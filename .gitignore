@@ -1,0 +1,23 @@
+/tmp
+
+# build tools
+/node_modules
+
+# dist
+/build
+
+.idea/.name
+
+.idea/encodings.xml
+
+.idea/mathquill.iml
+
+.idea/misc.xml
+
+.idea/modules.xml
+
+.idea/scopes/scope_settings.xml
+
+.idea/vcs.xml
+
+.idea/workspace.xml

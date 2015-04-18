@@ -1,0 +1,13 @@
+To build swift_calcs, you will need a node.js installation.
+We recommend https://github.com/visionmedia/n for installing node,
+otherwise, you can get it from http://nodejs.org/ .
+
+You will then need to update the dependencies with `npm`, like so:
+
+    % npm install
+
+If this installs properly, you should simply be able to run `make`,
+and swift_calcs will be built in the `build/` directory.  Alternatively,
+for development, you can run `make app`, which will automatically
+re-make, and then move the files into the applicaiton repo for testing
+

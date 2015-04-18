@@ -1,0 +1,34 @@
+div.sc_element_container {
+
+	.sc_selected {
+		background-color: #B4D5FE;
+		cursor: move;
+	}
+  .sc_selected.sc_blur {
+    background-color: #D4D4D4;
+  }
+	.sc_math {
+		cursor: text;
+	}
+}
+
+
+
+.user-select (...) {
+  -webkit-user-select: @arguments;
+  -moz-user-select: @arguments;
+  user-select: @arguments;
+}
+.sc_textarea {
+  position: relative;
+  // TODO: why is this here?
+  .user-select(text);
+}
+.sc_textarea * {
+  .user-select(text);
+  // the only way to hide the textarea
+  // *and the blinking insertion point* in IE
+  position: absolute;
+  clip: rect(1em 1em 1em 1em);
+  resize: none; // hotfix: https://code.google.com/p/chromium/issues/detail?id=355199#c1
+}
