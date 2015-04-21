@@ -6,7 +6,6 @@ Workspaces are attached/removed to/from the DOM after initialization with the 'b
 To create a workspace, you initialize an object by passing in:
 - Nothing: Create new workspace, default name based on current time
 - String: Create a new workspace with the passed string as its name
-- JSON: Array.  Should have an 'id' attribute, and a 'children' attribute. BRENTAN_TODO
 */
 var Workspace = P(function(_) {
 	_.parent = 0;
@@ -18,6 +17,7 @@ var Workspace = P(function(_) {
 	_.bound = false;
 	_.blurred = true;
 	_.activeElement = 0;
+	_.dragging = false;
 
   // Create the workspace, pass in an optional name
 	_.init = function(binder) { 

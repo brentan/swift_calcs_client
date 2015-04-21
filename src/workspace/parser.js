@@ -24,6 +24,8 @@
 var parse = function(text) {
   var regex = /([\{\}])/;
   var result = [];
+  //replace newlines after elements (these are added by select method when pushing to the textarea)
+  text = text.replace(/\}\n/g,'}');
 
   var splitArguments = function(text) {
     if(text.trim() == '') return [];
@@ -80,13 +82,13 @@ var parse = function(text) {
       if(depth == 0) {
         if(building_argument_list) {
           //Just finished creating the argument list.  
-          result.push(SwiftCalcs.elements[possible_command]().parse(splitArguments(argument_list)));
+          result.push(elements[possible_command]().parse(splitArguments(argument_list)));
           possible_command = '';
           argument_list = '';
           building_argument_list = false;
         } else {
           //Just finished typing a command...is it valid?
-          if(SwiftCalcs.elements[possible_command]) {
+          if(elements[possible_command]) {
             splitIntoTextBlocks(current_phrase);
             current_phrase = '';
             building_argument_list = true;

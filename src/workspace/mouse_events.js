@@ -30,20 +30,15 @@ Workspace.open(function(_) {
     	if (e.which !== 1) return false;
     	_this.focus();
     	// First handle mousedown.  This just sets the listeners for dragging and mouseup.  
+    	var selected_target = $(e.target).closest('.' + css_prefix + 'selected');
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-      _this.clearSelection();
+	    var new_target;
       if(!target) target = _this.ends[R];
-      if(target === 0) throw("Somehow we have an empty workspace, which should never be allowed to occur")
-      target.focus();
-      target.mouseDown(e);
-      var new_target;
-      var selected_elements = $();
-      // Dragging events:
-      function mousemove(e) { new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1]; if(!new_target) new_target = _this.ends[R]; }
+      if(target === 0) throw("Somehow we have an empty workspace, which should never be allowed to occur");
       // docmousemove and mouseup share a lot, so combine them here:
       function mousemoveup(e, command) {
-      	selected_elements.removeClass(css_prefix + 'selected');
-      	selected_elements = $();
+      	_this.clearSelection(true);
+      	var selected_elements = $();
     		var selection = [];
       	// Multiple cases for click-drag handling:
       	if(!new_target || !target) { //end or start target is not an element...so we do nothing
@@ -78,29 +73,139 @@ Workspace.open(function(_) {
 	      		if(!success) throw("Tree traversal failed for selection.  This shouldn't be possible");
 	      	}
       	}
-      	selected_elements.addClass(css_prefix + 'selected');
+      	_this.createSelection(selected_elements);
       	_this.selection = selection;
       	_this.selectionChanged();
       }
-      function docmousemove(e) {
-      	mousemoveup(e, 'mouseMove');
-        new_target = undefined;
-      }
-      function mouseup(e) {
-      	new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-      	if(!new_target) new_target = _this.ends[R]; 
-      	mousemoveup(e, 'mouseUp');
-        // delete the mouse handlers now that we're not dragging anymore
-        _this.jQ.unbind('mousemove', mousemove);
-        $(e.target.ownerDocument).unbind('mousemove', docmousemove).unbind('mouseup', mouseup);
-      }
-      e.preventDefault(); // doesn't work in IE≤8, but it's a one-line fix:
-      e.target.unselectable = true; // http://jsbin.com/yagekiji/1
-
-      _this.jQ.mousemove(mousemove);
-      $(e.target.ownerDocument).mousemove(docmousemove).mouseup(mouseup);
-      // listen on document not just body to not only hear about mousemove and
-      // mouseup on page outside field, but even outside page, except iframes
+    	if(selected_target.length && _this.selection.length) {
+    		// Clicking/dragging on selection
+    		function dragOver(e_drag) {
+    			var el = Element.byId[$(e_drag.target).attr(css_prefix + 'element_id') || -1];
+    			// Are we an element that allows children, but doesnt have any?
+    			if(el && el.hasChildren && (el.children().length == 0)) {
+	    			if(e_drag.originalEvent.offsetY > (el.jQ.height()*0.75)) {
+	    				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
+	    				el.insertJQ.removeClass(css_prefix + 'dropTop');
+	    			} else if(e_drag.originalEvent.offsetY < (el.jQ.height()*0.25)) {
+	    				el.insertJQ.removeClass(css_prefix + 'dropTop');
+	    				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
+	    			} else {
+	    				el.insertJQ.addClass(css_prefix + 'dropTop');
+	    				el.jQ.removeClass(css_prefix + 'dropBot').removeClass(css_prefix + 'dropTop');
+	    			}
+    			} else {
+	    			if(e_drag.originalEvent.offsetY > ($(e_drag.target).height())/2)
+	    				$(e_drag.target).removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
+	    			else
+	    				$(e_drag.target).removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
+	    		}
+	      	e_drag.preventDefault();
+    		}
+    		function dragDrop(e_drag) {
+    			dragLeave(e_drag);
+    			var el = Element.byId[$(e_drag.target).attr(css_prefix + 'element_id') || -1];
+    			var into = false;
+    			var dir = L;
+    			// Are we an element that allows children, but doesnt have any?
+    			if(el && el.hasChildren && (el.children().length == 0)) {
+	    			if(e_drag.originalEvent.offsetY > (el.jQ.height()*0.75)) 
+	    				dir = R;
+	    			else if(e_drag.originalEvent.offsetY < (el.jQ.height()*0.25)) 
+	    				dir = L;
+	    			else 
+	    				into = true;
+    			} else {
+	    			if(e_drag.originalEvent.offsetY > ($(e_drag.target).height())/2)
+	    				dir = R;
+	    			else
+	    				dir = L;
+	    		}
+	    		// Begin moving the selected elements to the new target
+	    		_this.clearSelection(true);
+	    		if(dir === R) _this.selection.reverse();
+	    		var active_elements = $();
+	    		for(var i = 0; i < _this.selection.length; i++) {
+	    			_this.selection[i].move(el, into ? R : dir, into);
+	    			active_elements = active_elements.add(_this.selection[i].jQ);
+	    		}
+	    		if(dir === R) _this.selection.reverse();
+	    		_this.createSelection(active_elements);
+	    		_this.focus();
+	    		e_drag.preventDefault();
+    		}
+    		function dragLeave(e_drag) {
+    			$(e_drag.target).removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot').off('dragover', dragOver).off('dragleave', dragLeave).off('drop', dragDrop);
+    			$(e_drag.target).find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
+	      	e_drag.preventDefault();
+    		}
+    		function dragEnter(e_drag) {
+    			$(e_drag.target).on('dragover', dragOver).on('dragleave', dragLeave).on('drop', dragDrop);
+    			dragOver(e_drag);
+    		}
+    		function dragStart(e_drag) {
+	      	// We started a drag, so remove mouesup listener as we dont want it firing
+	        $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
+	        // Bind new handlers
+	        $(e_drag.target).on('dragend', dragEnd);
+	      	_this.insertJQ.find('.' + css_prefix + 'element').on('dragenter', dragEnter);
+	      	selected_target.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
+    		}
+    		function dragEnd(e_drag) {
+	      	_this.dragging = false;
+	      	_this.focus();
+	      	// Remove listeners
+    			$(e_drag.target).off('dragend', dragEnd);
+	      	_this.insertJQ.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
+	      	selected_target.off('dragstart', dragStart);
+	      	e_drag.preventDefault();
+    		}
+	      function mouseup_drag(e_up) {
+	      	_this.dragging = false;
+	      	_this.focus();
+	      	// Remove listeners
+	      	selected_target.off('dragstart', dragStart);
+	      	// Handle full click events as mousedown and then mouseup
+		      _this.clearSelection();
+	      	new_target = Element.byId[$(e_up.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+	      	if(!new_target) new_target = _this.ends[R]; 
+	      	target = new_target;
+		      new_target.focus();
+		      new_target.mouseDown(e_up);
+	      	mousemoveup(e_up, 'mouseUp');
+	        $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
+	      	e.preventDefault();
+	      	e_up.preventDefault();
+	      }
+	      // We can't preventDefault on mousedown, because that will kill the draggable calls.  But by allowing it, we blur the textarea.
+	      // Set 'dragging' to true so that we know we are in a situation where we are blurred.
+	      _this.dragging = true;
+	      selected_target.on('dragstart', dragStart);
+	      $(e.target.ownerDocument).mouseup(mouseup_drag);
+    	} else {
+	  		// Clicking dragging on nothing
+	      _this.clearSelection();
+	      target.focus();
+	      target.mouseDown(e);
+	      // Dragging events:
+	      function mousemove(e) { new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1]; if(!new_target) new_target = _this.ends[R]; }
+	      function docmousemove(e) {
+	      	mousemoveup(e, 'mouseMove');
+	        new_target = undefined;
+	      }
+	      function mouseup(e) {
+	      	new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+	      	if(!new_target) new_target = _this.ends[R]; 
+	      	mousemoveup(e, 'mouseUp');
+	        // delete the mouse handlers now that we're not dragging anymore
+	        _this.jQ.unbind('mousemove', mousemove);
+	        $(e.target.ownerDocument).unbind('mousemove', docmousemove).unbind('mouseup', mouseup);
+	      }
+	      e.preventDefault(); 
+	      _this.jQ.mousemove(mousemove);
+	      $(e.target.ownerDocument).mousemove(docmousemove).mouseup(mouseup);
+	      // listen on document not just body to not only hear about mousemove and
+	      // mouseup on page outside field, but even outside page, except iframes
+	    }
       return this;
     };
     this.jQ.on('mousedown.swiftcalcs', mouseDown);

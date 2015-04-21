@@ -27,6 +27,15 @@ var SwiftCalcs = {};
     R = 1;
 	function noop() {}
 
+	// Class helper.  Returns the type of an element
+	var elementType = function(el) {
+		for (var key in elements) {
+		  if (elements.hasOwnProperty(key) && (el instanceof elements[key])) 
+		  	return key;
+		}
+		return null;
+	}
+
   /* Math helpers
    * These functions help create and register math elements.  They are used by various elements that have Math input or output secionts
    */
@@ -50,14 +59,28 @@ var SwiftCalcs = {};
   	var defaultOptions = {handlers: {
   		deleteOutOf: function(dir, mathField) {
   			if(!(_this instanceof EditableBlock)) return; //I can only delete out of editable blocks
-  			if(mathField.text() !== '') return; //We dont allow you to delete out of a non-empty block...BRENTAN: Change to merge 2 blocks of same type!  if not same type, highlight block so that you type again to delete it
+  			if(mathField.text() !== '') {
+  				if(elementType(_this) && (elementType(_this) == elementType(_this[dir]))) {
+  					// Deleting into element of the same type.  We should merge them together.  
+  					if(dir == L) {// backspace
+  						_this.write(_this[dir].focusableItems[0].toString());
+  						_this[dir].remove(0);
+  					} else {
+	  					_this[dir].moveInFrom(-dir);
+	  					_this[dir].write(mathField.toString());
+	  					_this.remove(0);
+	  				}
+  				} else if(_this[dir])
+  						_this.workspace.selectDir(_this[dir],dir);
+  				return; 
+  			}
   			if(_this.moveOut(mathField, dir)) _this.remove(0); //Only delete me if I successfully moved into a neighbor
   		},
   		upOutOf: function(mathField) {
-  			window.setTimeout(function() { _this.moveOut(mathField, L); });
+  			window.setTimeout(function() { _this.moveOut(mathField, L, mathField.cursorX()); });
   		},
   		downOutOf: function(mathField) {
-  			window.setTimeout(function() { _this.moveOut(mathField, R); });
+  			window.setTimeout(function() { _this.moveOut(mathField, R, mathField.cursorX()); });
   		},
   		moveOutOf: function(dir, mathField) {
   			window.setTimeout(function() { _this.moveOut(mathField, dir); });

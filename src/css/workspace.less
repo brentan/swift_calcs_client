@@ -1,15 +1,24 @@
 div.sc_element_container {
 
+  .sc_math {
+    cursor: text;
+  }
 	.sc_selected {
 		background-color: #B4D5FE;
-		cursor: move;
+		cursor: default;
+    .sc_math {
+      cursor: default;
+    }
 	}
   .sc_selected.sc_blur {
     background-color: #D4D4D4;
   }
-	.sc_math {
-		cursor: text;
-	}
+  .sc_dropTop {
+    border-top: 3px solid black;
+  }
+  .sc_dropBot {
+    border-bottom: 3px solid black;
+  }
 }
 
 

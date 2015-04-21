@@ -52,6 +52,7 @@ Workspace.open(function(_) {
       _this.blurred = true;
       blurTimeout = setTimeout(function() { // wait for blur on window.  If its not, then run this function (in-window blur)
         if(_this.activeElement) _this.activeElement.blur();
+        if(!_this.dragging) _this.clearSelection();
         blur();
       });
       $(window).on('blur', windowBlur);
@@ -187,22 +188,45 @@ Workspace.open(function(_) {
   }
   _.paste = function(text) {
     if(!this.activeElement) return;
-    var blocks = parse(text);
-    var _this = this;
-    var after = this.activeElement;
-    for(var i = 0; i < blocks.length; i++) {
-      blocks[i].insertAfter(after).show(0);
-      after = blocks[i];
+    if(this.selection.length == 0) {
+      // Nothing selected or selection is within the active element.  
+      if(elementType(this.activeElement) === 'text') 
+        this.activeElement.split(); // If pasting into text, we 'split' this element at the current cursor position first (and remove any selecton), then insert between the 2 text blocks that we created.  BRENTAN- WRITE SPLIT
+      if(text.slice(0,6) === 'latex{' && text.slice(-1) === '}') {
+        // This was a cut/copy -> paste from within a mathquill block.  We should insert it into the current block, if possible, or insert it afterwards
+        if(elementType(this.activeElement) === 'math')
+          return this.activeElement.write(text);
+        else
+          return math().insertAfter(this.activeElement).show(0).focus(R);
+      }
+      var blocks = parse(text);
+      var after = this.activeElement;
+      for(var i = 0; i < blocks.length; i++) {
+        blocks[i].insertAfter(after).show(0);
+        after = blocks[i];
+      }
+      if((this.activeElement instanceof math) && (this.activeElement.mathField.text() == '')) this.activeElement.remove(0);
+      if(i > 0)
+        blocks[i-1].moveInFrom(R);
+      // BRENTAN: Paste will be a bit weird...if we start/end with a textblock, and we are pasting next to textblocks, we will
+      // need to merge them together at the end of the paste, which is sorta crazy
+    } else {
+      // Something was selected at paste at the element level or above...so we have to overwrite it
+      if(text.slice(0,6) === 'latex{' && text.slice(-1) === '}') // This was a cut/copy -> paste from within a mathquill block.  We need to convert to a mathblock
+        var blocks = [math(text)];
+      else
+        var blocks = parse(text);
+      if(blocks.length == 0) //Nothing to paste somehow...so just remove the highlighting and refocus
+        this.deleteSelection(true, R);
+      else {
+        var after = blocks[0];
+        this.replaceSelection(after);
+        for(var i = 1; i < blocks.length; i++) {
+          blocks[i].insertAfter(after).show(0);
+          after = blocks[i];
+        }
+        blocks[i-1].moveInFrom(R);
+      }
     }
-    blocks[i-1].moveInFrom(R);
-    return;
-  // BRENTAN: Paste will be a bit weird...we need to see if it starts with 'latex', and if so it means we should dump it
-  // right into the focused math element (and if its not math, we should split the current element, insert a math, and add it)
-  // otherwise we should do our parse thing, but if we start/end with a textblock, and we are pasting next to textblocks, we will
-  // need to merge them together at the end of the paste, which is sorta crazy
-    if(this.selection.length == 0)
-      this.activeElement.paste(text);
-    else
-      console.log('Add code to drop selection and replace with pasted content, whatever it is');
   }
 });

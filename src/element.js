@@ -29,6 +29,7 @@ var Element = P(function(_) {
 	_.depth = 0;
 	_.blurred = true;
 	_.toParse = false;
+	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
 
 	//Give each element a unique ID, this is just for tracking purposes
   var id = 0;
@@ -198,10 +199,10 @@ var Element = P(function(_) {
 	}
 
 	/*
-	Move commands.  Only Workspace elements can be moved.  Allows them to be moved upwards, downwards, etc.
+	Move commands.  Allows them to be moved upwards, downwards, etc.
 	The move command takes care of all the move related stuff, including removing the old element and reinserting at the correct
-	new location.  Note that it takes a target to insert before or after, and a direction.  Shortcut comamnds (moveUp and moveDown)
-	are available to move one spot up or down, as well as moveBefore and moveAfter, which takes a target argument.  Active items cannot be moved
+	new location.  Note that it takes a target to insert before or after, and a direction.  insertInto should be set to true to insert into 
+	an element at the end based on dir
 	*/
 	_.move = function(target, location, insertInto) {
 		// First, basically remove this item from the tree
@@ -230,10 +231,10 @@ var Element = P(function(_) {
 				this.jQ.detach().insertBefore(target.jQ);
 			else
 				this.jQ.detach().insertAfter(target.jQ);
-			if(location === L)
-				this.scheduleFirstGenAncestor(); // BRENTAN- evaluation update
-			else
-				this[L].scheduleFirstGenAncestor(); // BRENTAN- evaluation update
+			//if(location === L)
+			//	this.scheduleFirstGenAncestor(); // BRENTAN- evaluation update
+			//else
+			//	this[L].scheduleFirstGenAncestor(); // BRENTAN- evaluation update
 		} else {
 			this.parent = target;
 			this.updateWorkspace(target.getWorkspace());
@@ -245,16 +246,10 @@ var Element = P(function(_) {
 				this.jQ.detach().prependTo(target.insertJQ);
 			else
 				this.jQ.detach().appendTo(target.insertJQ);
-			this.scheduleFirstGenAncestor(); // BRENTAN- evaluation update
+			//this.scheduleFirstGenAncestor(); // BRENTAN- evaluation update
 		}
 		this.setDepth();
 		return this;
-	}
-	_.moveBefore = function(target) {
-		return this.move(target, L, false);
-	}
-	_.moveAfter = function(target) {
-		return this.move(target, R, false);
 	}
 	/* Destroy methods.
 	Detach simply writes this elements jQ as a 0.  It assumes it has already been 
@@ -458,7 +453,7 @@ var Element = P(function(_) {
   up/left/down/right out of the focusable item.  We take these and then move accordingly
 	*/
 	// Will attempt to move to the next focusable item.  Returns false on failure (aka no next item to move to!) (if 'item' is 'false', it will move out of this element in the requested direction)
-	_.moveOut = function(item, dir) {
+	_.moveOut = function(item, dir, x_location) {
 		if(item) {
 			for(var i = 0; i < this.focusableItems.length; i++) 
 				if(this.focusableItems[i] == item) break;
@@ -469,7 +464,7 @@ var Element = P(function(_) {
 			if(this[dir]) {
 				// we must add an implicit math block if either me or the target isnt editable
 				if((this instanceof EditableBlock) || (this[dir] instanceof EditableBlock))
-					return this[dir].moveInFrom(-dir);
+					return this[dir].moveInFrom(-dir, x_location);
 				else {
 					math().insertNextTo(this,dir).show().focus().setImplicit();
 					return true;
@@ -484,11 +479,11 @@ var Element = P(function(_) {
 			if(this.depth === 0) return false;
 			return this.parent.moveOut(-1, dir);
 		} else if(this.focusableItems[i + dir] !== -1) {
-			this.focusableItems[i + dir].focus(-dir);
+			this.focusableItems[i + dir].focus(x_location ? x_location : -dir);
 			return true;
 		} else {
 			//We reached the children, we need to jump in.  If there are no children, we add an implicit block //BRENTAN: Check at some point to override what is the 'implicit' block for each type?
-			if(this.ends[dir] && this.ends[dir].moveInFrom(dir)) return true;
+			if(this.ends[dir] && this.ends[dir].moveInFrom(dir, x_location)) return true;
 			else if(this.ends[dir] === 0) {
 				math().appendTo(this).show().focus().setImplicit();
 				return true;
@@ -497,7 +492,7 @@ var Element = P(function(_) {
 		return false;
 	}
 	// Will attempt to move into this element from another from the passed direction
-	_.moveInFrom = function(dir) {
+	_.moveInFrom = function(dir, x_location) {
 		if(this.focusableItems.length == 0) //nothing to focus on, jump past me
 			return this.moveOut(undefined, -dir);
 		this.focus();
@@ -510,7 +505,7 @@ var Element = P(function(_) {
 			return false;
 		}
 		else
-			this.focusableItems[dir == R ? (this.focusableItems.length-1) : 0].focus(dir);
+			this.focusableItems[dir == R ? (this.focusableItems.length-1) : 0].focus(x_location ? x_location : dir);
 		return true;
 	}
 	/*
@@ -570,6 +565,9 @@ var Element = P(function(_) {
   _.paste = function(text) { 
   	if(this.focusedItem) this.focusedItem.paste(text);
   }
+  _.write = function(text) { // Like paste, but no blurring afterwards
+  	if(this.focusedItem) this.focusedItem.write(text);
+  }
   /*
    parse and toString are NEAR opposite methods.  toString will convert the element into a 
    string that is parse-able by the global 'parse' function (global within the SC scope).
@@ -627,6 +625,7 @@ var Element = P(function(_) {
 });
 
 // EditableBlock is a special element that means we dont need to add implicit math blocks before/after it when traversing with the keyboard or mouse hovering near its top/bottom
+// By definition they only have 1 focusable item.  
 var EditableBlock = P(Element, function(_, super_) {
 	_.init = function() {
 		super_.init.call(this);

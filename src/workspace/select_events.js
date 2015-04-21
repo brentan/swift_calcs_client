@@ -15,7 +15,7 @@ Workspace.open(function(_) {
 	var last_dir = 0;
 	_.selectDir = function(el, dir) {
 		// Select up/left or down/right, depending on dir.  if nothing has been selected yet, el becomes first selection
-    this.insertJQ.find('.' + css_prefix + 'selected').removeClass(css_prefix + 'selected');
+	  this.clearSelection(true);
 		if(this.selection.length == 0) {
 			this.selection = [el];
 			el.mouseOut({});
@@ -56,7 +56,10 @@ Workspace.open(function(_) {
 			}
 			last_dir = dir;
 		}
-		jQuery.each(this.selection, function(i, v) { v.jQ.addClass(css_prefix + 'selected'); });
+		var to_select = $();
+		for(var i = 0; i < this.selection.length; i++)
+			to_select = to_select.add(this.selection[i].jQ);
+		this.createSelection(to_select);
 		return this;
 	}
 	_.selectToEndDir = function(el, dir) {
@@ -87,11 +90,17 @@ Workspace.open(function(_) {
 		}
 		return this;
 	}
-	_.clearSelection = function() {
-    this.insertJQ.find('.' + css_prefix + 'selected').removeClass(css_prefix + 'selected');
+	_.clearSelection = function(css_only) {
+    this.insertJQ.find('.' + css_prefix + 'selected').replaceWith(function() {
+      return $( this ).contents();
+    });
+    if(css_only) return this;
     this.selection = [];
     this.selectionChanged(true);
     return this;
+	}
+	_.createSelection = function(els) {
+		els.wrapAll("<div class='" + css_prefix + "selected' draggable='true'></div>");
 	}
 	_.selectAll = function() {
 		this.clearSelection();
@@ -100,7 +109,7 @@ Workspace.open(function(_) {
       this.selection.push(el);
       to_highlight = to_highlight.add(el.jQ);
     }
-    to_highlight.addClass(css_prefix + 'selected');
+    this.createSelection(els); 
     return this;
   }
   _.replaceSelection = function(replacement, focus) {
@@ -143,7 +152,7 @@ Workspace.open(function(_) {
     this.textareaSelectionTimeout = undefined;
     var output = '';
     for(var i=0; i < this.selection.length; i++)
-    	output += this.selection[i].toString();
+    	output += this.selection[i].toString() + '\n';
     this.selectFn(output);
   };
 });
