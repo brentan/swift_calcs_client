@@ -1,11 +1,11 @@
 /*
  Simple parser method.  
 
- parse(text)
+ parse(to_paste)
  It takes a string and parses it based on groupings of curly braces {}
  It walks through the string in a way that ensures the start/end of each item is based on the
  matching { and }, allowing for nesting.  The output is a list of elements, in order, based on the 
- provided text, that can each then be inserted in turn into the workspace.
+ provided to_paste, that can each then be inserted in turn into the workspace.
 
  The input string is assumed to be in SwiftCalcs format.  This is simply text with inline commands
  that are set apart using curly brackets (in this way, any text copy/pasted from anywhere can safely
@@ -21,17 +21,17 @@
  arguments as an input (an array of arguments)
  */
 
-var parse = function(text) {
+var parse = function(to_paste) {
   var regex = /([\{\}])/;
   var result = [];
   //replace newlines after elements (these are added by select method when pushing to the textarea)
-  text = text.replace(/\}\n/g,'}');
+  to_paste = to_paste.replace(/\}\n/g,'}');
 
-  var splitArguments = function(text) {
-    if(text.trim() == '') return [];
-    if(text[0] !== '{') return [text];
+  var splitArguments = function(to_paste) {
+    if(to_paste.trim() == '') return [];
+    if(to_paste[0] !== '{') return [to_paste];
     var output = [];
-    var tokens = text.split(regex);
+    var tokens = to_paste.split(regex);
     var depth = 0;
     var current_phrase = '';
     jQuery.each(tokens, function(i, token) {
@@ -51,23 +51,21 @@ var parse = function(text) {
     });
     return output;
   }
-  var splitIntoTextBlocks = function(text) {
-    var split_arr = text.split(/\n/);
-    jQuery.each(split_arr, function(i, v) {
-      if((i == (split_arr.length-1)) && (v.trim() == '')) return;
-      result.push(math(v)); //BRENTAN- Change to 'text' type!
-    });
+  var splitIntoTextBlocks = function(text_block) {
+    text_block = text_block.replace(/\n/g,'<BR>');
+    if(text_block.slice(-4) == '<BR>') text_block = text_block.slice(0, -4);
+    result.push(text(text_block));
   }
   // First test for a valid string (equal number of start/stop curly braces).  If
-  // the string isn't balanced, assume its all text and throw it to the Text element
-  if((text.match(/\{/g) || []).length !== (text.match(/\}/g) || []).length) {
-    splitIntoTextBlocks(text);
+  // the string isn't balanced, assume its all to_paste and throw it to the to_paste element
+  if((to_paste.match(/\{/g) || []).length !== (to_paste.match(/\}/g) || []).length) {
+    splitIntoTextBlocks(to_paste);
     return result;
   }
 
   //Split the string into tokens based on { and }.  Then start walking through and rejoining based on depth.
   var depth = 0;
-  var tokens = text.split(regex);
+  var tokens = to_paste.split(regex);
   var current_phrase = '';
   var possible_command = '';
   var argument_list = '';
@@ -105,5 +103,7 @@ var parse = function(text) {
     else if(building_argument_list) argument_list += token;
     else possible_command += token;
   });
+  if(current_phrase.length)
+    splitIntoTextBlocks(current_phrase);
   return result;
 };

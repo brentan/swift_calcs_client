@@ -18,6 +18,7 @@ var Workspace = P(function(_) {
 	_.blurred = true;
 	_.activeElement = 0;
 	_.dragging = false;
+	_.mousedown = false;
 
   // Create the workspace, pass in an optional name
 	_.init = function(binder) { 

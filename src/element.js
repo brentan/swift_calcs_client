@@ -505,7 +505,7 @@ var Element = P(function(_) {
 			return false;
 		}
 		else
-			this.focusableItems[dir == R ? (this.focusableItems.length-1) : 0].focus(x_location ? x_location : dir);
+			this.focusableItems[dir == R ? (this.focusableItems.length-1) : 0].focus(x_location ? x_location : dir, dir);
 		return true;
 	}
 	/*
@@ -515,6 +515,8 @@ var Element = P(function(_) {
 	 */
 	_.focusedItem = 0; 
 	_.focus = function() {
+		if(!this.blurred) return this;
+		this.workspace.focus();
 		this.blurred = false;
 		if(this.workspace.activeElement)
 			this.workspace.activeElement.blur();
@@ -522,6 +524,7 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.blur = function() {
+		if(this.blurred) return this;
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.blur();
 		if(this.workspace.activeElement == this) this.workspace.activeElement = 0;
@@ -544,6 +547,8 @@ var Element = P(function(_) {
 	}
 	/* 
 	 Keyboard events.  Will forward the event to whatever item is focusable.  The focusable item should respond to:
+	 If cut/copy handles the cut/copy directly, and should set workspace.clipboard to the appropriate value and return true,
+	 or return false and let the browser handle it after bubbling up
 	 keystroke (description, event)
 	 typedText (text)
 	 cut (event)
@@ -558,9 +563,11 @@ var Element = P(function(_) {
  	}
   _.cut = function(e) { 
   	if(this.focusedItem) this.focusedItem.cut(e);
+  	return true;
   }
   _.copy = function(e) { 
   	if(this.focusedItem) this.focusedItem.copy(e);
+  	return true;
   }
   _.paste = function(text) { 
   	if(this.focusedItem) this.focusedItem.paste(text);

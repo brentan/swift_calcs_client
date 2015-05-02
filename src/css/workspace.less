@@ -1,23 +1,43 @@
 div.sc_element_container {
-
+  .sc_element {
+    border-top: 2px solid white;
+    border-bottom: 2px solid white;
+  }
   .sc_math {
     cursor: text;
   }
 	.sc_selected {
 		background-color: #B4D5FE;
+    .sc_element {
+      border-top: 2px solid #B4D5FE;
+      border-bottom: 2px solid #B4D5FE;
+    }
 		cursor: default;
-    .sc_math {
+    .sc_math, .sc_wysiwyg_holder {
       cursor: default;
     }
 	}
+  .sc_selected ::selection {
+    background: transparent;
+  }
   .sc_selected.sc_blur {
     background-color: #D4D4D4;
   }
   .sc_dropTop {
-    border-top: 3px solid black;
+    border-top: 2px solid black;
   }
   .sc_dropBot {
-    border-bottom: 3px solid black;
+    border-bottom: 2px solid black;
+  }
+  .sc_wysiwyg_holder {
+    border: 1px solid #777777; //BRENTAN: Remove this, its just helping us right now
+    padding: 6px 3px;
+    cursor: text;
+    .sc_wysiwyg, textarea {
+      resize: none;
+      outline: none;
+      white-space: pre-wrap;
+    }
   }
 }
 

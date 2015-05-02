@@ -91,16 +91,14 @@ Workspace.open(function(_) {
 		return this;
 	}
 	_.clearSelection = function(css_only) {
-    this.insertJQ.find('.' + css_prefix + 'selected').replaceWith(function() {
-      return $( this ).contents();
-    });
+    this.insertJQ.find('.' + css_prefix + 'selected').removeClass(css_prefix + 'selected').attr('draggable', false);
     if(css_only) return this;
     this.selection = [];
     this.selectionChanged(true);
     return this;
 	}
 	_.createSelection = function(els) {
-		els.wrapAll("<div class='" + css_prefix + "selected' draggable='true'></div>");
+		els.addClass(css_prefix + "selected").attr('draggable', true);
 	}
 	_.selectAll = function() {
 		this.clearSelection();
@@ -109,7 +107,8 @@ Workspace.open(function(_) {
       this.selection.push(el);
       to_highlight = to_highlight.add(el.jQ);
     }
-    this.createSelection(els); 
+    this.createSelection(to_highlight); 
+    this.selectionChanged(true);
     return this;
   }
   _.replaceSelection = function(replacement, focus) {
@@ -141,6 +140,7 @@ Workspace.open(function(_) {
   _.selectionChanged = function(force) {
   	force = (typeof force === 'undefined') ? false : force;
   	if(!force && (this.selection.length == 0)) return; // We don't want to overwrite anything that sub-focused items place in the textbox
+  	// This can get called a bunch of times during click/select events, so put it in a timeout to cut down on the number of executions
     if (this.textareaSelectionTimeout === undefined) {
     	var _this = this;
       this.textareaSelectionTimeout = setTimeout(function() {
@@ -153,6 +153,6 @@ Workspace.open(function(_) {
     var output = '';
     for(var i=0; i < this.selection.length; i++)
     	output += this.selection[i].toString() + '\n';
-    this.selectFn(output);
+    this.clipboard = output;
   };
 });

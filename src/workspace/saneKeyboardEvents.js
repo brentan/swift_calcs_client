@@ -21,69 +21,71 @@
  *    + attach event handlers and export methods
  ************************************************/
 
+
+// The following [key values][1] map was compiled from the
+// [DOM3 Events appendix section on key codes][2] and
+// [a widely cited report on cross-browser tests of key codes][3],
+// except for 10: 'Enter', which I've empirically observed in Safari on iOS
+// and doesn't appear to conflict with any other known key codes.
+//
+// [1]: http://www.w3.org/TR/2012/WD-DOM-Level-3-Events-20120614/#keys-keyvalues
+// [2]: http://www.w3.org/TR/2012/WD-DOM-Level-3-Events-20120614/#fixed-virtual-key-codes
+// [3]: http://unixpapa.com/js/key.html
+var KEY_VALUES = {
+  8: 'Backspace',
+  9: 'Tab',
+
+  10: 'Enter', // for Safari on iOS
+
+  13: 'Enter',
+
+  16: 'Shift',
+  17: 'Control',
+  18: 'Alt',
+  20: 'CapsLock',
+
+  27: 'Esc',
+
+  32: 'Spacebar',
+
+  33: 'PageUp',
+  34: 'PageDown',
+  35: 'End',
+  36: 'Home',
+
+  37: 'Left',
+  38: 'Up',
+  39: 'Right',
+  40: 'Down',
+
+  45: 'Insert',
+
+  46: 'Del',
+
+  144: 'NumLock'
+};
+
+// To the extent possible, create a normalized string representation
+// of the key combo (i.e., key code and modifier keys).
+function stringify(evt) {
+  var which = evt.which || evt.keyCode;
+  var keyVal = KEY_VALUES[which];
+  var key;
+  var modifiers = [];
+
+  if (evt.ctrlKey) modifiers.push('Ctrl');
+  if (evt.originalEvent && evt.originalEvent.metaKey) modifiers.push('Meta');
+  if (evt.altKey) modifiers.push('Alt');
+  if (evt.shiftKey) modifiers.push('Shift');
+
+  key = keyVal || String.fromCharCode(which);
+  if (!modifiers.length && !keyVal) return key;
+
+  modifiers.push(key);
+  return modifiers.join('-');
+}
+
 var saneKeyboardEvents = (function() {
-  // The following [key values][1] map was compiled from the
-  // [DOM3 Events appendix section on key codes][2] and
-  // [a widely cited report on cross-browser tests of key codes][3],
-  // except for 10: 'Enter', which I've empirically observed in Safari on iOS
-  // and doesn't appear to conflict with any other known key codes.
-  //
-  // [1]: http://www.w3.org/TR/2012/WD-DOM-Level-3-Events-20120614/#keys-keyvalues
-  // [2]: http://www.w3.org/TR/2012/WD-DOM-Level-3-Events-20120614/#fixed-virtual-key-codes
-  // [3]: http://unixpapa.com/js/key.html
-  var KEY_VALUES = {
-    8: 'Backspace',
-    9: 'Tab',
-
-    10: 'Enter', // for Safari on iOS
-
-    13: 'Enter',
-
-    16: 'Shift',
-    17: 'Control',
-    18: 'Alt',
-    20: 'CapsLock',
-
-    27: 'Esc',
-
-    32: 'Spacebar',
-
-    33: 'PageUp',
-    34: 'PageDown',
-    35: 'End',
-    36: 'Home',
-
-    37: 'Left',
-    38: 'Up',
-    39: 'Right',
-    40: 'Down',
-
-    45: 'Insert',
-
-    46: 'Del',
-
-    144: 'NumLock'
-  };
-
-  // To the extent possible, create a normalized string representation
-  // of the key combo (i.e., key code and modifier keys).
-  function stringify(evt) {
-    var which = evt.which || evt.keyCode;
-    var keyVal = KEY_VALUES[which];
-    var key;
-    var modifiers = [];
-
-    if (evt.ctrlKey) modifiers.push('Ctrl');
-    if (evt.originalEvent && evt.originalEvent.metaKey) modifiers.push('Meta');
-    if (evt.altKey) modifiers.push('Alt');
-    if (evt.shiftKey) modifiers.push('Shift');
-
-    key = keyVal || String.fromCharCode(which);
-    if (!modifiers.length && !keyVal) return key;
-
-    modifiers.push(key);
-    return modifiers.join('-');
-  }
 
   // create a keyboard events shim that calls callbacks at useful times
   // and exports useful public methods

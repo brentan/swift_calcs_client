@@ -12,12 +12,13 @@ Workspace.open(function(_) {
     //context-menu event handling
     var _this = this;
     var contextMenu = function(e) {
-    	_this.focus();
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id')];
       //BRENTAN: TODO: Check to see if something IS selected and if we right clicked on it...then handle appropriately
       _this.clearSelection();
       if(!target) return true;
       target.focus();
+      if(!(target instanceof text)) 
+		    _this.focus();
       if(!target.contextMenu(e)) {
 	      e.preventDefault(); // doesn't work in IE\u22648, but it's a one-line fix:
 	      return false;
@@ -28,7 +29,7 @@ Workspace.open(function(_) {
     //click and click-drag event handling
     var mouseDown = function(e) {
     	if (e.which !== 1) return false;
-    	_this.focus();
+    	_this.mousedown = true;
     	// First handle mousedown.  This just sets the listeners for dragging and mouseup.  
     	var selected_target = $(e.target).closest('.' + css_prefix + 'selected');
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
@@ -43,11 +44,11 @@ Workspace.open(function(_) {
       	// Multiple cases for click-drag handling:
       	if(!new_target || !target) { //end or start target is not an element...so we do nothing
       		_this.selectionChanged(true);
-      	} else if(target.id === new_target.id) { //If start/end target are the same, we pass to that target
+      	} else if(target.id === new_target.id) { // If start/end target are the same, we pass to that target
         	if(target[command](e)) {
         		selected_elements = selected_elements.add(target.jQ);
         		selection.push(target);
-        	}
+        	} else if(target instanceof text) return true; // Let text objects deal with their own mouse events
       	} else { //Start and target are different elements
       		target.mouseOut(e);
       		//Journey to common generation for start/end targets
@@ -77,16 +78,17 @@ Workspace.open(function(_) {
       	_this.selection = selection;
       	_this.selectionChanged();
       }
-    	if(selected_target.length && _this.selection.length) {
+    	if(selected_target.length && _this.selection.length && !(target instanceof text)) {
     		// Clicking/dragging on selection
     		function dragOver(e_drag) {
-    			var el = Element.byId[$(e_drag.target).attr(css_prefix + 'element_id') || -1];
+    			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+    			var top = el.jQ.offset().top;
     			// Are we an element that allows children, but doesnt have any?
     			if(el && el.hasChildren && (el.children().length == 0)) {
-	    			if(e_drag.originalEvent.offsetY > (el.jQ.height()*0.75)) {
+	    			if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) {
 	    				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
 	    				el.insertJQ.removeClass(css_prefix + 'dropTop');
-	    			} else if(e_drag.originalEvent.offsetY < (el.jQ.height()*0.25)) {
+	    			} else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) {
 	    				el.insertJQ.removeClass(css_prefix + 'dropTop');
 	    				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
 	    			} else {
@@ -94,28 +96,29 @@ Workspace.open(function(_) {
 	    				el.jQ.removeClass(css_prefix + 'dropBot').removeClass(css_prefix + 'dropTop');
 	    			}
     			} else {
-	    			if(e_drag.originalEvent.offsetY > ($(e_drag.target).height())/2)
-	    				$(e_drag.target).removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
+	    			if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
+	    				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
 	    			else
-	    				$(e_drag.target).removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
+	    				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
 	    		}
 	      	e_drag.preventDefault();
     		}
     		function dragDrop(e_drag) {
     			dragLeave(e_drag);
-    			var el = Element.byId[$(e_drag.target).attr(css_prefix + 'element_id') || -1];
+    			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+    			var top = el.jQ.offset().top;
     			var into = false;
     			var dir = L;
     			// Are we an element that allows children, but doesnt have any?
     			if(el && el.hasChildren && (el.children().length == 0)) {
-	    			if(e_drag.originalEvent.offsetY > (el.jQ.height()*0.75)) 
+	    			if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) 
 	    				dir = R;
-	    			else if(e_drag.originalEvent.offsetY < (el.jQ.height()*0.25)) 
+	    			else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) 
 	    				dir = L;
 	    			else 
 	    				into = true;
     			} else {
-	    			if(e_drag.originalEvent.offsetY > ($(e_drag.target).height())/2)
+	    			if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
 	    				dir = R;
 	    			else
 	    				dir = L;
@@ -134,11 +137,14 @@ Workspace.open(function(_) {
 	    		e_drag.preventDefault();
     		}
     		function dragLeave(e_drag) {
-    			$(e_drag.target).removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot').off('dragover', dragOver).off('dragleave', dragLeave).off('drop', dragDrop);
-    			$(e_drag.target).find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
+    			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+    			el.jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
+    			$(e_drag.target).off('dragover', dragOver).off('dragleave', dragLeave).off('drop', dragDrop);
+    			el.jQ.find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
 	      	e_drag.preventDefault();
     		}
     		function dragEnter(e_drag) {
+    			if($(e_drag.target).closest('.' + css_prefix + 'selected').length) return; // Don't do drag handlers on selected elements
     			$(e_drag.target).on('dragover', dragOver).on('dragleave', dragLeave).on('drop', dragDrop);
     			dragOver(e_drag);
     		}
@@ -147,21 +153,25 @@ Workspace.open(function(_) {
 	        $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
 	        // Bind new handlers
 	        $(e_drag.target).on('dragend', dragEnd);
-	      	_this.insertJQ.find('.' + css_prefix + 'element').on('dragenter', dragEnter);
-	      	selected_target.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
+	        var to_listen = _this.insertJQ.find('.' + css_prefix + 'element');
+	      	to_listen.on('dragenter', dragEnter);
+	      	to_listen.find('*').on('dragenter', dragEnter);
     		}
     		function dragEnd(e_drag) {
 	      	_this.dragging = false;
-	      	_this.focus();
+    			_this.mousedown = false;
+	      	//_this.focus();
 	      	// Remove listeners
     			$(e_drag.target).off('dragend', dragEnd);
 	      	_this.insertJQ.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
+	      	_this.insertJQ.find('.' + css_prefix + 'element').find('*').off('dragenter', dragEnter);
 	      	selected_target.off('dragstart', dragStart);
 	      	e_drag.preventDefault();
     		}
 	      function mouseup_drag(e_up) {
 	      	_this.dragging = false;
-	      	_this.focus();
+    			_this.mousedown = false;
+	      	//_this.focus();
 	      	// Remove listeners
 	      	selected_target.off('dragstart', dragStart);
 	      	// Handle full click events as mousedown and then mouseup
@@ -184,25 +194,32 @@ Workspace.open(function(_) {
     	} else {
 	  		// Clicking dragging on nothing
 	      _this.clearSelection();
-	      target.focus();
-	      target.mouseDown(e);
 	      // Dragging events:
 	      function mousemove(e) { new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1]; if(!new_target) new_target = _this.ends[R]; }
 	      function docmousemove(e) {
 	      	mousemoveup(e, 'mouseMove');
 	        new_target = undefined;
+	        if(_this.selection.length > 0)
+		      	e.preventDefault(); 
 	      }
 	      function mouseup(e) {
+    			_this.mousedown = false;
 	      	new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
 	      	if(!new_target) new_target = _this.ends[R]; 
 	      	mousemoveup(e, 'mouseUp');
 	        // delete the mouse handlers now that we're not dragging anymore
 	        _this.jQ.unbind('mousemove', mousemove);
-	        $(e.target.ownerDocument).unbind('mousemove', docmousemove).unbind('mouseup', mouseup);
+	        $(e.target.ownerDocument).off('mousemove', docmousemove).off('mouseup dragend', mouseup);
 	      }
-	      e.preventDefault(); 
+		    target.mouseDown(e);
+	      if(!(target instanceof text)) {
+	      	// text elements handle their own mouse events, so we allow bubbling for them, and dont throw mouse events
+		      _this.focus();
+		      target.focus();
+		      e.preventDefault(); 
+		    }
 	      _this.jQ.mousemove(mousemove);
-	      $(e.target.ownerDocument).mousemove(docmousemove).mouseup(mouseup);
+	      $(e.target.ownerDocument).on('mousemove', docmousemove).on('mouseup dragend', mouseup);
 	      // listen on document not just body to not only hear about mousemove and
 	      // mouseup on page outside field, but even outside page, except iframes
 	    }

@@ -1,6 +1,7 @@
 
 	SwiftCalcs.Workspace = Workspace;
 	var elements = SwiftCalcs.elements = {
-		math: math
+		math: math,
+		text: text
 	}
 }());

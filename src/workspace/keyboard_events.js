@@ -38,21 +38,21 @@ Workspace.open(function(_) {
     // Insert into the DOM, attach cut/copy listeners (paste is in saneKeyboardEvents)
     var _this = this;
     this.insertJQ.prepend(textareaSpan)
-    .on('cut', function() { _this.cut(); })
-    .on('copy', function() { _this.copy(); });
+    .on('cut', function(e) { _this.cut(e.originalEvent); })
+    .on('copy', function(e) { _this.copy(e.originalEvent); });
     
     var blurTimeout;
     var _this = this;
     textarea.focus(function() {
       _this.blurred = false;
-      if(_this.activeElement) _this.activeElement.focus();
+      if(_this.activeElement && !(_this.activeElement instanceof text)) _this.activeElement.focus();
       _this.insertJQ.find('.' + css_prefix + 'blur').removeClass(css_prefix + 'blur');
       clearTimeout(blurTimeout);
     }).blur(function() {
       _this.blurred = true;
       blurTimeout = setTimeout(function() { // wait for blur on window.  If its not, then run this function (in-window blur)
-        if(_this.activeElement) _this.activeElement.blur();
-        if(!_this.dragging) _this.clearSelection();
+        if(_this.activeElement && !(_this.activeElement instanceof text)) _this.activeElement.blur();
+        if(!_this.dragging && !_this.mousedown) _this.clearSelection();
         blur();
       });
       $(window).on('blur', windowBlur);
@@ -177,29 +177,57 @@ Workspace.open(function(_) {
     else 
       this.replaceSelection(math(text), true);
   }
+  var toClipboard = function(to_store, e) {
+    console.log(to_store);
+    if (window.clipboardData) 
+      window.clipboardData.setData('Text', to_store);    
+    else 
+      e.clipboardData.setData('text/plain', to_store);
+  }
   _.cut = function(e) {
-    if(this.selection.length == 0)
-      this.activeElement.cut(e);
-    else
+    var skip_copy = false;
+    if(this.selection.length == 0) {
+      skip_copy = this.activeElement.cut(e);
+      if(skip_copy) {
+        toClipboard(this.clipboard, e);
+        e.preventDefault();
+      }
+    } else {
+      toClipboard('SWIFTCALCS:'+this.clipboard, e);
+      e.preventDefault();
       this.deleteSelection(true, R);
+    }
   }
   _.copy = function(e) {
-    if(this.selection.length == 0) this.activeElement.copy(e);
-  }
-  _.paste = function(text) {
-    if(!this.activeElement) return;
+    var skip_copy = false;
     if(this.selection.length == 0) {
+      skip_copy = this.activeElement.copy(e);
+      if(skip_copy) {
+        toClipboard(this.clipboard, e);
+        e.preventDefault();
+      }
+    } else {
+      toClipboard('SWIFTCALCS:'+this.clipboard, e);
+      e.preventDefault();
+    }
+  }
+  _.clipboard = "";
+  _.paste = function(to_paste) { // BRENTAN: Rich/HTML text pasting is a problem...
+    if(this.selection.length == 0) {
+      if(!this.activeElement) return;
       // Nothing selected or selection is within the active element.  
-      if(elementType(this.activeElement) === 'text') 
-        this.activeElement.split(); // If pasting into text, we 'split' this element at the current cursor position first (and remove any selecton), then insert between the 2 text blocks that we created.  BRENTAN- WRITE SPLIT
-      if(text.slice(0,6) === 'latex{' && text.slice(-1) === '}') {
+      if(to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') {
         // This was a cut/copy -> paste from within a mathquill block.  We should insert it into the current block, if possible, or insert it afterwards
         if(elementType(this.activeElement) === 'math')
-          return this.activeElement.write(text);
+          return this.activeElement.write(to_paste);
         else
           return math().insertAfter(this.activeElement).show(0).focus(R);
+      } else if(to_paste.slice(0,11) === 'SWIFTCALCS:') 
+        var blocks = parse(to_paste.slice(11));
+      else {
+        console.log('COPIED PLAIN/HTML: ' + to_paste);
+        var blocks = [text(to_paste)];
       }
-      var blocks = parse(text);
       var after = this.activeElement;
       for(var i = 0; i < blocks.length; i++) {
         blocks[i].insertAfter(after).show(0);
@@ -208,14 +236,16 @@ Workspace.open(function(_) {
       if((this.activeElement instanceof math) && (this.activeElement.mathField.text() == '')) this.activeElement.remove(0);
       if(i > 0)
         blocks[i-1].moveInFrom(R);
-      // BRENTAN: Paste will be a bit weird...if we start/end with a textblock, and we are pasting next to textblocks, we will
-      // need to merge them together at the end of the paste, which is sorta crazy
     } else {
       // Something was selected at paste at the element level or above...so we have to overwrite it
-      if(text.slice(0,6) === 'latex{' && text.slice(-1) === '}') // This was a cut/copy -> paste from within a mathquill block.  We need to convert to a mathblock
-        var blocks = [math(text)];
-      else
-        var blocks = parse(text);
+      if(to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') // This was a cut/copy -> paste from within a mathquill block.  We need to convert to a mathblock
+        var blocks = [math(to_paste)];
+      else if(to_paste.slice(0,11) === 'SWIFTCALCS:')
+        var blocks = parse(to_paste.slice(11));
+      else {
+        console.log('COPIED PLAIN/HTML: ' + to_paste);
+        var blocks = [text(to_paste)];
+      }
       if(blocks.length == 0) //Nothing to paste somehow...so just remove the highlighting and refocus
         this.deleteSelection(true, R);
       else {

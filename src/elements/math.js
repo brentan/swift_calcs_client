@@ -26,6 +26,21 @@ var math = P(EditableBlock, function(_, super_) {
 			math().insertAfter(_this).show().focus();
 		};
 	}
+	_.changeToText = function(to_text) {
+		if(this[L] instanceof text) {
+			var left = cleanHtml(this[L].toString());
+			var line_break = '<br>';
+			if((to_text == '') && (left.slice(-4).toLowerCase() != '<br>'))
+				line_break = '<br><br>';
+			if((to_text != '') && (left.slice(-4).toLowerCase() == '<br>'))
+				line_break = '';
+			var el = this[L].append(line_break + to_text).focus(R);
+		} else 
+			var el = text(to_text).insertAfter(this).show().focus(R);
+		if ((to_text.length > 0) && !el.textField.magicCommands()) 
+			el.append('&nbsp;').focus(R);
+		this.remove(0);
+	}
 	_.submissionHandler = function(_this) {
 		//BRENTAN- Evaluation must be handled!
 		//console.log(mathField.text());
@@ -34,11 +49,15 @@ var math = P(EditableBlock, function(_, super_) {
 		};
 	}
 	_.PrependBlankItem = function() {
-		//add a blank math block just before this one
-		math().insertBefore(this).show();
+		//add a blank block just before this one
+		if(this[L] instanceof text) 
+			math().insertBefore(this).show().changeToText('');
+		else
+			math().insertBefore(this).show();
+		this.focus(L);
 	}
 	_.mouseClick = function(e) {
-		super_.mouseClick.call(this);
+		super_.mouseClick.call(this,e);
 		this.focus(R);
 		return false;
 	}
