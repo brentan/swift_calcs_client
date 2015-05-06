@@ -23,6 +23,7 @@ var text = P(EditableBlock, function(_, super_) {
     } 
     super_.focus.call(this);
     this.textField.focus(dir || 0);
+    this.workspace.attachToolbar(this, this.workspace.textToolbar());
     return this;
   }
   _.append = function(html) {
@@ -32,6 +33,86 @@ var text = P(EditableBlock, function(_, super_) {
   _.prepend = function(html) {
     this.textField.html(html + this.textField.html());
     return this;
+  }
+  _.command = function(command, option) {
+    var param = null;
+    switch(command) {
+      case 'normalFormat':
+        var container = $(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).commonAncestorContainer);
+        while(container.closest('.' + css_prefix + 'wysiwyg').length) {
+          container = container.closest('h1,h2,h3,h4,h5,h6,blockquote');
+          container.contents().unwrap();
+        }
+        this.textField.syncCode();
+        return;
+      case 'mathMode':
+        rangy.getSelection(this.textField.$editor[0]).deleteFromDocument();
+        if((cleanHtml(this.textField.html()) === '') || (cleanHtml(this.textField.html()) === '<br>')) {
+          math().insertAfter(this).show(0).focus();
+          this.remove();
+        } else if(this.textField.endPosition()) {
+          math().insertAfter(this).show(0).focus();
+        } else if(this.textField.startPosition()) {
+          math().insertBefore(this).show(0).focus();
+        } else {
+          this.textField.split();
+          math().insertAfter(this).show(0).focus();
+        }
+        this.textField.syncCode();
+        return;
+      case 'fontSize':
+      case 'fontName':
+      case 'foreColor':
+      case 'backColor':
+        param = option;
+        break;
+      case 'H1':
+      case 'H2':
+      case 'H3':
+      case 'BLOCKQUOTE':
+        if((navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') > 0))
+          param = '<' + command + '>';
+        else
+          param = command;
+        command = 'formatBlock';
+        break;
+    }
+    window.document.execCommand(command, false, param);
+    var font_tag = this.textField.$editor.find('font').first();
+    if(font_tag.length > 0) {
+      var new_tag = $('<span/>');
+      var font_sizes = [0, 8, 10, 12, 16, 20, 36, 48];
+      if(font_tag.attr('size')*1 > 0)
+        new_tag.css('font-size', font_sizes[font_tag.attr('size')*1] + 'px');
+      if(font_tag.attr('face'))
+        new_tag.css('font-family', font_tag.attr('face'));
+      if(font_tag.attr('color'))
+        new_tag.css('color', font_tag.attr('color'));
+      new_tag.html(font_tag.html());
+      font_tag.replaceWith(new_tag);
+      var range = rangy.createRange();
+      range.selectNodeContents(new_tag[0]);
+      range.select();
+    }
+    this.textField.syncCode();
+  }
+  _.merge = function() {
+    // This assumes that the element to the left is a textelement, and will merge this element into that one, then place the cursor
+    var left = cleanHtml(this[L].toString());
+    var line_break = '<br>';
+    var to_text = this.textField.html();
+    if((to_text == '') && (left.slice(-4).toLowerCase() != '<br>'))
+      to_text = '<br>';
+    if((to_text != '') && (left.slice(-4).toLowerCase() == '<br>')) 
+      line_break = '';
+    var el = this[L].append(line_break + '<span id="place_caret"></span>' + to_text).focus();
+    var $span = this[L].jQ.find('#place_caret');
+    range = rangy.createRange();
+    range.setStartBefore($span[0]);
+    range.setEndBefore($span[0]);
+    range.select();
+    $span.remove();
+    this.remove(0);
   }
   _.toString = function() {
     return this.textField.html();
@@ -61,6 +142,7 @@ var text = P(EditableBlock, function(_, super_) {
       this.focus(); 
       return false;
     } else { //We clicked in one area and dragged to another, just select the whole element
+      this.workspace.blurToolbar();
       return true;
     }
   }
@@ -83,11 +165,13 @@ var text = P(EditableBlock, function(_, super_) {
       return this.mouseClick(e); //We aren't really doing anything...
     else if(this.start_target == new_target) {
       // Pass control to the textField, since we are click/dragging within it
+      this.workspace.unblurToolbar();
       return false;
     } else  //We clicked in one area and dragged to another, just select the whole element
       return true;
   }
   _.mouseOut = function(e) {
+    this.workspace.blurToolbar();
   }
   _.mouseClick = function(e) {
     super_.mouseClick.call(this,e);
@@ -167,7 +251,11 @@ var WYSIWYG = P(function(_) {
     t.$editor 
     .on('keypress', function(e) {
       var ch = String.fromCharCode(e.which);
-      if(t.el.workspace.selection.length > 0) return;
+      if(t.el.workspace.selection.length > 0) {
+        e.preventDefault();
+        t.el.workspace.replaceSelection(math(ch), true);
+        return;
+      }
       if((ch == '.') || (ch == ':') || (ch == '-')) t.checkOnSpace = true;
     })
     .on('keydown', function(e){
@@ -242,7 +330,7 @@ var WYSIWYG = P(function(_) {
           if(key == 'Spacebar') break;
           // This is now tab behavior
           // If there is nothing to the right, I need to add a <br> character at the end, but position cursor before it
-          t.write('&#09;<span id="move_caret"></span>' + (t.endPosition(true) ? '<br>' : ''));
+          t.write('<span style="margin-right:40px;"></span>&nbsp;<span id="move_caret"></span>' + (t.endPosition(true) ? '<br>' : ''));
           var $span = t.$editor.find('#move_caret');
           range = rangy.createRange();
           range.setStartBefore($span[0]);
@@ -302,6 +390,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Backspace':
         case 'Shift-Backspace':
         case 'Backspace':
+          if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) return;
           // Check if we are in first spot.  If so, delete backwards OR highlight block
           if(t.startPosition()) {
             if((cleanHtml(t.html()) === '') || (cleanHtml(t.html()) === '<br>')) {
@@ -325,6 +414,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Del':
         case 'Shift-Del':
         case 'Del':
+          if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) return;
           // Same as above, but at the end position
           if(t.endPosition()) {
             if((cleanHtml(t.html()) === '') || (cleanHtml(t.html()) === '<br>')) {
@@ -394,16 +484,9 @@ var WYSIWYG = P(function(_) {
       t.syncCode();
     })
     .on('paste', function(e) {
-      function pastedText() {
-        var text = t.el.workspace.textarea.val();
-        t.el.workspace.textarea.val('');
-        if (text) 
-          t.el.workspace.paste(text);
-      }
       if(t.el.workspace.selection.length > 0) {
         // If something is highlighted in the workspace, just pass control up to the workspace paste handler
-        t.el.workspace.textarea.focus();
-        window.setTimeout(pastedText);
+        t.el.workspace.pasteHandler(e);
       } else {
         if(window.clipboardData)
           var to_paste = window.clipboardData.getData('Text');
@@ -419,12 +502,12 @@ var WYSIWYG = P(function(_) {
             t.el.workspace.selection = [temp_el];
           }
           // Redirect the paste event to the workspace textarea, which will then handle it
-          t.el.workspace.textarea.focus();
-          window.setTimeout(pastedText);
+          t.el.workspace.pasteHandler(e);
         } else {
           // SyncCode after paste
           function syncAfterPaste() {
             t.syncCode();
+            t.sanitize();
           }
           window.setTimeout(syncAfterPaste);
         }
@@ -434,17 +517,23 @@ var WYSIWYG = P(function(_) {
   };
   _.focus = function(dir, dir2) {
     if(this.el.blurred) return this.el.focus(dir);
+    this.el.workspace.unblurToolbar();
     if(this.blurred) {
       this.blurred = false;
+      var start_scroll = this.el.workspace.jQ.scrollTop();
       this.$creator.focus(); 
+      this.el.workspace.jQ.scrollTop(start_scroll);
     }
     try {
-      if(dir === L)
+      if(dir === L) {
         this.select(0);
-      else if(dir === R)
+        this.el.scrollToMe(L);
+      } else if(dir === R) {
         this.select(R);
-      else if(dir > 1) {
+        this.el.scrollToMe(R);
+      } else if(dir > 1) {
         this.setCaretFromXdir(dir, dir2);
+        this.el.scrollToMe(dir2);
       }
     } catch(e) {
     }
@@ -580,7 +669,17 @@ var WYSIWYG = P(function(_) {
     } else
       return t.$e.val();
   };
-
+  _.sanitize = function() {
+    var blocks = sanitize(this.html());
+    console.log(blocks[0].html);
+    if((blocks.length == 1) && (blocks[0] instanceof text))
+      this.html(blocks[0].html);
+    else {
+      for(var i = 0; i < blocks.length; i++)
+        blocks[i].insertBefore(this.el);
+      this.el.remove();
+    }
+  }
   _.syncCode = function(force){
     var t = this;
     if(!force && t.$editor.is(':visible'))
@@ -685,7 +784,6 @@ var WYSIWYG = P(function(_) {
   }
   // Browser's havent gotten their act together yet about placing the caret based on x,y position.  So we have to do some hacky stuff to make this work
   // We do this for when we move the caret into the text area from an element above or below, which passes us the x position relative to the document
-  // BRENTAN: the 'in bracket' thing doesnt seem to be working!
   _.setCaretFromXdir = function(x,dir) {
     var html = this.html();
     if(html.length === 0) return;

@@ -94,3 +94,18 @@ var SwiftCalcs = {};
 		mathField.setElement(_this);
 		return mathField;
   }
+// BRENTAN Examing HTML And pull images etc into their own blocks etc
+  // Take in HTML, clean it, and then return an array of elements to insert based on the HTML
+  var sanitize = function(html) {
+    var output = DOMPurify.sanitize(html, {
+      ALLOW_DATA_ATTR: false,
+      SAFE_FOR_JQUERY: true,
+      ALLOWED_TAGS: ['a','b','br','center','em',
+        'h1','h2','h3','h4','h5','h6','hr','i',
+        'img','li','ol','p','strike','span','div',
+        'strong','sub','sup','table','tbody','td','th','tr','u','ul',],
+      ALLOWED_ATTR: [
+        'alt','bgcolor','border','color','cols','colspan','rows','rowspan','style','src','valign']
+      });
+    return [text(output)];
+  }

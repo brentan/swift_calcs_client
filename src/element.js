@@ -284,6 +284,10 @@ var Element = P(function(_) {
 			} else 
 				this.jQ.slideUp({duration: duration, always: function() { $(this).remove(); }});
 		}
+		if((this[L] instanceof text) && (this[R] instanceof text) && !this[L].mark_for_deletion && !this[R].mark_for_deletion) {
+			// If we delete something between text nodes, we should merge those nodes
+			this[R].merge();
+		}
 		this.detach();
 		return this;
 	}
@@ -414,6 +418,7 @@ var Element = P(function(_) {
     	return false;
     } else { //We clicked in one area and dragged to another, just select the whole element
 			if(this.focusedItem) this.focusedItem.mouseOut(e);
+      this.workspace.blurToolbar();
     	return true;
     }
 	}
@@ -437,6 +442,7 @@ var Element = P(function(_) {
     else if(this.start_target == new_target) {
     	this.start_target.mouseUp(e);
     	this.start_target.focus();
+      this.workspace.unblurToolbar();
     	// Pass control to the mathField, since we are click/dragging within it
     	return false;
     } else  //We clicked in one area and dragged to another, just select the whole element
@@ -495,7 +501,7 @@ var Element = P(function(_) {
 	_.moveInFrom = function(dir, x_location) {
 		if(this.focusableItems.length == 0) //nothing to focus on, jump past me
 			return this.moveOut(undefined, -dir);
-		this.focus();
+		this.focus(dir);
 		if(this.focusableItems[dir == R ? (this.focusableItems.length-1) : 0] === -1) {
 			if(this.ends[dir] && this.ends[dir].moveInFrom(dir)) return true;
 			else if(this.ends[dir] === 0) {
@@ -514,13 +520,33 @@ var Element = P(function(_) {
 	 also accept a 'focus', 'blur', 'windowBlur', and 'inFocus' method call.
 	 */
 	_.focusedItem = 0; 
-	_.focus = function() {
+	_.focus = function(dir) {
 		if(!this.blurred) return this;
 		this.workspace.focus();
+		this.workspace.detachToolbar();
 		this.blurred = false;
 		if(this.workspace.activeElement)
 			this.workspace.activeElement.blur();
 		this.workspace.activeElement = this;
+		// Check if we are in view, and if not, scroll:
+		if(this instanceof text) 
+			return this;
+		else
+			return this.scrollToMe(dir);
+	}
+	_.scrollToMe = function(dir) {
+		var top = this.jQ.position().top;
+		var bottom = top + this.jQ.height();
+		var to_move_top = Math.min(0, top);
+		var to_move_bot = Math.max(0, bottom - this.workspace.jQ.height()+20);
+		if(dir === R)
+			this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_bot);
+		else if(dir === L)
+			this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top);
+		else if((to_move_bot > 0) && (to_move_top < 0)) 
+				this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top);
+		else
+			this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
 		return this;
 	}
 	_.blur = function() {

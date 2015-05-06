@@ -24,31 +24,37 @@
  *******************************************************/
 
 Workspace.open(function(_) {
+  _.pasting = false;
   _.bindKeyboard = function() {
     if(this.bound) return this;
     // First create a textarea which we focus, and to which we bind all events
-    var textareaSpan = this.textareaSpan = $('<span class="' + css_prefix + 'textareaDELETE"></span>');
+    var textareaSpan = this.textareaSpan = $('<span class="' + css_prefix + 'textarea"></span>');
     var textarea = $('<textarea>')[0];
     textarea = this.textarea = $(textarea).appendTo(textareaSpan);
+    var richarea = $('<div>')[0];
+    $(richarea).attr('contenteditable', 'true');
+    $(richarea).appendTo(textareaSpan);
 
     // Bind keyboard events to this textarea
-    var keyboardEventsShim = saneKeyboardEvents(textarea, this);
+    var keyboardEventsShim = saneKeyboardEvents(textarea, richarea, this);
     this.selectFn = function(text) { keyboardEventsShim.select(text); };
 
     // Insert into the DOM, attach cut/copy listeners (paste is in saneKeyboardEvents)
     var _this = this;
-    this.insertJQ.prepend(textareaSpan)
+    $('body').append(textareaSpan)
     .on('cut', function(e) { _this.cut(e.originalEvent); })
     .on('copy', function(e) { _this.copy(e.originalEvent); });
     
     var blurTimeout;
     var _this = this;
     textarea.focus(function() {
+      if(_this.pasting) return;
       _this.blurred = false;
       if(_this.activeElement && !(_this.activeElement instanceof text)) _this.activeElement.focus();
       _this.insertJQ.find('.' + css_prefix + 'blur').removeClass(css_prefix + 'blur');
       clearTimeout(blurTimeout);
     }).blur(function() {
+      if(_this.pasting) return;
       _this.blurred = true;
       blurTimeout = setTimeout(function() { // wait for blur on window.  If its not, then run this function (in-window blur)
         if(_this.activeElement && !(_this.activeElement instanceof text)) _this.activeElement.blur();
@@ -212,7 +218,7 @@ Workspace.open(function(_) {
     }
   }
   _.clipboard = "";
-  _.paste = function(to_paste) { // BRENTAN: Rich/HTML text pasting is a problem...
+  _.paste = function(to_paste, html) { 
     if(this.selection.length == 0) {
       if(!this.activeElement) return;
       // Nothing selected or selection is within the active element.  
@@ -225,8 +231,7 @@ Workspace.open(function(_) {
       } else if(to_paste.slice(0,11) === 'SWIFTCALCS:') 
         var blocks = parse(to_paste.slice(11));
       else {
-        console.log('COPIED PLAIN/HTML: ' + to_paste);
-        var blocks = [text(to_paste)];
+        var blocks = sanitize(html ? html : to_paste); 
       }
       var after = this.activeElement;
       for(var i = 0; i < blocks.length; i++) {
@@ -243,8 +248,8 @@ Workspace.open(function(_) {
       else if(to_paste.slice(0,11) === 'SWIFTCALCS:')
         var blocks = parse(to_paste.slice(11));
       else {
-        console.log('COPIED PLAIN/HTML: ' + to_paste);
-        var blocks = [text(to_paste)];
+        console.log(html);
+        var blocks = sanitize(html ? html : to_paste);
       }
       if(blocks.length == 0) //Nothing to paste somehow...so just remove the highlighting and refocus
         this.deleteSelection(true, R);

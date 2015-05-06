@@ -54,7 +54,9 @@ var parse = function(to_paste) {
   var splitIntoTextBlocks = function(text_block) {
     text_block = text_block.replace(/\n/g,'<BR>');
     if(text_block.slice(-4) == '<BR>') text_block = text_block.slice(0, -4);
-    result.push(text(text_block));
+    text_block = sanitize(text_block);
+    for(var i = 0; i < text_block.length; i++)
+      result.push(text_block[i]);
   }
   // First test for a valid string (equal number of start/stop curly braces).  If
   // the string isn't balanced, assume its all to_paste and throw it to the to_paste element

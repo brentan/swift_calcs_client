@@ -36,7 +36,6 @@ div.sc_element_container {
     .sc_wysiwyg, textarea {
       resize: none;
       outline: none;
-      white-space: pre-wrap;
     }
   }
 }
@@ -49,7 +48,9 @@ div.sc_element_container {
   user-select: @arguments;
 }
 .sc_textarea {
-  position: relative;
+  position: fixed;
+  top:0px;
+  left:0px;
   // TODO: why is this here?
   .user-select(text);
 }
@@ -60,4 +61,9 @@ div.sc_element_container {
   position: absolute;
   clip: rect(1em 1em 1em 1em);
   resize: none; // hotfix: https://code.google.com/p/chromium/issues/detail?id=355199#c1
+}
+.sc_textareaDebug {
+  position: fixed;
+  top: 50px;
+  left: 0px;
 }

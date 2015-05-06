@@ -27,6 +27,7 @@ Workspace.open(function(_) {
 			if((this.selection.length == 1) && (this.selection[0] === el) && (last_dir == dir)) {
 				// Scenario where we were de-selecting last time, and are again de-selecting, so we should re-enter the element
 				this.selection = [];
+				this.unblurToolbar();
 				el.focus();
 			} else if(this.selection[start_index] === start_el) {
 				// We are continuing to select more
@@ -109,12 +110,14 @@ Workspace.open(function(_) {
     }
     this.createSelection(to_highlight); 
     this.selectionChanged(true);
+		this.blurToolbar();
     return this;
   }
   _.replaceSelection = function(replacement, focus) {
   	if(this.selection.length == 0) throw("Nothing is selected to be replaced")
   	replacement.insertBefore(this.selection[0]).show();
   	if(focus) replacement.focus();
+  	jQuery.each(this.selection, function(i,v) { v.mark_for_deletion = true; });
   	jQuery.each(this.selection, function(i,v) { v.remove(0); });
   	this.clearSelection();
   	return this;
@@ -133,6 +136,7 @@ Workspace.open(function(_) {
 	  		else this.selection[0][L].focus(R);
 	  	}
   	}
+  	jQuery.each(this.selection, function(i,v) { v.mark_for_deletion = true; });
   	jQuery.each(this.selection, function(i,v) { v.remove(0); });
   	this.clearSelection();
   	return this;

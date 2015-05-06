@@ -89,14 +89,15 @@ var saneKeyboardEvents = (function() {
 
   // create a keyboard events shim that calls callbacks at useful times
   // and exports useful public methods
-  return function saneKeyboardEvents(el, handlers) {
+  return function saneKeyboardEvents(el, rich_el, handlers) {
     var keydown = null;
     var keypress = null;
 
     var textarea = jQuery(el);
+    var richarea = jQuery(rich_el);
     var target = jQuery(handlers.container || textarea);
 
-    // checkTextareaFor() is called after keypress or paste events to
+    // checkTextareaFor() is called after keypress to
     // say "Hey, I think something was just typed" or "pasted" (resp.),
     // so that at all subsequent opportune times (next event or timeout),
     // will check for expected typed or pasted text.
@@ -110,7 +111,7 @@ var saneKeyboardEvents = (function() {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(checker);
     }
-    target.bind('keydown keypress input keyup focusout paste', function() { checkTextarea(); });
+    target.bind('keydown keypress input focusout focusout keyup', function() { if(!handlers.pasting) checkTextarea(); });
 
 
     // -*- public methods -*- //
@@ -199,7 +200,8 @@ var saneKeyboardEvents = (function() {
 
     function onBlur() { keydown = keypress = null; }
 
-    function onPaste(e) {
+    function onPaste(ev) {
+      var e = ev.originalEvent;
       // browsers are dumb.
       //
       // In Linux, middle-click pasting causes onPaste to be called,
@@ -212,14 +214,35 @@ var saneKeyboardEvents = (function() {
       // on keydown too, FWIW).
       //
       // And by nifty, we mean dumb (but useful sometimes).
-      textarea.focus();
-      checkTextareaFor(pastedText);
+      
+      // Pasting can bring formatted content (HTML), so we use the contenteditable as the paste target, then move it to the textarea immediately after the paste.
+      handlers.pasting = true;
+      if(e.clipboardData && e.clipboardData.getData) {
+        var text = e.clipboardData.getData('text/plain');
+        textarea.val(text);
+        richarea.focus();
+        window.setTimeout(pastedText,100);
+      } else if(window.clipboardData) {
+        //IE
+        var text = window.clipboardData.getData('Text');
+        textarea.val(text);
+        richarea.focus();
+        window.setTimeout(pastedText);
+      } else {
+        textarea.focus(); // Ignore HTML in these cases
+        window.setTimeout(pastedText);
+      }
     }
     function pastedText() {
+      textarea.focus();
+      handlers.pasting = false;
+      var html = richarea.html();
       var text = textarea.val();
       textarea.val('');
-      if (text) handlers.paste(text);
+      richarea.html('');
+      if (text) handlers.paste(text, html);
     }
+    handlers.pasteHandler = onPaste;
 
     // -*- attach event handlers -*- //
     target.bind({
