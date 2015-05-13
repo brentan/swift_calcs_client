@@ -550,6 +550,7 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.blur = function() {
+    this.workspace.blurToolbar();
 		if(this.blurred) return this;
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.blur();

@@ -13,6 +13,16 @@ var text = P(EditableBlock, function(_, super_) {
     this.textField = new WYSIWYG(this.jQ.find('.' + css_prefix + 'wysiwyg')[0], this, {});
     this.focusableItems.push(this.textField);
     this.textField.html(this.html);
+    var _this = this;
+    this.textField.$editor.on('click', 'a', function(e) {
+      if(_this.shft) {
+        _this.shft = false;
+        var url = $(this).attr('href');
+        window.open(url, '_blank').focus();
+      } else 
+        showNotice('To open the link, hold "Shift" while clicking on the link');
+      return false;
+    });
     super_.postInsertHandler.call(this);
     return this;
   }
@@ -22,8 +32,9 @@ var text = P(EditableBlock, function(_, super_) {
       this.workspace.activeElement.blur();
     } 
     super_.focus.call(this);
-    this.textField.focus(dir || 0);
     this.workspace.attachToolbar(this, this.workspace.textToolbar());
+    this.textField.toolbar = $('#toolbar');
+    this.textField.focus(dir || 0);
     return this;
   }
   _.append = function(html) {
@@ -60,6 +71,9 @@ var text = P(EditableBlock, function(_, super_) {
         }
         this.textField.syncCode();
         return;
+      case 'createLink':
+        param = prompt('Enter URL:');
+        break;
       case 'fontSize':
       case 'fontName':
       case 'foreColor':
@@ -81,7 +95,7 @@ var text = P(EditableBlock, function(_, super_) {
     var font_tag = this.textField.$editor.find('font').first();
     if(font_tag.length > 0) {
       var new_tag = $('<span/>');
-      var font_sizes = [0, 8, 10, 12, 16, 20, 36, 48];
+      var font_sizes = [0, 10, 12, 16, 18, 24, 32, 48];
       if(font_tag.attr('size')*1 > 0)
         new_tag.css('font-size', font_sizes[font_tag.attr('size')*1] + 'px');
       if(font_tag.attr('face'))
@@ -165,7 +179,7 @@ var text = P(EditableBlock, function(_, super_) {
       return this.mouseClick(e); //We aren't really doing anything...
     else if(this.start_target == new_target) {
       // Pass control to the textField, since we are click/dragging within it
-      this.workspace.unblurToolbar();
+      this.focus()
       return false;
     } else  //We clicked in one area and dragged to another, just select the whole element
       return true;
@@ -262,6 +276,8 @@ var WYSIWYG = P(function(_) {
       var key = stringify(e);
       if(t.el.workspace.selection.length > 0)
         return t.el.workspace.keystroke(key, e);
+      if(key.match(/Shift-.*/))
+        t.el.shft = true;
       switch (key) {
         case 'Shift-Tab':
           var li_parent = t.isSelectionInsideElement('li');
@@ -482,6 +498,7 @@ var WYSIWYG = P(function(_) {
     })
     .on('keyup', function() {
       t.syncCode();
+      t.el.shft = false;
     })
     .on('paste', function(e) {
       if(t.el.workspace.selection.length > 0) {
@@ -537,6 +554,7 @@ var WYSIWYG = P(function(_) {
       }
     } catch(e) {
     }
+    this.updateToolbar();
   }
   _.magicCommands = function() {
     // Magic Commands checks if the line conforms to one of the magic commands and if so, will
@@ -686,7 +704,34 @@ var WYSIWYG = P(function(_) {
       t.$e.val(t.$editor.html());
     else
       t.$editor.html(t.$e.val());
+    t.updateToolbar();
   };
+  _.updateToolbar = function() {
+    if(this.blurred) return;
+    if(!this.toolbar) return;
+    this.toolbar.find('.highlight').removeClass('highlight');
+    if(document.queryCommandState('bold'))
+      this.toolbar.find('.bold').addClass('highlight');
+    if(document.queryCommandState('italic'))
+      this.toolbar.find('.italic').addClass('highlight');
+    if(document.queryCommandState('underline'))
+      this.toolbar.find('.underline').addClass('highlight');
+    if(document.queryCommandState('strikeThrough'))
+      this.toolbar.find('.strikethrough').addClass('highlight');
+    if(document.queryCommandState('justifyCenter'))
+      this.toolbar.find('.justifyCenter').addClass('highlight');
+    if(document.queryCommandState('justifyRight'))
+      this.toolbar.find('.justifyRight').addClass('highlight');
+    if(document.queryCommandState('justifyFull'))
+      this.toolbar.find('.justifyFull').addClass('highlight');
+    if(document.queryCommandState('justifyLeft'))
+      this.toolbar.find('.justifyLeft').addClass('highlight');
+    this.toolbar.find('.foreColor').css('border-bottom-color',document.queryCommandValue('foreColor'));
+    this.toolbar.find('.backColor').css('border-bottom-color',document.queryCommandValue('backColor'));
+    try { this.toolbar.find('.fontName').html(document.queryCommandValue('fontName').split(',')[0].replace(/'/g,"")); } catch(e) {}
+    this.toolbar.find('.fontSize').html(document.queryCommandValue('fontSize'));
+
+  }
   /*
    * Caret/Selection positioning functions.  These rely on the rangy.js library from Tim Down,
    * That library provides cross-browser support, but is a bit large, so I include notes on how.  

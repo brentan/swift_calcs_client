@@ -1,17 +1,65 @@
-.base_layout .toolbar ul.base ul.color-picker { 
-	list-style: none; 
-	padding: 0px; 
-	margin: 0px; 
-	width: 128px;
-	li {
-		position: static;
-		display: block;
-		width: 15px;
-		height: 15px;
-		border-right: 1px solid black;
-		border-bottom: 1px solid black;
-		margin: 0px;
-		float: left;
-		cursor: pointer;
+.base_layout .toolbar ul.base {
+	ul.color-picker { 
+		list-style: none; 
+		padding: 0px; 
+		margin: 0px; 
+		width: 128px;
+		li {
+			position: static;
+			display: block;
+			width: 15px;
+			height: 15px;
+			border-right: 1px solid black;
+			border-bottom: 1px solid black;
+			margin: 0px;
+			float: left;
+			cursor: pointer;
+			&:hover {
+
+			}
+		}
+	}
+	ul.symbol-picker { 
+		list-style: none; 
+		padding: 0px; 
+		margin: 0px; 
+		width: 120px;
+		li {
+			position: static;
+			display: block;
+			width: 18px;
+			margin: 1px;
+			float: left;
+		}
+	}
+	span.dots {
+		border: 1px dotted #666666;
+	}
+	span.fontSize {
+		padding: 0px 5px;
+		width: 10px;
+		display: inline-block;
+		vertical-align: middle;
+		text-align: left;
+		color: #666;
+		overflow: hidden;
+		font-size: 12px;
+	}
+	span.fontName {
+		padding: 0px 5px;
+		color: #666;
+		text-align: left;
+		font-size: 12px;
+		vertical-align: middle;
+		display: inline-block;
+		width: 60px;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+	div.item.highlight {
+		background-color: #ccc;
+		&:hover {
+			background-color: #d7e0e2;
+		}
 	}
 }

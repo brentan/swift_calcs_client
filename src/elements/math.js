@@ -43,9 +43,8 @@ var math = P(EditableBlock, function(_, super_) {
 	}
 	_.submissionHandler = function(_this) {
 		//BRENTAN- Evaluation must be handled!
-		//console.log(mathField.text());
 		return function(mathField) {
-
+			//console.log(mathField.text());
 		};
 	}
 	_.PrependBlankItem = function() {
