@@ -56,6 +56,7 @@ Workspace.open(function(_) {
     }).blur(function() {
       if(_this.pasting) return;
       _this.blurred = true;
+      _this.lastActive = _this.activeElement;
       blurTimeout = setTimeout(function() { // wait for blur on window.  If its not, then run this function (in-window blur)
         if(_this.activeElement && !(_this.activeElement instanceof text)) _this.activeElement.blur();
         if(!_this.dragging && !_this.mousedown) _this.clearSelection();

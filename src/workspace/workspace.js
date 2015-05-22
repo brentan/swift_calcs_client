@@ -17,6 +17,7 @@ var Workspace = P(function(_) {
 	_.bound = false;
 	_.blurred = true;
 	_.activeElement = 0;
+	_.lastActive = 0;
 	_.dragging = false;
 	_.mousedown = false;
 
@@ -69,7 +70,7 @@ var Workspace = P(function(_) {
 	// List children
 	_.children = function() {
 		var out = [];
-		for(var ac = this.ends[dir.L]; ac !== 0; ac = ac[dir.R])
+		for(var ac = this.ends[L]; ac !== 0; ac = ac[R])
 			out.push(ac);
 		return out;
 	}
@@ -77,6 +78,31 @@ var Workspace = P(function(_) {
 	_.getWorkspace = function() {
 		return this;
 	}
+	// Renumber all the lines in the workspace
+	_.renumber = function() {
+		var start = 1;
+		jQuery.each(this.children(), function(i, child) {
+			start = child.numberBlock(start);
+		});
+	}
+	// Check for all hashtags and update the hashtag list
+  _.updateHashtags = function() {
+    var hashtags = this.insertJQ.find('span.' + css_prefix + 'hashtag');
+    var $hashtag = $('#hashtags');
+    $hashtag.html('');
+    var _this = this;
+    hashtags.each(function(i, hash) {
+    	hash = $(hash);
+    	var link = $('<a href="#">#' + hash.text() + '</a>');
+    	$('<li/>').append(link).appendTo($hashtag);
+    	link.on('click', function(e) {
+    		var offset = hash.position().top + _this.jQ.scrollTop();
+    		_this.jQ.scrollTop(offset);
+    		hash.stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, 600);
+    		return false;
+    	});
+    });
+  }
 	// Debug.  Print entire workspace tree
 	_.printTree = function() {
 		var out = '';

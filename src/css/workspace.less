@@ -1,22 +1,71 @@
 div.sc_element_container {
   .sc_element {
-    border-top: 2px solid white;
-    border-bottom: 2px solid white;
+    border-width:0px;
+    table.sc_element_table {
+      border: 0px;
+      margin: 0px;
+      padding: 0px;
+      td.sc_element_td, td.sc_element_insert_td {
+        border: 0px;
+        margin: 0px;
+        padding: 1px 0px;
+        padding-left: 4px;
+        vertical-align: top;
+      }
+      td.sc_element_td {
+        text-align: right;
+        color: #999999;
+        padding-right: 2px;
+        padding-left: 0px;
+        border-right: 1px solid #e0e0e0;
+        min-width: 27px;
+        font-size: 11px;
+        padding-top: 4px;
+        &.sc_focused {
+          background-color: #f2f2f2;
+        }
+      }
+    }
+  }
+  & > .sc_element {
+    padding-right: 30px;
   }
   .sc_math {
     cursor: text;
+    &.mq-math-mode.mq-editable-field {
+      border-width: 0px;
+    }
   }
   .sc_text {
     font-family: Arial, sans-serif;
+    .sc_hashtag {
+      font-family: monospace;
+      color: #55bb55;
+      background-color: white;
+      &::before {
+        content: '#'
+      }
+    }
   }
 	.sc_selected {
 		background-color: #B4D5FE;
-    .sc_element {
-      border-top: 2px solid #B4D5FE;
-      border-bottom: 2px solid #B4D5FE;
+    border-color: #B4D5FE;
+    .sc_math.mq-math-mode.mq-editable-field, .mq-math-mode.mq-editable-field {
+      border-color: #B4D5FE;
+      &.mq-focused {
+        border-color: #B4D5FE;
+      }
+    }
+    &.sc_text .sc_hashtag {
+      background-color: #B4D5FE;
+    }
+    &.sc_element {
+      table.sc_element_table td.sc_element_td.sc_focused {
+        background-color: #B4D5FE;
+      }
     }
 		cursor: default;
-    .sc_math, .sc_wysiwyg_holder {
+    &.sc_math, .sc_wysiwyg_holder {
       cursor: default;
     }
 	}
@@ -33,7 +82,6 @@ div.sc_element_container {
     border-bottom: 2px solid black;
   }
   .sc_wysiwyg_holder {
-    border: 1px solid #777777; //BRENTAN: Remove this, its just helping us right now
     padding: 6px 3px;
     cursor: text;
     .sc_wysiwyg, textarea {

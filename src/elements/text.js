@@ -37,6 +37,10 @@ var text = P(EditableBlock, function(_, super_) {
     this.textField.focus(dir || 0);
     return this;
   }
+  _.blur = function() {
+    this.updateHashtags();
+    return super_.blur.call(this);
+  }
   _.append = function(html) {
     this.textField.html(this.textField.html() + html);
     return this;
@@ -75,9 +79,15 @@ var text = P(EditableBlock, function(_, super_) {
         param = prompt('Enter URL:');
         break;
       case 'fontSize':
-      case 'fontName':
-      case 'foreColor':
+        param = option;
+        break;
       case 'backColor':
+      case 'foreColor':
+      case 'fontName':
+        if($(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) {
+          $(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).startContainer.parentNode).stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, 400);
+          return; 
+        }
         param = option;
         break;
       case 'H1':
@@ -179,6 +189,7 @@ var text = P(EditableBlock, function(_, super_) {
       return this.mouseClick(e); //We aren't really doing anything...
     else if(this.start_target == new_target) {
       // Pass control to the textField, since we are click/dragging within it
+      this.updateHashtags();
       this.focus()
       return false;
     } else  //We clicked in one area and dragged to another, just select the whole element
@@ -199,6 +210,10 @@ var text = P(EditableBlock, function(_, super_) {
   _.copy = function(e) { 
     super_.copy.call(this,e);
     return false;
+  }
+  _.updateHashtags = function() {
+    var _this = this;
+    window.setTimeout(function() { _this.workspace.updateHashtags(); }, 250);
   }
 });
 
@@ -271,6 +286,37 @@ var WYSIWYG = P(function(_) {
         return;
       }
       if((ch == '.') || (ch == ':') || (ch == '-')) t.checkOnSpace = true;
+      if(!ch.match(/[a-z0-9]/i) && $(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) {
+        rangy.getSelection(t.$editor[0]).deleteFromDocument();
+        var hashtag = rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode;
+        var $span = $('<span>&#8203;</span>');
+        $span.insertAfter($(hashtag));
+        range = rangy.createRange();
+        range.selectNode($span[0]);
+        range.select();
+        t.write((ch == ' ' ? '&nbsp;' : ch) + "<span id='move_caret'></span>");
+        $span.remove();
+        $span = t.$editor.find('#move_caret');
+        range = rangy.createRange();
+        range.setStartBefore($span[0]);
+        range.setEndBefore($span[0]);
+        range.select();
+        $span.remove();
+        e.preventDefault();
+        t.el.updateHashtags();
+      }
+      if(ch == '#') {
+        // We are adding in a hashtag
+        e.preventDefault();
+        rangy.getSelection(t.$editor[0]).deleteFromDocument();
+        t.write('<span class="' + css_prefix + 'hashtag">&#8203;<span id="move_caret"></span></span>');
+        var $span = t.$editor.find('#move_caret');
+        var hashtag = $span.parent()[0];
+        $span.remove();
+        var range = rangy.createRange();
+        range.selectNodeContents(hashtag);
+        range.select();
+      }
     })
     .on('keydown', function(e){
       var key = stringify(e);
@@ -278,6 +324,8 @@ var WYSIWYG = P(function(_) {
         return t.el.workspace.keystroke(key, e);
       if(key.match(/Shift-.*/))
         t.el.shft = true;
+      if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) 
+        window.setTimeout(function() { t.el.updateHashtags(); }, 50);
       switch (key) {
         case 'Shift-Tab':
           var li_parent = t.isSelectionInsideElement('li');
@@ -371,6 +419,15 @@ var WYSIWYG = P(function(_) {
             // End of text box.  Insert a math box after this, and move focus
             math().insertAfter(t.el).show().focus();
           } else {
+            if($(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) {
+              var hashtag = rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode;
+              var $span = $('<span>&#8203;</span>');
+              $span.insertAfter($(hashtag));
+              range = rangy.createRange();
+              range.selectNode($span[0]);
+              range.select();
+              t.el.updateHashtags();
+            }
             var range = rangy.getSelection(t.$editor[0]).getRangeAt(0).cloneRange();
             var $span = $('<span/>');
             $span.appendTo(t.$editor);
@@ -425,6 +482,7 @@ var WYSIWYG = P(function(_) {
             }
             e.preventDefault();
           }
+          window.setTimeout(function() { t.el.updateHashtags(); }, 50);
           break;
         case 'Ctrl-Shift-Del':
         case 'Ctrl-Del':
@@ -443,6 +501,7 @@ var WYSIWYG = P(function(_) {
             }
             e.preventDefault();
           }
+          window.setTimeout(function() { t.el.updateHashtags(); }, 50);
           break;
         case 'Left':
           // If already at start, move into previous element
@@ -521,10 +580,14 @@ var WYSIWYG = P(function(_) {
           // Redirect the paste event to the workspace textarea, which will then handle it
           t.el.workspace.pasteHandler(e);
         } else {
+          //If we are pasting into a hashtag, remove the hashtag
+          if($(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) 
+            $(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).removeClass(css_prefix + 'hashtag')
           // SyncCode after paste
           function syncAfterPaste() {
             t.syncCode();
             t.sanitize();
+            t.el.updateHashtags();
           }
           window.setTimeout(syncAfterPaste);
         }
@@ -565,12 +628,26 @@ var WYSIWYG = P(function(_) {
     $span.prependTo(this.$editor);
     range.setStartAfter($span[0]);
     var html = cleanHtml(range.toHtml()).slice(-20);
+    var front = '';
     $span.remove();
     if(html.match(/<br>[ \t]*[0-9]+[.\-:]$/) || html.match(/^[ \t]*[0-9]+[.\-:]$/)) {
-      this.replaceToBeginningOfLine("<ol><li><span id='caret_position'>OK</span></li></ol>");
+      if(html.match(/^[ \t]*[0-9]+[.\-:]$/)) front = '&#8203;';
+      this.replaceToBeginningOfLine(front + "<ol><li><span id='caret_position'>OK</span></li></ol>");
       return true;
     } else if(html.match(/<br>[ \t]*-?[.\-:]$/) || html.match(/^[ \t]*-?[.\-:]$/)) {
-      this.replaceToBeginningOfLine("<ul><li><span id='caret_position'>OK</span></li></ul>");
+      if(html.match(/^[ \t]*-?[.\-:]$/)) front = '&#8203;';
+      this.replaceToBeginningOfLine(front + "<ul><li><span id='caret_position'>OK</span></li></ul>");
+      return true;
+    } else if(html.match(/<br>#$/) || html.match(/^#$/)) {
+      if(html.match(/^#$/)) front = '&#8203;';
+      this.replaceToBeginningOfLine(front + "<span id='caret_position'>OK</span>");
+      this.write('<span class="' + css_prefix + 'hashtag">&#8203;<span id="move_caret"></span></span>');
+      var $span = this.$editor.find('#move_caret');
+      var hashtag = $span.parent()[0];
+      $span.remove();
+      var range = rangy.createRange();
+      range.selectNodeContents(hashtag);
+      range.select();
       return true;
     }
     return false;
@@ -689,7 +766,6 @@ var WYSIWYG = P(function(_) {
   };
   _.sanitize = function() {
     var blocks = sanitize(this.html());
-    console.log(blocks[0].html);
     if((blocks.length == 1) && (blocks[0] instanceof text))
       this.html(blocks[0].html);
     else {
@@ -893,7 +969,7 @@ var WYSIWYG = P(function(_) {
 
 });
 
-var cleanHtml = function(html) {
+var cleanHtml = SwiftCalcs.cleanHtml = function(html) {
   // This function strips all html elements out, except <br> and <br/>
   html = html.replace(/<[bB]+[rR]+\/?>/g, "LEFT_br_RIGHT");
   html = html.replace(/<[^<>]*>/g,'');

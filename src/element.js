@@ -29,6 +29,7 @@ var Element = P(function(_) {
 	_.depth = 0;
 	_.blurred = true;
 	_.toParse = false;
+	_.lineNumber = false;
 	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
 
 	//Give each element a unique ID, this is just for tracking purposes
@@ -69,9 +70,11 @@ var Element = P(function(_) {
 	_.regenerateHtml = function() {
 		this.jQ = $('<div style="display:none;" ' + css_prefix + 'element_id=' + this.id + ' class="' + css_prefix + 'element '
 			+ jQuery.map(this.klass, function(k) { return (css_prefix + k) }).join(' ') + '">'
-			+ this.innerHtml() + '</div>');
+			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"></td><td class="' + css_prefix + 'element_insert_td">'
+			+ this.innerHtml() + '</td></tr></tbody></table></div>');
 		var parent = this;
-		this.insertJQ = (this.jQ.find(".sc_insert").length == 0) ? this.jQ : this.jQ.find(".sc_insert").first();
+		this.insertJQ = (this.jQ.find("." + css_prefix + "insert").length == 0) ? this.jQ.find("." + css_prefix + "element_insert_td").first() : this.jQ.find("." + css_prefix + "insert").first();
+		this.leftJQ = this.jQ.find("." + css_prefix + "element_td").first();
 		jQuery.each(this.children(), function(i, child) {
 			if(child.jQ === 0) child.regenerateHtml();
 			parent.insertJQ.append(child.jQ);
@@ -156,37 +159,8 @@ var Element = P(function(_) {
 		return this.insertInto(parent, R);
 	}
 	_.replace = function(replaced) {
-		// Copy of replaced element properties and fix directional assignments
-		this.parent = replaced.parent;
-		this[R] = replaced[R];
-		this[L] = replaced[L];
-		this.id = replaced.id;
-		if(this[L] !== 0) 
-			this[L][R] = this;
-		else
-			this.parent.ends[L] = this;
-		if(this[R] !== 0) 
-			this[R][L] = this;
-		else
-			this.parent.ends[R] = this;
-		this.updateWorkspace(this.parent.getWorkspace());
-		this.regenerateHtml();
-		// Add the new element to the DOM
-		replaced.jQ.after(this.jQ);
-		if(replaced.active) this.activate();
-		// Remove the replaced element
-		replaced.preRemoveHandler();
-		if(replaced.jQ !== 0) {
-			if(replaced.hidden)
-				replaced.jQ.remove();
-			else 
-				replaced.jQ.hide({duration: 200, always: function() { $(this).remove(); }});
-		}
-		replaced.detach();
-		this.setDepth();
-
-		// Finish insert
-		if((this.workspace !== 0) && (this.workspace.jQ !== 0)) this.postInsert();
+		this.insertAfter(replaced);
+		replaced.remove();
 		return this;
 	}
 	// Update the workspace of this block and all children
@@ -196,6 +170,17 @@ var Element = P(function(_) {
 			child.updateWorkspace(workspace);
 		});
 		return this;
+	}
+	// Update the line numbers on this block and all children
+	_.numberBlock = function(start) {
+		if(this.lineNumber) {
+			this.leftJQ.html(start);
+			start++;
+		} else this.leftJQ.html('');
+		jQuery.each(this.children(), function(i, child) {
+			start = child.numberBlock(start);
+		});
+		return start;
 	}
 
 	/*
@@ -289,6 +274,7 @@ var Element = P(function(_) {
 			this[R].merge();
 		}
 		this.detach();
+		this.workspace.renumber();
 		return this;
 	}
 	/* Visibility Methods
@@ -333,6 +319,7 @@ var Element = P(function(_) {
 		jQuery.each(this.children(), function(i, child) {
 			child.setDepth();
 		});
+		this.workspace.renumber();
 		return this;
 	}
 	// return current workspace
@@ -524,10 +511,11 @@ var Element = P(function(_) {
 		if(!this.blurred) return this;
 		this.workspace.focus();
 		this.workspace.detachToolbar();
-		this.blurred = false;
 		if(this.workspace.activeElement)
 			this.workspace.activeElement.blur();
+		this.blurred = false;
 		this.workspace.activeElement = this;
+		this.leftJQ.addClass(css_prefix + 'focused');
 		// Check if we are in view, and if not, scroll:
 		if(this instanceof text) 
 			return this;
@@ -535,6 +523,7 @@ var Element = P(function(_) {
 			return this.scrollToMe(dir);
 	}
 	_.scrollToMe = function(dir) {
+		console.log(this);
 		var top = this.jQ.position().top;
 		var bottom = top + this.jQ.height();
 		var to_move_top = Math.min(0, top);
@@ -555,11 +544,14 @@ var Element = P(function(_) {
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.blur();
 		if(this.workspace.activeElement == this) this.workspace.activeElement = 0;
+		this.leftJQ.removeClass(css_prefix + 'focused');
 		return this;
 	}
 	_.windowBlur = function() {
+    this.workspace.blurToolbar();
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.windowBlur();
+		this.leftJQ.removeClass(css_prefix + 'focused');
 		return this;
 	}
 	_.inFocus = function() { return !this.blurred; };

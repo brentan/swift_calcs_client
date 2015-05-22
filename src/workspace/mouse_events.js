@@ -7,6 +7,99 @@
  *******************************************************/
 
 Workspace.open(function(_) {
+	_.bindDragging = function(e, selected_target, click_handler, drag_done_handler) {
+		var _this = this;
+		function dragOver(e_drag) {
+			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+			var top = el.jQ.offset().top;
+			// Are we an element that allows children, but doesnt have any?
+			if(el && el.hasChildren && (el.children().length == 0)) {
+  			if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) {
+  				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
+  				el.insertJQ.removeClass(css_prefix + 'dropTop');
+  			} else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) {
+  				el.insertJQ.removeClass(css_prefix + 'dropTop');
+  				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
+  			} else {
+  				el.insertJQ.addClass(css_prefix + 'dropTop');
+  				el.jQ.removeClass(css_prefix + 'dropBot').removeClass(css_prefix + 'dropTop');
+  			}
+			} else {
+  			if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
+  				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
+  			else
+  				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
+  		}
+    	e_drag.preventDefault();
+		}
+		function dragDrop(e_drag) {
+			dragLeave(e_drag);
+			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+			var top = el.jQ.offset().top;
+			var into = false;
+			var dir = L;
+			// Are we an element that allows children, but doesnt have any?
+			if(el && el.hasChildren && (el.children().length == 0)) {
+  			if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) 
+  				dir = R;
+  			else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) 
+  				dir = L;
+  			else 
+  				into = true;
+			} else {
+  			if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
+  				dir = R;
+  			else
+  				dir = L;
+  		}
+  		drag_done_handler(el, into, dir);
+  		e_drag.preventDefault();
+		}
+		function dragLeave(e_drag) {
+			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+			el.jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
+			$(e_drag.target).off('dragover', dragOver).off('dragleave', dragLeave).off('drop', dragDrop);
+			el.jQ.find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
+    	e_drag.preventDefault();
+		}
+		function dragEnter(e_drag) {
+			if($(e_drag.target).closest('.' + css_prefix + 'selected').length) return; // Don't do drag handlers on selected elements
+			$(e_drag.target).on('dragover', dragOver).on('dragleave', dragLeave).on('drop', dragDrop);
+			dragOver(e_drag);
+		}
+		function dragStart(e_drag) {
+    	// We started a drag, so remove mouesup listener as we dont want it firing
+      $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
+      // Bind new handlers
+      $(e_drag.target).on('dragend', dragEnd);
+      var to_listen = _this.insertJQ.find('.' + css_prefix + 'element');
+    	to_listen.on('dragenter', dragEnter);
+    	to_listen.find('*').on('dragenter', dragEnter);
+		}
+		function dragEnd(e_drag) {
+    	_this.dragging = false;
+			_this.mousedown = false;
+    	// Remove listeners
+			$(e_drag.target).off('dragend', dragEnd);
+    	_this.insertJQ.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
+    	_this.insertJQ.find('.' + css_prefix + 'element').find('*').off('dragenter', dragEnter);
+    	selected_target.off('dragstart', dragStart);
+    	e_drag.preventDefault();
+		}
+    function mouseup_drag(e_up) {
+    	_this.dragging = false;
+			_this.mousedown = false;
+    	// Remove listeners
+    	selected_target.off('dragstart', dragStart);
+    	click_handler(e_up);
+      $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
+    	e.preventDefault();
+    	e_up.preventDefault();
+    }
+    selected_target.on('dragstart', dragStart);
+    $(e.target.ownerDocument).mouseup(mouseup_drag);
+	};
+
   _.bindMouse = function() {
   	if(this.bound) return this;
     //context-menu event handling
@@ -80,117 +173,33 @@ Workspace.open(function(_) {
       }
     	if(selected_target.length && _this.selection.length && !(target instanceof text)) {
     		// Clicking/dragging on selection
-    		function dragOver(e_drag) {
-    			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-    			var top = el.jQ.offset().top;
-    			// Are we an element that allows children, but doesnt have any?
-    			if(el && el.hasChildren && (el.children().length == 0)) {
-	    			if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) {
-	    				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
-	    				el.insertJQ.removeClass(css_prefix + 'dropTop');
-	    			} else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) {
-	    				el.insertJQ.removeClass(css_prefix + 'dropTop');
-	    				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
-	    			} else {
-	    				el.insertJQ.addClass(css_prefix + 'dropTop');
-	    				el.jQ.removeClass(css_prefix + 'dropBot').removeClass(css_prefix + 'dropTop');
-	    			}
-    			} else {
-	    			if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
-	    				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
-	    			else
-	    				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
-	    		}
-	      	e_drag.preventDefault();
-    		}
-    		function dragDrop(e_drag) {
-    			dragLeave(e_drag);
-    			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-    			var top = el.jQ.offset().top;
-    			var into = false;
-    			var dir = L;
-    			// Are we an element that allows children, but doesnt have any?
-    			if(el && el.hasChildren && (el.children().length == 0)) {
-	    			if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) 
-	    				dir = R;
-	    			else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) 
-	    				dir = L;
-	    			else 
-	    				into = true;
-    			} else {
-	    			if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
-	    				dir = R;
-	    			else
-	    				dir = L;
-	    		}
-	    		// Begin moving the selected elements to the new target
-	    		_this.clearSelection(true);
-	    		if(dir === R) _this.selection.reverse();
-	    		var active_elements = $();
-	    		for(var i = 0; i < _this.selection.length; i++) {
-	    			_this.selection[i].move(el, into ? R : dir, into);
-	    			active_elements = active_elements.add(_this.selection[i].jQ);
-	    		}
-	    		if(dir === R) _this.selection.reverse();
-	    		_this.createSelection(active_elements);
-	    		_this.focus();
-	    		e_drag.preventDefault();
-    		}
-    		function dragLeave(e_drag) {
-    			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-    			el.jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
-    			$(e_drag.target).off('dragover', dragOver).off('dragleave', dragLeave).off('drop', dragDrop);
-    			el.jQ.find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
-	      	e_drag.preventDefault();
-    		}
-    		function dragEnter(e_drag) {
-    			if($(e_drag.target).closest('.' + css_prefix + 'selected').length) return; // Don't do drag handlers on selected elements
-    			$(e_drag.target).on('dragover', dragOver).on('dragleave', dragLeave).on('drop', dragDrop);
-    			dragOver(e_drag);
-    		}
-    		function dragStart(e_drag) {
-	      	// We started a drag, so remove mouesup listener as we dont want it firing
-	        $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
-	        // Bind new handlers
-	        $(e_drag.target).on('dragend', dragEnd);
-	        var to_listen = _this.insertJQ.find('.' + css_prefix + 'element');
-	      	to_listen.on('dragenter', dragEnter);
-	      	to_listen.find('*').on('dragenter', dragEnter);
-    		}
-    		function dragEnd(e_drag) {
-	      	_this.dragging = false;
-    			_this.mousedown = false;
-	      	//_this.focus();
-	      	// Remove listeners
-    			$(e_drag.target).off('dragend', dragEnd);
-	      	_this.insertJQ.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
-	      	_this.insertJQ.find('.' + css_prefix + 'element').find('*').off('dragenter', dragEnter);
-	      	selected_target.off('dragstart', dragStart);
-	      	e_drag.preventDefault();
-    		}
-	      function mouseup_drag(e_up) {
-	      	_this.dragging = false;
-    			_this.mousedown = false;
-	      	//_this.focus();
-	      	// Remove listeners
-	      	selected_target.off('dragstart', dragStart);
-	      	// Handle full click events as mousedown and then mouseup
+    		function click_handler(e_up) {
+		    	// Handle full click events as mousedown and then mouseup
 		      _this.clearSelection();
-	      	new_target = Element.byId[$(e_up.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-	      	if(!new_target) new_target = _this.ends[R]; 
-	      	target = new_target;
+		    	new_target = Element.byId[$(e_up.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+		    	if(!new_target) new_target = _this.ends[R]; 
+		    	target = new_target;
 		      new_target.focus();
 		      new_target.mouseDown(e_up);
-	      	mousemoveup(e_up, 'mouseUp');
-	        $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
-	      	e.preventDefault();
-	      	e_up.preventDefault();
-	      }
+		    	mousemoveup(e_up, 'mouseUp');
+		    }
+    		function drag_done_handler(el, into, dir) {
+		  		// Begin moving the selected elements to the new target
+		  		_this.clearSelection(true);
+		  		if(dir === R) _this.selection.reverse();
+		  		var active_elements = $();
+		  		for(var i = 0; i < _this.selection.length; i++) {
+		  			_this.selection[i].move(el, into ? R : dir, into);
+		  			active_elements = active_elements.add(_this.selection[i].jQ);
+		  		}
+		  		if(dir === R) _this.selection.reverse();
+		  		_this.createSelection(active_elements);
+		  		_this.focus();
+    		}
 	      // We can't preventDefault on mousedown, because that will kill the draggable calls.  But by allowing it, we blur the textarea.
 	      // Set 'dragging' to true so that we know we are in a situation where we are blurred.
 	      _this.dragging = true;
-	      selected_target.on('dragstart', dragStart);
-	      $(e.target.ownerDocument).mouseup(mouseup_drag);
+	      _this.bindDragging(e, selected_target, click_handler, drag_done_handler)
     	} else {
 	  		// Clicking dragging on nothing
 	      _this.clearSelection();

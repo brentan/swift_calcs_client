@@ -2,6 +2,7 @@ var math = P(EditableBlock, function(_, super_) {
 	_.klass = ['math'];
 	_.mathField = 0;
 	_.implicit = false;
+	_.lineNumber = true;
 
 	_.init = function(latex) {
 		super_.init.call(this);
@@ -46,6 +47,9 @@ var math = P(EditableBlock, function(_, super_) {
 		return function(mathField) {
 			//console.log(mathField.text());
 		};
+	}
+	_.AppendText = function() {
+		text().insertAfter(this).show().focus(L)
 	}
 	_.PrependBlankItem = function() {
 		//add a blank block just before this one

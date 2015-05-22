@@ -90,7 +90,7 @@ var SwiftCalcs = {};
 			}
 		}};
 		jQuery.extend(true, defaultOptions, options);
-  	var mathField = MathQuill.MathField(_this.jQ.children('span.' + css_prefix + 'math' + klass)[0], defaultOptions);
+  	var mathField = MathQuill.MathField(_this.jQ.find('span.' + css_prefix + 'math' + klass)[0], defaultOptions);
 		mathField.setElement(_this);
 		return mathField;
   }
@@ -105,7 +105,7 @@ var SwiftCalcs = {};
         'img','li','ol','p','strike','span','div',
         'strong','sub','sup','table','tbody','td','th','tr','u','ul',],
       ALLOWED_ATTR: [
-        'alt','bgcolor','border','color','cols','colspan','rows','rowspan','style','src','valign']
+        'alt','bgcolor','border','color','cols','colspan','rows','rowspan','style','src','valign','class']
       });
     return [text(output)];
   }
