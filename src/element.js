@@ -523,7 +523,6 @@ var Element = P(function(_) {
 			return this.scrollToMe(dir);
 	}
 	_.scrollToMe = function(dir) {
-		console.log(this);
 		var top = this.jQ.position().top;
 		var bottom = top + this.jQ.height();
 		var to_move_top = Math.min(0, top);

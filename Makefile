@@ -6,6 +6,9 @@
 SRC_DIR = ./src
 INTRO = $(SRC_DIR)/wrapper/intro.js
 OUTRO = $(SRC_DIR)/wrapper/outro.js
+SRC_DIR_WORKER = ./src_worker
+INTRO_WORKER = $(SRC_DIR_WORKER)/wrapper/intro.js
+OUTRO_WORKER = $(SRC_DIR_WORKER)/wrapper/outro.js
 
 PJS_SRC = ./node_modules/pjs/src/p.js
 
@@ -16,6 +19,8 @@ SOURCES = \
   $(SRC_DIR)/workspace/*.js \
   $(SRC_DIR)/elements/*.js 
 
+SOURCES_WORKER = $(SRC_DIR_WORKER)/*.js
+
 CSS_DIR = $(SRC_DIR)/css
 CSS_MAIN = $(CSS_DIR)/main.less
 CSS_SOURCES = $(shell find $(CSS_DIR) -name '*.less')
@@ -23,8 +28,10 @@ CSS_SOURCES = $(shell find $(CSS_DIR) -name '*.less')
 BUILD_DIR = ./build
 APP_DIR = ../swift_calcs
 BUILD_JS = $(BUILD_DIR)/swift_calcs.js
+BUILD_JS_WORKER = $(BUILD_DIR)/giac_worker.js
 BUILD_CSS = $(BUILD_DIR)/swift_calcs.css
 UGLY_JS = $(BUILD_DIR)/swift_calcs.min.js
+UGLY_JS_WORKER = $(BUILD_DIR)/giac_worker.min.js
 
 # programs and flags
 UGLIFY ?= ./node_modules/.bin/uglifyjs
@@ -49,11 +56,16 @@ BUILD_DIR_EXISTS = $(BUILD_DIR)/.exists--used_by_Makefile
 
 all: css uglify
 
-app: css js
-	# BE SURE TO REMOVE include swift_calcs AND ADD include swift_calcs-dev TO APPLICATION.JS, and similar for APPLICATION.css
-	cp -f $(BUILD_DIR)/swift_calcs.js ./$(APP_DIR)/app/assets/javascripts/swift_calcs-dev.js
-	cp -f $(BUILD_DIR)/swift_calcs.css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs-dev.css
-# dev is like all, but without minification
+app: css js js_worker
+	cp -f $(BUILD_DIR)/swift_calcs.js ./$(APP_DIR)/public/swift_calcs.js
+	cp -f $(BUILD_DIR)/giac_worker.js ./$(APP_DIR)/public/giac_worker.js
+	cp -f $(BUILD_DIR)/swift_calcs.css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
+
+app_ugly: css uglify uglify_worker
+	cp -f $(BUILD_DIR)/swift_calcs.min.js ./$(APP_DIR)/public/swift_calcs.js
+	cp -f $(BUILD_DIR)/giac_worker.min.js ./$(APP_DIR)/public/giac_worker.js
+	cp -f $(BUILD_DIR)/swift_calcs.css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
+
 js: $(BUILD_JS)
 uglify: $(UGLY_JS)
 css: $(BUILD_CSS)
@@ -76,3 +88,12 @@ $(NODE_MODULES_INSTALLED): package.json
 $(BUILD_DIR_EXISTS):
 	mkdir -p $(BUILD_DIR)
 	touch $(BUILD_DIR_EXISTS)
+
+js_worker: $(BUILD_JS_WORKER)
+uglify_worker: $(UGLY_JS_WORKER)
+
+$(BUILD_JS_WORKER): $(INTRO_WORKER) $(SOURCES_WORKER) $(OUTRO_WORKER) $(BUILD_DIR_EXISTS)
+	cat $^ | ./script/escape-non-ascii > $@
+
+$(UGLY_JS_WORKER): $(BUILD_JS_WORKER) $(NODE_MODULES_INSTALLED)
+	$(UGLIFY) $(UGLIFY_OPTS) < $< > $@

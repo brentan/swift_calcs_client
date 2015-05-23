@@ -109,3 +109,36 @@ var SwiftCalcs = {};
       });
     return [text(output)];
   }
+
+  var status_bar = $('.status_bar');
+  // Status bar helper functions
+  var clearBar = function() {
+    status_bar.removeClass(css_prefix + 'clear ' + css_prefix + 'complete ' + css_prefix + 'error ' + css_prefix + 'warn');
+    status_bar.html('');
+  }
+  var startProgress = function(message) {
+    message = message || 'Calculating...Please Wait';
+    status_bar.addClass(css_prefix + 'clear');
+    status_bar.html('<div class="progress_bar"></div><div class="message_text"><i class="fa fa-spinner fa-pulse"></i>&nbsp;' + message + '</div>');
+  }
+  var setProgress = function(percent) {
+    status_bar.children('.progress_bar').css('width', Math.floor(percent * 100) + '%'); 
+  }
+  var changeMessage = function(text) {
+    status_bar.find('.message_text').html('<i class="fa fa-spinner fa-pulse"></i>&nbsp;' + text);
+  }
+  var setComplete = function() {
+    clearBar();
+    status_bar.addClass(css_prefix + 'complete');
+    status_bar.html('Ready');
+  }
+  var setWarning = function(warn) {
+    clearBar();
+    status_bar.addClass(css_prefix + 'warn');
+    status_bar.html(warn);
+  }
+  var setError = function(err) {
+    clearBar();
+    status_bar.addClass(css_prefix + 'error');
+    status_bar.html(err);
+  }

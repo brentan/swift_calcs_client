@@ -311,7 +311,8 @@ Workspace.open(function(_) {
 			sub: [
 				{html: '(<span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>)', method: function(el) { el.command('('); }, title: 'Parenthesis' },
 				{html: '[<span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>]', method: function(el) { el.command('['); }, title: 'Square Bracket' },
-				{html: '{<span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>}', method: function(el) { el.command('{'); }, title: 'Curly Bracket' }
+				{html: '{<span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>}', method: function(el) { el.command('{'); }, title: 'Curly Bracket' },
+				{html: '|<span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>|', method: function(el) { el.command('|'); }, title: 'Absolute Value' }
 			]
 		},
 		{
@@ -473,6 +474,20 @@ Workspace.open(function(_) {
 				{html: 'Add Row After (;)', title: 'Add Row After', method: function(el) { el.command('matrix_add_row_after'); } },
 				{html: 'Remove Column', title: 'Remove Column', method: function(el) { el.command('matrix_remove_column'); } },
 				{html: 'Remove Row', title: 'Remove Row', method: function(el) { el.command('matrix_remove_row'); } },
+			]
+		},
+		{
+			id: 'matrixMath',
+			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">&#8857;</div>',
+			title: 'Matrix/Vector Operations',
+			sub: [
+				{html: 'Elementwise Multiplication (.*)', title: 'Elementwise Multiplication', method: function(el) { el.command('.'); el.command('*'); } },
+				{html: 'Elementwise Division (./)', title: 'Elementwise Division', method: function(el) { el.command('.'); el.command('/'); } },
+				{html: 'Elementwise Power (.^)', title: 'Elementwise Power', method: function(el) { el.command('.'); el.command('^'); } },
+				{html: 'Dot Product', title: 'Dot Product', method: function(el) { el.command('d'); el.command('o'); el.command('t'); el.command('('); } },
+				{html: 'Cross Product', title: 'Cross Product', method: function(el) { el.command('c'); el.command('r'); el.command('o'); el.command('s'); el.command('s'); el.command('('); } },
+				{html: 'Determinate', title: 'Determinate', method: function(el) { el.command('d'); el.command('e'); el.command('t'); el.command('('); } },
+				{html: 'Transpose', title: 'Transpose', method: function(el) { el.command('t'); el.command('r'); el.command('a'); el.command('n'); el.command('('); } }
 			]
 		},
 		{ id: '|' },

@@ -1,9 +1,7 @@
 /********************************************************
  * Event listerns for the mouse, to deal with clicking, 
  * click and dragging, etc.  Will pass to listeners within
- * each block when needed.  Blocks have the following hooks:
- * 
-
+ * each block when needed.  
  *******************************************************/
 
 Workspace.open(function(_) {
@@ -67,6 +65,30 @@ Workspace.open(function(_) {
 			$(e_drag.target).on('dragover', dragOver).on('dragleave', dragLeave).on('drop', dragDrop);
 			dragOver(e_drag);
 		}
+		function dragOverWorkspace(e_drag) {
+			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
+  		_this.ends[R].jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
+    	e_drag.preventDefault();
+		}
+		function dragDropWorkspace(e_drag) {
+			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
+			dragLeaveWorkspace(e_drag);
+  		drag_done_handler(_this.ends[R], false, R);
+  		e_drag.preventDefault();
+		}
+		function dragLeaveWorkspace(e_drag) {
+			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
+			_this.ends[R].jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
+			_this.insertJQ.off('dragover', dragOverWorkspace).off('dragleave', dragLeaveWorkspace).off('drop', dragDropWorkspace);
+			_this.ends[R].jQ.find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
+    	e_drag.preventDefault();
+		}
+		function dragEnterWorkspace(e_drag) {
+			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
+			if(_this.ends[R].jQ.hasClass(css_prefix + 'selected')) return; // Don't do drag handlers on selected elements
+			_this.insertJQ.on('dragover', dragOverWorkspace).on('dragleave', dragLeaveWorkspace).on('drop', dragDropWorkspace);
+			dragOverWorkspace(e_drag);
+		}
 		function dragStart(e_drag) {
     	// We started a drag, so remove mouesup listener as we dont want it firing
       $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
@@ -75,6 +97,7 @@ Workspace.open(function(_) {
       var to_listen = _this.insertJQ.find('.' + css_prefix + 'element');
     	to_listen.on('dragenter', dragEnter);
     	to_listen.find('*').on('dragenter', dragEnter);
+    	_this.insertJQ.on('dragenter', dragEnterWorkspace);
 		}
 		function dragEnd(e_drag) {
     	_this.dragging = false;
@@ -83,6 +106,7 @@ Workspace.open(function(_) {
 			$(e_drag.target).off('dragend', dragEnd);
     	_this.insertJQ.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
     	_this.insertJQ.find('.' + css_prefix + 'element').find('*').off('dragenter', dragEnter);
+    	_this.insertJQ.off('dragenter', dragEnterWorkspace);
     	selected_target.off('dragstart', dragStart);
     	e_drag.preventDefault();
 		}

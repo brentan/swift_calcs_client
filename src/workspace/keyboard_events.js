@@ -185,7 +185,6 @@ Workspace.open(function(_) {
       this.replaceSelection(math(text), true);
   }
   var toClipboard = function(to_store, e) {
-    console.log(to_store);
     if (window.clipboardData) 
       window.clipboardData.setData('Text', to_store);    
     else 
@@ -249,7 +248,6 @@ Workspace.open(function(_) {
       else if(to_paste.slice(0,11) === 'SWIFTCALCS:')
         var blocks = parse(to_paste.slice(11));
       else {
-        console.log(html);
         var blocks = sanitize(html ? html : to_paste);
       }
       if(blocks.length == 0) //Nothing to paste somehow...so just remove the highlighting and refocus
