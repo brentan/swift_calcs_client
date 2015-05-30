@@ -3,13 +3,14 @@ var math = P(EditableBlock, function(_, super_) {
 	_.mathField = 0;
 	_.implicit = false;
 	_.lineNumber = true;
+	_.evaluatable = true;
 
 	_.init = function(latex) {
 		super_.init.call(this);
 		this.latex = latex || '';
 	}
 	_.innerHtml = function() {
-		return mathSpan('input');
+		return mathSpan('input') + '<BR>' + answerSpan();
 	}
 	_.postInsertHandler = function() {
 		this.mathField = registerMath(this, 'input', { handlers: {
@@ -18,6 +19,7 @@ var math = P(EditableBlock, function(_, super_) {
 		}});
 		this.focusableItems.push(this.mathField);
 		this.mathField.write(this.latex);
+		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		super_.postInsertHandler.call(this);
 		return this;
 	}
@@ -42,11 +44,60 @@ var math = P(EditableBlock, function(_, super_) {
 			el.append('&nbsp;').focus(R);
 		this.remove(0);
 	}
+	_.was_scoped = false;
 	_.submissionHandler = function(_this) {
-		//BRENTAN- Evaluation must be handled!
 		return function(mathField) {
-			//console.log(mathField.text());
+			if(_this.needsEvaluation) {
+				console.log(mathField.latex());
+				var to_compute = mathField.text();
+				if(to_compute.indexOf(':=') > -1) {
+					_this.scoped = true;
+					_this.was_scoped = true;
+					_this.fullEvaluation = true;
+				}	else if(_this.was_scoped) {
+					_this.scoped = false;
+					_this.was_scoped = false;
+					_this.fullEvaluation = true;
+				} else {
+					_this.scoped = false;
+					_this.fullEvaluation = false;
+					if(to_compute.trim() === '')
+						_this.needsEvaluation = false;
+				}
+				_this.commands = [to_compute];
+				_this.evaluate();
+				_this.needsEvaluation = false;
+			}
 		};
+	}
+	_.evaluationFinished = function(result) {
+		this.outputBox.removeClass('calculating error warn');
+		this.outputBox.find('.warning').remove();
+		if(result[0].success) {
+			if((this.scoped) || (result[0].returned.trim() === '')) {
+				// BRENTAN: Should also check if this is the child of an element that suppresses output (like a loop)?
+				this.outputBox.closest('div.' + css_prefix + 'answer_table').hide(400);
+			} else {
+				this.children('div').html('');
+				this.outputBox.removeClass('calculating error warn');
+				this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400, complete: function(_this) { return function() { _this.mathField.reflow(); }; }(this)});
+				var field = MathQuill.MathField(this.outputBox.children('div')[0]);
+				field.latex(result[0].returned.replace(/"/g,''))
+				console.log(result[0].returned.replace(/"/g,''));
+			}
+		} else {
+			giac.errors_encountered = true;
+			this.outputBox.removeClass('calculating warn').addClass('error');
+			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400, complete: function(_this) { return function() { _this.mathField.reflow(); }; }(this)});
+			this.outputBox.children('div').html(result[0].returned);
+		}
+		if(result[0].warnings.length > 0) {
+			this.outputBox.removeClass('calculating').addClass('warn');
+			for(var i = 0; i < result[0].warnings.length; i++) 
+				this.outputBox.append('<div class="warning">' + result[0].warnings[i] + '</div>');
+			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400, complete: function(_this) { return function() { _this.mathField.reflow(); }; }(this)});
+		}
+		return true;
 	}
 	_.AppendText = function() {
 		text().insertAfter(this).show().focus(L)
@@ -82,6 +133,7 @@ var math = P(EditableBlock, function(_, super_) {
 	// Callback for math elements notifying that this element has been changed
 	_.changed = function(el) {
 		this.implicit = false;
+		this.needsEvaluation = true;
 		// BRENTAN: When we have output for these blocks, 'changed' should remove the output and all future block outputs since they are no longer valid
 	}
 	_.setImplicit = function() {

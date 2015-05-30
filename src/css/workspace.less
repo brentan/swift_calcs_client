@@ -5,6 +5,7 @@ div.sc_element_container {
       border: 0px;
       margin: 0px;
       padding: 0px;
+      width: 100%;
       td.sc_element_td, td.sc_element_insert_td {
         border: 0px;
         margin: 0px;
@@ -18,11 +19,72 @@ div.sc_element_container {
         padding-right: 2px;
         padding-left: 0px;
         border-right: 1px solid #e0e0e0;
-        min-width: 27px;
+        width: 45px;
         font-size: 11px;
         padding-top: 4px;
         &.sc_focused {
           background-color: #f2f2f2;
+        }
+        i.fa-spinner {
+          display: inline-block;
+          margin-right: 3px;
+        }
+      }
+    }
+    div.sc_answer_table {
+      display: none;
+      margin: 4px 0px 1px 10px;
+      table.sc_answer_table {
+        border-width: 0px;
+        margin: 0px;
+        width: 100%;
+        td {
+          padding: 0px;
+          margin: 0px;
+          &.sc_answer_table_1t {
+            border-left: 1px solid #cccccc;
+            border-bottom: 1px solid #cccccc;
+            height: 50%;
+          }
+          &.sc_answer_table_1b {
+            border-left: 1px solid #ffffff;
+          }
+          &.sc_answer_table_2 {
+            width: 6px;
+            color: #cccccc;
+            font-size: 16px;
+            font-family: monospace;
+            position: relative;
+            left: -5px;
+            top: 1px;
+          }
+          &.sc_output_box {
+            width: 1%;
+            padding: 5px;
+            border-radius: 5px;
+            background-color: #efefef;
+            div {
+              float: right;
+            }
+            &.warn {
+              background-color: #FFFFD6
+            }
+            &.error {
+              width: 65%;
+              font-size: 11px;
+              background-color: #FFD6D6
+            }
+            &.calculating {
+              color: #bbbbbb;
+              background-color: #f6f6f6;
+            }
+            div.warning {
+              text-align: right;
+              min-width: 350px;
+              display:block;
+              font-size: 11px;
+            }
+          }
         }
       }
     }
@@ -35,6 +97,9 @@ div.sc_element_container {
     &.mq-math-mode.mq-editable-field {
       border-width: 0px;
     }
+  }
+  .sc_output_box .mq-math-mode.mq-editable-field {
+    border-width: 0px;
   }
   .sc_text {
     font-family: Arial, sans-serif;
@@ -110,11 +175,14 @@ div.sc_element_container {
   // the only way to hide the textarea
   // *and the blinking insertion point* in IE
   position: absolute;
-  clip: rect(1em 1em 1em 1em);
+  clip: rect(1em, 1em, 1em, 1em);
+  clip-path: rect(1em, 1em, 1em, 1em);
   resize: none; // hotfix: https://code.google.com/p/chromium/issues/detail?id=355199#c1
 }
-.sc_textareaDebug {
-  position: fixed;
-  top: 50px;
-  left: 0px;
+.sc_textarea.show {
+  z-index: 10000;
+  & * {
+    clip: auto;
+    clip-path: none;
+  }
 }

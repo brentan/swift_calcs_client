@@ -7,8 +7,11 @@
  *******************************************************/
 
 Workspace.open(function(_) {
+	var current_toolbar_target = 0;
 	_.attachToolbar = function(el, options) {
+		if(current_toolbar_target === el) return;
 		this.detachToolbar();
+		current_toolbar_target = el;
 		// Helper function to build the toolbar.  Parses the options
 		var buildMenu = function(element, toolbar) {
 			var $ul = $('<ul/>');
@@ -73,6 +76,7 @@ Workspace.open(function(_) {
 		$('#toolbar_holder').append($ul);
 	}
 	_.detachToolbar = function() {
+		current_toolbar_target = false;
 		$('#toolbar').remove();
 	}
 	_.blurToolbar = function() {
@@ -336,7 +340,8 @@ Workspace.open(function(_) {
 			title: 'Symbols',
 			method: function(el) { el.command('\\infinity'); },
 			sub: [
-				{html: '&nbsp;&nbsp;<span style="font-family: serif;">&#8734;</span>&nbsp;&nbsp;', title: 'Infinity', method: function(el) { el.command('\\infinity'); } },
+				{html: '&nbsp;&nbsp;<span style="font-family: serif;">+&#8734;</span>&nbsp;&nbsp;', title: 'Plus-Infinity', method: function(el) { el.command('+'); el.command('\\infinity'); } },
+				{html: '&nbsp;&nbsp;<span style="font-family: serif;">-&#8734;</span>&nbsp;&nbsp;', title: 'Minus-Infinity', method: function(el) { el.command('-'); el.command('\\infinity'); } },
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">i</span>&nbsp;&nbsp;', title: '(-1)^(1/2)', method: function(el) { el.command('i'); } },
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">e</span>&nbsp;&nbsp;', title: '2.71828...', method: function(el) { el.command('e'); } },
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">&pi;</span>&nbsp;&nbsp;', title: '3.14159...', method: function(el) { el.command('\\pi'); } },

@@ -21,6 +21,9 @@ var Workspace = P(function(_) {
 	_.dragging = false;
 	_.mousedown = false;
 
+  var id = 0;
+  function uniqueWorkspaceId() { return id += 1; }
+
   // Create the workspace, pass in an optional name
 	_.init = function(binder) { 
 		if(typeof binder === 'undefined') {
@@ -35,6 +38,7 @@ var Workspace = P(function(_) {
 		this.ends[R] = 0;
 		this.ends[L] = 0;
 		this.selection = [];
+		this.id = uniqueWorkspaceId();
 	}
 	// Attach the workspace to the DOM and regenerate HTML
 	_.bind = function(el) {

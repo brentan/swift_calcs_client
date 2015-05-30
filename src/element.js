@@ -30,6 +30,10 @@ var Element = P(function(_) {
 	_.blurred = true;
 	_.toParse = false;
 	_.lineNumber = false;
+	_.needsEvaluation = false; // This is whether an evaluatable element, when evaluated directly (not in a queue through fullEvaluation), should be evaluated
+	_.evaluatable = false;     // Is this element evaluatable?  If not, just skip it
+	_.fullEvaluation = false;  // When evaluated, should this element evaluate ancestors and suceeding elements?
+	_.scoped = false;          // Can this element change the scope (set/change variables).  If so, we need to keep track of scope here
 	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
 
 	//Give each element a unique ID, this is just for tracking purposes
@@ -42,6 +46,7 @@ var Element = P(function(_) {
     Element.byId[this.id] = this;
 
 		this.ends = {};
+		this.commands = [];
 		this.ends[R] = 0;
 		this.ends[L] = 0;
 
@@ -70,7 +75,7 @@ var Element = P(function(_) {
 	_.regenerateHtml = function() {
 		this.jQ = $('<div style="display:none;" ' + css_prefix + 'element_id=' + this.id + ' class="' + css_prefix + 'element '
 			+ jQuery.map(this.klass, function(k) { return (css_prefix + k) }).join(' ') + '">'
-			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"></td><td class="' + css_prefix + 'element_insert_td">'
+			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"><span></span></td><td class="' + css_prefix + 'element_insert_td">'
 			+ this.innerHtml() + '</td></tr></tbody></table></div>');
 		var parent = this;
 		this.insertJQ = (this.jQ.find("." + css_prefix + "insert").length == 0) ? this.jQ.find("." + css_prefix + "element_insert_td").first() : this.jQ.find("." + css_prefix + "insert").first();
@@ -174,9 +179,9 @@ var Element = P(function(_) {
 	// Update the line numbers on this block and all children
 	_.numberBlock = function(start) {
 		if(this.lineNumber) {
-			this.leftJQ.html(start);
+			this.leftJQ.children('span').html(start);
 			start++;
-		} else this.leftJQ.html('');
+		} else this.leftJQ.children('span').html('');
 		jQuery.each(this.children(), function(i, child) {
 			start = child.numberBlock(start);
 		});
@@ -217,9 +222,9 @@ var Element = P(function(_) {
 			else
 				this.jQ.detach().insertAfter(target.jQ);
 			//if(location === L)
-			//	this.scheduleFirstGenAncestor(); // BRENTAN- evaluation update
+			//	this.evaluate(true); 
 			//else
-			//	this[L].scheduleFirstGenAncestor(); // BRENTAN- evaluation update
+			//	this[L].evaluate(true); 
 		} else {
 			this.parent = target;
 			this.updateWorkspace(target.getWorkspace());
@@ -231,7 +236,7 @@ var Element = P(function(_) {
 				this.jQ.detach().prependTo(target.insertJQ);
 			else
 				this.jQ.detach().appendTo(target.insertJQ);
-			//this.scheduleFirstGenAncestor(); // BRENTAN- evaluation update
+			//this.evaluate(true); 
 		}
 		this.setDepth();
 		return this;
@@ -349,10 +354,145 @@ var Element = P(function(_) {
 
 	/*
 	Evaluation functions. 
+
+	Most of these functions work on their own, but elements can override:
+	continueEvaluation: What should happen when this element is evaluated
+	evaluationFinished: the default callback from continueEvaluation, although other callbacks can be defined (assumes commands are in the 'commands' property of this element)
+	childrenEvaluated: the callback that is called when all children of the element have been evaluated (if any)
+	When continueEvaluation and childrenEvaluated are overrident, they should be called through super_, it may make sense to call them with super_ after some work is done
+	The giac function 'execute' is provided to send commands to giac.  Execute is called with various options, including 
+		commands to send (array), and the string name of the callback that should be called when complete
 	*/
-	_.evaluate = function() {
+	_.move_to_next = false;
+	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method) and whether we also need to evaluate ancesctor/succeeding blocks (fullEvaluation)
+	// This function assigns this evaluation stream a unique id, and registers it in Workspace.  Other functions can cancel this evaluation stream with this unique id.
+	_.evaluate = function(force) {
+		if(typeof force === 'undefined') force = false;
+		if(!this.needsEvaluation && !force) return this;
+		var fullEvaluation = force || this.fullEvaluation;
+
+	  // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue
+		var current_evaluations = giac.current_evaluations();
+		for(var i = 0; i < current_evaluations.length; i++) {
+			var location = L;
+			var current_evaluation = giac.evaluations[current_evaluations[i]];
+			var current_evaluation_full = giac.evaluation_full[current_evaluations[i]];
+			if(current_evaluation !== true) {
+				var el = this.firstGenAncestor();
+				if(el.id == current_evaluation) 
+					location = 0;
+				else {
+					for(el = el[L]; el instanceof Element; el = el[L]) {
+						if(el.id == current_evaluation) { location = R; break; }
+					}
+				}
+			}
+			if(location === L) {
+				// I am above the currently evaluating block
+				if(fullEvaluation) giac.cancelEvaluation(current_evaluations[i]); // Ill get to the other block through this one.
+			} else if(location === 0) {
+				// I am in the same parent (first gen) block as currently evaluating block
+				if(current_evaluation_full && fullEvaluation) { giac.cancelEvaluation(current_evaluations[i]); } // We need to redo, as we don't know where in the block the other evaluation is
+				else if(current_evaluation_full) { fullEvaluation = true; giac.cancelEvaluation(current_evaluations[i]); } // Restart the evaluation, in full, at this parent
+				else if(fullEvaluation) { giac.cancelEvaluation(current_evaluations[i]); } // This evaluation will reach, fix whatever is currently being evaluated
+				// Else both are independant evaluations, so let that one do its thing and this will do its thing.
+			}	else {
+				// I am below the currently evaluating block
+				if(current_evaluation_full) return this; // The other calculation is a 'full' calculation and will eventually reach me.
+			}
+		}
+
+		if(this.depth == 0) {
+			var eval_id = giac.registerEvaluation(fullEvaluation);
+			this.continueEvaluation(eval_id, fullEvaluation);
+			this.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
+			if(fullEvaluation) {
+				for(var el = this[R]; el !== 0; el = el[R]) {
+					el.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
+					el.jQ.find('i.fa-spinner').remove();
+				}
+			} 
+		} else {
+			// If this is a 'full evaluation', we should find the first generation ancestor and do it there
+			if(fullEvaluation) return this.firstGenAncestor().evaluate();
+			var eval_id = giac.registerEvaluation(false);
+			this.continueEvaluation(eval_id, false);
+			this.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
+		}
 		return this;
 	}
+	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
+	_.continueEvaluation = function(evaluation_id, move_to_next) {
+		if(this.evaluatable && giac.shouldEvaluate(evaluation_id)) {
+			this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>');
+			if(this.hasChildren) {
+				this.move_to_next = move_to_next;
+				if(this.ends[L])
+					this.ends[L].continueEvaluation(evaluation_id, true)
+				else
+					this.childrenEvaluated(evaluation_id);
+			} else {
+				if((this.commands.length === 0) || (this.commands.join('').trim() === '')) // Nothing to evaluate...
+					this.evaluateNext(evaluation_id, move_to_next)
+				else
+					giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+			}
+		} else 
+			this.evaluateNext(evaluation_id, move_to_next)
+	}
+
+	// Callback from giac when an evaluation has completed and results are returned
+	_.evaluationCallback = function(evaluation_id, evaluation_callback, move_to_next, results) {
+		if(!giac.shouldEvaluate(evaluation_id)) return;
+		if(this[evaluation_callback](results)) 
+			this.evaluateNext(evaluation_id, move_to_next);
+	}
+
+	// Callback function.  should return true if this is the end of the element evaluation, false if more evaluation is happening
+	_.evaluationFinished = function(result) {
+		return true;
+	}
+
+	// Call the next item
+	_.evaluateNext = function(evaluation_id, move_to_next) {
+		this.leftJQ.find('i').remove();
+		if(this[R] && move_to_next)
+			this[R].continueEvaluation(evaluation_id, move_to_next)
+		else if(move_to_next && (this.parent instanceof Element))
+			this.parent.childrenEvaluated(evaluation_id);
+		else 
+			giac.evaluationComplete(evaluation_id);
+	}
+
+	// Called by the last child node of this element after it is evaluated.  This node should move onwards to next nodes if 'move_to_next' is true
+	_.childrenEvaluated = function(evaluation_id) {
+		var move_to_next = this.move_to_next;
+		// We need to save the scope?
+		if(this.scoped && giac.shouldEvaluate(evaluation_id))
+			giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
+		else
+			this.evaluateNext(evaluation_id, move_to_next);
+	}
+	_.scopeSaved = function(result) {
+		return true;
+	}
+	// Find the nearest previous element that has a scope we should use
+	_.previousScope = function() {
+		var el = this;
+		while(el instanceof Element) {
+			if((el !== this) && el.hasChildren && el.ends[R]) el = el.ends[R]
+			else if(el[L]) el = el[L];
+			else {
+				for(el = el.parent; el instanceof Element; el = el.parent) {
+					if(el[L]) { el = el[L]; break; }
+				}
+				if(!(el instanceof Element)) return false;
+			}
+			if(el.scoped) return el;
+		}
+		return false;
+	}
+
 	// Journey up parents to the workspace.  Evaluation is linear in the first generation children of workspace.  Below that level,
 	// Children blocks may have non-linear evaluation (such as 'for' loops, etc).  We need to find our ancestor who is a workspace
 	// first generation child, then start the evaluation process there and move inwards/downwards.  

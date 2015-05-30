@@ -49,6 +49,19 @@ var SwiftCalcs = {};
   	return '<span class="' + css_prefix + 'math' + klass + '"></span>';
   }
 
+  // This returns the answer block which is used to show the results from a calculation
+  var answerSpan = function(klass) {
+    if(klass)
+      klass = ' ' + css_prefix + klass;
+    else
+      klass = '';
+    return '<div class="' + css_prefix + 'answer_table' + klass + '"><table class="' + css_prefix + 'answer_table"><tbody><tr>'
+        + '<td class="' + css_prefix + 'answer_table_1t"></td>'
+        + '<td rowspan=2 class="' + css_prefix + 'answer_table_2">&gt;</td>'
+        + '<td rowspan=2 class="' + css_prefix + 'output_box"><div></div></td></tr>'
+        + '<tr><td class="' + css_prefix + 'answer_table_2b"></td></tr></tbody></table></div>';
+  }
+
   // This function will attach a math editable field by looking for a field with the provided class name (if provided)
   // It assumes the DOM element exists
   var registerMath = function(_this, klass, options) {
@@ -121,8 +134,24 @@ var SwiftCalcs = {};
     status_bar.addClass(css_prefix + 'clear');
     status_bar.html('<div class="progress_bar"></div><div class="message_text"><i class="fa fa-spinner fa-pulse"></i>&nbsp;' + message + '</div>');
   }
+  var progressTimeout = false;
   var setProgress = function(percent) {
+    if(progressTimeout) window.clearTimeout(progressTimeout);
+    progressTimeout = false;
     status_bar.children('.progress_bar').css('width', Math.floor(percent * 100) + '%'); 
+  }
+  var setUpdateTimeout = function(start_percent, end_percent, total_time) {
+    var doTimeout = function(setting) {
+      progressTimeout = false;
+      if(setting > end_percent) setting = end_percent;
+      setProgress(setting);
+      if(setting < end_percent) {
+        var delay = Math.random()*100 + 350;
+        var new_val = setting + (end_percent - start_percent) * delay / total_time;
+        progressTimeout = window.setTimeout(function(val) { return function() { doTimeout(val); }; }(new_val), delay);
+      }
+    }
+    doTimeout(start_percent);
   }
   var changeMessage = function(text) {
     status_bar.find('.message_text').html('<i class="fa fa-spinner fa-pulse"></i>&nbsp;' + text);

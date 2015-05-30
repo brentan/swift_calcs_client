@@ -96,7 +96,7 @@ Workspace.open(function(_) {
       $(e_drag.target).on('dragend', dragEnd);
       var to_listen = _this.insertJQ.find('.' + css_prefix + 'element');
     	to_listen.on('dragenter', dragEnter);
-    	to_listen.find('*').on('dragenter', dragEnter);
+    	//to_listen.find('table, div').on('dragenter', dragEnter); // WHY WAS THIS ADDED?  DOES NOT SEEM TO BE USEFUL
     	_this.insertJQ.on('dragenter', dragEnterWorkspace);
 		}
 		function dragEnd(e_drag) {
@@ -132,20 +132,21 @@ Workspace.open(function(_) {
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id')];
       //BRENTAN: TODO: Check to see if something IS selected and if we right clicked on it...then handle appropriately
       _this.clearSelection();
-      if(!target) return true;
-      target.focus();
-      if(!(target instanceof text)) 
-		    _this.focus();
-      if(!target.contextMenu(e)) {
-	      e.preventDefault(); // doesn't work in IE\u22648, but it's a one-line fix:
-	      return false;
-	    } else
-	    	return true;
+      if(target) {
+        target.focus();
+        if(!(target instanceof text)) 
+  		    _this.focus();
+        if(!target.contextMenu(e)) {
+  	      e.preventDefault(); 
+  	      return false;
+  	    } 
+      }
+      return true;
     };
     this.jQ.on('contextmenu.swiftcalcs', contextMenu);
     //click and click-drag event handling
     var mouseDown = function(e) {
-    	if (e.which !== 1) return false;
+    	if (e.which !== 1) return;
     	_this.mousedown = true;
     	// First handle mousedown.  This just sets the listeners for dragging and mouseup.  
     	var selected_target = $(e.target).closest('.' + css_prefix + 'selected');
