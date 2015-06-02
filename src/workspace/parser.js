@@ -52,6 +52,7 @@ var parse = function(to_paste) {
     return output;
   }
   var splitIntoTextBlocks = function(text_block) {
+    if(text_block.length === 0) return;
     text_block = text_block.replace(/\n/g,'<BR>');
     if(text_block.slice(-4) == '<BR>') text_block = text_block.slice(0, -4);
     text_block = sanitize(text_block);
@@ -105,7 +106,6 @@ var parse = function(to_paste) {
     else if(building_argument_list) argument_list += token;
     else possible_command += token;
   });
-  if(current_phrase.length)
-    splitIntoTextBlocks(current_phrase);
+  splitIntoTextBlocks(current_phrase);
   return result;
 };

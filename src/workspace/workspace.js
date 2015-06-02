@@ -102,7 +102,7 @@ var Workspace = P(function(_) {
     	link.on('click', function(e) {
     		var offset = hash.position().top + _this.jQ.scrollTop();
     		_this.jQ.scrollTop(offset);
-    		hash.stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, 600);
+    		hash.stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')}, duration: 600});
     		return false;
     	});
     });

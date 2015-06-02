@@ -79,7 +79,8 @@ Workspace.open(function(_) {
 		current_toolbar_target = false;
 		$('#toolbar').remove();
 	}
-	_.blurToolbar = function() {
+	_.blurToolbar = function(el) {
+		if(el && (el !== current_toolbar_target)) return;
 		$('#toolbar').addClass('blurred');
 	}
 	_.unblurToolbar = function() {
@@ -789,7 +790,7 @@ Workspace.open(function(_) {
 				output += '<li><div class="item unit" title="' + units[i].sub[j].unit + '">' + units[i].sub[j].name + '</div></li>';
 			output += '</ul></li>';
 		}	
-		var top_option = $('<li/>').html('<div class="item">Insert Unit Picker</div>');
+		var top_option = $('<li/>').html('<div class="item">Insert Unit Picker (\')</div>');
 		top_option.on('mousedown', function(e) {
 			func(el, '\\Unit');
 			e.stopPropagation();

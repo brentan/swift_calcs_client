@@ -4,9 +4,15 @@ var eval_function = function(var_name) {
   If we do, return its value as a string (and add units if you want)
   and if we dont, return an empty string ''
   */
-  if(var_name === 'test')
-    return '1_mm';
-  return '';
+  var ob = var_name.replace(/__.*$/,'');
+  var method = var_name.replace(/^.*__/,'');
+  var out = '';
+  if(constants[ob]) {
+  	var out = constants[ob][method];
+  	if(typeof out === 'function') out = constants[ob][method]();
+  }
+  if(typeof out !== 'string') out = '';
+  return out;
 }
 var eval_method = function(method_name, inputs) {
   /*
@@ -33,37 +39,84 @@ var errors = [];
 var warnings = [];
 var ii = 0;
 var receiveMessage = function(command) {
+  // If we are starting a new evaluation, restart giac to reset everything
 	if(command.restart)
 		Module.caseval('restart');
 	var output = [];
+  // Errors and warnings are sometimes (but not always!) caught with Module.printErr (they are sometimes also just returned by caseval directly)
+  // to deal with that we define these in the global scope and set them with printErr as things happen
 	errors = [];
 	warnings = [];
+  // If we need to load a scope, do it here
 	if(command.previous_scope)
 		Module.caseval('unarchive("' + command.previous_scope + '")');
+  // Iterate over the command list
 	for(ii = 0; ii < command.commands.length; ii++) {
-		var to_send = command.commands[ii];
+		var to_send = command.commands[ii].trim();
 		warnings.push([]);
+    // If the command is simply a variable name (or object.property transformed to object__property), 
+    // and this command is in our global constants array, output its toString value directly
+		if(to_send.match(/^[a-z][a-z0-9_]*$/i) && constants[to_send]) {
+			output[ii] = {success: true, returned: constants[to_send].toString(), warnings: []};
+			continue;
+		}
+    // If we are setting an object into a new variable, we do this directly through the 'clone' method.
+		if(to_send.match(/^[a-z][a-z0-9_]* *:= *[a-z][a-z0-9_]*$/i) && constants[to_send.replace(/^[a-z][a-z0-9_]* *:= */i,'')]) {
+			var new_var = to_send.replace(/ *:= *[a-z][a-z0-9_]*$/i,'');
+			var old_var = to_send.replace(/^[a-z][a-z0-9_]* *:= */i,'');
+			constants[new_var] = user_vars[new_var] = constants[old_var].clone();
+			output[ii] = {success: true, returned: constants[new_var].toString(), warnings: []};
+			continue;
+		}
+    // Otherwise, lets use giac for our evaluation. 
+    // Is this an expression that is setting the value of a variable?  If not, we add some simplification, unit converstion, and set output to latex
 		if(to_send.indexOf(":=") === -1) {
-			output.push({ success: true, returned: Module.caseval('latex(simplify(' + to_send + '))') });
+      // if to_send has 'convert' in it, we are already dealing with units, so don't do a usimplify, as that will override
+      if(to_send.indexOf('convert(') === -1) 
+        output.push({ success: true, returned: Module.caseval('latex(simplify(usimplify(' + to_send + ')))') });
+      else {
+        output.push({ success: true, returned: Module.caseval('latex(simplify(' + to_send + '))') });
+        if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
+          // Perhaps the auto-unit conversion messed this up...remove it
+          // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...
+          output[ii] = { success: true, returned: Module.caseval('latex(simplify(usimplify(' + to_send.replace('convert(','').replace(/,[^,]*$/,'') + ')))') };
+          errors[ii] = null;
+        } 
+      }
+      // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
 			if(errors[ii])
 				output[ii] = { success: true, returned: Module.caseval(to_send) }
 		} else
 			output.push({ success: true, returned: Module.caseval(to_send) });
+    // Work through the warnings.  If any are present and suggesting a different input, lets evaluate that instead
+		for(var j = 0; j < warnings[ii].length; j++) {
+			if(warnings[ii][j].indexOf('Perhaps you meant') > -1) {
+				// Use the cas suggestion, as we probably want to use that
+				to_send = warnings[ii][j].replace('Perhaps you meant ','');
+				errors[ii] = null;
+				warnings[ii] = [];
+				output[ii] = { success: true, returned: Module.caseval(to_send)};
+				break;
+			}
+		}
+    // If there were errors, set the output to the error.  Check both the errors array and the direct output. 
+    // Also check for an undefined result, which returns a bit of a complex result from giac
 		if(errors[ii]) 
 			output[ii] = {success: false, returned: errors[ii] };
 		else if(output[ii].returned.indexOf("GIAC_ERROR") > -1)
-			output[ii] = {success: false, returned: output[ii].returned.replace('GIAC_ERROR:','')};
+			output[ii] = {success: false, returned: fix_message(output[ii].returned.replace('GIAC_ERROR:',''))};
 		else if(output[ii].returned == '"\\,\\mathrm{undef}\\,"') {
 			output[ii] = {success: true, returned: ''}
 			warnings[ii].push('Undefined result');
 		}
-		console.log(output[ii].returned);
+		//console.log('GIAC OUT: ' + output[ii].returned);
+    // Set any warnings to the output
 		output[ii].warnings = warnings[ii];
-		// BRENTAN: Error handling of some sort should go here (just stop when an error occurs?  dont stop for expressions, stop for equations)
 	}
+  // If we are scoped evaluation, we should save the scope now for future retreival
 	if(command.scoped)
 		Module.caseval('archive("' + command.next_scope + '")');
-	//BRENTAN: At full completion of full evaluations, should update variable list and autocomplete list
+  // Return the result to the window thread
 	sendMessage({command: 'results', results: output, eval_id: command.eval_id, move_to_next: command.move_to_next, callback_id: command.callback_id, callback_function: command.callback_function});
 }
 this.addEventListener("message", function (evt) {
@@ -75,9 +128,9 @@ var Module = {
   postRun: [],
   print: function(text) {
   	if(text.indexOf('error') > -1)
-  		errors[ii] = text.replace(/:.*:[ ]*/,'');
+  		errors[ii] = fix_message(text);
   	else if((text.trim() != '') && (text.indexOf('Success') === -1))
-  		warnings[ii].push(text.replace(/:.*:[ ]*/,''));
+  		warnings[ii].push(fix_message(text));
   },
   printErr: function(text) {
     sendMessage({command: 'printErr', value: text});

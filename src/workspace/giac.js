@@ -1,11 +1,4 @@
 
-var compute = function(input) {
-	if(!SwiftCalcs.giac_ready) return;
-	//input = 'usimplify(' + input + ')';
-	console.log('to giac: ' + input);
-	SwiftCalcs.giac.postMessage(JSON.stringify({command: input}));
-}
-
 /* object that deals with evaluations, and setting the evaluation queue */
 var GiacHandler = P(function(_) {
 	_.giac_ready = false;
@@ -24,12 +17,13 @@ var GiacHandler = P(function(_) {
 	_.setEvaluationElement = function(eval_id, el) {
 		if(this.evaluations[eval_id] === false) return this;
 		this.evaluations[eval_id] = el.firstGenAncestor().id;
+		if(!this.giac_ready) return this; // Don't update status bar until computation is complete!
+		startProgress();
 		if(this.evaluation_full[eval_id]) {
 			var total = el.workspace.insertJQ.children('.' + css_prefix + 'element').length;
 			var me = 0;
 			for(var ell = el[L]; ell instanceof Element; ell = ell[L])
 				me++;
-			startProgress();
 			setProgress(me/total);
 		} 
 		return this;
@@ -89,8 +83,8 @@ var GiacHandler = P(function(_) {
 	}
 	_.sendCommand = function(el, hash) {
 		if(this.evaluations[hash.eval_id] === false) return;
+		this.setEvaluationElement(hash.eval_id, el);
 		if(this.giac_ready) {
-			this.setEvaluationElement(hash.eval_id, el);
 			this.worker.postMessage(JSON.stringify(hash));
 		}
 		else 

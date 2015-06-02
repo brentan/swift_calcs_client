@@ -85,7 +85,7 @@ var text = P(EditableBlock, function(_, super_) {
       case 'foreColor':
       case 'fontName':
         if($(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) {
-          $(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).startContainer.parentNode).stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, 400);
+          $(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).startContainer.parentNode).stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, {duration: 400, complete: function() { $(this).css('background-color','');}});
           return; 
         }
         param = option;

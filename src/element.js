@@ -24,8 +24,10 @@ var Element = P(function(_) {
   _.jQ = 0;
   _.hidden = true;
 	_.error = false;
+	_.savedProperties = [];
 	_.warn = false;
 	_.klass = [];
+	_.mark_for_deletion = false;
 	_.depth = 0;
 	_.blurred = true;
 	_.toParse = false;
@@ -221,10 +223,6 @@ var Element = P(function(_) {
 				this.jQ.detach().insertBefore(target.jQ);
 			else
 				this.jQ.detach().insertAfter(target.jQ);
-			//if(location === L)
-			//	this.evaluate(true); 
-			//else
-			//	this[L].evaluate(true); 
 		} else {
 			this.parent = target;
 			this.updateWorkspace(target.getWorkspace());
@@ -236,7 +234,6 @@ var Element = P(function(_) {
 				this.jQ.detach().prependTo(target.insertJQ);
 			else
 				this.jQ.detach().appendTo(target.insertJQ);
-			//this.evaluate(true); 
 		}
 		this.setDepth();
 		return this;
@@ -260,6 +257,15 @@ var Element = P(function(_) {
 	_.remove = function(duration) {
 		duration = typeof duration === 'undefined' ? 200 : duration;
 		this.preRemoveHandler();
+		if(this.fullEvaluation) {
+			if((this.depth == 0) && this[R]) {
+				var to_eval = this[R];
+				window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
+			} else if(this.depth > 0) {
+				var to_eval = this.firstGenAncestor();
+				window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
+			}
+		}
 		if(this[L] !== 0) 
 			this[L][R] = this[R];
 		else
@@ -366,10 +372,12 @@ var Element = P(function(_) {
 	_.move_to_next = false;
 	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method) and whether we also need to evaluate ancesctor/succeeding blocks (fullEvaluation)
 	// This function assigns this evaluation stream a unique id, and registers it in Workspace.  Other functions can cancel this evaluation stream with this unique id.
-	_.evaluate = function(force) {
+	_.evaluate = function(force, force_full) {
 		if(typeof force === 'undefined') force = false;
+		if(typeof force_full === 'undefined') force_full = false;
+		if(this.mark_for_deletion) return;
 		if(!this.needsEvaluation && !force) return this;
-		var fullEvaluation = force || this.fullEvaluation;
+		var fullEvaluation = force_full || this.fullEvaluation;
 
 	  // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue
 		var current_evaluations = giac.current_evaluations();
@@ -401,12 +409,13 @@ var Element = P(function(_) {
 				if(current_evaluation_full) return this; // The other calculation is a 'full' calculation and will eventually reach me.
 			}
 		}
-
 		if(this.depth == 0) {
+			//this.jQ.stop().css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, {duration: 1500, complete: function() { $(this).css('background-color','')} } );
 			var eval_id = giac.registerEvaluation(fullEvaluation);
 			this.continueEvaluation(eval_id, fullEvaluation);
 			this.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
 			if(fullEvaluation) {
+			//this.jQ.stop().css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 				for(var el = this[R]; el !== 0; el = el[R]) {
 					el.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
 					el.jQ.find('i.fa-spinner').remove();
@@ -415,6 +424,7 @@ var Element = P(function(_) {
 		} else {
 			// If this is a 'full evaluation', we should find the first generation ancestor and do it there
 			if(fullEvaluation) return this.firstGenAncestor().evaluate();
+			//this.jQ.stop().css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 			var eval_id = giac.registerEvaluation(false);
 			this.continueEvaluation(eval_id, false);
 			this.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
@@ -678,7 +688,7 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.blur = function() {
-    this.workspace.blurToolbar();
+    this.workspace.blurToolbar(this);
 		if(this.blurred) return this;
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.blur();
@@ -687,7 +697,7 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.windowBlur = function() {
-    this.workspace.blurToolbar();
+    this.workspace.blurToolbar(this);
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.windowBlur();
 		this.leftJQ.removeClass(css_prefix + 'focused');
@@ -739,6 +749,8 @@ var Element = P(function(_) {
    It uses the 'argumentList' helper method, which is the exact opposite of parse.  argumentList produces
    an array of arguments, that when passed to the 'parse' method of a blank element of the same type,
    identically reproduces the element.  Used for copy/pasting, among other things.
+   Both parse and argumentList also utilize a helper property 'savedProperties', which is an array of property names that
+   should also be saved and parsed with the element
    */
   // Parse must return itself as it is chained
   _.parse = function(args) {
@@ -756,6 +768,8 @@ var Element = P(function(_) {
   		} else 
   			this.focusableItems[i].clear().paste(args[i]);
   	}
+  	for(var k = 0; k < this.savedProperties.length; k++) 
+  		this[this.savedProperties[k]] = args[i + k];
   	return this;
   }
   _.argumentList = function() {
@@ -771,6 +785,8 @@ var Element = P(function(_) {
   		} else
   			output.push(this.focusableItems[i].toString());
   	}
+  	for(var k = 0; k < this.savedProperties.length; k++) 
+  		output.push(this[this.savedProperties[k]]);
   	return output;
   }
   _.toString = function() {

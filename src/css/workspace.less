@@ -62,9 +62,35 @@ div.sc_element_container {
             width: 1%;
             padding: 5px;
             border-radius: 5px;
+            cursor: pointer;
             background-color: #efefef;
-            div {
+            &:hover {
+              background-color: #dddddd;
+            }
+            & > div, div.answer {
               float: right;
+            }
+            & > table {
+              td, td .mq-math-mode, td .mq-math-mode .mq-editable-field {
+                cursor: pointer;
+                .mq-unit {
+                  cursor: text;
+                  &:hover {
+                    border: 1px solid #888888;
+                  }
+                }
+              }
+              width: 100%;
+              border: 0px;
+              padding: 0px;
+              margin: 0px;
+              td.answer_menu {
+                color: #bfbfbf;
+                width: 1%;
+                span {
+                  padding-left: 6px;
+                }
+              }
             }
             &.warn {
               background-color: #FFFFD6
@@ -72,11 +98,66 @@ div.sc_element_container {
             &.error {
               width: 65%;
               font-size: 11px;
-              background-color: #FFD6D6
+              cursor: default;
+              background-color: #FFD6D6;
+              & > table {
+                td, td .mq-math-mode, td .mq-math-mode .mq-editable-field {
+                  cursor: default;
+                }
+              }
+              &:hover {
+                background-color: #FFD6D6;
+              }
             }
             &.calculating {
               color: #bbbbbb;
               background-color: #f6f6f6;
+              & > table {
+                td, td .mq-math-mode, td .mq-math-mode .mq-editable-field {
+                  cursor: default;
+                  .mq-unit {
+                    cursor: default;
+                    &:hover {
+                      border: 1px solid #f6f6f6;
+                    }
+                  }
+                }
+                td.answer_menu {
+                  color: #f6f6f6;
+                }
+              }
+              &:hover {
+                background-color: #f6f6f6;
+              }
+            }
+            &.unit_input {
+              white-space: nowrap;
+              background-color: #aaffff;
+              & > table {
+                td, td .mq-math-mode, td .mq-math-mode .mq-editable-field {
+                  .mq-root-block {
+                    width: auto;
+                  }
+                  .mq-unit {
+                    cursor: default;
+                    &:hover {
+                      border: 1px solid #aaffff;
+                    }
+                  }
+                  .sc_math .mq-unit {
+                    cursor: text;
+                    &:hover {
+                      border: 1px solid #000000;
+                    }
+                  }
+                }
+                td.answer_menu {
+                  color: #aaffff;
+                }
+              }
+              &:hover {
+                background-color: #aaffff;
+              }
             }
             div.warning {
               text-align: right;

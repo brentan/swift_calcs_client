@@ -148,6 +148,11 @@ Workspace.open(function(_) {
     var mouseDown = function(e) {
     	if (e.which !== 1) return;
     	_this.mousedown = true;
+      if($(e.target).closest('.mq-popup').length) {
+        // Ignore mouse events for clicks on popup menu, those are handled elsewhere
+        e.preventDefault();
+        return;
+      }
     	// First handle mousedown.  This just sets the listeners for dragging and mouseup.  
     	var selected_target = $(e.target).closest('.' + css_prefix + 'selected');
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
@@ -204,13 +209,33 @@ Workspace.open(function(_) {
 		    	new_target = Element.byId[$(e_up.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
 		    	if(!new_target) new_target = _this.ends[R]; 
 		    	target = new_target;
+          mousemoveup(e_up, 'mouseUp');
 		      new_target.focus();
 		      new_target.mouseDown(e_up);
-		    	mousemoveup(e_up, 'mouseUp');
 		    }
     		function drag_done_handler(el, into, dir) {
 		  		// Begin moving the selected elements to the new target
 		  		_this.clearSelection(true);
+          var eval_target = false;
+          if(_this.selection.length > 0) {
+            var full_eval = false;
+            for(var i = 0; i < _this.selection.length; i++) {
+              if(_this.selection[i].fullEvaluation) { full_eval = true; break; }
+            }
+            if(full_eval) {
+              var top_move = _this.selection[0].firstGenAncestor();
+              var target = el.firstGenAncestor();
+              var moving_up = false;
+              for(var temp_el = top_move[L]; temp_el instanceof Element; temp_el = temp_el[L]) {
+                if(temp_el.id === target.id) { moving_up = true; break; }
+              }
+              if(!moving_up) {
+                // Because we are moving downwards, we need to recompute from the original location
+                var eval_target = _this.selection[_this.selection.length - 1].firstGenAncestor()[R];
+              }
+            }
+          }
+
 		  		if(dir === R) _this.selection.reverse();
 		  		var active_elements = $();
 		  		for(var i = 0; i < _this.selection.length; i++) {
@@ -218,6 +243,10 @@ Workspace.open(function(_) {
 		  			active_elements = active_elements.add(_this.selection[i].jQ);
 		  		}
 		  		if(dir === R) _this.selection.reverse();
+          if(eval_target)
+            eval_target.evaluate(true,true);
+          for(var i = 0; i < _this.selection.length; i++) 
+            _this.selection[i].evaluate(true); // Evaluate the moved blocks
 		  		_this.createSelection(active_elements);
 		  		_this.focus();
     		}
