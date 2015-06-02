@@ -52,7 +52,7 @@ var receiveMessage = function(command) {
 		Module.caseval('unarchive("' + command.previous_scope + '")');
   // Iterate over the command list
 	for(ii = 0; ii < command.commands.length; ii++) {
-		var to_send = command.commands[ii].trim();
+		var to_send = command.commands[ii].command.trim();
 		warnings.push([]);
     // If the command is simply a variable name (or object.property transformed to object__property), 
     // and this command is in our global constants array, output its toString value directly
@@ -71,18 +71,20 @@ var receiveMessage = function(command) {
     // Otherwise, lets use giac for our evaluation. 
     // Is this an expression that is setting the value of a variable?  If not, we add some simplification, unit converstion, and set output to latex
 		if(to_send.indexOf(":=") === -1) {
-      // if to_send has 'convert' in it, we are already dealing with units, so don't do a usimplify, as that will override
-      if(to_send.indexOf('convert(') === -1) 
-        output.push({ success: true, returned: Module.caseval('latex(simplify(usimplify(' + to_send + ')))') });
-      else {
-        output.push({ success: true, returned: Module.caseval('latex(simplify(' + to_send + '))') });
+      // if to_send has units associated with it, we attempt to convert to that unit.  On failure, we revert to auto unit handling
+      if(command.commands[ii].unit) {
+        output.push({ success: true, returned: Module.caseval('latex(simplify(convert(' + to_send + ',' + command.commands[ii].unit + ')))') });
         if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
           // Perhaps the auto-unit conversion messed this up...remove it
           // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...
-          output[ii] = { success: true, returned: Module.caseval('latex(simplify(usimplify(' + to_send.replace('convert(','').replace(/,[^,]*$/,'') + ')))') };
           errors[ii] = null;
+          warnings[ii] = [];
+          output[ii] = { success: true, returned: Module.caseval('latex(simplify(usimplify(' + to_send + ')))') };
+          if(!errors[ii] && (output[ii].returned.indexOf('Incompatible units') === -1))
+            warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit.replace(/_/g,''));  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
         } 
-      }
+      } else 
+        output.push({ success: true, returned: Module.caseval('latex(simplify(usimplify(' + to_send + ')))') });
       // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
 			if(errors[ii])
 				output[ii] = { success: true, returned: Module.caseval(to_send) }

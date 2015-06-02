@@ -59,20 +59,16 @@ var math = P(EditableBlock, function(_, super_) {
 					_this.was_scoped = true;
 					_this.fullEvaluation = true;
 				}	else if(_this.was_scoped) {
-					if(_this.expectedUnits)
-						to_compute = 'convert(' + to_compute + ',' + _this.expectedUnits + ')';
 					_this.scoped = false;
 					_this.was_scoped = false;
 					_this.fullEvaluation = true;
 				} else {
-					if(_this.expectedUnits)
-						to_compute = 'convert(' + to_compute + ',' + _this.expectedUnits + ')';
 					_this.scoped = false;
 					_this.fullEvaluation = false;
 					if(to_compute.trim() === '')
 						_this.needsEvaluation = false;
 				}
-				_this.commands = [to_compute];
+				_this.commands = [{command: to_compute, unit: _this.expectedUnits}];
 				_this.evaluate();
 				_this.needsEvaluation = false;
 			}

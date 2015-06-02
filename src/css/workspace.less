@@ -93,7 +93,10 @@ div.sc_element_container {
               }
             }
             &.warn {
-              background-color: #FFFFD6
+              background-color: #FFFFD6;
+              &:hover {
+                background-color: #FFFFA6;
+              }
             }
             &.error {
               width: 65%;
@@ -104,9 +107,6 @@ div.sc_element_container {
                 td, td .mq-math-mode, td .mq-math-mode .mq-editable-field {
                   cursor: default;
                 }
-              }
-              &:hover {
-                background-color: #FFD6D6;
               }
             }
             &.calculating {
@@ -125,9 +125,6 @@ div.sc_element_container {
                 td.answer_menu {
                   color: #f6f6f6;
                 }
-              }
-              &:hover {
-                background-color: #f6f6f6;
               }
             }
             &.unit_input {

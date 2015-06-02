@@ -442,7 +442,7 @@ var Element = P(function(_) {
 				else
 					this.childrenEvaluated(evaluation_id);
 			} else {
-				if((this.commands.length === 0) || (this.commands.join('').trim() === '')) // Nothing to evaluate...
+				if((this.commands.length === 0) || ($.map(this.commands, function(val) { return val.command; }).join('').trim() === '')) // Nothing to evaluate...
 					this.evaluateNext(evaluation_id, move_to_next)
 				else
 					giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
