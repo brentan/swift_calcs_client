@@ -759,21 +759,27 @@ var Element = P(function(_) {
   		this.toParse = args;
   		return this;
   	}
+  	for(var k = 0; k < this.savedProperties.length; k++) {
+  		if(args[k].match(/^[+-]?(?:\d*\.)?\d+$/)) args[i+k] = 1.0 * args[k];
+  		if(args[k] === "false") args[k] = false;
+  		if(args[k] === "true") args[k] = true;
+  		this[this.savedProperties[k]] = args[k];
+  	}
   	for(var i = 0; i < this.focusableItems.length; i++) {
   		if(this.focusableItems[i] === -1) {
   			// We are at the children.  We simply parse this and the resultant blocks become my children
-  			var blocks = parse(args[i]);
+  			var blocks = parse(args[i + k]);
   			for(var j=0; j < blocks.length; j++)
   				blocks[j].appendTo(this);
   		} else 
-  			this.focusableItems[i].clear().paste(args[i]);
+  			this.focusableItems[i].clear().paste(args[i + k]);
   	}
-  	for(var k = 0; k < this.savedProperties.length; k++) 
-  		this[this.savedProperties[k]] = args[i + k];
   	return this;
   }
   _.argumentList = function() {
   	var output = [];
+  	for(var k = 0; k < this.savedProperties.length; k++) 
+  		output.push(this[this.savedProperties[k]]);
   	for(var i = 0; i < this.focusableItems.length; i++) {
   		if(this.focusableItems[i] === -1) {
   			//We need to zip up the children
@@ -785,8 +791,6 @@ var Element = P(function(_) {
   		} else
   			output.push(this.focusableItems[i].toString());
   	}
-  	for(var k = 0; k < this.savedProperties.length; k++) 
-  		output.push(this[this.savedProperties[k]]);
   	return output;
   }
   _.toString = function() {

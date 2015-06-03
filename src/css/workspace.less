@@ -66,6 +66,7 @@ div.sc_element_container {
             background-color: #efefef;
             &:hover {
               background-color: #dddddd;
+              div.pulldown { display: block; }
             }
             & > div, div.answer {
               float: right;
@@ -85,6 +86,7 @@ div.sc_element_container {
               padding: 0px;
               margin: 0px;
               td.answer_menu {
+                position: relative;
                 color: #bfbfbf;
                 width: 1%;
                 span {
@@ -92,13 +94,43 @@ div.sc_element_container {
                 }
               }
             }
+            div.pulldown {
+              display: none;
+              position: absolute;
+              top: 0px;
+              right: -5px;
+              background-color: white;
+              border: 1px solid #dddddd;
+              border-radius: 5px;
+              border-top-right-radius: 0px;
+              z-index: 99;
+              div.pulldown_item {
+                white-space: nowrap;
+                font-size: 11px;
+                color: #555555;
+                cursor: pointer;
+                padding: 2px;
+                margin: 0px;
+                border-width: 0px;
+                text-align: left;
+                &:hover {
+                  color: #222222;
+                  background-color: #efefef;
+                }
+              }
+            }
+            &.hide_pulldown {
+              div.pulldown { display: none; }
+            }
             &.warn {
               background-color: #FFFFD6;
+              div.pulldown { border-color: #FFFFA6; }
               &:hover {
                 background-color: #FFFFA6;
               }
             }
             &.error {
+              div.pulldown { display: none; }
               width: 65%;
               font-size: 11px;
               cursor: default;
@@ -110,6 +142,7 @@ div.sc_element_container {
               }
             }
             &.calculating {
+              div.pulldown { display: none; }
               color: #bbbbbb;
               background-color: #f6f6f6;
               & > table {
@@ -128,6 +161,7 @@ div.sc_element_container {
               }
             }
             &.unit_input {
+              div.pulldown { display: none; }
               white-space: nowrap;
               background-color: #aaffff;
               & > table {

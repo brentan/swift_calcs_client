@@ -5,8 +5,11 @@ var math = P(EditableBlock, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
 	_.unitMode = false;
-	_.savedProperties = ['expectedUnits'];
+	_.savedProperties = ['expectedUnits','approx','factor_expand'];
 	_.expectedUnits = false;
+	_.approx = false;
+	_.factor_expand = false;
+	_.answerLatex = '';
 
 	_.init = function(latex) {
 		super_.init.call(this);
@@ -68,7 +71,7 @@ var math = P(EditableBlock, function(_, super_) {
 					if(to_compute.trim() === '')
 						_this.needsEvaluation = false;
 				}
-				_this.commands = [{command: to_compute, unit: _this.expectedUnits}];
+				_this.commands = [{command: to_compute, unit: _this.workspace.latexToUnit(_this.expectedUnits), approx: _this.approx, simplify: _this.factor_expand}];
 				_this.evaluate();
 				_this.needsEvaluation = false;
 			}
@@ -85,26 +88,60 @@ var math = P(EditableBlock, function(_, super_) {
 				this.outputBox.closest('div.' + css_prefix + 'answer_table').hide(400);
 			} else {
 				this.outputBox.find('div.answer').html('');
-				this.outputBox.find('td.answer_menu').html('<span class="fa fa-toggle-down"></span>');
+				var menu = $('<div></div>').addClass('pulldown');
+				this.outputBox.find('td.answer_menu').html('<span class="fa fa-toggle-down"></span>').append(menu);
 				this.outputBox.removeClass('calculating error warn');
-				this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400, complete: function(_this) { return function() { _this.mathField.reflow(); }; }(this)});
-				var field = MathQuill.MathField(this.outputBox.find('div.answer')[0]);
-				field.latex(result[0].returned.replace(/"/g,''))
+				this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+				var height = this.outputBox.find('div.answer').html(this.workspace.latexToHtml(result[0].returned.replace(/"/g,''))).height();
+				this.answerLatex = result[0].returned.replace(/"/g,'').replace(/^.*\\Longrightarrow \\whitespace/,'');
+				menu.css({top: height + 'px'});
+				// Create the pulldown menu
+				menu.append('<div class="pulldown_item" data-action="copyAnswer"><i class="fa fa-fw"></i>&nbsp; Copy to new line</div>');
+				if(result[0].returned.indexOf('\\Unit') > -1)
+					menu.append('<div class="pulldown_item" data-action="enableUnitMode"><i class="fa fa-fw"></i>&nbsp; Change units</div>');
+				menu.append('<div class="pulldown_item" data-action="toggleApprox"><i class="fa fa-toggle-' + (this.approx ? 'on' : 'off') + ' fa-fw"></i>&nbsp; Approximate mode (1/2 &#8594; 0.5)</div>');
+				var factor = 'off';
+				var expand = 'off';
+				if(this.factor_expand === 'factor') factor = 'on';
+				if(this.factor_expand === 'expand') expand = 'on';
+				menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
+				menu.append('<div class="pulldown_item" data-action="toggleExpand"><i class="fa fa-toggle-' + expand + ' fa-fw"></i>&nbsp; Expand</div>');
 			}
 		} else {
 			giac.errors_encountered = true;
 			this.outputBox.removeClass('calculating warn').addClass('error');
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400, complete: function(_this) { return function() { _this.mathField.reflow(); }; }(this)});
+			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
 			this.outputBox.find('div.answer').html(result[0].returned);
 		}
 		if(result[0].warnings.length > 0) {
 			this.outputBox.removeClass('calculating').addClass('warn');
 			for(var i = 0; i < result[0].warnings.length; i++) 
 				this.outputBox.append('<div class="warning">' + result[0].warnings[i] + '</div>');
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400, complete: function(_this) { return function() { _this.mathField.reflow(); }; }(this)});
+			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
 		}
 		return true;
 	}
+	_.copyAnswer = function() {
+		math().insertAfter(this).show(450).focus(L).write(this.answerLatex);
+	}
+	_.toggleApprox = function() {
+		this.approx = !this.approx;
+		this.needsEvaluation = true;
+		this.submissionHandler(this)(this.mathField);
+	}
+	_.toggleExpand = function() {
+		if(this.factor_expand == 'expand') this.factor_expand = false;
+		else this.factor_expand = 'expand';
+		this.needsEvaluation = true;
+		this.submissionHandler(this)(this.mathField);
+	}
+	_.toggleFactor = function() {
+		if(this.factor_expand == 'factor') this.factor_expand = false;
+		else this.factor_expand = 'factor';
+		this.needsEvaluation = true;
+		this.submissionHandler(this)(this.mathField);
+	}
+
 	_.AppendText = function() {
 		text().insertAfter(this).show().focus(L)
 	}
@@ -124,7 +161,12 @@ var math = P(EditableBlock, function(_, super_) {
 			if(this.outputBox.hasClass('unit_input')) return false;
 			if($el.closest('.mq-unit').length) {
 				this.enableUnitMode();
-			}
+			} else if($el.closest('.pulldown_item').length) 
+				this[$el.closest('.pulldown_item').attr('data-action')]();
+			else
+				this.copyAnswer();
+			this.outputBox.addClass('hide_pulldown');
+			window.setTimeout(function(box) { return function() { box.removeClass('hide_pulldown'); }; }(this.outputBox), 250);
 		} else {
 			if(this.outputBox.hasClass('unit_input')) {
 				this.unitMode = false;
@@ -147,13 +189,15 @@ var math = P(EditableBlock, function(_, super_) {
 		this.unitMode.setUnitMode(true);
 		this.unitMode.focus();
 		this.mathField.hideCursor();
-		this.unitMode.cmd('\\Unit');
+		if(this.expectedUnits)
+			this.unitMode.latex(this.expectedUnits).keystroke('Left',{preventDefault: function() { } });
+		else
+			this.unitMode.cmd('\\Unit');
 		this.outputBox.addClass('unit_input');
 	}
 	_.unitChosen = function(output) {
 		if(!this.unitMode) return;
-		if(output.trim() == '') this.expectedUnits = false;
-		else this.expectedUnits = output;
+		this.expectedUnits = output;
 		this.outputBox.removeClass('unit_input').find(".unit_add").remove();
 		this.unitMode = false;
 		this.needsEvaluation = true;
@@ -172,7 +216,7 @@ var math = P(EditableBlock, function(_, super_) {
 		return this;
 	}
   _.toString = function() {
-  	return '{math}{' + this.argumentList().join('}{') + '}';
+  	return '{math}{{' + this.argumentList().join('}{') + '}}';
   }
 
 	// Callback for math elements notifying that this element has been changed
