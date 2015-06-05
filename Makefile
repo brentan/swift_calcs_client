@@ -17,7 +17,8 @@ SOURCES = \
   $(SRC_DIR)/*.js \
   $(SRC_DIR)/workspace/workspace.js \
   $(SRC_DIR)/workspace/*.js \
-  $(SRC_DIR)/elements/*.js 
+  $(SRC_DIR)/elements/*.js \
+  $(SRC_DIR)/elements/*/*.js 
 
 SOURCES_WORKER = $(SRC_DIR_WORKER)/*.js
 

@@ -88,7 +88,7 @@ var receiveMessage = function(command) {
 		}
     // Otherwise, lets use giac for our evaluation. 
     // Is this an expression that is setting the value of a variable?  If not, we add some simplification, unit converstion, and set output to latex
-		if(to_send.indexOf(":=") === -1) {
+		if(!command.commands[ii].nomarkup && to_send.indexOf(":=") === -1) {
       // if to_send has units associated with it, we attempt to convert to that unit.  On failure, we revert to auto unit handling
       var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : 'simplify';
       if(command.commands[ii].approx)
@@ -111,8 +111,14 @@ var receiveMessage = function(command) {
       // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
 			if(errors[ii])
 				output[ii] = { success: true, returned: Module.caseval(to_send) }
-		} else
+		} else {
+      // Test for setting i
+      if(to_send.match(/^[ ]*i[ ]*:=.*$/)) {
+        output[ii] = {success: false, returned: 'variable name <i>i</i> is protected and defined as sqrt(-1)', warnings: []}
+        continue;
+      }
 			output.push({ success: true, returned: Module.caseval(to_send) });
+    }
     // Work through the warnings.  If any are present and suggesting a different input, lets evaluate that instead
 		for(var j = 0; j < warnings[ii].length; j++) {
 			if(warnings[ii][j].indexOf('Perhaps you meant') > -1) {

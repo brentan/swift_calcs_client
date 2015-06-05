@@ -28,6 +28,7 @@ var Element = P(function(_) {
 	_.warn = false;
 	_.klass = [];
 	_.mark_for_deletion = false;
+	_.suppress_output = false; // Also will suppress children output.  Will not suppress warnings/errors
 	_.depth = 0;
 	_.blurred = true;
 	_.toParse = false;
@@ -452,11 +453,21 @@ var Element = P(function(_) {
 		this.jQ.removeClass(css_prefix + 'greyout');
 		return true;
 	}
+	_.allowOutput = function() {
+		for(var el = this; el instanceof Element; el = el.parent)
+			if(el.suppress_output) return false;
+		return true;
+	}
+	_.addSpinner = function() {
+		if(this.allowOutput()) {
+			this.leftJQ.find('i').remove();
+			this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>');
+		}
+	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.leftJQ.find('i').remove();
-			this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>');
+			this.addSpinner();
 			if(this.hasChildren) {
 				this.move_to_next = move_to_next;
 				if(this.ends[L])
@@ -865,6 +876,12 @@ var LogicBlock = P(Element, function(_, super_) {
 var LogicCommand = P(Element, function(_, super_) {
 	_.klass = ['logic_command'];
 	_.logicResult = false;
+	_.init = function() {
+		super_.init.call(this);
+	}
+});
+// Loops are things like for loops or while loops that use flow control statements such as 'continue' or 'break'
+var Loop = P(Element, function(_, super_) {
 	_.init = function() {
 		super_.init.call(this);
 	}

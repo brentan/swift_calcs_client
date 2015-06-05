@@ -10,8 +10,6 @@ var if_block = P(LogicBlock, function(_, super_) {
 	_.lineNumber = true;
 	_.outputBox = 0;
 
-	// BRENTAN: ELSE BLOCK SHOULD BE SCOPED AS WELL, BUT SCOPE IS BEFORE CALCULATION OF THE FOLLOWING ITEMS! 
-
 	_.init = function(latex) {
 		super_.init.call(this);
 		this.latex = latex || '';
@@ -60,8 +58,7 @@ var if_block = P(LogicBlock, function(_, super_) {
 				el.jQ.addClass(css_prefix + 'greyout');
 		}
 		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.leftJQ.find('i').remove();
-			this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>');
+			this.addSpinner();
 			this.move_to_next = move_to_next;
 			giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
 		} else 

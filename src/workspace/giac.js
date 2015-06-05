@@ -22,7 +22,7 @@ var GiacHandler = P(function(_) {
 		this.evaluations[eval_id] = el.firstGenAncestor().id;
 		if(!this.giac_ready) return this; // Don't update status bar until computation is complete!
 		startProgress();
-		if(this.evaluation_full[eval_id]) {
+		if(this.evaluation_full[eval_id] && (el.depth == 0)) {
 			var total = el.workspace.insertJQ.children('.' + css_prefix + 'element').length;
 			var me = 0;
 			for(var ell = el[L]; ell instanceof Element; ell = ell[L])
@@ -43,6 +43,8 @@ var GiacHandler = P(function(_) {
 		var to_cancel = this.current_evaluations();
 		for(var i = 0; i < to_cancel.length; i++)
 			this.cancelEvaluation(to_cancel[i]); 
+		setError('Computation was aborted by the user.');
+		SwiftCalcs.active_workspace.jQ.find('i.fa-spinner').remove();
 		return this;
 	}
 	_.evaluationComplete = function(eval_id) {

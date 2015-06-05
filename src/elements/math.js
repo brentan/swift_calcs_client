@@ -98,9 +98,8 @@ var math = P(EditableBlock, function(_, super_) {
 		if(result[0].success) {
 			if((this.scoped) || (result[0].returned.trim() === '')) {
 				this.outputBox.find('div.answer').html('');
-				// BRENTAN: Should also check if this is the child of an element that suppresses output (like a loop)?
 				this.outputBox.closest('div.' + css_prefix + 'answer_table').hide(400);
-			} else {
+			} else if(this.allowOutput()) {
 				this.outputBox.find('div.answer').html('');
 				var menu = $('<div></div>').addClass('pulldown');
 				this.outputBox.find('td.answer_menu').html('<span class="fa fa-toggle-down"></span>').append($('<div></div>').addClass('pulldown_holder').append(menu));

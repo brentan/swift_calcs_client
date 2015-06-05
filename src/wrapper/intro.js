@@ -140,9 +140,14 @@ var SwiftCalcs = {};
   }
   var startProgress = function(message) {
     if(status_bar.children('.progress_bar').length > 0) return;
-    message = message || 'Calculating...Please Wait';
+    message = message || 'Calculating... <a href="#"><i>Abort</i></a>';
     status_bar.addClass(css_prefix + 'clear');
     status_bar.html('<div class="progress_bar"></div><div class="message_text"><i class="fa fa-spinner fa-pulse"></i>&nbsp;' + message + '</div>');
+    status_bar.find('a').on('click', function(e) {
+      giac.cancelEvaluations();
+      $(this).html('Aborting...');
+      return false;
+    });
   }
   var progressTimeout = false;
   var setProgress = function(percent) {
