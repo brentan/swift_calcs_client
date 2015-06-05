@@ -4,7 +4,7 @@ var constants = {};
 var user_vars = {};
 // Helper to bind a new object into the constant hash
 var newConstant = function(name, ob) {
-	constants[name] = constants[name.toLowerCase()] = ob;
+	constants[name] = ob;
 }
 // Helper to create an output table.  Will take a 2D array and turn it into latex output
 var toTable = function(data) {
@@ -31,6 +31,22 @@ var latexUnit = function(input) {
 	var number = input.replace(/ .*$/,'');
 	var unit = input.replace(/^.* /,'').replace(/_/g,'');
 	return '\\Unit{' + number + '}{' + unit + '}';
+}
+// return the unique items in an array
+function uniq(a) {
+  var seen = {};
+  var out = [];
+  var len = a.length;
+  var j = 0;
+  for(var i = 0; i < len; i++) {
+    var item = a[i];
+    if(item.indexOf('SWIFTCALCSMETHOD') > -1) continue;
+    if(seen[item] !== 1) {
+      seen[item] = 1;
+      out[j++] = item;
+    }
+  }
+  return out;
 }
 
 var P = (function(prototype, ownProperty, undefined) {

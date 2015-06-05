@@ -23,7 +23,7 @@ var math = P(EditableBlock, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.focusableItems.push(this.mathField);
+		this.focusableItems = [this.mathField];
 		this.mathField.write(this.latex);
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		super_.postInsertHandler.call(this);
@@ -31,24 +31,38 @@ var math = P(EditableBlock, function(_, super_) {
 	}
 	_.enterPressed = function(_this) {
 		return function(mathField) {
-			_this.submissionHandler(_this)(mathField);
-			math().insertAfter(_this).show().focus();
+			var to_compute = mathField.text();
+			if(elements[to_compute.toLowerCase()]) {
+				_this.needsEvaluation = false;
+				elements[to_compute.toLowerCase()]().insertAfter(_this).show().focus(L);
+				_this.remove(0);
+			} else {
+				_this.submissionHandler(_this)(mathField);
+				math().insertAfter(_this).show().focus();
+			}
 		};
 	}
 	_.changeToText = function(to_text) {
 		this.mark_for_deletion = true;
-		if(this[L] instanceof text) {
-			var left = cleanHtml(this[L].toString());
-			var line_break = '<br>';
-			if((to_text == '') && (left.slice(-4).toLowerCase() != '<br>'))
-				line_break = '<br><br>';
-			if((to_text != '') && (left.slice(-4).toLowerCase() == '<br>'))
-				line_break = '';
-			var el = this[L].append(line_break + to_text).focus(R);
-		} else 
-			var el = text(to_text).insertAfter(this).show().focus(R);
-		if ((to_text.length > 0) && !el.textField.magicCommands()) 
-			el.append('&nbsp;').focus(R);
+		if(elements[to_text.toLowerCase()]) {
+			this.needsEvaluation = false;
+			elements[to_text.toLowerCase()]().insertAfter(this).show().focus(L);
+		}
+		else {
+			// Not a specific command, so we turn in to a text box
+			if(this[L] instanceof text) {
+				var left = cleanHtml(this[L].toString());
+				var line_break = '<br>';
+				if((to_text == '') && (left.slice(-4).toLowerCase() != '<br>'))
+					line_break = '<br><br>';
+				if((to_text != '') && (left.slice(-4).toLowerCase() == '<br>'))
+					line_break = '';
+				var el = this[L].append(line_break + to_text).focus(R);
+			} else 
+				var el = text(to_text).insertAfter(this).show().focus(R);
+			if ((to_text.length > 0) && !el.textField.magicCommands()) 
+				el.append('&nbsp;').focus(R);
+		}
 		this.remove(0);
 	}
 	_.was_scoped = false;
@@ -78,7 +92,7 @@ var math = P(EditableBlock, function(_, super_) {
 		};
 	}
 	_.evaluationFinished = function(result) {
-		this.outputBox.removeClass('calculating error warn unit_input');
+		this.outputBox.removeClass('calculating error warn unit_input hide_pulldown');
 		this.outputBox.find('.warning').remove();
 		this.outputBox.find('td.answer_menu').html('');
 		if(result[0].success) {
@@ -89,23 +103,28 @@ var math = P(EditableBlock, function(_, super_) {
 			} else {
 				this.outputBox.find('div.answer').html('');
 				var menu = $('<div></div>').addClass('pulldown');
-				this.outputBox.find('td.answer_menu').html('<span class="fa fa-toggle-down"></span>').append(menu);
+				this.outputBox.find('td.answer_menu').html('<span class="fa fa-toggle-down"></span>').append($('<div></div>').addClass('pulldown_holder').append(menu));
 				this.outputBox.removeClass('calculating error warn');
 				this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
-				var height = this.outputBox.find('div.answer').html(this.workspace.latexToHtml(result[0].returned.replace(/"/g,''))).height();
-				this.answerLatex = result[0].returned.replace(/"/g,'').replace(/^.*\\Longrightarrow \\whitespace/,'');
-				menu.css({top: height + 'px'});
-				// Create the pulldown menu
-				menu.append('<div class="pulldown_item" data-action="copyAnswer"><i class="fa fa-fw"></i>&nbsp; Copy to new line</div>');
-				if(result[0].returned.indexOf('\\Unit') > -1)
-					menu.append('<div class="pulldown_item" data-action="enableUnitMode"><i class="fa fa-fw"></i>&nbsp; Change units</div>');
-				menu.append('<div class="pulldown_item" data-action="toggleApprox"><i class="fa fa-toggle-' + (this.approx ? 'on' : 'off') + ' fa-fw"></i>&nbsp; Approximate mode (1/2 &#8594; 0.5)</div>');
-				var factor = 'off';
-				var expand = 'off';
-				if(this.factor_expand === 'factor') factor = 'on';
-				if(this.factor_expand === 'expand') expand = 'on';
-				menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
-				menu.append('<div class="pulldown_item" data-action="toggleExpand"><i class="fa fa-toggle-' + expand + ' fa-fw"></i>&nbsp; Expand</div>');
+				var height = this.outputBox.find('div.answer').html(this.workspace.latexToHtml(result[0].returned)).height();
+				this.answerLatex = result[0].returned.replace(/^.*\\Longrightarrow \\whitespace/,'');
+				menu.css({top: Math.floor(height/2-9) + 'px'});
+				if(result[0].suppress_pulldown) {
+					menu.remove();
+					this.outputBox.addClass('hide_pulldown');
+				} else {
+					// Create the pulldown menu
+					menu.append('<div class="pulldown_item" data-action="copyAnswer"><i class="fa fa-fw"></i>&nbsp; Copy to new line</div>');
+					if(result[0].returned.indexOf('\\Unit') > -1)
+						menu.append('<div class="pulldown_item" data-action="enableUnitMode"><i class="fa fa-fw"></i>&nbsp; Change units</div>');
+					menu.append('<div class="pulldown_item" data-action="toggleApprox"><i class="fa fa-toggle-' + (this.approx ? 'on' : 'off') + ' fa-fw"></i>&nbsp; Approximate mode (1/2 &#8594; 0.5)</div>');
+					var factor = 'off';
+					var expand = 'off';
+					if(this.factor_expand === 'factor') factor = 'on';
+					if(this.factor_expand === 'expand') expand = 'on';
+					menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
+					menu.append('<div class="pulldown_item" data-action="toggleExpand"><i class="fa fa-toggle-' + expand + ' fa-fw"></i>&nbsp; Expand</div>');
+				}
 			}
 		} else {
 			giac.errors_encountered = true;
@@ -157,7 +176,7 @@ var math = P(EditableBlock, function(_, super_) {
 		super_.mouseClick.call(this,e);
 		// Test for click on answer section
 		var $el = $(e.target);
-		if($el.closest('td.' + css_prefix + 'output_box').length && !this.outputBox.hasClass('calculating') && !this.outputBox.hasClass('error')) {
+		if($el.closest('td.' + css_prefix + 'output_box').length && !this.outputBox.hasClass('calculating') && !this.outputBox.hasClass('error') && !this.outputBox.hasClass('hide_pulldown')) {
 			if(this.outputBox.hasClass('unit_input')) return false;
 			if($el.closest('.mq-unit').length) {
 				this.enableUnitMode();

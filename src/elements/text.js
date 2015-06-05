@@ -11,7 +11,7 @@ var text = P(EditableBlock, function(_, super_) {
   }
   _.postInsertHandler = function() {
     this.textField = new WYSIWYG(this.jQ.find('.' + css_prefix + 'wysiwyg')[0], this, {});
-    this.focusableItems.push(this.textField);
+    this.focusableItems = [this.textField];
     this.textField.html(this.html);
     var _this = this;
     this.textField.$editor.on('click', 'a', function(e) {
@@ -119,6 +119,11 @@ var text = P(EditableBlock, function(_, super_) {
       range.select();
     }
     this.textField.syncCode();
+  }
+  _.changeToMath = function() {
+    this.mark_for_deletion = true;
+    var el = math().insertAfter(this).show().focus(R);
+    this.remove(0);
   }
   _.merge = function() {
     // This assumes that the element to the left is a textelement, and will merge this element into that one, then place the cursor
@@ -467,7 +472,10 @@ var WYSIWYG = P(function(_) {
           // Check if we are in first spot.  If so, delete backwards OR highlight block
           if(t.startPosition()) {
             if((cleanHtml(t.html()) === '') || (cleanHtml(t.html()) === '<br>')) {
-              if(t.el.moveOut(t.el.textField, L)) t.el.remove(0); //Only delete me if I successfully moved into a neighbor
+              if(t.el.moveOut(t.el.textField, L)) 
+                t.el.remove(0); //Only delete me if I successfully moved into a neighbor
+              else
+                t.el.changeToMath(); //Otherwise, turn me into a math block
             } else {
               if(rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed && t.isSelectionInsideElement('li')) {
                 t.$editor.prepend('<span id="temp_span">&#8203;</span>');

@@ -260,10 +260,12 @@ var Element = P(function(_) {
 		if(this.fullEvaluation) {
 			if((this.depth == 0) && this[R]) {
 				var to_eval = this[R];
-				window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
+				if(to_eval.mark_for_deletion) to_eval.fullEvaluation = true;
+				else window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
 			} else if(this.depth > 0) {
 				var to_eval = this.firstGenAncestor();
-				window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
+				if(to_eval.mark_for_deletion) to_eval.fullEvaluation = true;
+				else window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
 			}
 		}
 		if(this[L] !== 0) 
@@ -299,6 +301,8 @@ var Element = P(function(_) {
 			this.jQ.slideDown({duration: duration});
 		else 
 			this.jQ.css('display', '');
+		for(var i = 0; i < this.focusableItems.length; i++) 
+			if((this.focusableItems[i] !== -1) && this.focusableItems[i].reflow) this.focusableItems[i].reflow();
 		return this;
 	}
 	_.hide = function(duration) {
@@ -423,7 +427,7 @@ var Element = P(function(_) {
 			} 
 		} else {
 			// If this is a 'full evaluation', we should find the first generation ancestor and do it there
-			if(fullEvaluation) return this.firstGenAncestor().evaluate();
+			if(fullEvaluation) return this.firstGenAncestor().evaluate(true, true);
 			//this.jQ.stop().css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 			var eval_id = giac.registerEvaluation(false);
 			this.continueEvaluation(eval_id, false);
@@ -431,9 +435,27 @@ var Element = P(function(_) {
 		}
 		return this;
 	}
+	_.shouldBeEvaluated = function(evaluation_id) {
+		if(!this.evaluatable || !giac.shouldEvaluate(evaluation_id)) return false;
+		// Logic Blocks: Make sure I'm not a children of any block that is not currently activated
+		for(var el = this; el instanceof Element; el = el.parent) {
+			if(el.parent instanceof LogicBlock) {
+				for(var el2 = el; el2 instanceof Element; el2 = el2[L]) {
+					if(el2 instanceof LogicCommand) break;
+				}
+				if(el2 instanceof LogicCommand) {
+				 	if(el2.logicResult === false) { this.jQ.addClass(css_prefix + 'greyout'); return false; }
+				} else 
+					if(el.parent.logicResult === false) { this.jQ.addClass(css_prefix + 'greyout'); return false; }
+			}
+		}
+		this.jQ.removeClass(css_prefix + 'greyout');
+		return true;
+	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
-		if(this.evaluatable && giac.shouldEvaluate(evaluation_id)) {
+		if(this.shouldBeEvaluated(evaluation_id)) {
+			this.leftJQ.find('i').remove();
 			this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>');
 			if(this.hasChildren) {
 				this.move_to_next = move_to_next;
@@ -454,7 +476,7 @@ var Element = P(function(_) {
 	// Callback from giac when an evaluation has completed and results are returned
 	_.evaluationCallback = function(evaluation_id, evaluation_callback, move_to_next, results) {
 		if(!giac.shouldEvaluate(evaluation_id)) return;
-		if(this[evaluation_callback](results)) 
+		if(this[evaluation_callback](results, evaluation_id, move_to_next)) 
 			this.evaluateNext(evaluation_id, move_to_next);
 	}
 
@@ -491,7 +513,7 @@ var Element = P(function(_) {
 		var el = this;
 		while(el instanceof Element) {
 			if((el !== this) && el.hasChildren && el.ends[R]) el = el.ends[R]
-			else if(el[L]) el = el[L];
+			else if(el[L] && !(el[L] instanceof LogicCommand)) el = el[L];
 			else {
 				for(el = el.parent; el instanceof Element; el = el.parent) {
 					if(el[L]) { el = el[L]; break; }
@@ -620,14 +642,14 @@ var Element = P(function(_) {
 			}
 			// At this point, we jump to parent and look for next focusable item. Is there a parent?
 			if(this.depth === 0) return false;
-			return this.parent.moveOut(-1, dir);
+			return this.parent.focus().moveOut(-1, dir, x_location);
 		} else if(this.focusableItems[i + dir] !== -1) {
 			this.focusableItems[i + dir].focus(x_location ? x_location : -dir);
 			return true;
 		} else {
 			//We reached the children, we need to jump in.  If there are no children, we add an implicit block //BRENTAN: Check at some point to override what is the 'implicit' block for each type?
-			if(this.ends[dir] && this.ends[dir].moveInFrom(dir, x_location)) return true;
-			else if(this.ends[dir] === 0) {
+			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir, x_location)) return true;
+			else if(this.ends[-dir] === 0) {
 				math().appendTo(this).show().focus().setImplicit();
 				return true;
 			}
@@ -673,18 +695,20 @@ var Element = P(function(_) {
 			return this.scrollToMe(dir);
 	}
 	_.scrollToMe = function(dir) {
-		var top = this.jQ.position().top;
-		var bottom = top + this.jQ.height();
-		var to_move_top = Math.min(0, top);
-		var to_move_bot = Math.max(0, bottom - this.workspace.jQ.height()+20);
-		if(dir === R)
-			this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_bot);
-		else if(dir === L)
-			this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top);
-		else if((to_move_bot > 0) && (to_move_top < 0)) 
+		if(this.jQ) {
+			var top = this.jQ.position().top;
+			var bottom = top + this.jQ.height();
+			var to_move_top = Math.min(0, top);
+			var to_move_bot = Math.max(0, bottom - this.workspace.jQ.height()+20);
+			if(dir === R)
+				this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_bot);
+			else if(dir === L)
 				this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top);
-		else
-			this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
+			else if((to_move_bot > 0) && (to_move_top < 0)) 
+					this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top);
+			else
+				this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
+		}
 		return this;
 	}
 	_.blur = function() {
@@ -712,6 +736,13 @@ var Element = P(function(_) {
 	}
 	_.clearFocusedItem = function(ob) {
 		if(this.focusedItem === ob) this.focusedItem = 0;  
+	}
+	// Autocomplete helpers.  Overwrite if the autocomplete in this element should not populate
+	_.autocomplete = function() {
+		return giac.variable_list;
+	}
+	_.autocompleteObject = function(name) {
+		return giac.object_list[name];
 	}
 	/* 
 	 Keyboard events.  Will forward the event to whatever item is focusable.  The focusable item should respond to:
@@ -770,7 +801,7 @@ var Element = P(function(_) {
   			// We are at the children.  We simply parse this and the resultant blocks become my children
   			var blocks = parse(args[i + k]);
   			for(var j=0; j < blocks.length; j++)
-  				blocks[j].appendTo(this);
+  				blocks[j].appendTo(this).show(0);
   		} else 
   			this.focusableItems[i].clear().paste(args[i + k]);
   	}
@@ -799,19 +830,41 @@ var Element = P(function(_) {
 
 	// Debug.  Print entire workspace tree
 	_.printTree = function() {
-		var out = '';
+		var out = '<li>' + this.id;
 		if(this.children().length > 0) {
+			out += '<ul>';
 			$.each(this.children(), function(i, child) {
 				out += child.printTree();
 			});
+			out += '</ul>';
 		} 
-		return out;
+		return out + '</li>';
 	}
 });
 
 // EditableBlock is a special element that means we dont need to add implicit math blocks before/after it when traversing with the keyboard or mouse hovering near its top/bottom
 // By definition they only have 1 focusable item.  
 var EditableBlock = P(Element, function(_, super_) {
+	_.init = function() {
+		super_.init.call(this);
+	}
+});
+
+// Logic Blocks are special blocks: They may not evaluate all their children, based on some test criteria.  
+// A logic Block will have a 'logicResult' property, that defines whether children should be evaluated up to the first
+// child of type LogicCommand.  LogicCommand has a property 'logicResult' that defines whether its following siblings
+// should be evaluated, up to the next LogicCommand, and so on.
+// LogicBlock is responsible for setting its logicResult property, and the property of all of its child LogicCommands, 
+// before the children are executed.
+var LogicBlock = P(Element, function(_, super_) {
+	_.logicResult = false;
+	_.init = function() {
+		super_.init.call(this);
+	}
+});
+var LogicCommand = P(Element, function(_, super_) {
+	_.klass = ['logic_command'];
+	_.logicResult = false;
 	_.init = function() {
 		super_.init.call(this);
 	}

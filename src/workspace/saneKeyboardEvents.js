@@ -219,8 +219,11 @@ var saneKeyboardEvents = (function() {
       handlers.pasting = true;
       if(e.clipboardData && e.clipboardData.getData) {
         var text = e.clipboardData.getData('text/plain');
+        var html = e.clipboardData.getData('text/html');
         textarea.val(text);
-        richarea.focus();
+        richarea.html(html);
+        e.stopPropagation();
+        e.preventDefault();
         window.setTimeout(pastedText,100);
       } else if(window.clipboardData) {
         //IE
@@ -229,6 +232,7 @@ var saneKeyboardEvents = (function() {
         richarea.focus();
         window.setTimeout(pastedText);
       } else {
+        textarea.val('');
         textarea.focus(); // Ignore HTML in these cases
         window.setTimeout(pastedText);
       }

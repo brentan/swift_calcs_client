@@ -4,8 +4,8 @@ var eval_function = function(var_name) {
   If we do, return its value as a string (and add units if you want)
   and if we dont, return an empty string ''
   */
-  var ob = var_name.replace(/__.*$/,'');
-  var method = var_name.replace(/^.*__/,'');
+  var ob = var_name.replace(/SWIFTCALCSMETHOD.*$/,'');
+  var method = var_name.replace(/^.*SWIFTCALCSMETHOD/,'');
   var out = '';
   if(constants[ob]) {
   	var out = constants[ob][method];
@@ -39,6 +39,24 @@ var errors = [];
 var warnings = [];
 var ii = 0;
 var receiveMessage = function(command) {
+  if(command.varList) {
+    // If we are asking for the variable list, we simply get that list and return it immediately
+    var vars = Module.caseval('VARS').slice(1,-1).split(',');
+    if((vars.length == 1) && (vars[0] == '')) vars = [];
+    var uvars = vars.slice(0);
+    var objects = {};
+    for(var key in constants) {// BRENTAN: Maybe change later to 'user_vars' if the constants list grows too large?
+      vars.push(key);
+      vars.push(key + '.');
+      objects[key] = {propertyList:constants[key].propertyList, methodList: constants[key].methodList};
+    }
+    for(var key in user_vars) {
+      uvars.push(key);
+    }
+    vars = uniq(vars).sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+    uvars = uniq(uvars).sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+    return sendMessage({command: 'varList', userVarList: uvars, totalVarList: vars, objects: objects})
+  }
   // If we are starting a new evaluation, restart giac to reset everything
 	if(command.restart)
 		Module.caseval('restart');
@@ -57,7 +75,7 @@ var receiveMessage = function(command) {
     // If the command is simply a variable name (or object.property transformed to object__property), 
     // and this command is in our global constants array, output its toString value directly
 		if(to_send.match(/^[a-z][a-z0-9_]*$/i) && constants[to_send]) {
-			output[ii] = {success: true, returned: constants[to_send].toString(), warnings: []};
+			output[ii] = {success: true, returned: constants[to_send].toString(), warnings: [], suppress_pulldown: true};
 			continue;
 		}
     // If we are setting an object into a new variable, we do this directly through the 'clone' method.
@@ -124,7 +142,10 @@ var receiveMessage = function(command) {
 	if(command.scoped)
 		Module.caseval('archive("' + command.next_scope + '")');
   // Return the result to the window thread
-	sendMessage({command: 'results', results: output, eval_id: command.eval_id, move_to_next: command.move_to_next, callback_id: command.callback_id, callback_function: command.callback_function});
+  if(command.variable)
+    sendMessage({command: 'variable', results: output, callback_id: command.callback_id})
+  else
+	  sendMessage({command: 'results', results: output, eval_id: command.eval_id, move_to_next: command.move_to_next, callback_id: command.callback_id, callback_function: command.callback_function});
 }
 this.addEventListener("message", function (evt) {
   receiveMessage(JSON.parse(evt.data));

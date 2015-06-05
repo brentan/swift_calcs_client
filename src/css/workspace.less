@@ -54,9 +54,11 @@ div.sc_element_container {
             color: #cccccc;
             font-size: 16px;
             font-family: monospace;
-            position: relative;
-            left: -5px;
-            top: 1px;
+            div {
+              position: relative;
+              left: -5px;
+              top: 1px;
+            }
           }
           &.sc_output_box {
             width: 1%;
@@ -86,13 +88,15 @@ div.sc_element_container {
               padding: 0px;
               margin: 0px;
               td.answer_menu {
-                position: relative;
                 color: #bfbfbf;
                 width: 1%;
                 span {
                   padding-left: 6px;
                 }
               }
+            }
+            div.pulldown_holder {
+              position: relative;
             }
             div.pulldown {
               display: none;
@@ -121,6 +125,23 @@ div.sc_element_container {
             }
             &.hide_pulldown {
               div.pulldown { display: none; }
+              & > table {
+                td, td .mq-math-mode, td .mq-math-mode .mq-editable-field {
+                  cursor: default;
+                  .mq-unit {
+                    cursor: default;
+                    &:hover {
+                      border: 1px solid #efefef;
+                    }
+                  }
+                }
+                td.answer_menu {
+                  color: #efefef;
+                }
+              }
+              &:hover {
+                background-color: #efefef;
+              }
             }
             &.warn {
               background-color: #FFFFD6;
@@ -200,13 +221,23 @@ div.sc_element_container {
         }
       }
     }
+    &.sc_greyout {
+      color: #afafaf;
+      .mq-math-mode.mq-editable-field.mq-focused {
+        color: black;
+      }
+    }
+    &.sc_logic_block > table > tbody > tr > td > div.sc_insert > div.sc_logic_command {
+      position: relative;
+      left: -52px;
+    }
   }
   & > .sc_element {
     padding-right: 30px;
   }
   .sc_math {
     cursor: text;
-    &.mq-math-mode.mq-editable-field {
+    &.sc_input.mq-math-mode.mq-editable-field {
       border-width: 0px;
     }
   }

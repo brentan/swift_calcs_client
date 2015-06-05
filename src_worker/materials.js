@@ -6,7 +6,9 @@ var Material = P(function(_) {
 	_.rho = 0;
 	_.k = 0;
 	_.name = '';
-	_.methodList = ['E','rho','k','density','modulus','thermalConductivity'];
+	// Property list and method list are used for autocomplete
+	_.propertyList = ['density','modulus','thermalConductivity'];
+	_.methodList = [];
 
 	_.init = function(data) {
 		this.E = data.modulus;

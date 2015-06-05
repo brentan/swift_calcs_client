@@ -56,10 +56,10 @@ var SwiftCalcs = {};
     else
       klass = '';
     return '<div class="' + css_prefix + 'answer_table' + klass + '"><table class="' + css_prefix + 'answer_table"><tbody><tr>'
-        + '<td class="' + css_prefix + 'answer_table_1t"></td>'
-        + '<td rowspan=2 class="' + css_prefix + 'answer_table_2">&gt;</td>'
+        + '<td class="' + css_prefix + 'answer_table_1t">&nbsp;</td>'
+        + '<td rowspan=2 class="' + css_prefix + 'answer_table_2"><div>&gt;</div></td>'
         + '<td rowspan=2 class="' + css_prefix + 'output_box"><table><tbody><tr><td><div class="answer"></div></td><td class="answer_menu"></td></tr></tbody></table></td></tr>'
-        + '<tr><td class="' + css_prefix + 'answer_table_2b"></td></tr></tbody></table></div>';
+        + '<tr><td class="' + css_prefix + 'answer_table_2b">&nbsp;</td></tr></tbody></table></div>';
   }
 
   // This function will attach a math editable field by looking for a field with the provided class name (if provided)
@@ -71,6 +71,10 @@ var SwiftCalcs = {};
   		klass = '';
   	var defaultOptions = {handlers: {
   		deleteOutOf: function(dir, mathField) {
+        if((_this instanceof LogicBlock) || (_this instanceof LogicCommand)) {
+          _this.workspace.selectDir(_this,dir);
+          return;
+        }
   			if(!(_this instanceof EditableBlock)) return; //I can only delete out of editable blocks
   			if(mathField.text() !== '') {
   				if(elementType(_this) && (elementType(_this) == elementType(_this[dir]))) {
@@ -178,6 +182,14 @@ var SwiftCalcs = {};
     status_bar.html(err);
   }
 
+  var parseLogicResult = function(result) {
+    result = result.trim();
+    if(result == 'false') return false;
+    if(result == 'true') return true;
+    if(result.match(/^[0-9\.]+$/)) 
+      return ((result * 1) != 0);
+    return false;
+  }
     
   var P = (function(prototype, ownProperty, undefined) {
     // helper functions that also help minification

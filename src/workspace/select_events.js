@@ -158,5 +158,6 @@ Workspace.open(function(_) {
     for(var i=0; i < this.selection.length; i++)
     	output += this.selection[i].toString() + '\n';
     this.clipboard = output;
+    this.selectFn(output);
   };
 });

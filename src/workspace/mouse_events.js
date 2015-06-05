@@ -90,6 +90,7 @@ Workspace.open(function(_) {
 			dragOverWorkspace(e_drag);
 		}
 		function dragStart(e_drag) {
+      e_drag.originalEvent.dataTransfer.setData("text/plain", "Draggable Element");
     	// We started a drag, so remove mouesup listener as we dont want it firing
       $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
       // Bind new handlers
