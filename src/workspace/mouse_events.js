@@ -208,7 +208,8 @@ Workspace.open(function(_) {
 		    	// Handle full click events as mousedown and then mouseup
 		      _this.clearSelection();
 		    	new_target = Element.byId[$(e_up.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-		    	if(!new_target) new_target = _this.ends[R]; 
+		    	if(!new_target) 
+            new_target = _this.ends[R];
 		    	target = new_target;
           mousemoveup(e_up, 'mouseUp');
 		      new_target.focus();
@@ -269,7 +270,15 @@ Workspace.open(function(_) {
 	      function mouseup(e) {
     			_this.mousedown = false;
 	      	new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-	      	if(!new_target) new_target = _this.ends[R]; 
+          if(!new_target) {
+            if((target !== _this.ends[R]) || (_this.ends[R] instanceof EditableBlock))
+              new_target = _this.ends[R];
+            else {
+              new_target = math().insertAfter(_this.ends[R]).show().setImplicit();
+              new_target.start_target = -1; // Fake a 'mousedown' event on the element
+              target = new_target;
+            }
+          }
 	      	mousemoveup(e, 'mouseUp');
 	        // delete the mouse handlers now that we're not dragging anymore
 	        _this.jQ.unbind('mousemove', mousemove);

@@ -9,6 +9,14 @@ var plot = P(Element, function(_, super_) {
 	_.klass = ['plot'];
 	_.evaluatable = true;
 	_.plot = false;
+	_.savedProperties = ['x_min','x_max'];
+	_.x_min_val = -5;
+	_.x_max_val = 5;
+	_.x_min = '-5';
+	_.x_max = '5';
+	_.xminField = 0;
+	_.xmaxField = 0;
+	_.attached = false;
 
 	_.init = function() {
 		super_.init.call(this);
@@ -16,12 +24,28 @@ var plot = P(Element, function(_, super_) {
 		this.subplots = [];
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'code">plot</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'plot_box"></div>';
+		return '<div class="' + css_prefix + 'top"><span class="' + css_prefix + 'code">plot</span>x<sub>min</sub>:&nbsp;'
+			+ mathSpan('x_min')
+			+ '&nbsp;x<sub>max</sub>:&nbsp;'
+			+ mathSpan('x_max') + '<BR>'  + answerSpan()
+			+ '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'plot_box"></div>';
 	}
 	_.postInsertHandler = function() {
+		this.xminField = registerMath(this, 'x_min', { handlers: {
+			enter: this.enterPressed(this),
+			blur: this.submissionHandler(this)
+		}});
+		this.xmaxField = registerMath(this, 'x_max', { handlers: {
+			enter: this.enterPressed(this),
+			blur: this.submissionHandler(this)
+		}});
+		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.plotBox = this.jQ.find('.' + css_prefix + 'plot_box');
 		super_.postInsertHandler.call(this);
-		this.focusableItems = [];
+		this.xminField.latex(this.x_min);
+		this.xmaxField.latex(this.x_max);
+		this.focusableItems = [this.xminField, this.xmaxField];
+		this.attached = true;
 		var _this = this;
 		// Add the 'another plot' link
 		$('<div>Add Another Plot</div>').addClass(css_prefix + 'plot_item').addClass(css_prefix + 'plot_add').on('click', function(e) {
@@ -54,7 +78,7 @@ var plot = P(Element, function(_, super_) {
 		else if(dir == R)
 			this.focusableItems[this.focusableItems.length - 1].focus(R);
 		else if(dir == L)
-			this.focusableItems[0].focus(L);
+			this.focusableItems[2].focus(L);
 		this.showOptions();
 		return this;
 	}
@@ -68,19 +92,61 @@ var plot = P(Element, function(_, super_) {
 		subplot.byId[target.attr('data-plot-id')*1].focus();
 		return false;
 	}
+	_.enterPressed = function(_this) {
+		return function(mathField) {
+			_this.submissionHandler(_this)(mathField);
+		};
+	}
+	_.submissionHandler = function(_this) {
+		return function(mathField) {
+			_this.x_min = _this.xminField.latex();
+			_this.x_max = _this.xmaxField.latex();
+			if(_this.xmaxField.text().trim() == '') return;
+			if(_this.xminField.text().trim() == '') return;
+			_this.redraw();
+		};
+	}
 	_.blur = function() {
 		super_.blur.call(this);
 		this.hideOptions();
 	}
 	_.showOptions = function() {
-		this.jQ.find('div.' + css_prefix + 'code, div.' + css_prefix + 'insert').slideDown({duration: 300});
+		this.jQ.find('div.' + css_prefix + 'insert').slideDown({duration: 300});
 	}
 	_.hideOptions = function() {
-		this.jQ.find('div.' + css_prefix + 'code, div.' + css_prefix + 'insert').slideUp({duration: 300});
+		this.jQ.find('div.' + css_prefix + 'insert').slideUp({duration: 300});
 	}
-  _.toString = function() {
-  	// BRENTAN: Enable copy/paste action here:
-  	return '{plot}{}';
+  _.toString = function(dir) {
+  	if(dir === R) return '';
+  	var id = (dir === L) ? this.id : 0;
+  	return '{plot}{{' + id + '}{' + this.argumentList().join('}{') + '}}';
+  }
+  _.argumentList = function() {
+  	var output = [];
+  	for(var k = 0; k < this.savedProperties.length; k++) 
+  		output.push(this[this.savedProperties[k]]);
+  	for(var i = 0; i < this.subplots.length; i++) 
+  		output.push(this.subplots[i].toString());
+  	return output;
+  }
+  _.parse = function(args) {
+  	if(this.jQ === 0) {
+  		// Not attached yet.  delay the parse until we are attached
+  		this.toParse = args;
+  		return this;
+  	}
+  	for(var k = 0; k < this.savedProperties.length; k++) {
+  		if(args[k].match(/^[+-]?(?:\d*\.)?\d+$/)) args[i+k] = 1.0 * args[k];
+  		if(args[k] === "false") args[k] = false;
+  		if(args[k] === "true") args[k] = true;
+  		this[this.savedProperties[k]] = args[k];
+  	}
+  	for(var i = k; i < args.length; i++) {
+  		var el = args[i].split('___');
+  		if(plot_types[el[0]]) 
+  			plot_types[el[0]](this).parse(el).attach();
+  	}
+  	return this;
   }
   _.redraw = function() {
   	if(this.needsEvaluation) {
@@ -94,12 +160,47 @@ var plot = P(Element, function(_, super_) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner();
 			this.move_to_next = move_to_next;
-			if(this.subplots.length)
-				this.subplots[0].continueEvaluation(evaluation_id, true)
-			else
+			if(this.subplots.length) {
+				var commands = [{command: this.xminField.text(), nomarkup: true},{command: this.xmaxField.text(), nomarkup: true}];
+				giac.execute(evaluation_id, true, commands, this, 'startSubplot');
+			} else
 				this.childrenEvaluated(evaluation_id);
 		} else 
 			this.evaluateNext(evaluation_id, move_to_next)
+	}
+	_.startSubplot = function(result, evaluation_id) {
+		//HANDLE XMIN, XMAX
+		var errors = [];
+		if(result[0].success) {
+			if(result[0].returned.match(/^[\-\+0-9\.]+$/)) {
+				this.x_min_val = result[0].returned * 1;
+			} else {
+				errors.push('X<sub>min</sub> is non-numeric.');// Report x_min error
+			}
+		} else errors.push('X<sub>min</sub>: ' + result[0].returned);
+		if(result[1].success) {
+			if(result[1].returned.match(/^[\-\+0-9\.]+$/)) {
+				this.x_max_val = result[1].returned * 1;
+			} else {
+				errors.push('X<sub>max</sub> is non-numeric.');// Report x_max error
+			}
+		} else errors.push('X<sub>max</sub>: ' + result[0].returned);
+		if(errors.length) {
+			giac.errors_encountered = true;
+			this.outputBox.removeClass('calculating warn').addClass('error');
+			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+			this.outputBox.find('div.answer').html(errors.join('<BR>'));
+		} else
+			this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+
+		// Start handling the subplots
+		if(this.shouldBeEvaluated(evaluation_id)) {
+			if(this.subplots.length > 0)
+				this.subplots[0].continueEvaluation(evaluation_id, true);
+			else
+				this.childrenEvaluated(evaluation_id);
+		} else
+			this.childrenEvaluated(evaluation_id);
 	}
 	_.nextSubplot = function(result, evaluation_id) {
 		var current_subplot = subplot.byId[result[0].returned * 1];
@@ -120,23 +221,40 @@ var plot = P(Element, function(_, super_) {
 				var columns = [];
 				for(var i = 0; i < this.subplots.length; i++) {
 					if(this.subplots[i].plotData.type == 'line') {
-						xs['data' + i] = 'x' + i;
+						xs['y' + i + ': ' + this.subplots[i].plotData.legend] = 'x' + i;
 						var x = this.subplots[i].plotData.data.x;
 						x.unshift('x'+i);
 						var y = this.subplots[i].plotData.data.y;
-						y.unshift('data'+i);
+						y.unshift('y' + i + ': ' + this.subplots[i].plotData.legend);
 						columns.push(x);
 						columns.push(y);
 					}
 				}
+				var x_vals = [this.x_min_val];
+				var step = (this.x_max_val - this.x_min_val)/10;
+				for(var i = 1; i < 11; i++)
+					x_vals[i] = x_vals[i-1] + step;
 				this.plot = c3.generate({
 	    		bindto: this.plotBox[0],
 	    		height: 350,
 	    		padding: { right: 20 },
+	    		point: {
+					  show: false
+					},
+			    axis: {
+		        x: {
+	            tick: {
+                values: x_vals
+	            }
+		        }
+			    },
 			    data: {
 			      xs: xs,
 			      columns: columns
-			    }
+			    },
+			    line: {
+					  connectNull: true
+					}
 				});
 				this.childrenEvaluated(evaluation_id);
 			}
@@ -183,12 +301,19 @@ var subplot = P(function(_) {
 		this.parent = parent;
 		this.mathField = [];
 		this.plotData = {};
+		this.to_parse = [];
 	}
 	_.attach = function(duration, focus) {
-		if(this.parent.insertJQ) {
+		if(this.parent.attached) {
 			// BRENTAN: add the 'X' out
 			this.jQ = $('<div></div>').addClass(css_prefix + 'plot_item');
-			this.jQ.html(this.innerHtml() + '<BR>' + answerSpan());
+			this.jQ.html('<table><tbody><tr><td class="left"></td><td class="right"></td></tr></tbody></table>');
+			this.jQ.find('.right').html(this.innerHtml() + '<BR>' + answerSpan());
+			this.jQ.find('.left').html('<i class="fa fa-remove"></i>');
+			var _this = this;
+			this.jQ.find('.left i').on('click', function(e) {
+				_this.remove();
+			})
 			this.jQ.attr('data-plot-id', this.id);
 			if(duration) this.jQ.css('display','none');
 			this.jQ.insertBefore(this.parent.insertJQ.find('.' + css_prefix + 'plot_add'));
@@ -198,6 +323,7 @@ var subplot = P(function(_) {
 			if(focus) this.focus();
 		} else
 			this.parent.to_attach.push(this);
+		return this;
 	}
 	_.innerHtml = function() {
 		return '';
@@ -206,6 +332,8 @@ var subplot = P(function(_) {
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		for(var i = 0; i < this.mathField.length; i++)
 			this.parent.focusableItems.push(this.mathField[i]);
+		for(var i = 1; i < this.to_parse.length; i++)
+			this.mathField[i-1].clear().latex(this.to_parse[i]);
 	}
 	_.remove = function() {
 		var to_remove = [];
@@ -223,6 +351,8 @@ var subplot = P(function(_) {
 		}
 		if(this.jQ) 
 			this.jQ.slideUp({duration: 400});
+		if(this.parent.subplots.length == 0)
+			this.parent.appendPlotOption(400,true);
 		this.parent.needsEvaluation = true;
 		this.parent.redraw();
 	}
@@ -252,17 +382,27 @@ var subplot = P(function(_) {
 	_.buildCommand = function(commands) {
 		return commands;
 	}
+	_.toString = function() {
+		var out = []
+		for(var i = 0; i < this.mathField.length; i++)
+			out.push(this.mathField[i].latex());
+		return out.join('___');
+	}
+	_.parse = function(to_parse) {
+		this.to_parse = to_parse;
+		return this;
+	}
 });
 var line_plot = P(subplot, function(_, super_) {
 	_.innerHtml = function() {
-		return 'line plot: y(' + mathSpan('var' + this.id) + ') &#8801; ' + mathSpan('plot' + this.id);
+		return '<b>line-plot</b>: plot the function ' + mathSpan('plot' + this.id) + ' as a function of ' + mathSpan('var' + this.id);
 	}
 	_.postInsertHandler = function() {
-		this.mathField[0] = registerMath(this.parent, 'var' + this.id, { handlers: {
+		this.mathField[1] = registerMath(this.parent, 'var' + this.id, { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.mathField[1] = registerMath(this.parent, 'plot' + this.id, { handlers: {
+		this.mathField[0] = registerMath(this.parent, 'plot' + this.id, { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
@@ -270,10 +410,14 @@ var line_plot = P(subplot, function(_, super_) {
 		return this;
 	}
 	_.buildCommand = function(commands) {
-		commands.push({command: 'plot(' + this.mathField[1].text() + ',' + this.mathField[0].text() + ')', nomarkup: true});
+		commands.push({command: 'plot(' + this.mathField[0].text() + ',' + this.mathField[1].text() + '='  + this.parent.x_min_val + '..' + this.parent.x_max_val + ')', nomarkup: true});
 		return commands;
 	}
 	_.handle = function(result) {
+		if((this.mathField[0].text() == '') || (this.mathField[1].text() == '')) {
+			this.plotData = {};
+			return;
+		}
 		if(result[0].success) {
 			if(result[0].returned == '[]') {
 				this.plotData = {};
@@ -283,7 +427,7 @@ var line_plot = P(subplot, function(_, super_) {
 				this.outputBox.find('div.answer').html('<div class="warning">Nothing to plot.  If you are trying to plot a function, such as f(x), be sure to include the "(x)" portion in the input</div>');
 			} else {
 				this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
-				this.plotData = {type: 'line', data: handlePlotOutput(result[0].returned)};
+				this.plotData = {type: 'line', data: handlePlotOutput(result[0].returned), legend: this.mathField[0].text()};
 			}
 		} else {
 			this.plotData = {};
@@ -294,4 +438,10 @@ var line_plot = P(subplot, function(_, super_) {
 			this.outputBox.find('div.answer').html(result[0].returned);
 		}
 	}
+	_.toString = function() {
+		return 'line___' + super_.toString.call(this);
+	}
 });
+var plot_types = {
+	'line': line_plot
+}

@@ -20,6 +20,7 @@ var Workspace = P(function(_) {
 	_.lastActive = 0;
 	_.dragging = false;
 	_.mousedown = false;
+	_.server_id = -1;
 
   var id = 0;
   function uniqueWorkspaceId() { return id += 1; }

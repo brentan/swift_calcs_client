@@ -450,7 +450,8 @@ var Element = P(function(_) {
 					if(el.parent.logicResult === false) { this.jQ.addClass(css_prefix + 'greyout'); return false; }
 			}
 		}
-		this.jQ.removeClass(css_prefix + 'greyout');
+		if(this.jQ && (typeof this.jQ.removeClass === 'function'))
+			this.jQ.removeClass(css_prefix + 'greyout');
 		return true;
 	}
 	_.allowOutput = function() {
