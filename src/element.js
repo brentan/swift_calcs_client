@@ -134,6 +134,7 @@ var Element = P(function(_) {
 			this.postInsert();
 		}
 		this.setDepth();
+		if(this.workspace) this.workspace.save();
 		return this;
 	}
 	_.insertAfter = function(sibling) {
@@ -158,6 +159,7 @@ var Element = P(function(_) {
 			this.postInsert();
 		}
 		this.setDepth();
+		if(this.workspace) this.workspace.save();
 		return this;
 	}
 	_.prependTo = function(parent) {
@@ -237,6 +239,7 @@ var Element = P(function(_) {
 				this.jQ.detach().appendTo(target.insertJQ);
 		}
 		this.setDepth();
+		if(this.workspace) this.workspace.save();
 		return this;
 	}
 	/* Destroy methods.
@@ -289,6 +292,7 @@ var Element = P(function(_) {
 		}
 		this.detach();
 		this.workspace.renumber();
+		this.workspace.save();
 		return this;
 	}
 	/* Visibility Methods
@@ -343,26 +347,6 @@ var Element = P(function(_) {
 		return this.workspace;
 	}	
 
-	// Update success level of this block.  Clear resets the block, complete is a good evaluation, warn is a non-fatal, error is fatal
-	_.clearState = function() {
-		this.error = false;
-		this.warn = false;
-		return this;
-	}
-	_.setComplete = function() {
-		this.error = false;
-		this.warn = false;
-		return this;
-	}
-	_.setWarning = function(message) {
-		this.warn = message;
-		return this;
-	}
-	_.setError = function(message) {
-		this.error = message;
-		return this;
-	}
-
 	/*
 	Evaluation functions. 
 
@@ -382,6 +366,7 @@ var Element = P(function(_) {
 		if(typeof force_full === 'undefined') force_full = false;
 		if(this.mark_for_deletion) return;
 		if(!this.needsEvaluation && !force) return this;
+		if(this.needsEvaluation) this.workspace.save();
 		var fullEvaluation = force_full || this.fullEvaluation;
 
 	  // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue

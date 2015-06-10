@@ -59,6 +59,8 @@ var plot = P(Element, function(_, super_) {
 		// If this is a blank plot box, add a first item
 		if(this.subplots.length == 0)
 			this.appendPlotOption(0, true);
+		else
+			this.redraw();
 		return this;
 	}
 	_.appendPlotOption = function(duration, focus) {
@@ -116,10 +118,8 @@ var plot = P(Element, function(_, super_) {
 	_.hideOptions = function() {
 		this.jQ.find('div.' + css_prefix + 'insert').slideUp({duration: 300});
 	}
-  _.toString = function(dir) {
-  	if(dir === R) return '';
-  	var id = (dir === L) ? this.id : 0;
-  	return '{plot}{{' + id + '}{' + this.argumentList().join('}{') + '}}';
+  _.toString = function() {
+  	return '{plot}{{' + this.argumentList().join('}{') + '}}';
   }
   _.argumentList = function() {
   	var output = [];
@@ -146,6 +146,8 @@ var plot = P(Element, function(_, super_) {
   		if(plot_types[el[0]]) 
   			plot_types[el[0]](this).parse(el).attach();
   	}
+  	this.needsEvaluation = true;
+  	this.redraw();
   	return this;
   }
   _.redraw = function() {

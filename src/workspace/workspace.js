@@ -38,6 +38,7 @@ var Workspace = P(function(_) {
 		this.ends = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
+		this.hashtags = [];
 		this.selection = [];
 		this.id = uniqueWorkspaceId();
 	}
@@ -52,6 +53,21 @@ var Workspace = P(function(_) {
 		SwiftCalcs.active_workspace = this;
 		this.bound = true;
 		return this;
+	}
+	_.load = function(to_parse) {
+		var blocks = parse(to_parse);
+		if(blocks.length > 0) {
+			blocks[0].appendTo(this).show(0);
+	    var after = this.ends[L];
+	    for(var i = 1; i < blocks.length; i++) {
+	      blocks[i].insertAfter(after).show(0);
+	      after = blocks[i];
+	    }
+	  } else {
+			math().appendTo(this).show(0);
+	  }
+	  this.updateHashtags();
+	  return this;
 	}
 	// Detach method (remove from the DOM)
 	_.unbind = function() {
@@ -96,9 +112,11 @@ var Workspace = P(function(_) {
     var $hashtag = $('#hashtags');
     $hashtag.html('');
     var _this = this;
+    var tags = [];
     hashtags.each(function(i, hash) {
     	hash = $(hash);
     	var link = $('<a href="#">#' + hash.text() + '</a>');
+    	tags.push(hash.text());
     	$('<li/>').append(link).appendTo($hashtag);
     	link.on('click', function(e) {
     		var offset = hash.position().top + _this.jQ.scrollTop();
@@ -107,6 +125,17 @@ var Workspace = P(function(_) {
     		return false;
     	});
     });
+    this.hashtags = tags;
+  }
+  _.save = function(force) {
+  	ajaxQueue.saveNeeded(this, force);
+  }
+  _.toString = function() {
+		var out = [];
+		jQuery.each(this.children(), function(i, child) {
+			out.push(child.toString());
+		});
+		return out.join("\n");
   }
 	// Debug.  Print entire workspace tree
 	_.printTree = function() {

@@ -784,8 +784,10 @@ var WYSIWYG = P(function(_) {
   }
   _.syncCode = function(force){
     var t = this;
-    if(!force && t.$editor.is(':visible'))
+    if(!force && t.$editor.is(':visible')) {
+      t.el.workspace.save();
       t.$e.val(t.$editor.html());
+    }
     else
       t.$editor.html(t.$e.val());
     t.updateToolbar();
