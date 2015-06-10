@@ -307,7 +307,6 @@ var subplot = P(function(_) {
 	}
 	_.attach = function(duration, focus) {
 		if(this.parent.attached) {
-			// BRENTAN: add the 'X' out
 			this.jQ = $('<div></div>').addClass(css_prefix + 'plot_item');
 			this.jQ.html('<table><tbody><tr><td class="left"></td><td class="right"></td></tr></tbody></table>');
 			this.jQ.find('.right').html(this.innerHtml() + '<BR>' + answerSpan());

@@ -34,6 +34,7 @@ var ajaxQueueClass = P(function(_) {
 		this.jQ.html('Saving...');
 		var post_data = {
 			workspace_id: id,
+			name: this.holding_pen[id].workspace.name,
 			hashtags: this.holding_pen[id].workspace.hashtags,
 			data: this.holding_pen[id].workspace.toString()
 		}

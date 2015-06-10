@@ -154,6 +154,10 @@ Workspace.open(function(_) {
         e.preventDefault();
         return;
       }
+      if($(e.target).closest('input.' + css_prefix + 'workspace_name').length) {
+        // Let the workspace name input box handle its own click events
+        return;
+      }
     	// First handle mousedown.  This just sets the listeners for dragging and mouseup.  
     	var selected_target = $(e.target).closest('.' + css_prefix + 'selected');
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];

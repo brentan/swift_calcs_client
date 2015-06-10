@@ -21,20 +21,22 @@ var Workspace = P(function(_) {
 	_.dragging = false;
 	_.mousedown = false;
 	_.server_id = -1;
+	_.name = '';
 
   var id = 0;
   function uniqueWorkspaceId() { return id += 1; }
 
   // Create the workspace, pass in an optional name
-	_.init = function(binder) { 
-		if(typeof binder === 'undefined') {
+	_.init = function(name) { 
+		if(typeof name === 'undefined') {
 			var currentdate = new Date(); 
-			binder = "Workspace from " + currentdate.getDate() + "/"
+			this.name = "Workspace from " + currentdate.getDate() + "/"
                 + (currentdate.getMonth()+1)  + "/" 
                 + currentdate.getFullYear() + ", "  
                 + currentdate.getHours() + ":"  
                 + currentdate.getMinutes();
-		}
+		} else
+		 	this.name = name;
 		this.ends = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
@@ -48,6 +50,12 @@ var Workspace = P(function(_) {
 		this.jQ.html(""); // Clear the target
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
 		this.jQ.append(this.insertJQ);
+		this.insertJQ.append('<div class="' + css_prefix + 'workspace_name"><input type=text class="' + css_prefix + 'workspace_name" value="' + this.name.replace(/"/g,'\"') + '"></div>');
+		var _this = this;
+		this.insertJQ.find('input').on('blur', function(e) {
+			_this.name = $(this).val();
+			_this.save();
+		});
 		this.bindMouse();
 		this.bindKeyboard();
 		SwiftCalcs.active_workspace = this;
