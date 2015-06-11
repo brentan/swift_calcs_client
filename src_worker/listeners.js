@@ -145,7 +145,7 @@ var receiveMessage = function(command) {
 		output[ii].warnings = warnings[ii];
 	}
   // If we are scoped evaluation, we should save the scope now for future retreival
-	if(command.scoped)
+	if(command.scoped) 
 		Module.caseval('archive("' + command.next_scope + '")');
   // Return the result to the window thread
   if(command.variable)

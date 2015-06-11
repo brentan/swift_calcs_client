@@ -20,6 +20,8 @@ var GiacHandler = P(function(_) {
 	_.setEvaluationElement = function(eval_id, el) {
 		if(this.evaluations[eval_id] === false) return this;
 		this.evaluations[eval_id] = el.firstGenAncestor().id;
+		//console.log(el.jQ[0]);
+		//this.start_time = new Date();
 		if(!this.giac_ready) return this; // Don't update status bar until computation is complete!
 		startProgress();
 		if(this.evaluation_full[eval_id] && (el.depth == 0)) {
@@ -160,6 +162,8 @@ This file handles communications with giac, which lives in a webworker
     var text = response.value
     switch(response.command) {
     	case 'results':
+    		//var end_time = new Date();
+    		//console.log(giacHandler.start_time - end_time);
     		Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
     		break;
     	case 'variable':
