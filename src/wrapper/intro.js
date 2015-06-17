@@ -284,3 +284,7 @@ var SwiftCalcs = {};
     // as a minifier optimization, we've closured in a few helper functions
     // and the string 'prototype' (C[p] is much shorter than C.prototype)
   })('prototype', ({}).hasOwnProperty);
+
+  $(window).on('resize', function() {
+    if(SwiftCalcs.active_workspace) SwiftCalcs.active_workspace.reshapeToolbar();
+  });

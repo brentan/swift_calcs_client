@@ -74,6 +74,7 @@ Workspace.open(function(_) {
 		var $ul = buildMenu(el, options);
 		$ul.attr('id', 'toolbar').addClass('base');
 		$('#toolbar_holder').append($ul);
+		this.reshapeToolbar();
 	}
 	_.detachToolbar = function() {
 		current_toolbar_target = false;
@@ -85,6 +86,10 @@ Workspace.open(function(_) {
 	}
 	_.unblurToolbar = function() {
 		$('#toolbar').removeClass('blurred');
+	}
+	_.reshapeToolbar = function() {
+		var height = $('#toolbar_holder').height();
+		this.jQ.css('top', (100-35+height) + 'px');
 	}
 
 	// Return the default textToolbar with extra options.  To_add is appended to the menu, and to_remove will remove any items with matching id
