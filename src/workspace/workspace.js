@@ -30,7 +30,7 @@ var Workspace = P(function(_) {
 	_.init = function(name) { 
 		if(typeof name === 'undefined') {
 			var currentdate = new Date(); 
-			this.name = "Workspace from " + currentdate.getDate() + "/"
+			this.name = "Worksheet from " + currentdate.getDate() + "/"
                 + (currentdate.getMonth()+1)  + "/" 
                 + currentdate.getFullYear() + ", "  
                 + currentdate.getHours() + ":"  
@@ -61,6 +61,14 @@ var Workspace = P(function(_) {
 		SwiftCalcs.active_workspace = this;
 		this.bound = true;
 		return this;
+	}
+	_.rename = function() {
+		var new_name = prompt('Please enter a new name for this Worksheet:', this.name);
+		if(new_name) {
+			this.name = new_name;
+			this.insertJQ.find("input." + css_prefix + "workspace_name").val(this.name);
+			this.save();
+		}
 	}
 	_.load = function(to_parse) {
 		var blocks = parse(to_parse);
