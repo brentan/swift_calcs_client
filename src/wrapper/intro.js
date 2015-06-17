@@ -56,10 +56,10 @@ var SwiftCalcs = {};
     else
       klass = '';
     return '<div class="' + css_prefix + 'answer_table' + klass + '"><table class="' + css_prefix + 'answer_table"><tbody><tr>'
-        + '<td class="' + css_prefix + 'answer_table_1t">&nbsp;</td>'
-        + '<td rowspan=2 class="' + css_prefix + 'answer_table_2"><div>&gt;</div></td>'
+        + '<td class="' + css_prefix + 'answer_table_1t"><div class="arrow_box">&gt;</div></td>'
+        + '<td rowspan=2 class="' + css_prefix + 'answer_table_2">&nbsp;</td>'
         + '<td rowspan=2 class="' + css_prefix + 'output_box"><table><tbody><tr><td><div class="answer"></div></td><td class="answer_menu"></td></tr></tbody></table></td></tr>'
-        + '<tr><td class="' + css_prefix + 'answer_table_2b">&nbsp;</td></tr></tbody></table></div>';
+        + '<tr><td class="' + css_prefix + 'answer_table_1b">&nbsp;</td></tr></tbody></table></div>';
   }
 
   // This function will attach a math editable field by looking for a field with the provided class name (if provided)

@@ -64,24 +64,31 @@ div.sc_element_container {
             border-left: 1px solid #cccccc;
             border-bottom: 1px solid #cccccc;
             height: 50%;
+            vertical-align: bottom;
+            div.arrow_box {
+              float: right;
+              color: #cccccc;
+              font-size: 14px;
+              font-family: monospace;
+              width: 8px;
+              height: 16px;
+              margin: 0px;
+              padding: 0px;
+              position:relative;
+              top: 7px;
+              left: 2px;
+            }
           }
           &.sc_answer_table_1b {
             border-left: 1px solid #ffffff;
           }
           &.sc_answer_table_2 {
             width: 6px;
-            color: #cccccc;
-            font-size: 16px;
-            font-family: monospace;
-            div {
-              position: relative;
-              left: -5px;
-              top: 1px;
-            }
           }
           &.sc_output_box {
             width: 1%;
             padding: 5px;
+            margin-left: 6px;
             border-radius: 5px;
             cursor: pointer;
             background-color: #efefef;
