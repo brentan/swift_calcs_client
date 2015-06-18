@@ -86,6 +86,10 @@ Workspace.open(function(_) {
   _.keystroke = function(description, evt) {
     // Total override commands:
     switch(description) {
+      case 'Ctrl-Z':
+      case 'Meta-Z':
+        alert('Haven\'t integrated the undo stack yet....sorry');
+        break;
       case 'Ctrl-Shift-A':
       case 'Meta-Shift-A':
         // Select everything
@@ -222,8 +226,8 @@ Workspace.open(function(_) {
     if(this.selection.length == 0) {
       if(!this.activeElement) return;
       // Nothing selected or selection is within the active element.  
-      if(to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') {
-        // This was a cut/copy -> paste from within a mathquill block.  We should insert it into the current block, if possible, or insert it afterwards
+      if((to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') || to_paste.match(/^[0-9\.]*$/)) {
+        // This was a cut/copy -> paste from within a mathquill block, or is numeric in nature.  We should insert it into the current block, if possible, or insert it afterwards
         if(elementType(this.activeElement) === 'math')
           return this.activeElement.write(to_paste);
         else

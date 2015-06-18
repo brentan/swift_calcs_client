@@ -593,8 +593,17 @@ var WYSIWYG = P(function(_) {
             $(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).removeClass(css_prefix + 'hashtag')
           // SyncCode after paste
           function syncAfterPaste() {
+            t.write('<span class="caret_position" style="display:none;">&#65279;</span>');
             t.syncCode();
             t.sanitize();
+            var caret = t.$editor.find('.caret_position');
+            if(caret.length > 0) {
+              var range = rangy.createRange();
+              range.selectNode(caret[0]);
+              range.select();
+              rangy.getSelection(t.$editor[0]).deleteFromDocument();
+              t.$editor.find('.caret_position').remove();
+            }
             t.el.updateHashtags();
           }
           window.setTimeout(syncAfterPaste);
@@ -773,10 +782,11 @@ var WYSIWYG = P(function(_) {
       return t.$e.val();
   };
   _.sanitize = function() {
+    //BRENTAN: Sanitize breaks the browser undo stack.  We need to work with that here!
     var blocks = sanitize(this.html());
-    if((blocks.length == 1) && (blocks[0] instanceof text))
+    if((blocks.length == 1) && (blocks[0] instanceof text)) {
       this.html(blocks[0].html);
-    else {
+    } else {
       for(var i = 0; i < blocks.length; i++)
         blocks[i].insertBefore(this.el);
       this.el.remove();
@@ -785,8 +795,8 @@ var WYSIWYG = P(function(_) {
   _.syncCode = function(force){
     var t = this;
     if(!force && t.$editor.is(':visible')) {
-      t.el.workspace.save();
       t.$e.val(t.$editor.html());
+      t.el.workspace.save();
     }
     else
       t.$editor.html(t.$e.val());
@@ -873,7 +883,7 @@ var WYSIWYG = P(function(_) {
     return at_end;
   }
   // Insert html just after cursor location
-  _.write = function(html) {
+  _.write = function(html, move_cursor) {
     var el = $('<div/>');
     el.html(html);
     var frag = document.createDocumentFragment(), node;
@@ -884,7 +894,8 @@ var WYSIWYG = P(function(_) {
     range.collapse(false);
     range.insertNode(frag);
     range.detach();
-    //range.setEndAfter(frag);
+    if(move_cursor)
+      range.setEndAfter(frag);
     this.syncCode();
   }
   // This function will place the cursor in the div, and select to the left or right edge based on input (1, -1)

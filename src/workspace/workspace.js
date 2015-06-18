@@ -62,8 +62,8 @@ var Workspace = P(function(_) {
 		this.bound = true;
 		return this;
 	}
-	_.rename = function() {
-		var new_name = prompt('Please enter a new name for this Worksheet:', this.name);
+	_.rename = function(new_name) {
+		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
 		if(new_name) {
 			this.name = new_name;
 			this.insertJQ.find("input." + css_prefix + "workspace_name").val(this.name);

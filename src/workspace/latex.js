@@ -13,7 +13,11 @@ Workspace.open(function(_) {
 	}
 	_.latexToHtml = function(latex) {
 		bindMathfield();
-		return "<span class='mq-math-mode mq-editable-field'><span class='mq-root-block'>" + mathField.clear().latex(latex).html() + "</span></span>";
+		try {
+			return "<span class='mq-math-mode mq-editable-field'><span class='mq-root-block'>" + mathField.clear().latex(latex).html() + "</span></span>";
+		} catch(e) {
+			return "<strong>DISPLAY ERROR: </strong>" + e + " (while trying to display: " + latex + ")";
+		}
 	}
 	_.latexToText = function(latex) {
 		bindMathfield();
