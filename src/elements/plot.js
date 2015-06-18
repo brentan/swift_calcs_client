@@ -28,7 +28,7 @@ var plot = P(Element, function(_, super_) {
 			+ mathSpan('x_min')
 			+ '&nbsp;x<sub>max</sub>:&nbsp;'
 			+ mathSpan('x_max') + '<BR>'  + answerSpan()
-			+ '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'plot_box"></div>';
+			+ '</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div><div class="' + css_prefix + 'plot_box"></div>';
 	}
 	_.postInsertHandler = function() {
 		this.xminField = registerMath(this, 'x_min', { handlers: {
