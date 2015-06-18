@@ -160,7 +160,7 @@ var plot = P(Element, function(_, super_) {
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.addSpinner();
+			this.addSpinner(evaluation_id);
 			this.move_to_next = move_to_next;
 			if(this.subplots.length) {
 				var commands = [{command: this.xminField.text(), nomarkup: true},{command: this.xmaxField.text(), nomarkup: true}];

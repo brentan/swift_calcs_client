@@ -444,16 +444,19 @@ var Element = P(function(_) {
 			if(el.suppress_output) return false;
 		return true;
 	}
-	_.addSpinner = function() {
+	_.addSpinner = function(eval_id) {
 		if(this.allowOutput()) {
 			this.leftJQ.find('i').remove();
-			this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>');
+			if((typeof eval_id !== 'undefined') && giac.manual_evaluation[eval_id])
+				this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>'); // Manual mode spinner should not be hidden
+			else
+				this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse calculation_spinner"></i>');
 		}
 	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.addSpinner();
+			this.addSpinner(evaluation_id);
 			if(this.hasChildren) {
 				this.move_to_next = move_to_next;
 				if(this.ends[L])

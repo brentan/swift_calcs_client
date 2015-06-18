@@ -79,7 +79,7 @@ var for_loop = P(Loop, function(_, super_) {
 		// Build command list
 		this.commands = [{ command: 'evalf(' + this.startField.text() + ')' },{ command: 'evalf(' + this.finishField.text() + ')' },{ command: 'evalf(' + this.stepField.text() + ')' }];
 		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.addSpinner();
+			this.addSpinner(evaluation_id);
 			this.move_to_next = move_to_next;
 			giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
 		} else 

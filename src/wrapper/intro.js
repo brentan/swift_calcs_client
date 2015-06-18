@@ -135,11 +135,12 @@ var SwiftCalcs = {};
   var status_bar = $('.status_bar');
   // Status bar helper functions
   var clearBar = function() {
-    status_bar.removeClass(css_prefix + 'clear ' + css_prefix + 'complete ' + css_prefix + 'error ' + css_prefix + 'warn');
+    status_bar.removeClass(css_prefix + 'clear ' + css_prefix + 'complete ' + css_prefix + 'error ' + css_prefix + 'warn ' + css_prefix + 'manual');
     status_bar.html('');
   }
   var startProgress = function(message) {
     if(status_bar.children('.progress_bar').length > 0) return;
+    clearBar();
     message = message || 'Calculating... <a href="#"><i>Abort</i></a>';
     status_bar.addClass(css_prefix + 'clear');
     status_bar.html('<div class="progress_bar"></div><div class="message_text"><i class="fa fa-spinner fa-pulse"></i>&nbsp;' + message + '</div>');
@@ -179,6 +180,12 @@ var SwiftCalcs = {};
   var setWarning = function(warn) {
     clearBar();
     status_bar.addClass(css_prefix + 'warn');
+    status_bar.html(warn);
+  }
+  var setManual = function(warn) {
+    if(status_bar.hasClass(css_prefix + 'manual')) return;
+    clearBar();
+    status_bar.addClass(css_prefix + 'warn').addClass(css_prefix + 'manual');
     status_bar.html(warn);
   }
   var setError = function(err) {

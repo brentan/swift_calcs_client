@@ -58,7 +58,7 @@ var if_block = P(LogicBlock, function(_, super_) {
 				el.jQ.addClass(css_prefix + 'greyout');
 		}
 		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.addSpinner();
+			this.addSpinner(evaluation_id);
 			this.move_to_next = move_to_next;
 			giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
 		} else 

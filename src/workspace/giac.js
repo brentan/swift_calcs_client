@@ -2,17 +2,20 @@
 /* object that deals with evaluations, and setting the evaluation queue */
 var GiacHandler = P(function(_) {
 	_.giac_ready = false;
+	_.auto_evaluation = true;
 	_.errors_encountered = false;
 	_.varCallbackCounter = 0;
 	// Evaluation handling functions.  Each array element keeps track of which first Gen element, by id, is currently being evaluated.  Set to false to stop evaluation or when complete
 	_.init = function() {
 		this.evaluations = [];
 	  this.evaluation_full = [];
+	  this.manual_evaluation = [];
 	  this.variable_list = [];
 	  this.object_list = [];
 	}
 	_.registerEvaluation = function(full) {
 		this.evaluations.push(true);
+		this.manual_evaluation.push(!full); //We allow single line evaluations, even in manual mode
 		this.evaluation_full.push(full);
 		this.errors_encountered = false;
 		return (this.evaluations.length-1);
@@ -41,6 +44,11 @@ var GiacHandler = P(function(_) {
 		this.evaluations[eval_id]=false;
 		return this;
 	}
+	_.manualEvaluation = function() {
+		var to_do = this.current_evaluations();
+		for(var i = 0; i < to_do.length; i++)
+			this.manual_evaluation[to_do[i]] = true; 
+	}
 	_.cancelEvaluations = function() {
 		var to_cancel = this.current_evaluations();
 		for(var i = 0; i < to_cancel.length; i++)
@@ -62,6 +70,42 @@ var GiacHandler = P(function(_) {
 		}
 		return this;
 	}
+	var varToLatex = function(var_name) {
+		var textToGreek = function(s) {
+	    switch (s.length) {
+	      case 2:
+	        if (s=="mu" || s=="nu" || s=="pi" || s=="xi" || s=="Xi")
+	          return "\\"+s;
+	        break;
+	      case 3:
+	        if (s=="chi" || s=="phi" || s=="Phi" || s=="eta" || s=="rho" || s=="tau" || s=="psi" || s=="Psi")
+	          return "\\"+s;
+	        break;
+	      case 4:
+	        if (s=="beta" || s=="zeta")
+	          return "\\"+s;
+	        break;
+	      case 5:
+	        if (s=="alpha" || s=="delta" || s=="Delta" || s=="gamma" || s=="Gamma" || s=="kappa" || s=="theta" || s=="Theta" || s=="sigma" || s=="Sigma" || s=="Omega" || s=="omega")
+	          return "\\"+s;      
+	        break;
+	      case 6:
+	        if (s=="lambda" || s=="Lambda")
+	          return "\\"+s;      
+	        break;
+	      case 7:
+	        if (s=="epsilon")
+	          return "\\"+s;      
+	      	break;
+	    }
+	    return s;
+	  }
+		var_name = var_name.split('_');	
+		if(var_name.length == 1)
+			return textToGreek(var_name[0]);
+		else
+			return textToGreek(var_name[0]) + '_{' + textToGreek(var_name[1]) + '}';
+	}
 	_.varListCallback = function(response) {
 		this.variable_list = response.totalVarList;
 		this.object_list = response.objects;
@@ -69,16 +113,22 @@ var GiacHandler = P(function(_) {
     $vars.html('');
     var _this = this;
     $.each(response.userVarList, function(i, varr) {
-    	var link = $('<a href="#">' + varr.replace(/_(.*)$/,'<sub>$1</sub>') + '</a>');
-    	$('<li/>').append(link).appendTo($vars);
+    	var link = $('<div class="var_name"><span class="fa fa-fw fa-caret-right"></span>' + SwiftCalcs.active_workspace.latexToHtml(varToLatex(varr)) + '</div>');
+    	link.appendTo($vars);
     	link.on('click', function(e) {
-    		$(this).next('div').remove();
-    		$('<div id="var_callback_' + _this.varCallbackCounter + '" class="var_callback"><i class="fa fa-spinner fa-pulse"></i></div>').insertAfter($(this));
-    		var last_scope = SwiftCalcs.active_workspace.ends[R].previousScope();
-    		if(last_scope) last_scope = last_scope.workspace.id + '_' + last_scope.id;
-    		else last_scope = false;
-    		_this.sendCommand({variable: true, previous_scope: last_scope, commands: [{command: varr}], callback_id:_this.varCallbackCounter });
-    		_this.varCallbackCounter++;
+    		$(this).next('div.var_callback').remove();
+    		var caret = $(this).find('span.fa');
+    		if(caret.hasClass('fa-caret-right')) {
+	    		caret.removeClass('fa-caret-right').addClass('fa-caret-down');
+	    		$('<div id="var_callback_' + _this.varCallbackCounter + '" class="var_callback"><span class="fa fa-spinner fa-pulse"></span></div>').insertAfter($(this));
+	    		var last_scope = SwiftCalcs.active_workspace.ends[R].previousScope();
+	    		if(last_scope) last_scope = last_scope.workspace.id + '_' + last_scope.id;
+	    		else last_scope = false;
+	    		_this.sendCommand({variable: true, previous_scope: last_scope, commands: [{command: varr}], callback_id:_this.varCallbackCounter });
+	    		_this.varCallbackCounter++;
+	    	} else {
+	    		caret.removeClass('fa-caret-down').addClass('fa-caret-right');
+	    	}
     		return false;
     	});
     });
@@ -98,6 +148,22 @@ var GiacHandler = P(function(_) {
 			if(this.evaluations[i]) output.push(i);
 		}
 		return output;
+	}
+	_.manual_mode = function(mode) {
+		if(!mode) {
+			// Auto mode
+			$('.workspace_holder').removeClass(css_prefix + 'manual_evaluation');
+			this.auto_evaluation = true;
+      $('a.auto_off').closest('li').show(); 
+      $('a.calc_now').closest('li').hide();
+      $('a.auto_on').closest('li').hide();
+		} else {
+			$('.workspace_holder').addClass(css_prefix + 'manual_evaluation');
+			this.auto_evaluation = false;
+      $('a.auto_off').closest('li').hide(); 
+      $('a.calc_now').closest('li').show();
+      $('a.auto_on').closest('li').show();
+		}
 	}
 
 	/* 
@@ -127,16 +193,18 @@ var GiacHandler = P(function(_) {
 			if(this.evaluations[hash.eval_id] === false) return;
 			this.setEvaluationElement(hash.eval_id, el);
 		}
-		if(this.giac_ready) {
+		if(this.giac_ready && ((typeof hash.eval_id === 'undefined') || this.auto_evaluation || this.manual_evaluation[hash.eval_id])) {
 			this.worker.postMessage(JSON.stringify(hash));
-		}
-		else 
+		}	else {
+			if(this.giac_ready) 
+				setManual('Auto-Evaluation is disabled.  <a href="#" onclick="SwiftCalcs.giac.manualEvaluation();$(this).html(\'Starting...\');return false;">Recalculate Now</a> &nbsp; <a href="#" onclick="SwiftCalcs.giac.manual_mode(false);$(this).html(\'Working...\');return false;">Re-enable Auto-Evaluation</a>');
 			window.setTimeout(function(_this) { return function() { _this.sendCommand(hash, el); }; }(this), 250);
+		}
 	}
 });
 
 // Initialize the giac object
-var giac = GiacHandler();
+var giac = SwiftCalcs.giac = GiacHandler();
 
 /*
 This file handles communications with giac, which lives in a webworker
@@ -191,6 +259,7 @@ This file handles communications with giac, which lives in a webworker
       case 'setStatus':
         if(text === '') {
         	giacHandler.giac_ready = true;
+					$('.workspace_holder').removeClass(css_prefix + 'giac_loading');
 					giac.postMessage(JSON.stringify({varList: true}));
         	return;
         }
