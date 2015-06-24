@@ -6,9 +6,9 @@ Workspace.open(function(_) {
 	var mathField = false;
 	var bindMathfield = function() {
 		if(mathField) return;
-		var span = $('<span></span>');
+		var span = $('<table><tbody><tr><td><span></span></td></tr></tbody></table>');
 		$('.background_div').append(span);
-		mathField = MathQuill.MathField(span[0]);
+		mathField = MathQuill.MathField(span.find('span')[0]);
 		return this;
 	}
 	_.latexToHtml = function(latex) {

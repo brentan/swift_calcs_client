@@ -3,6 +3,7 @@
 #
 
 # inputs
+VERSION = 1_01
 SRC_DIR = ./src
 INTRO = $(SRC_DIR)/wrapper/intro.js
 OUTRO = $(SRC_DIR)/wrapper/outro.js
@@ -28,11 +29,11 @@ CSS_SOURCES = $(shell find $(CSS_DIR) -name '*.less')
 
 BUILD_DIR = ./build
 APP_DIR = ../swift_calcs
-BUILD_JS = $(BUILD_DIR)/swift_calcs.js
-BUILD_JS_WORKER = $(BUILD_DIR)/giac_worker.js
-BUILD_CSS = $(BUILD_DIR)/swift_calcs.css
-UGLY_JS = $(BUILD_DIR)/swift_calcs.min.js
-UGLY_JS_WORKER = $(BUILD_DIR)/giac_worker.min.js
+BUILD_JS = $(BUILD_DIR)/swift_calcs$(VERSION).js
+BUILD_JS_WORKER = $(BUILD_DIR)/giac_worker$(VERSION).js
+BUILD_CSS = $(BUILD_DIR)/swift_calcs$(VERSION).css
+UGLY_JS = $(BUILD_DIR)/swift_calcs$(VERSION).min.js
+UGLY_JS_WORKER = $(BUILD_DIR)/giac_worker$(VERSION).min.js
 
 # programs and flags
 UGLIFY ?= ./node_modules/.bin/uglifyjs
@@ -58,14 +59,18 @@ BUILD_DIR_EXISTS = $(BUILD_DIR)/.exists--used_by_Makefile
 all: css uglify
 
 app: css js js_worker
-	cp -f $(BUILD_DIR)/swift_calcs.js ./$(APP_DIR)/public/swift_calcs.js
-	cp -f $(BUILD_DIR)/giac_worker.js ./$(APP_DIR)/public/giac_worker.js
-	cp -f $(BUILD_DIR)/swift_calcs.css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
+	rm -rf ./$(APP_DIR)/public/swift_calcs*.js
+	rm -rf ./$(APP_DIR)/public/giac_worker*.js
+	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).js ./$(APP_DIR)/public/swift_calcs$(VERSION).js
+	cp -f $(BUILD_DIR)/giac_worker$(VERSION).js ./$(APP_DIR)/public/giac_worker$(VERSION).js
+	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
 
 app_ugly: css uglify uglify_worker
-	cp -f $(BUILD_DIR)/swift_calcs.min.js ./$(APP_DIR)/public/swift_calcs.js
-	cp -f $(BUILD_DIR)/giac_worker.min.js ./$(APP_DIR)/public/giac_worker.js
-	cp -f $(BUILD_DIR)/swift_calcs.css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
+	rm -rf ./$(APP_DIR)/public/swift_calcs*.js
+	rm -rf ./$(APP_DIR)/public/giac_worker*.js
+	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).min.js ./$(APP_DIR)/public/swift_calcs$(VERSION).js
+	cp -f $(BUILD_DIR)/giac_worker$(VERSION).min.js ./$(APP_DIR)/public/giac_worker$(VERSION).js
+	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
 
 js: $(BUILD_JS)
 uglify: $(UGLY_JS)

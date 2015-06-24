@@ -214,7 +214,7 @@ This file handles communications with giac, which lives in a webworker
 	startProgress('Loading Computational Library');
 	setProgress(0);
 
-  var giac = giacHandler.worker = new Worker("giac_worker.js");
+  var giac = giacHandler.worker = new Worker("giac_worker" + window.SwiftCalcs_version + ".js");
   giac.addEventListener("message", function (evt) {
     handleResponse(JSON.parse(evt.data));
   },false);

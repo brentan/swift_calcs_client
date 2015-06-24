@@ -1,4 +1,4 @@
-var GIAC_VERSION = '1_22';
+var GIAC_VERSION = '1_23';
 
 var constants = {};
 var user_vars = {};

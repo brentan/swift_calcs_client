@@ -306,9 +306,15 @@ var Element = P(function(_) {
 			this.jQ.slideDown({duration: duration});
 		else 
 			this.jQ.css('display', '');
+		window.setTimeout(function(_this) { return function() { _this.reflow(); }; }(this));
+		return this;
+	}
+	_.reflow = function() {
 		for(var i = 0; i < this.focusableItems.length; i++) 
 			if((this.focusableItems[i] !== -1) && this.focusableItems[i].reflow) this.focusableItems[i].reflow();
-		return this;
+		var children = this.children();
+		for(var i = 0; i < children.length; i++)
+			children[i].reflow();
 	}
 	_.hide = function(duration) {
 		duration = typeof duration === 'undefined' ? 0 : duration;
