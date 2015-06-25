@@ -204,7 +204,7 @@ var text = P(EditableBlock, function(_, super_) {
     this.workspace.blurToolbar();
   }
   _.mouseClick = function(e) {
-    super_.mouseClick.call(this,e);
+    if(super_.mouseClick.call(this,e)) return true;
     this.focus(R);
     return false;
   }

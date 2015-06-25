@@ -28,5 +28,8 @@ obj.onprogress = function(input_module) { return function(e){
 	if(e.lengthComputable) 
 		input_module.updateProgress((e.loaded / e.total)*0.5);
 }; }(Module);
-obj.open('GET','giac' + GIAC_VERSION + '.js',true);
-obj.send(null);
+var loadGiac = function(v) {
+	obj.open('GET','giac' + v + '.js',true);
+	obj.send(null);
+}
+sendMessage({command: 'giac_version'});

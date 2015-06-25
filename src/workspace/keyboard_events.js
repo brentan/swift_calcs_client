@@ -56,7 +56,6 @@ Workspace.open(function(_) {
     }).blur(function() {
       if(_this.pasting) return;
       _this.blurred = true;
-      _this.lastActive = _this.activeElement;
       blurTimeout = setTimeout(function() { // wait for blur on window.  If its not, then run this function (in-window blur)
         if(_this.activeElement && !(_this.activeElement instanceof text)) _this.activeElement.blur();
         if(!_this.dragging && !_this.mousedown) _this.clearSelection();
@@ -71,6 +70,7 @@ Workspace.open(function(_) {
       blur();
     }
     function blur() {
+      _this.lastActive = 0;
       $(window).off('blur', windowBlur);
     }
     this.blurred = true;
@@ -78,8 +78,10 @@ Workspace.open(function(_) {
   }
   _.selectFn = function() { };
   _.unbindKeyboard = function() {
-    if(this.bound)
+    if(this.bound) {
+      $('body').off('cut').off('copy');
       this.textareaSpan.remove();
+    }
     return this;
   }
 
@@ -225,6 +227,7 @@ Workspace.open(function(_) {
   _.paste = function(to_paste, html) { 
     if(this.selection.length == 0) {
       if(!this.activeElement) return;
+      console.log(to_paste);
       // Nothing selected or selection is within the active element.  
       if((to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') || to_paste.match(/^[0-9\.]*$/)) {
         // This was a cut/copy -> paste from within a mathquill block, or is numeric in nature.  We should insert it into the current block, if possible, or insert it afterwards

@@ -1,5 +1,3 @@
-var GIAC_VERSION = '1_23';
-
 var constants = {};
 var user_vars = {};
 // Helper to bind a new object into the constant hash

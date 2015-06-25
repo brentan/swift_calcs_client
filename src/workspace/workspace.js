@@ -50,12 +50,15 @@ var Workspace = P(function(_) {
 		this.jQ.html(""); // Clear the target
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
 		this.jQ.append(this.insertJQ);
-		this.insertJQ.append('<div class="' + css_prefix + 'workspace_name"><input type=text class="' + css_prefix + 'workspace_name" value="' + this.name.replace(/"/g,'\"') + '"></div>');
+		$('#account_bar .content').html('<div class="' + css_prefix + 'workspace_name"><i class="fa fa-fw fa-file-text-o"></i><input type=text class="' + css_prefix + 'workspace_name" value="' + this.name.replace(/"/g,'\"') + '"></div>');
 		var _this = this;
-		this.insertJQ.find('input').on('blur', function(e) {
+		$('#account_bar .content').find('input').on('blur', function(e) {
 			_this.name = $(this).val();
 			_this.save();
-		});
+		}).on("keydown",function(e) {
+    	if(e.keyCode == 13) 
+    		$(this).blur();
+    });
 		this.bindMouse();
 		this.bindKeyboard();
 		SwiftCalcs.active_workspace = this;
@@ -66,7 +69,7 @@ var Workspace = P(function(_) {
 		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
 		if(new_name) {
 			this.name = new_name;
-			this.insertJQ.find("input." + css_prefix + "workspace_name").val(this.name);
+			$('#account_bar .content').find("input." + css_prefix + "workspace_name").val(this.name);
 			this.save();
 		}
 	}
@@ -89,6 +92,7 @@ var Workspace = P(function(_) {
 	_.unbind = function() {
 		this.unbindMouse();
 		this.unbindKeyboard();
+		$('#account_bar .content').html('');
 		this.bound = false;
 		return this;
 	}

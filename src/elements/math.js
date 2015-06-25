@@ -172,7 +172,7 @@ var math = P(EditableBlock, function(_, super_) {
 		this.focus(L);
 	}
 	_.mouseClick = function(e) {
-		super_.mouseClick.call(this,e);
+		if(super_.mouseClick.call(this,e)) return true;
 		// Test for click on answer section
 		var $el = $(e.target);
 		if($el.closest('td.' + css_prefix + 'output_box').length && !this.outputBox.hasClass('calculating') && !this.outputBox.hasClass('error') && !this.outputBox.hasClass('hide_pulldown')) {

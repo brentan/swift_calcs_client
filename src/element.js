@@ -722,7 +722,7 @@ var Element = P(function(_) {
 		if(this.blurred) return this;
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.blur();
-		if(this.workspace.activeElement == this) this.workspace.activeElement = 0;
+		if(this.workspace.activeElement == this) { this.workspace.lastActive = this; this.workspace.activeElement = 0; }
 		this.leftJQ.removeClass(css_prefix + 'focused');
 		return this;
 	}

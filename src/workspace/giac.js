@@ -229,6 +229,9 @@ This file handles communications with giac, which lives in a webworker
   var handleResponse = function(response) {
     var text = response.value
     switch(response.command) {
+    	case 'giac_version':
+				giac.postMessage(JSON.stringify({giac_version: window.giac_version}));
+      	return;
     	case 'results':
     		//var end_time = new Date();
     		//console.log(giacHandler.start_time - end_time);

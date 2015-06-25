@@ -85,6 +85,7 @@ var plot = P(Element, function(_, super_) {
 		return this;
 	}
 	_.mouseClick = function(e) {
+    if(super_.mouseClick.call(this,e)) return true;
 		var target = $(e.target).closest('div.' + css_prefix + 'plot_item');
 		if(target.length == 0) {
 			this.focus(L);

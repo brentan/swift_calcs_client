@@ -39,6 +39,8 @@ var errors = [];
 var warnings = [];
 var ii = 0;
 var receiveMessage = function(command) {
+  if(command.giac_version)
+    return loadGiac(command.giac_version);
   if(command.varList) {
     // If we are asking for the variable list, we simply get that list and return it immediately
     var vars = Module.caseval('VARS').slice(1,-1).split(',');
