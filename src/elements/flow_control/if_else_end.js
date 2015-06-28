@@ -16,7 +16,7 @@ var if_block = P(LogicBlock, function(_, super_) {
 		this.else_blocks = [];
 	}
 	_.innerHtml = function() {
-		return '<div><span class="' + css_prefix + 'code">if</span>' + mathSpan('logic') + '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'code">end</div>';
+		return '<div><span class="' + css_prefix + 'code">if</span>' + mathSpan('logic') + helpBlock() + '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'code">end</div>';
 	}
 	_.postInsertHandler = function() {
 		this.mathField = registerMath(this, 'logic', { handlers: {
@@ -110,7 +110,7 @@ var else_block = P(LogicCommand, function(_, super_) {
 		return 'true';
 	}
 	_.innerHtml = function() {
-		return '<span class="' + css_prefix + 'code">else</span><BR>' + answerSpan();
+		return '<span class="' + css_prefix + 'code">else</span>'  + helpBlock() + '<BR>' + answerSpan();
 	}
 	_.postInsertHandler = function() {
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
@@ -182,7 +182,7 @@ var else_if_block = P(else_block, function(_, super_) {
 		this.latex = latex || '';
 	}
 	_.innerHtml = function() {
-		return '<span class="' + css_prefix + 'code">elseif</span>' + mathSpan('logic') + '<BR>' + answerSpan();
+		return '<span class="' + css_prefix + 'code">elseif</span>' + mathSpan('logic') + helpBlock() + '<BR>' + answerSpan();
 	}
 	_.command = function() {
 		return this.mathField.text();

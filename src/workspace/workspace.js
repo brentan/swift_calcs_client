@@ -50,6 +50,7 @@ var Workspace = P(function(_) {
 		this.jQ.html(""); // Clear the target
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
 		this.jQ.append(this.insertJQ);
+		this.insertJQ.append('<div class="' + css_prefix + 'element_top_spacer"></div>');
 		$('#account_bar .content').html('<div class="' + css_prefix + 'workspace_name"><i class="fa fa-fw fa-file-text-o"></i><input type=text class="' + css_prefix + 'workspace_name" value="' + this.name.replace(/"/g,'\"') + '"></div>');
 		var _this = this;
 		$('#account_bar .content').find('input').on('blur', function(e) {

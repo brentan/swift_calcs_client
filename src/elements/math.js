@@ -38,7 +38,8 @@ var math = P(EditableBlock, function(_, super_) {
 				_this.remove(0);
 			} else {
 				_this.submissionHandler(_this)(mathField);
-				math().insertAfter(_this).show().focus();
+
+				math().insertAfter(_this).show().setImplicit().focus();
 			}
 		};
 	}

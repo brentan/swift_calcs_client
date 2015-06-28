@@ -74,10 +74,13 @@ Workspace.open(function(_) {
 		var $ul = buildMenu(el, options);
 		$ul.attr('id', 'toolbar').addClass('base');
 		$('#toolbar_holder').append($ul);
+		if(el.klass && el.klass.length) 
+			$('#toolbar_holder').addClass(css_prefix + el.klass.join(' ' + css_prefix));
 		this.reshapeToolbar();
 	}
 	_.detachToolbar = function() {
 		current_toolbar_target = false;
+		$('#toolbar_holder').removeClass().addClass('toolbar');
 		$('#toolbar').remove();
 	}
 	_.blurToolbar = function(el) {
@@ -266,18 +269,18 @@ Workspace.open(function(_) {
 			title: 'Remove all formatting',
 			method: function(el) { el.command('removeFormat'); } 
 		},
-		{ id: '|' },
-		{
-			id: 'math',
-			html: 'f(x)=&frac14;<sup>x</sup>',
-			title: 'Change to Math Mode',
-			method: function(el) { el.command('mathMode'); }
-		},
 		{
 			id: 'mode',
-			html: '<span style="color: #888888;">Text Mode</span>',
-			klass: 'static',
-			right: true
+			html: 'Text Mode',
+			klass: 'text_mode',
+			right: true,
+			method: function(el) { el.command('mathMode'); },
+			sub: [
+				{ html: '<span class="fa fa-calculator fa-fw"></span> Change to Math Mode', method: function(el) { el.command('mathMode'); } },
+				{klass: 'vaporware', html: '<span class="fa fa-code fa-fw"></span> Change to Code Mode', method: function(el) { showNotice('Feature not yet available'); } },
+				{klass: 'vaporware', html: '<span class="fa fa-table fa-fw"></span> Change to Spreadsheet Mode', method: function(el) { showNotice('Feature not yet available'); } },
+				{klass: 'vaporware', html: '<span class="fa fa-image fa-fw"></span> Change to Drawing Mode', method: function(el) { showNotice('Feature not yet available'); } }
+			]
 		}
 		];
 		if(to_add) {
@@ -501,18 +504,18 @@ Workspace.open(function(_) {
 				{html: 'Transpose', title: 'Transpose', method: function(el) { el.command('t'); el.command('r'); el.command('a'); el.command('n'); el.command('('); } }
 			]
 		},
-		{ id: '|' },
-		{
-			id: 'text',
-			icon: 'font',
-			title: 'Change to Text Mode',
-			method: function(el) { el.command('textMode'); }
-		},
 		{
 			id: 'mode',
-			html: '<span style="color: #888888;">Math Mode</span>',
-			klass: 'static',
-			right: true
+			html: 'Math Mode',
+			klass: 'math_mode',
+			right: true,
+			method: function(el) { el.command('textMode'); },
+			sub: [
+				{html: '<span class="fa fa-font fa-fw"></span> Change to Text Mode', method: function(el) { el.command('textMode');} },
+				{klass: 'vaporware', html: '<span class="fa fa-code fa-fw"></span> Change to Code Mode', method: function(el) { showNotice('Feature not yet available'); } },
+				{klass: 'vaporware', html: '<span class="fa fa-table fa-fw"></span> Change to Spreadsheet Mode', method: function(el) { showNotice('Feature not yet available'); } },
+				{klass: 'vaporware', html: '<span class="fa fa-image fa-fw"></span> Change to Drawing Mode', method: function(el) { showNotice('Feature not yet available'); } }
+			]
 		}
 		];
 		if(to_add) {

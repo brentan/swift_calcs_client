@@ -28,13 +28,17 @@ var SwiftCalcs = {};
 	function noop() {}
 
 	// Class helper.  Returns the type of an element
-	var elementType = function(el) {
+	var elementType = function(el) {  // BRENTAN, where is this used, and is it really needed over a simple instanceof?
 		for (var key in elements) {
 		  if (elements.hasOwnProperty(key) && (el instanceof elements[key])) 
 		  	return key;
 		}
 		return null;
 	}
+
+  var helpBlock = function() { // BRENTAN: Todo, just vaporware right now...
+    return '&nbsp;&nbsp;<a class="vaporware ' + css_prefix + 'help_circle" href="" onclick="showNotice(\'This feature is not yet available\'); return false;"><span class="vaporware fa fa-question-circle"></span></a>';
+  }
 
   /* Math helpers
    * These functions help create and register math elements.  They are used by various elements that have Math input or output secionts
@@ -61,7 +65,58 @@ var SwiftCalcs = {};
         + '<td rowspan=2 class="' + css_prefix + 'output_box"><table><tbody><tr><td><div class="answer"></div></td><td class="answer_menu"></td></tr></tbody></table></td></tr>'
         + '<tr><td class="' + css_prefix + 'answer_table_1b">&nbsp;</td></tr></tbody></table></div>';
   }
-
+  var getDefaultOptions = function(_this) {
+    return {handlers: {
+      deleteOutOf: function(dir, field) {
+        if(_this instanceof math) {
+          if(field.text() !== '') {
+            if(elementType(_this) && (elementType(_this) == elementType(_this[dir]))) {
+              // Deleting into element of the same type.  We should merge them together.  
+              if(dir == L) {// backspace
+                _this.write(_this[dir].focusableItems[0].toString());
+                _this[dir].remove(0);
+              } else {
+                _this.mark_for_deletion = true;
+                _this[dir].moveInFrom(-dir);
+                _this[dir].write(field.toString());
+                _this.remove(0);
+              }
+            } else if(_this[dir])
+              _this.workspace.selectDir(_this[dir],dir);
+            return; 
+          }
+          _this.mark_for_deletion = true;
+          if(_this.moveOut(field, dir)) 
+            _this.remove(0); //Only delete me if I successfully moved into a neighbor
+          else
+            _this.mark_for_deletion = false;
+        } else {
+          // If we aren't in a math block, move up to first item, and from there deleteOut
+          for(var i = 0; i < _this.focusableItems.length; i++) 
+            if(_this.focusableItems[i] === field) break;
+          if(i === (dir == L ? 0 : (_this.focusableItems.length-1)) || (_this.focusableItems[i + dir] === -1)) {
+            _this.workspace.selectDir(_this,dir);
+            return;
+          } else {
+            _this.moveOut(field, dir);
+            return;
+          }
+        }
+      },
+      upOutOf: function(field) {
+        window.setTimeout(function() { _this.moveOut(field, L, field.cursorX()); });
+      },
+      downOutOf: function(field) {
+        window.setTimeout(function() { _this.moveOut(field, R, field.cursorX()); });
+      },
+      moveOutOf: function(dir, field) {
+        window.setTimeout(function() { _this.moveOut(field, dir); });
+      },
+      selectOutOf: function(dir, field) { 
+        window.setTimeout(function() { _this.workspace.selectDir(_this, dir); _this.workspace.selectionChanged(); });
+      }
+    }};
+  }
   // This function will attach a math editable field by looking for a field with the provided class name (if provided)
   // It assumes the DOM element exists
   var registerMath = function(_this, klass, options) {
@@ -69,50 +124,9 @@ var SwiftCalcs = {};
   		klass = '.' + css_prefix + klass;
   	else
   		klass = '';
-  	var defaultOptions = {handlers: {
-  		deleteOutOf: function(dir, mathField) {
-        if((_this instanceof LogicBlock) || (_this instanceof LogicCommand)) {
-          _this.workspace.selectDir(_this,dir);
-          return;
-        }
-  			if(!(_this instanceof EditableBlock)) return; //I can only delete out of editable blocks
-  			if(mathField.text() !== '') {
-  				if(elementType(_this) && (elementType(_this) == elementType(_this[dir]))) {
-  					// Deleting into element of the same type.  We should merge them together.  
-  					if(dir == L) {// backspace
-  						_this.write(_this[dir].focusableItems[0].toString());
-  						_this[dir].remove(0);
-  					} else {
-              _this.mark_for_deletion = true;
-	  					_this[dir].moveInFrom(-dir);
-	  					_this[dir].write(mathField.toString());
-	  					_this.remove(0);
-	  				}
-  				} else if(_this[dir])
-  					_this.workspace.selectDir(_this[dir],dir);
-  				return; 
-  			}
-        _this.mark_for_deletion = true;
-  			if(_this.moveOut(mathField, dir)) 
-          _this.remove(0); //Only delete me if I successfully moved into a neighbor
-        else
-          _this.mark_for_deletion = false;
-  		},
-  		upOutOf: function(mathField) {
-  			window.setTimeout(function() { _this.moveOut(mathField, L, mathField.cursorX()); });
-  		},
-  		downOutOf: function(mathField) {
-  			window.setTimeout(function() { _this.moveOut(mathField, R, mathField.cursorX()); });
-  		},
-  		moveOutOf: function(dir, mathField) {
-  			window.setTimeout(function() { _this.moveOut(mathField, dir); });
-  		},
-			selectOutOf: function(dir, mathField) { 
-				window.setTimeout(function() { _this.workspace.selectDir(_this, dir); _this.workspace.selectionChanged(); });
-			}
-		}};
-		jQuery.extend(true, defaultOptions, options);
-  	var mathField = MathQuill.MathField(_this.jQ.find('span.' + css_prefix + 'math' + klass)[0], defaultOptions);
+    var default_options = getDefaultOptions(_this);
+		jQuery.extend(true, default_options, options);
+  	var mathField = MathQuill.MathField(_this.jQ.find('span.' + css_prefix + 'math' + klass)[0], default_options);
 		mathField.setElement(_this);
 		return mathField;
   }

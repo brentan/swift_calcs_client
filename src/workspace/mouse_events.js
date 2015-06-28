@@ -181,8 +181,12 @@ Workspace.open(function(_) {
           _this.clearSelection();
           _this.blur();
           return;
-        } else
-          target = _this.ends[R];
+        } else {
+          if($(e.target).closest('.' + css_prefix + 'element_top_spacer').length)
+            target = _this.ends[L];
+          else
+            target = _this.ends[R];
+        }
       }
       if(target === 0) throw("Somehow we have an empty workspace, which should never be allowed to occur");
       // docmousemove and mouseup share a lot, so combine them here:
@@ -237,8 +241,12 @@ Workspace.open(function(_) {
 		    	// Handle full click events as mousedown and then mouseup
 		      _this.clearSelection();
 		    	new_target = Element.byId[$(e_up.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-		    	if(!new_target) 
-            new_target = _this.ends[R];
+		    	if(!new_target) {
+            if($(e.target).closest('.' + css_prefix + 'element_top_spacer').length)
+              new_target = _this.ends[L];
+            else
+              new_target = _this.ends[R];
+          }
 		    	target = new_target;
           mousemoveup(e_up, 'mouseUp');
 		      new_target.focus();
@@ -246,8 +254,12 @@ Workspace.open(function(_) {
 		    }
         function force_click_handler(e_up) {
           new_target = Element.byId[$(e_up.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-          if(!new_target) 
-            new_target = _this.ends[R];
+          if(!new_target) {
+            if($(e.target).closest('.' + css_prefix + 'element_top_spacer').length)
+              new_target = _this.ends[L];
+            else
+              new_target = _this.ends[R];
+          }
           target = new_target;
           if(_this.activeElement) _this.activeElement.blur();
         }
@@ -299,7 +311,15 @@ Workspace.open(function(_) {
 	  		// Clicking dragging on nothing
 	      _this.clearSelection();
 	      // Dragging events:
-	      function mousemove(e) { new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1]; if(!new_target) new_target = _this.ends[R]; }
+	      function mousemove(e) { 
+          new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1]; 
+          if(!new_target) {
+            if($(e.target).closest('.' + css_prefix + 'element_top_spacer').length)
+              new_target = _this.ends[L];
+            else
+              new_target = _this.ends[R];
+          }
+        }
 	      function docmousemove(e) {
 	      	mousemoveup(e, 'mouseMove');
 	        new_target = undefined;
@@ -310,7 +330,9 @@ Workspace.open(function(_) {
     			_this.mousedown = false;
 	      	new_target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
           if(!new_target) {
-            if((target !== _this.ends[R]) || (_this.ends[R] instanceof EditableBlock))
+            if($(e.target).closest('.' + css_prefix + 'element_top_spacer').length)
+              new_target = _this.ends[L];
+            else if((target !== _this.ends[R]) || (_this.ends[R] instanceof EditableBlock))
               new_target = _this.ends[R];
             else {
               new_target = math().insertAfter(_this.ends[R]).show().setImplicit();

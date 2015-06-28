@@ -18,6 +18,14 @@ div.sc_element_container {
     font-weight: normal;
     padding: 2px 6px 2px 1px;
   }
+  .sc_help_circle {
+    color: #dddddd;
+    cursor: pointer;
+    display: none;
+    &:hover {
+      color: #555555;
+    }
+  }
   .sc_element {
     border-width:0px;
     table.sc_element_table {
@@ -84,7 +92,7 @@ div.sc_element_container {
             }
           }
           &.sc_answer_table_1b {
-            border-left: 1px solid #ffffff;
+            border-left-width: 0px;
           }
           &.sc_answer_table_2 {
             width: 6px;
@@ -261,6 +269,12 @@ div.sc_element_container {
       position: relative;
       left: -52px;
     }
+    & > table > tbody > tr > td.sc_element_insert_td > div:hover > .sc_help_circle {
+      display: inline-block;
+    }
+    &:hover > table > tbody > tr > td.sc_element_insert_td > .sc_help_circle {
+      display: inline-block;
+    }
   }
   & > .sc_element {
     padding-right: 30px;
@@ -294,12 +308,25 @@ div.sc_element_container {
         border-color: #B4D5FE;
       }
     }
-    &.sc_text .sc_hashtag {
-      background-color: #B4D5FE;
+    &.sc_text {
+      .sc_hashtag {
+        background-color: #B4D5FE;
+      }
+      .sc_wysiwyg_holder {
+        border-color: #B4D5FE;
+      }
     }
     &.sc_element {
-      table.sc_element_table td.sc_element_td.sc_focused {
-        background-color: #B4D5FE;
+      table.sc_element_table td.sc_element_td {
+        &.sc_focused {
+          background-color: #B4D5FE;
+          &:hover {
+            background-color: #B4D5FE;
+          }
+        }
+        &:hover {
+          background-color: #B4D5FE;
+        }
       }
     }
 		cursor: default;
@@ -320,12 +347,17 @@ div.sc_element_container {
     border-bottom: 2px solid black;
   }
   .sc_wysiwyg_holder {
-    padding: 6px 3px;
+    padding: 5px 2px;
+    border: 1px solid #ffffff;
     cursor: text;
     .sc_wysiwyg, textarea {
       resize: none;
       outline: none;
     }
+  }
+  .sc_focused .sc_wysiwyg_holder {
+    box-shadow: 0 0 5px rgba(81, 203, 238, 1);
+    border-color: rgba(81, 203, 238, 1);
   }
 }
 

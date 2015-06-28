@@ -567,8 +567,11 @@ var Element = P(function(_) {
 	_.start_target = 0;
 	_.mouseMove = function(e) {
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
+		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
     if(math_field.length) 
     	var new_target = MathQuill(math_field[0]);
+    else if(command_field.length) 
+    	var new_target = CommandBlock.byId[command_field.attr('data-id')*1];
     else
     	var new_target = -1;
     if(this.start_target === 0) 
@@ -590,15 +593,22 @@ var Element = P(function(_) {
 	_.mouseDown = function(e) {
 		this.start_target = -1;
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
+		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
     if(math_field.length) {
     	this.start_target = MathQuill(math_field[0]);
     	this.start_target.mouseDown(e);
-	  }
+	  } else if(command_field.length) {
+    	this.start_target = CommandBlock.byId[command_field.attr('data-id')*1];
+    	this.start_target.mouseDown(e);
+    }
 	}
 	_.mouseUp = function(e) {
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
+		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
     if(math_field.length) 
     	var new_target = MathQuill(math_field[0]);
+    else if(command_field.length) 
+    	var new_target = CommandBlock.byId[command_field.attr('data-id')*1];
     else
     	var new_target = -1;
     // Are we clicking/dragging within the area?
@@ -607,7 +617,8 @@ var Element = P(function(_) {
     else if(this.start_target == new_target) {
     	this.start_target.mouseUp(e);
     	this.start_target.focus();
-      this.workspace.unblurToolbar();
+    	if(!(this.start_target instanceof CommandBlock))
+      	this.workspace.unblurToolbar();
     	// Pass control to the mathField, since we are click/dragging within it
     	return false;
     } else  //We clicked in one area and dragged to another, just select the whole element
@@ -694,6 +705,7 @@ var Element = P(function(_) {
 		this.blurred = false;
 		this.workspace.activeElement = this;
 		this.leftJQ.addClass(css_prefix + 'focused');
+		this.jQ.addClass(css_prefix + 'focused');
 		// Check if we are in view, and if not, scroll:
 		if(this instanceof text) 
 			return this;
@@ -724,6 +736,7 @@ var Element = P(function(_) {
   	if(this.focusedItem) this.focusedItem.blur();
 		if(this.workspace.activeElement == this) { this.workspace.lastActive = this; this.workspace.activeElement = 0; }
 		this.leftJQ.removeClass(css_prefix + 'focused');
+		this.jQ.removeClass(css_prefix + 'focused');
 		return this;
 	}
 	_.windowBlur = function() {
@@ -731,6 +744,7 @@ var Element = P(function(_) {
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.windowBlur();
 		this.leftJQ.removeClass(css_prefix + 'focused');
+		this.jQ.removeClass(css_prefix + 'focused');
 		return this;
 	}
 	_.inFocus = function() { return !this.blurred; };
@@ -802,14 +816,17 @@ var Element = P(function(_) {
   		if(args[k] === "true") args[k] = true;
   		this[this.savedProperties[k]] = args[k];
   	}
+  	var count = 0;
   	for(var i = 0; i < this.focusableItems.length; i++) {
+  		if(this.focusableItems[i] instanceof CommandBlock) continue; //Ignore command blocks, those are created with the block and have no saveable options
   		if(this.focusableItems[i] === -1) {
   			// We are at the children.  We simply parse this and the resultant blocks become my children
-  			var blocks = parse(args[i + k]);
+  			var blocks = parse(args[count + k]);
   			for(var j=0; j < blocks.length; j++)
   				blocks[j].appendTo(this).show(0);
   		} else 
-  			this.focusableItems[i].clear().paste(args[i + k]);
+  			this.focusableItems[i].clear().paste(args[count + k]);
+  		count++;
   	}
   	return this;
   }
@@ -818,6 +835,7 @@ var Element = P(function(_) {
   	for(var k = 0; k < this.savedProperties.length; k++) 
   		output.push(this[this.savedProperties[k]]);
   	for(var i = 0; i < this.focusableItems.length; i++) {
+  		if(this.focusableItems[i] instanceof CommandBlock) continue; //Ignore command blocks, those are created with the block and have no saveable options
   		if(this.focusableItems[i] === -1) {
   			//We need to zip up the children
   			var child_string = '';

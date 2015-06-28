@@ -27,7 +27,7 @@ var plot = P(Element, function(_, super_) {
 		return '<div class="' + css_prefix + 'top"><span class="' + css_prefix + 'code">plot</span>x<sub>min</sub>:&nbsp;'
 			+ mathSpan('x_min')
 			+ '&nbsp;x<sub>max</sub>:&nbsp;'
-			+ mathSpan('x_max') + '<BR>'  + answerSpan()
+			+ mathSpan('x_max')  + helpBlock() + '<BR>'  + answerSpan()
 			+ '</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div><div class="' + css_prefix + 'plot_box"></div>';
 	}
 	_.postInsertHandler = function() {

@@ -22,10 +22,11 @@ var for_loop = P(Loop, function(_, super_) {
 		this.touched = [false, false, false, false];
 	}
 	_.innerHtml = function() {
-		return '<div><span class="' + css_prefix + 'code">for</span>' + mathSpan('var') 
+		//return '<div>' + codeBlockHTML('for', this.id) + mathSpan('var') 
+		return '<div><span class="' + css_prefix + 'code">for</span>' + mathSpan('var')
 		+ '&nbsp;from&nbsp;' + mathSpan('start')  
 		+ '&nbsp;to&nbsp;' + mathSpan('finish')  
-		+ '&nbsp;by&nbsp;' + mathSpan('step')  
+		+ '&nbsp;by&nbsp;' + mathSpan('step') + helpBlock()
 		+ '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'code">end</div>';
 	}
 	_.postInsertHandler = function() {
@@ -45,6 +46,7 @@ var for_loop = P(Loop, function(_, super_) {
 			enter: this.enterPressed(this,4),
 			blur: this.submissionHandler(this)
 		}});
+		//this.focusableItems = [registerCommand(this, 'for', { }), this.varField, this.startField, this.finishField, this.stepField, -1];
 		this.focusableItems = [this.varField, this.startField, this.finishField, this.stepField, -1];
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.varField.write(this.latex_var);
@@ -209,7 +211,7 @@ var continue_block = P(Element, function(_, super_) {
 		super_.init.call(this);
 	}
 	_.innerHtml = function() {
-		return '<span class="' + css_prefix + 'code">continue</span><BR>' + answerSpan();
+		return '<span class="' + css_prefix + 'code">continue</span>'  + helpBlock() + '<BR>' + answerSpan();
 	}
 	_.postInsertHandler = function() {
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
@@ -263,7 +265,7 @@ var break_block = P(continue_block, function(_, super_) {
 		super_.init.call(this);
 	}
 	_.innerHtml = function() {
-		return '<span class="' + css_prefix + 'code">break</span><BR>' + answerSpan();
+		return '<span class="' + css_prefix + 'code">break</span>'  + helpBlock() + '<BR>' + answerSpan();
 	}
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		var parentLoop = this.parentLoop();
