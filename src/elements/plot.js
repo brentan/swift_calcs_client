@@ -24,7 +24,7 @@ var plot = P(Element, function(_, super_) {
 		this.subplots = [];
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'top"><span class="' + css_prefix + 'code">plot</span>x<sub>min</sub>:&nbsp;'
+		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('plot', this.id) + 'x<sub>min</sub>:&nbsp;'
 			+ mathSpan('x_min')
 			+ '&nbsp;x<sub>max</sub>:&nbsp;'
 			+ mathSpan('x_max')  + helpBlock() + '<BR>'  + answerSpan()
@@ -44,7 +44,7 @@ var plot = P(Element, function(_, super_) {
 		super_.postInsertHandler.call(this);
 		this.xminField.latex(this.x_min);
 		this.xmaxField.latex(this.x_max);
-		this.focusableItems = [this.xminField, this.xmaxField];
+		this.focusableItems = [[registerCommand(this, 'plot', { }), this.xminField, this.xmaxField]];
 		this.attached = true;
 		var _this = this;
 		// Add the 'another plot' link
@@ -78,9 +78,13 @@ var plot = P(Element, function(_, super_) {
 		if(this.subplots.length == 0)
 			this.appendPlotOption(400,true);
 		else if(dir == R)
-			this.focusableItems[this.focusableItems.length - 1].focus(R);
+			this.focusableItems[this.focusableItems.length - 1][this.focusableItems[this.focusableItems.length - 1].length - 1].focus(R);
 		else if(dir == L)
-			this.focusableItems[2].focus(L);
+			this.focusableItems[1][0].focus(L);
+		else if(dir === 0)
+			this.focusableItems[1][0].focus(L);
+		else if(!dir && this.focusedItem)
+			this.focusedItem.focus();
 		this.showOptions();
 		return this;
 	}
@@ -332,19 +336,15 @@ var subplot = P(function(_) {
 	}
 	_.postInsertHandler = function() {
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
-		for(var i = 0; i < this.mathField.length; i++)
-			this.parent.focusableItems.push(this.mathField[i]);
+		this.parent.focusableItems.push(this.mathField);
 		for(var i = 1; i < this.to_parse.length; i++)
 			this.mathField[i-1].clear().latex(this.to_parse[i]);
 	}
 	_.remove = function() {
-		var to_remove = [];
 		for(var i = 0; i < this.parent.focusableItems.length; i++) {
-			for(var k = 0; k < this.mathField.length; k++)
-				if(this.mathField[k] == this.parent.focusableItems[i]) to_remove.push(i);
+			if(this.mathField[0] == this.parent.focusableItems[i][0]) break;
 		}
-		for(var i = 0; i < to_remove.length; i++)
-			this.parent.focusableItems.splice(to_remove[i],1);
+		this.parent.focusableItems.splice(i,1);
 		for(var i = 0; i < this.parent.subplots.length; i++) {
 			if(this.parent.subplots[i] == this) {
 				this.parent.subplots.splice(i,1);

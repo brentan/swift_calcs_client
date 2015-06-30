@@ -16,14 +16,14 @@ var if_block = P(LogicBlock, function(_, super_) {
 		this.else_blocks = [];
 	}
 	_.innerHtml = function() {
-		return '<div><span class="' + css_prefix + 'code">if</span>' + mathSpan('logic') + helpBlock() + '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'code">end</div>';
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('if', this.id) + mathSpan('logic') + helpBlock() + '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'focusableItems" data-id="2">' + codeBlockHTML('end', this.id) + '</div>';
 	}
 	_.postInsertHandler = function() {
 		this.mathField = registerMath(this, 'logic', { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.focusableItems = [this.mathField, -1];
+		this.focusableItems = [[registerCommand(this, 'if', { }), this.mathField], [-1], [registerCommand(this, 'end', { })]];
 		this.mathField.setExpressionMode(true);
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.mathField.write(this.latex);
@@ -33,7 +33,10 @@ var if_block = P(LogicBlock, function(_, super_) {
 	_.enterPressed = function(_this) {
 		return function(mathField) {
 			_this.submissionHandler(_this)(mathField);
-			math().prependTo(_this).show().focus();
+			if(_this.ends[L] && (_this.ends[L] instanceof math) && _this.ends[L].empty())
+				_this.ends[L].focus(L);
+			else
+				math().prependTo(_this).show().focus();
 		};
 	}
 	_.submissionHandler = function(_this) {
@@ -86,17 +89,20 @@ var if_block = P(LogicBlock, function(_, super_) {
 			this.childrenEvaluated(evaluation_id);
 		return false;
 	}
-	_.focus = function(dir) {
-		super_.focus.call(this);
-		this.mathField.focus(dir || 0);
-		return this;
-	}
   _.toString = function() {
   	return '{if}{{' + this.argumentList().join('}{') + '}}';
   }
 	// Callback for math elements notifying that this element has been changed
 	_.changed = function(el) {
 		this.needsEvaluation = true;
+	}
+	_.focus = function(dir) {
+		super_.focus.call(this);
+		if(dir === 0)
+			this.mathField.focus(L);
+		else if(!dir && this.focusedItem)
+			this.focusedItem.focus();
+		return this;
 	}
 
 });
@@ -110,12 +116,16 @@ var else_block = P(LogicCommand, function(_, super_) {
 		return 'true';
 	}
 	_.innerHtml = function() {
-		return '<span class="' + css_prefix + 'code">else</span>'  + helpBlock() + '<BR>' + answerSpan();
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('else', this.id) + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
 	_.postInsertHandler = function() {
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
+		this.attachItems();
 		super_.postInsertHandler.call(this);
 		return this;
+	}
+	_.attachItems = function() {
+		this.focusableItems = [[registerCommand(this, 'else', { allowDelete: true})]];
 	}
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		this.rightParent();
@@ -149,12 +159,22 @@ var else_block = P(LogicCommand, function(_, super_) {
 	_.focus = function(dir) {
 		super_.focus.call(this);
 		this.rightParent();
-		if(this.mathField)
-			this.mathField.focus(dir || 0);
-		else if(this[R])
-			this[R].focus(dir);
-		else
-			math().insertAfter(this).show().focus(dir);
+		if(dir === 0)
+			this.mathField.focus(L);
+		else if(!dir && this.focusedItem)
+			this.focusedItem.focus();
+		return this;
+	}
+	_.focus = function(dir) {
+		super_.focus.call(this);
+		this.rightParent();
+		if(dir === 0) {
+		  if(this[R])
+				this[R].focus(dir);
+			else
+				math().insertAfter(this).show().focus(dir);
+		} else if(!dir && this.focusedItem)
+			this.focusedItem.focus();
 		return this;
 	}
 	_.handle_response = function(result, any_yet) {
@@ -182,22 +202,19 @@ var else_if_block = P(else_block, function(_, super_) {
 		this.latex = latex || '';
 	}
 	_.innerHtml = function() {
-		return '<span class="' + css_prefix + 'code">elseif</span>' + mathSpan('logic') + helpBlock() + '<BR>' + answerSpan();
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('elseif', this.id) + mathSpan('logic') + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
 	_.command = function() {
 		return this.mathField.text();
 	}
-	_.postInsertHandler = function() {
+	_.attachItems = function() {
 		this.mathField = registerMath(this, 'logic', { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
-		this.focusableItems = [this.mathField];
+		this.focusableItems = [[registerCommand(this, 'elseif', { }), this.mathField]];
 		this.mathField.setExpressionMode(true);
 		this.mathField.write(this.latex);
-		super_.postInsertHandler.call(this);
-		return this;
 	}
 	_.enterPressed = function(_this) {
 		return function(mathField) {
@@ -218,5 +235,14 @@ var else_if_block = P(else_block, function(_, super_) {
 	_.changed = function(el) {
 		if(this.parent instanceof if_block)
 			this.parent.needsEvaluation = true;
+	}
+	_.focus = function(dir) {
+		super_.focus.call(this);
+		this.rightParent();
+		if(dir === 0)
+			this.mathField.focus(L);
+		else if(!dir && this.focusedItem)
+			this.focusedItem.focus();
+		return this;
 	}
 });

@@ -55,9 +55,10 @@ var Element = P(function(_) {
 
 		/* Focusable items is used for item traversal when using keyboard arrows to move around.  It is assumed all
 		 * focusable items will issue a callback when the cursor tries to move out of them up/down/left/right, and when this
-		 * is done, we look here first to determine where to go next.  A value of '-1' indicates a placeholder for children,
+		 * is done, we look here first to determine where to go next.  A value of '-1' indicates a placeholder for children and must exist on its own row,
 		 * so if/when this is reached, the cursor will move into the child elements (if any).  When the beginning/end of the
-		 * array is reached, we jump to the next neighbor focusable item, or traverse up the tree
+		 * array is reached, we jump to the next neighbor focusable item, or traverse up the tree.  This should be an array of 
+		 * arrays, where each row is a new actual row in the HTML representation
 		 */
 		this.focusableItems = [];
 	}
@@ -99,6 +100,8 @@ var Element = P(function(_) {
 			this.parse(this.toParse);
 			this.toParse = false;
 		}
+		if(this.hasChildren && (this.children().length == 0)) // Add default item
+			math().appendTo(this).show(0);
 		return this;
 	}
 	// Allow blocks to define handlers to run before being destroyed.
@@ -272,6 +275,8 @@ var Element = P(function(_) {
 				else window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
 			}
 		}
+		if((this[L] === 0) && (this[R] === 0))
+			math().appendTo(this.parent).show(0).focus(L);
 		if(this[L] !== 0) 
 			this[L][R] = this[R];
 		else
@@ -311,7 +316,8 @@ var Element = P(function(_) {
 	}
 	_.reflow = function() {
 		for(var i = 0; i < this.focusableItems.length; i++) 
-			if((this.focusableItems[i] !== -1) && this.focusableItems[i].reflow) this.focusableItems[i].reflow();
+			for(var j = 0; j < this.focusableItems[i].length; j++)
+				if((this.focusableItems[i][j] !== -1) && this.focusableItems[i][j].reflow) this.focusableItems[i][j].reflow();
 		var children = this.children();
 		for(var i = 0; i < children.length; i++)
 			children[i].reflow();
@@ -428,7 +434,7 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.shouldBeEvaluated = function(evaluation_id) {
-		if(!this.evaluatable || !giac.shouldEvaluate(evaluation_id)) return false;
+		if(!this.evaluatable || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;
 		// Logic Blocks: Make sure I'm not a children of any block that is not currently activated
 		for(var el = this; el instanceof Element; el = el.parent) {
 			if(el.parent instanceof LogicBlock) {
@@ -628,44 +634,52 @@ var Element = P(function(_) {
 		if(this.focusedItem) this.focusedItem.mouseOut(e);
 	}
 	_.mouseClick = function(e) {
+		if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'focusableItems').length) {
+			var focusable = this.getFocusableByX($(e.target).closest('div.' + css_prefix + 'focusableItems').attr('data-id')*1, e.originalEvent.pageX);
+			focusable.focus(e.originalEvent.pageX);
+		}
 		return false;
 	}
 	/* Keyboard events
   Keyboard events are handled by focusable items, but they report meta-events of interest to us (namely, attempt to move the cursor)
-  up/left/down/right out of the focusable item.  We take these and then move accordingly
+  up/left/down/right out of the focusable item (if up/down, x_location is passed).  We take these and then move accordingly
 	*/
 	// Will attempt to move to the next focusable item.  Returns false on failure (aka no next item to move to!) (if 'item' is 'false', it will move out of this element in the requested direction)
-	_.moveOut = function(item, dir, x_location) {
+	_.moveOutUpDown = function(item, dir, x_location) {
 		if(item) {
-			for(var i = 0; i < this.focusableItems.length; i++) 
-				if(this.focusableItems[i] == item) break;
-		} else
+			for(var i = 0; i < this.focusableItems.length; i++) {
+				for(var j = 0; j < this.focusableItems[i].length; j++)
+					if(this.focusableItems[i][j] == item) break;
+				if(this.focusableItems[i][j] == item) break;
+			}
+		} else {
 			var i = dir === L ? 0 : (this.focusableItems.length - 1);
+			var j = dir === L ? 0 : (this.focusableItems[i].length - 1);
+		}
 		if(((i == 0) && (dir == L)) || ((i == (this.focusableItems.length - 1)) && (dir == R))) {
-			// we are moving out of this element (up/left or down/right), so go to the next guy
-			if(this[dir]) {
-				// we must add an implicit math block if either me or the target isnt editable
-				if((this instanceof EditableBlock) || (this[dir] instanceof EditableBlock))
-					return this[dir].moveInFrom(-dir, x_location);
-				else {
-					math().insertNextTo(this,dir).show().focus().setImplicit();
-					return true;
-				}
-			}
-			// Since there is no next guy, lets see if we need to throw in an implicit math block
-			if(!(this instanceof EditableBlock)) {
-				math().insertNextTo(this,dir).show().focus().setImplicit();
-				return true;
-			}
+			// we are moving out of this element (left or right), so go to the next guy
+			if(this[dir]) return this[dir].moveInFrom(-dir, x_location);
 			// At this point, we jump to parent and look for next focusable item. Is there a parent?
-			if(this.depth === 0) return false;
-			return this.parent.focus().moveOut(-1, dir, x_location);
-		} else if(this.focusableItems[i + dir] !== -1) {
-			this.focusableItems[i + dir].focus(x_location ? x_location : -dir);
+			if(this.depth === 0) {
+				// No parent.  
+				if((dir === R) && (!(this instanceof EditableBlock) || !this.empty())) {
+					math().insertAfter(this).setImplicit().show(0).focus(L);
+					return true;
+				} else
+					return false;
+			}
+			return this.parent.focus().moveOutUpDown(-1, dir, x_location);
+		} 
+		// Update i, j to point to the next focusable item
+		i += dir;
+		var next = this.getFocusableByX(i,x_location);
+		if(next !== -1) {
+			next.focus(x_location);
 			return true;
 		} else {
 			//We reached the children, we need to jump in.  If there are no children, we add an implicit block //BRENTAN: Check at some point to override what is the 'implicit' block for each type?
-			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir, x_location)) return true;
+			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir, x_location)) 
+				return true;
 			else if(this.ends[-dir] === 0) {
 				math().appendTo(this).show().focus().setImplicit();
 				return true;
@@ -673,13 +687,69 @@ var Element = P(function(_) {
 		}
 		return false;
 	}
-	// Will attempt to move into this element from another from the passed direction
+	_.moveOutLeftRight = function(item, dir) {
+		if(item) {
+			for(var i = 0; i < this.focusableItems.length; i++) {
+				for(var j = 0; j < this.focusableItems[i].length; j++)
+					if(this.focusableItems[i][j] == item) break;
+				if(this.focusableItems[i][j] == item) break;
+			}
+		} else {
+			var i = dir === L ? 0 : (this.focusableItems.length - 1);
+			var j = dir === L ? 0 : (this.focusableItems[i].length - 1);
+		}
+		if(((i == 0) && (j == 0) && (dir == L)) || ((i == (this.focusableItems.length - 1)) && (j == (this.focusableItems[this.focusableItems.length - 1].length - 1)) && (dir == R))) {
+			// we are moving out of this element (left or right), so go to the next guy
+			if(this[dir]) return this[dir].moveInFrom(-dir);
+			// At this point, we jump to parent and look for next focusable item. Is there a parent?
+			if(this.depth === 0) {
+				// No parent.  
+				if((dir === R) && (!(this instanceof EditableBlock) || !this.empty())) {
+					math().insertAfter(this).setImplicit().show(0).focus(L);
+					return true;
+				} else
+					return false;
+			}
+			return this.parent.focus().moveOutLeftRight(-1, dir);
+		} 
+		// Update i, j to point to the next focusable item
+		if(((dir === L) && (j == 0)) || ((dir === R) && (j == (this.focusableItems[i].length-1)))) {
+			i += dir;
+			j = dir === L ? this.focusableItems[i].length-1 : 0;
+		} else
+			j += dir;
+		if(this.focusableItems[i][j] !== -1) {
+			this.focusableItems[i][j].focus(-dir);
+			return true;
+		} else {
+			//We reached the children, we need to jump in.  If there are no children, we add an implicit block //BRENTAN: Check at some point to override what is the 'implicit' block for each type?
+			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir)) 
+				return true;
+			else if(this.ends[-dir] === 0) {
+				math().appendTo(this).show().focus().setImplicit();
+				return true;
+			}
+		}
+		return false;
+	}
+	// Will attempt to move into this element from another from the passed direction.  If x_location is passed, assume we are coming from Up/Down and need to place cursor based on this location
 	_.moveInFrom = function(dir, x_location) {
 		if(this.focusableItems.length == 0) //nothing to focus on, jump past me
-			return this.moveOut(undefined, -dir);
+			return (x_location ? this.moveOutUpDown(undefined, -dir, x_location) : this.moveOutLeftRight(undefined, -dir));
 		this.focus(dir);
-		if(this.focusableItems[dir == R ? (this.focusableItems.length-1) : 0] === -1) {
-			if(this.ends[dir] && this.ends[dir].moveInFrom(dir)) return true;
+		// BRENTAN: BELOW SHOULD BE IN FOCUS IF/WHEN dir/x_location is set?
+		if(x_location) {
+			// up/down entry
+			var next = this.getFocusableByX(dir === L ? 0 : (this.focusableItems.length-1), x_location);
+		} else if(dir === L) {
+			// left entry
+			var next = this.focusableItems[0][0];
+		} else {
+			// right entry
+			var next = this.focusableItems[this.focusableItems.length - 1][this.focusableItems[this.focusableItems.length - 1].length - 1];
+		}
+		if(next === -1) {
+			if(this.ends[dir] && this.ends[dir].moveInFrom(dir, x_location)) return true;
 			else if(this.ends[dir] === 0) {
 				math().appendTo(this).show().focus().setImplicit();
 				return true;
@@ -687,7 +757,33 @@ var Element = P(function(_) {
 			return false;
 		}
 		else
-			this.focusableItems[dir == R ? (this.focusableItems.length-1) : 0].focus(x_location ? x_location : dir, dir);
+			next.focus(x_location ? x_location : dir, dir);
+		return true;
+	}
+	_.getFocusableByX = function(i,x_location) {
+		// Find the focusable item in row i by the x_location provided
+		for(var j = 0; j < (this.focusableItems[i].length-1); j++) {
+			if(this.focusableItems[i][j] === -1) return this.focusableItems[i][j];
+			var midway = this.focusableItems[i][j].jQ.offset().left + this.focusableItems[i][j].jQ.width();
+			midway = midway + (this.focusableItems[i][j+1].jQ.offset().left - midway)/2;
+			if(x_location < midway) return this.focusableItems[i][j];
+		}
+		return this.focusableItems[i][j];
+	}
+	// Returns true if the item is 'empty', which means all focusableItems are clear and all children are empty as well
+	_.empty = function() {
+		for(var i = 0; i < this.focusableItems.length; i++) {
+			for(var j = 0; j < this.focusableItems[i].length; j++) {
+				if(this.focusableItems[i][j] === -1) continue;
+				if(this.focusableItems[i][j] instanceof CommandBlock) continue;
+				if(!this.focusableItems[i][j].empty()) return false;
+			}
+		}
+		if(this.hasChildren) {
+			var kids = this.children();
+			for(var i = 0; i < kids.length; i++)
+				if(!kids[i].empty()) return false;
+		}
 		return true;
 	}
 	/*
@@ -704,8 +800,8 @@ var Element = P(function(_) {
 			this.workspace.activeElement.blur();
 		this.blurred = false;
 		this.workspace.activeElement = this;
-		this.leftJQ.addClass(css_prefix + 'focused');
-		this.jQ.addClass(css_prefix + 'focused');
+		if(this.leftJQ) this.leftJQ.addClass(css_prefix + 'focused');
+		if(this.jQ) this.jQ.addClass(css_prefix + 'focused');
 		// Check if we are in view, and if not, scroll:
 		if(this instanceof text) 
 			return this;
@@ -735,16 +831,16 @@ var Element = P(function(_) {
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.blur();
 		if(this.workspace.activeElement == this) { this.workspace.lastActive = this; this.workspace.activeElement = 0; }
-		this.leftJQ.removeClass(css_prefix + 'focused');
-		this.jQ.removeClass(css_prefix + 'focused');
+		if(this.leftJQ) this.leftJQ.removeClass(css_prefix + 'focused');
+		if(this.jQ) this.jQ.removeClass(css_prefix + 'focused');
 		return this;
 	}
 	_.windowBlur = function() {
     this.workspace.blurToolbar(this);
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.windowBlur();
-		this.leftJQ.removeClass(css_prefix + 'focused');
-		this.jQ.removeClass(css_prefix + 'focused');
+		if(this.leftJQ) this.leftJQ.removeClass(css_prefix + 'focused');
+		if(this.jQ) this.jQ.removeClass(css_prefix + 'focused');
 		return this;
 	}
 	_.inFocus = function() { return !this.blurred; };
@@ -818,15 +914,17 @@ var Element = P(function(_) {
   	}
   	var count = 0;
   	for(var i = 0; i < this.focusableItems.length; i++) {
-  		if(this.focusableItems[i] instanceof CommandBlock) continue; //Ignore command blocks, those are created with the block and have no saveable options
-  		if(this.focusableItems[i] === -1) {
-  			// We are at the children.  We simply parse this and the resultant blocks become my children
-  			var blocks = parse(args[count + k]);
-  			for(var j=0; j < blocks.length; j++)
-  				blocks[j].appendTo(this).show(0);
-  		} else 
-  			this.focusableItems[i].clear().paste(args[count + k]);
-  		count++;
+  		for(var j = 0; j < this.focusableItems[i].length; j++) {
+	  		if(this.focusableItems[i][j] instanceof CommandBlock) continue; //Ignore command blocks, those are created with the block and have no saveable options
+	  		if(this.focusableItems[i][j] === -1) {
+	  			// We are at the children.  We simply parse this and the resultant blocks become my children
+	  			var blocks = parse(args[count + k]);
+	  			for(var j=0; j < blocks.length; j++)
+	  				blocks[j].appendTo(this).show(0);
+	  		} else 
+	  			this.focusableItems[i][j].clear().paste(args[count + k]);
+	  		count++;
+	  	}
   	}
   	return this;
   }
@@ -835,16 +933,18 @@ var Element = P(function(_) {
   	for(var k = 0; k < this.savedProperties.length; k++) 
   		output.push(this[this.savedProperties[k]]);
   	for(var i = 0; i < this.focusableItems.length; i++) {
-  		if(this.focusableItems[i] instanceof CommandBlock) continue; //Ignore command blocks, those are created with the block and have no saveable options
-  		if(this.focusableItems[i] === -1) {
-  			//We need to zip up the children
-  			var child_string = '';
-  			jQuery.each(this.children(), function(j, child) {
-  				child_string += child.toString();
-  			});
-  			output.push(child_string);
-  		} else
-  			output.push(this.focusableItems[i].toString());
+  		for(var j = 0; j < this.focusableItems[i].length; j++) {
+	  		if(this.focusableItems[i][j] instanceof CommandBlock) continue; //Ignore command blocks, those are created with the block and have no saveable options
+	  		if(this.focusableItems[i][j] === -1) {
+	  			//We need to zip up the children
+	  			var child_string = '';
+	  			jQuery.each(this.children(), function(n, child) {
+	  				child_string += child.toString();
+	  			});
+	  			output.push(child_string);
+	  		} else
+	  			output.push(this.focusableItems[i][j].toString());
+	  	}
   	}
   	return output;
   }

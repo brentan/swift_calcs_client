@@ -12,11 +12,29 @@ div.workspace_holder.sc_manual_evaluation {
   }
 }
 div.sc_element_container {
+  .sc_cursor {
+    border-left: 1px solid black;
+    margin-left: -1px;
+    position: relative;
+    z-index: 1;
+    padding: 0;
+    display: inline-block;
+    &.blink { visibility: hidden; }
+  }
   .sc_code {
     font-size:1.1em;
     color: #0000cc;
     font-weight: normal;
     padding: 2px 6px 2px 1px;
+    var {
+      font-style: normal;
+      &.highlighted {
+        background-color: #B4D5FE;
+      }
+    }
+  }
+  .sc_focusableItems {
+    cursor: text;
   }
   .sc_help_circle {
     color: #dddddd;

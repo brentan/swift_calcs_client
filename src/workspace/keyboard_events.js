@@ -153,7 +153,7 @@ Workspace.open(function(_) {
           break;
         case 'Up':
           // move to start - 1
-          this.selection[0].focus(L).moveOut(false,L);
+          this.selection[0].focus(L).moveOutLeftRight(false,L);
           this.clearSelection();
           break;
         case 'Right':
@@ -163,7 +163,7 @@ Workspace.open(function(_) {
           break;
         case 'Down':
           // move to end + 1
-          this.selection[this.selection.length - 1].focus(R).moveOut(false,R);
+          this.selection[this.selection.length - 1].focus(R).moveOutLeftRight(false,R);
           this.clearSelection();
           break;
         case 'Shift-Left':

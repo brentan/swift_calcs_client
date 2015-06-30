@@ -22,12 +22,11 @@ var for_loop = P(Loop, function(_, super_) {
 		this.touched = [false, false, false, false];
 	}
 	_.innerHtml = function() {
-		//return '<div>' + codeBlockHTML('for', this.id) + mathSpan('var') 
-		return '<div><span class="' + css_prefix + 'code">for</span>' + mathSpan('var')
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('for', this.id) + mathSpan('var') 
 		+ '&nbsp;from&nbsp;' + mathSpan('start')  
 		+ '&nbsp;to&nbsp;' + mathSpan('finish')  
 		+ '&nbsp;by&nbsp;' + mathSpan('step') + helpBlock()
-		+ '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'code">end</div>';
+		+ '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'focusableItems" data-id="2">' + codeBlockHTML('end', this.id) + '</div>';
 	}
 	_.postInsertHandler = function() {
 		this.varField = registerMath(this, 'var', { handlers: {
@@ -46,8 +45,7 @@ var for_loop = P(Loop, function(_, super_) {
 			enter: this.enterPressed(this,4),
 			blur: this.submissionHandler(this)
 		}});
-		//this.focusableItems = [registerCommand(this, 'for', { }), this.varField, this.startField, this.finishField, this.stepField, -1];
-		this.focusableItems = [this.varField, this.startField, this.finishField, this.stepField, -1];
+		this.focusableItems = [[registerCommand(this, 'for', { }), this.varField, this.startField, this.finishField, this.stepField], [-1], [registerCommand(this, 'end', { })]];
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.varField.write(this.latex_var);
 		this.startField.write(this.latex_start);
@@ -61,10 +59,13 @@ var for_loop = P(Loop, function(_, super_) {
 	_.enterPressed = function(_this, to_focus) {
 		return function(mathField) {
 			_this.submissionHandler(_this)(mathField);
-			if(to_focus == 4)
-				math().prependTo(_this).show().focus();
-			else 
-				_this.focusableItems[to_focus].focus(-1);
+			if(to_focus == 4) {
+				if(_this.ends[L] && (_this.ends[L] instanceof math) && _this.ends[L].empty())
+					_this.ends[L].focus(L);
+				else
+					math().prependTo(_this).show().focus();
+			}	else 
+				_this.focusableItems[0][to_focus+1].focus(-1);
 		};
 	}
 	_.submissionHandler = function(_this) {
@@ -186,7 +187,10 @@ var for_loop = P(Loop, function(_, super_) {
 	}
 	_.focus = function(dir) {
 		super_.focus.call(this);
-		this.varField.focus(0);
+		if(dir === 0)
+			this.varField.focus(L);
+		else if(!dir && this.focusedItem)
+			this.focusedItem.focus();
 		return this;
 	}
   _.toString = function() {
@@ -207,14 +211,13 @@ var continue_block = P(Element, function(_, super_) {
 	_.lineNumber = true;
 	_.outputBox = 0;
 	_.evaluatable = true;
-	_.init = function() {
-		super_.init.call(this);
-	}
+	_.command_name = 'continue';
 	_.innerHtml = function() {
-		return '<span class="' + css_prefix + 'code">continue</span>'  + helpBlock() + '<BR>' + answerSpan();
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML(this.command_name, this.id) + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
 	_.postInsertHandler = function() {
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
+		this.focusableItems = [[registerCommand(this, this.command_name, { allowDelete: true})]];
 		super_.postInsertHandler.call(this);
 		return this;
 	}
@@ -247,26 +250,24 @@ var continue_block = P(Element, function(_, super_) {
 		}
 	}
 	_.focus = function(dir) {
+		console.log('break/cont focus: ' + dir);
 		super_.focus.call(this);
 		this.parentLoop(true);
-		if(this[R])
-			this[R].focus(dir);
-		else
-			math().insertAfter(this).show().focus(dir).setImplicit();
+		if(dir === 0) {
+			if(this[R])
+				this[R].focus(dir);
+			else
+				math().insertAfter(this).show().focus(dir).setImplicit();
+		} else if(!dir && this.focusedItem)
+			this.focusedItem.focus();
 		return this;
 	}
   _.toString = function() {
-  	return '{continue}{}';
+  	return '{' + this.command_name + '}{}';
   }
 });
 var break_block = P(continue_block, function(_, super_) {
-	_.outputBox = 0;
-	_.init = function() {
-		super_.init.call(this);
-	}
-	_.innerHtml = function() {
-		return '<span class="' + css_prefix + 'code">break</span>'  + helpBlock() + '<BR>' + answerSpan();
-	}
+	_.command_name = 'break';
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		var parentLoop = this.parentLoop();
 		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) {
@@ -275,7 +276,4 @@ var break_block = P(continue_block, function(_, super_) {
 		}	else
 			this.evaluateNext(evaluation_id, move_to_next);
 	}
-  _.toString = function() {
-  	return '{break}{}';
-  }
 });

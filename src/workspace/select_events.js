@@ -18,7 +18,7 @@ Workspace.open(function(_) {
 	  this.clearSelection(true);
 		if(this.selection.length == 0) {
 			this.selection = [el];
-			el.mouseOut({});
+			if(this.activeElement) this.activeElement.mouseOut({});
 			last_dir = -dir;
 		} else {
 			var start_index = dir === R ? 0 : (this.selection.length - 1);

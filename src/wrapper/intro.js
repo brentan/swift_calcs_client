@@ -68,49 +68,49 @@ var SwiftCalcs = {};
   var getDefaultOptions = function(_this) {
     return {handlers: {
       deleteOutOf: function(dir, field) {
-        if(_this instanceof math) {
-          if(field.text() !== '') {
-            if(elementType(_this) && (elementType(_this) == elementType(_this[dir]))) {
-              // Deleting into element of the same type.  We should merge them together.  
-              if(dir == L) {// backspace
-                _this.write(_this[dir].focusableItems[0].toString());
-                _this[dir].remove(0);
-              } else {
-                _this.mark_for_deletion = true;
-                _this[dir].moveInFrom(-dir);
-                _this[dir].write(field.toString());
-                _this.remove(0);
-              }
-            } else if(_this[dir])
-              _this.workspace.selectDir(_this[dir],dir);
-            return; 
-          }
-          _this.mark_for_deletion = true;
-          if(_this.moveOut(field, dir)) 
-            _this.remove(0); //Only delete me if I successfully moved into a neighbor
-          else
-            _this.mark_for_deletion = false;
-        } else {
-          // If we aren't in a math block, move up to first item, and from there deleteOut
-          for(var i = 0; i < _this.focusableItems.length; i++) 
-            if(_this.focusableItems[i] === field) break;
-          if(i === (dir == L ? 0 : (_this.focusableItems.length-1)) || (_this.focusableItems[i + dir] === -1)) {
-            _this.workspace.selectDir(_this,dir);
-            return;
-          } else {
-            _this.moveOut(field, dir);
-            return;
-          }
+        // find next focusable item, and if there isn't one or if its the children, do the appropriate action
+        for(var i = 0; i < _this.focusableItems.length; i++) {
+          for(var j = 0; j < _this.focusableItems[i].length; j++)
+            if(_this.focusableItems[i][j] == field) break;
+          if(_this.focusableItems[i][j] == field) break;
         }
+        if(((dir === L) && (j == 0)) || ((dir === R) && (j == (_this.focusableItems[i].length-1)))) {
+          var i_new = i + dir;
+          var j_new = dir === L ? _this.focusableItems[i].length-1 : 0;
+        } else {
+          var i_new = i;
+          var j_new = j + dir;
+        }
+        if(((i == 0) && (j == 0) && (dir == L)) || ((i == (_this.focusableItems.length - 1)) && (j == (_this.focusableItems[_this.focusableItems.length - 1].length - 1)) && (dir == R))) {
+          // leftward or rightward delete out of element
+          if(_this[dir] && (_this[dir] instanceof EditableBlock) && _this[dir].empty()) _this[dir].remove(0);
+          else if(_this[dir]) _this.workspace.selectDir(_this[dir],dir);
+          else if(_this.depth) _this.workspace.selectDir(_this.parent,dir);
+          return;
+        }
+        if(_this.focusableItems[i_new][j_new] === -1) {
+          if(_this.ends[-dir] && (_this.ends[-dir] instanceof EditableBlock) && _this.ends[-dir].empty()) _this.ends[-dir].remove(0);
+          else _this.workspace.selectDir(_this.ends[-dir],dir);
+          return;
+        } 
+        if((i_new == 0) && (j_new == 0) && (dir == L) && (_this.focusableItems[0][0] instanceof CommandBlock) && _this.empty()) {
+          // Special case, this is where the cursor would be right after a magic command is transformed into a special block.  Backspace should revert to the magic command in a math block
+          _this.mark_for_deletion = true;
+          _this.moveOutLeftRight(field, dir);
+          _this.focusableItems[0][0].changeToMath();
+          return;
+        }
+        _this.moveOutLeftRight(field, dir);
+        return;
       },
       upOutOf: function(field) {
-        window.setTimeout(function() { _this.moveOut(field, L, field.cursorX()); });
+        window.setTimeout(function() { _this.moveOutUpDown(field, L, field.cursorX()); });
       },
       downOutOf: function(field) {
-        window.setTimeout(function() { _this.moveOut(field, R, field.cursorX()); });
+        window.setTimeout(function() { _this.moveOutUpDown(field, R, field.cursorX()); });
       },
       moveOutOf: function(dir, field) {
-        window.setTimeout(function() { _this.moveOut(field, dir); });
+        window.setTimeout(function() { _this.moveOutLeftRight(field, dir); });
       },
       selectOutOf: function(dir, field) { 
         window.setTimeout(function() { _this.workspace.selectDir(_this, dir); _this.workspace.selectionChanged(); });

@@ -23,7 +23,7 @@ var math = P(EditableBlock, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.focusableItems = [this.mathField];
+		this.focusableItems = [[this.mathField]];
 		this.mathField.write(this.latex);
 		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		super_.postInsertHandler.call(this);
@@ -34,11 +34,11 @@ var math = P(EditableBlock, function(_, super_) {
 			var to_compute = mathField.text();
 			if(elements[to_compute.toLowerCase()]) {
 				_this.needsEvaluation = false;
-				elements[to_compute.toLowerCase()]().insertAfter(_this).show().focus(L);
+				_this.mark_for_deletion = true;
+				elements[to_compute.toLowerCase()]().insertAfter(_this).show().focus(0);
 				_this.remove(0);
 			} else {
 				_this.submissionHandler(_this)(mathField);
-
 				math().insertAfter(_this).show().setImplicit().focus();
 			}
 		};
@@ -47,9 +47,8 @@ var math = P(EditableBlock, function(_, super_) {
 		this.mark_for_deletion = true;
 		if(elements[to_text.toLowerCase()]) {
 			this.needsEvaluation = false;
-			elements[to_text.toLowerCase()]().insertAfter(this).show().focus(L);
-		}
-		else {
+			elements[to_text.toLowerCase()]().insertAfter(this).show().focus(0);
+		}	else {
 			// Not a specific command, so we turn in to a text box
 			if(this[L] instanceof text) {
 				var left = cleanHtml(this[L].toString());
@@ -72,6 +71,13 @@ var math = P(EditableBlock, function(_, super_) {
 			if(_this.needsEvaluation) {
 				//console.log(mathField.latex());
 				var to_compute = mathField.text();
+				if(elements[to_compute.toLowerCase()]) {
+					_this.mark_for_deletion = true;
+					_this.needsEvaluation = false;
+					elements[to_compute.toLowerCase()]().insertAfter(_this).show();
+					_this.remove(0);
+					return;
+				}
 				if(to_compute.indexOf(':=') > -1) {
 					_this.scoped = true;
 					_this.was_scoped = true;
@@ -244,7 +250,7 @@ var math = P(EditableBlock, function(_, super_) {
 		this.needsEvaluation = true;
 	}
 	_.setImplicit = function() {
-		if(!((this.depth == 0) && (this[L] == 0) && (this[R] == 0)))
+		if(!((this[L] == 0) && (this[R] == 0)))
 			this.implicit = true;
 		return this;
 	}

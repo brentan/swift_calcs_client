@@ -11,7 +11,7 @@ var text = P(EditableBlock, function(_, super_) {
   }
   _.postInsertHandler = function() {
     this.textField = new WYSIWYG(this.jQ.find('.' + css_prefix + 'wysiwyg')[0], this, {});
-    this.focusableItems = [this.textField];
+    this.focusableItems = [[this.textField]];
     this.textField.html(this.html);
     var _this = this;
     this.textField.$editor.on('click', 'a', function(e) {
@@ -472,7 +472,7 @@ var WYSIWYG = P(function(_) {
           // Check if we are in first spot.  If so, delete backwards OR highlight block
           if(t.startPosition()) {
             if((cleanHtml(t.html()) === '') || (cleanHtml(t.html()) === '<br>')) {
-              if(t.el.moveOut(t.el.textField, L)) 
+              if(t.el.moveOutLeftRight(t.el.textField, L)) 
                 t.el.remove(0); //Only delete me if I successfully moved into a neighbor
               else
                 t.el.changeToMath(); //Otherwise, turn me into a math block
@@ -500,7 +500,7 @@ var WYSIWYG = P(function(_) {
           // Same as above, but at the end position
           if(t.endPosition()) {
             if((cleanHtml(t.html()) === '') || (cleanHtml(t.html()) === '<br>')) {
-              if(t.el.moveOut(t.el.textField, R)) t.el.remove(0); //Only delete me if I successfully moved into a neighbor
+              if(t.el.moveOutLeftRight(t.el.textField, R)) t.el.remove(0); //Only delete me if I successfully moved into a neighbor
             } else {
               if(t.el[R]) {
                 t.el.workspace.selectDir(t.el[R],R);
@@ -513,22 +513,22 @@ var WYSIWYG = P(function(_) {
           break;
         case 'Left':
           // If already at start, move into previous element
-          if(t.startPosition() && t.el.moveOut(t.el.textField, L))
+          if(t.startPosition() && t.el.moveOutLeftRight(t.el.textField, L))
             e.preventDefault();
           break;
         case 'Right':
           // If already at end, move into next element
-          if(t.endPosition() && t.el.moveOut(t.el.textField, R))
+          if(t.endPosition() && t.el.moveOutLeftRight(t.el.textField, R))
             e.preventDefault();
           break;
         case 'Up':
           // If on top line, move up to previous item
-          if(t.firstLine() && t.el.moveOut(t.el.textField, L, t.caretOffset().left))
+          if(t.firstLine() && t.el.moveOutUpDown(t.el.textField, L, t.caretOffset().left))
             e.preventDefault();
           break;
         case 'Down':
           // If on bottom line, move down to next item
-          if(t.lastLine() && t.el.moveOut(t.el.textField, R, t.caretOffset().left))
+          if(t.lastLine() && t.el.moveOutUpDown(t.el.textField, R, t.caretOffset().left))
             e.preventDefault();
           break;
         case 'Shift-Home':
@@ -756,10 +756,9 @@ var WYSIWYG = P(function(_) {
     t.$box.remove();
   };
 
-  // Empty the editor
+  // Is the editor Empty ?
   _.empty = function(){
-    this.$e.val('');
-    this.syncCode(true);
+    return this.$e.val().trim() == '';
   };
 
   // Function call when click on viewHTML button
