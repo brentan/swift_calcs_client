@@ -83,7 +83,8 @@ var SwiftCalcs = {};
         }
         if(((i == 0) && (j == 0) && (dir == L)) || ((i == (_this.focusableItems.length - 1)) && (j == (_this.focusableItems[_this.focusableItems.length - 1].length - 1)) && (dir == R))) {
           // leftward or rightward delete out of element
-          if(_this[dir] && (_this[dir] instanceof EditableBlock) && _this[dir].empty()) _this[dir].remove(0);
+          if((_this instanceof EditableBlock) && _this.empty() && _this.moveOutLeftRight(field, dir)) _this.remove(0);
+          else if(_this[dir] && (_this[dir] instanceof EditableBlock) && _this[dir].empty()) _this[dir].remove(0);
           else if(_this[dir]) _this.workspace.selectDir(_this[dir],dir);
           else if(_this.depth) _this.workspace.selectDir(_this.parent,dir);
           return;

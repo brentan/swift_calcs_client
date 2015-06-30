@@ -86,6 +86,7 @@ var Workspace = P(function(_) {
 	  } else {
 			math().appendTo(this).show(0);
 	  }
+		this.insertJQ.append('<div class="' + css_prefix + 'element_bot_spacer"></div>');
 	  this.updateHashtags();
 	  return this;
 	}

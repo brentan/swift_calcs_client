@@ -332,7 +332,7 @@ Workspace.open(function(_) {
           if(!new_target) {
             if($(e.target).closest('.' + css_prefix + 'element_top_spacer').length)
               new_target = _this.ends[L];
-            else if((target !== _this.ends[R]) || (_this.ends[R] instanceof EditableBlock))
+            else if((target !== _this.ends[R]) || (_this.ends[R] instanceof math))
               new_target = _this.ends[R];
             else {
               new_target = math().insertAfter(_this.ends[R]).show().setImplicit();

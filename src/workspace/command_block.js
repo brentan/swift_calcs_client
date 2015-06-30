@@ -61,6 +61,24 @@ var CommandBlock = P(function(_) {
 			case 'Shift-Down':
 				this.handlers.selectOutOf(R, this);
 				break;
+			case 'End':
+				this.placeCursor(this.children().length);
+				break;
+			case 'Shift-End':
+			case 'Ctrl-End':
+			case 'Ctrl-Shift-End':
+				this.location = this.children().length;
+				this.updateHighlight();
+				break;
+			case 'Home':
+				this.placeCursor(0);
+				break;
+			case 'Shift-Home':
+			case 'Ctrl-Home':
+			case 'Ctrl-Shift-Home':
+				this.location = 0;
+				this.updateHighlight();
+				break;
 	    case 'Ctrl-Shift-Backspace':
 	    case 'Ctrl-Backspace':
 	    case 'Shift-Backspace':

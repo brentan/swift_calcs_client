@@ -420,9 +420,6 @@ var WYSIWYG = P(function(_) {
             // Our behavior is dependant on where the cursor is on the line
             // Start of text box.  Insert a math box before this, but hold focus here
             math().insertBefore(t.el).show();
-          } else if(t.endPosition()) {
-            // End of text box.  Insert a math box after this, and move focus
-            math().insertAfter(t.el).show().focus();
           } else {
             if($(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) {
               var hashtag = rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode;

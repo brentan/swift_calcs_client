@@ -172,10 +172,7 @@ var math = P(EditableBlock, function(_, super_) {
 	}
 	_.PrependBlankItem = function() {
 		//add a blank block just before this one
-		if(this[L] instanceof text) 
-			math().insertBefore(this).show().changeToText('');
-		else
-			math().insertBefore(this).show();
+		math().insertBefore(this).show();
 		this.focus(L);
 	}
 	_.mouseClick = function(e) {
