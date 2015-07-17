@@ -83,6 +83,7 @@ var SwiftCalcs = {};
         }
         if(((i == 0) && (j == 0) && (dir == L)) || ((i == (_this.focusableItems.length - 1)) && (j == (_this.focusableItems[_this.focusableItems.length - 1].length - 1)) && (dir == R))) {
           // leftward or rightward delete out of element
+          console.log(_this.empty());
           if((_this instanceof EditableBlock) && _this.empty() && _this.moveOutLeftRight(field, dir)) _this.remove(0);
           else if(_this[dir] && (_this[dir] instanceof EditableBlock) && _this[dir].empty()) _this[dir].remove(0);
           else if(_this[dir]) _this.workspace.selectDir(_this[dir],dir);
@@ -160,8 +161,7 @@ var SwiftCalcs = {};
     status_bar.addClass(css_prefix + 'clear');
     status_bar.html('<div class="progress_bar"></div><div class="message_text"><i class="fa fa-spinner fa-pulse"></i>&nbsp;' + message + '</div>');
     status_bar.find('a').on('click', function(e) {
-      giac.cancelEvaluations();
-      $(this).html('Aborting...');
+      giac.cancelEvaluations($(this));
       return false;
     });
   }

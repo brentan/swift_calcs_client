@@ -9,6 +9,7 @@
 		'for': for_loop,
 		'continue': continue_block,
 		'break': break_block,
-		'plot': plot
+		'plot': plot,
+		'bookmark': bookmark
 	}
 }());

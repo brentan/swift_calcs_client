@@ -1,5 +1,4 @@
 var if_block = P(LogicBlock, function(_, super_) {
-	_.savedProperties = [];
 	_.klass = ['if', 'logic_block'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
@@ -8,7 +7,6 @@ var if_block = P(LogicBlock, function(_, super_) {
 	_.hasChildren = true;
 	_.mathField = 0;
 	_.lineNumber = true;
-	_.outputBox = 0;
 
 	_.init = function(latex) {
 		super_.init.call(this);
@@ -25,7 +23,6 @@ var if_block = P(LogicBlock, function(_, super_) {
 		}});
 		this.focusableItems = [[registerCommand(this, 'if', { }), this.mathField], [-1], [registerCommand(this, 'end', { })]];
 		this.mathField.setExpressionMode(true);
-		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.mathField.write(this.latex);
 		super_.postInsertHandler.call(this);
 		return this;
@@ -71,13 +68,11 @@ var if_block = P(LogicBlock, function(_, super_) {
 		var any_yet = false;
 		if(result[0].success) {
 			any_yet = this.logicResult = parseLogicResult(result[0].returned)
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+			this.outputBox.collapse();
 		} else {
 			this.logicResult = false;
-			giac.errors_encountered = true;
-			this.outputBox.removeClass('calculating warn').addClass('error');
-			this.outputBox.html(result[0].returned);
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+			this.outputBox.setError(result[0].returned);
+			this.outputBox.expand();
 		}
 		for(var i = 1; i < result.length; i++) 
 			any_yet = this.else_blocks[i-1].handle_response(result[i], any_yet);
@@ -107,7 +102,6 @@ var if_block = P(LogicBlock, function(_, super_) {
 
 });
 var else_block = P(LogicCommand, function(_, super_) {
-	_.outputBox = 0;
 	_.mathField = false;
 	_.init = function() {
 		super_.init.call(this);
@@ -119,7 +113,6 @@ var else_block = P(LogicCommand, function(_, super_) {
 		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('else', this.id) + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
 	_.postInsertHandler = function() {
-		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.attachItems();
 		super_.postInsertHandler.call(this);
 		return this;
@@ -142,28 +135,17 @@ var else_block = P(LogicCommand, function(_, super_) {
 				}
 			}
 			if(prev_else) {
-				this.outputBox.removeClass('calculating error').addClass('warn');
-				this.outputBox.html('<div class="warning">Statement occurs after an <i>else</i> statement and is never reached.</div>');
-				this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+				this.outputBox.setWarning('Statement occurs after an <i>else</i> statement and is never reached.');
+				this.outputBox.expand();
 				return false;
 			}
 		} else {
-			this.outputBox.removeClass('calculating error').addClass('warn');
-			this.outputBox.html('<div class="warning">Statement is not within an <i>If</i> statement.  Block has been ignored.</div>');
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+			this.outputBox.setWarning('Statement is not within an <i>If</i> statement.  Block has been ignored.');
+			this.outputBox.expand();
 			return false;
 		}
-		this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+		this.outputBox.collapse();
 		return true;
-	}
-	_.focus = function(dir) {
-		super_.focus.call(this);
-		this.rightParent();
-		if(dir === 0)
-			this.mathField.focus(L);
-		else if(!dir && this.focusedItem)
-			this.focusedItem.focus();
-		return this;
 	}
 	_.focus = function(dir) {
 		super_.focus.call(this);
@@ -180,14 +162,12 @@ var else_block = P(LogicCommand, function(_, super_) {
 	_.handle_response = function(result, any_yet) {
 		if(result.success) {
 			this.logicResult = parseLogicResult(result.returned);
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+			this.outputBox.collapse();
 			if(any_yet) this.logicResult = false;
 		}	else {
 			this.logicResult = false;
-			giac.errors_encountered = true;
-			this.outputBox.removeClass('calculating warn').addClass('error');
-			this.outputBox.html(result.returned);
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+			this.outputBox.setError(result.returned);
+			this.outputBox.expand();
 		}
 		return this.logicResult || any_yet;
 	}

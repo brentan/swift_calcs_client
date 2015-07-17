@@ -22,21 +22,17 @@ var Workspace = P(function(_) {
 	_.mousedown = false;
 	_.server_id = -1;
 	_.name = '';
+	_.hash = '';
 
   var id = 0;
   function uniqueWorkspaceId() { return id += 1; }
 
   // Create the workspace, pass in an optional name
-	_.init = function(name) { 
-		if(typeof name === 'undefined') {
-			var currentdate = new Date(); 
-			this.name = "Worksheet from " + currentdate.getDate() + "/"
-                + (currentdate.getMonth()+1)  + "/" 
-                + currentdate.getFullYear() + ", "  
-                + currentdate.getHours() + ":"  
-                + currentdate.getMinutes();
-		} else
-		 	this.name = name;
+	_.init = function(name, hash) { 
+		if((typeof name === 'undefined') || (typeof name === 'undefined')) 
+			throw "Workspace initialized with no name or hash";
+		this.name = name;
+		this.hash = hash;
 		this.ends = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
@@ -51,7 +47,8 @@ var Workspace = P(function(_) {
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
 		this.jQ.append(this.insertJQ);
 		this.insertJQ.append('<div class="' + css_prefix + 'element_top_spacer"></div>');
-		$('#account_bar .content').html('<div class="' + css_prefix + 'workspace_name"><i class="fa fa-fw fa-file-text-o"></i><input type=text class="' + css_prefix + 'workspace_name" value="' + this.name.replace(/"/g,'\"') + '"></div>');
+		$('#account_bar .content').html('<div class="' + css_prefix + 'workspace_name"><i class="fa fa-fw fa-file-text-o"></i><input type=text class="' + css_prefix + 'workspace_name"></div>');
+		$('#account_bar input.' + css_prefix + 'workspace_name').val(this.name);
 		var _this = this;
 		$('#account_bar .content').find('input').on('blur', function(e) {
 			_this.name = $(this).val();
@@ -60,14 +57,16 @@ var Workspace = P(function(_) {
     	if(e.keyCode == 13) 
     		$(this).blur();
     });
+    this.bindToolbar();
 		this.bindMouse();
 		this.bindKeyboard();
 		SwiftCalcs.active_workspace = this;
 		this.bound = true;
 		return this;
 	}
-	_.rename = function(new_name) {
+	_.rename = function(new_name, new_hash) {
 		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
+		if(new_hash) this.hash = new_hash;
 		if(new_name) {
 			this.name = new_name;
 			$('#account_bar .content').find("input." + css_prefix + "workspace_name").val(this.name);
@@ -75,6 +74,9 @@ var Workspace = P(function(_) {
 		}
 	}
 	_.load = function(to_parse) {
+		var auto_evaluation = giac.auto_evaluation;
+		ajaxQueue.suppress = true;
+		giac.auto_evaluation = false;
 		var blocks = parse(to_parse);
 		if(blocks.length > 0) {
 			blocks[0].appendTo(this).show(0);
@@ -86,14 +88,21 @@ var Workspace = P(function(_) {
 	  } else {
 			math().appendTo(this).show(0);
 	  }
+	  this.commandChildren(function(_this) { _this.needsEvaluation = false }); // Set to false as we are loading a document and dont want to trigger a save
+	  ajaxQueue.suppress = false;
+	  ajaxQueue.jQ.html(ajaxQueue.save_message);
+	  giac.auto_evaluation = auto_evaluation;
+	  this.ends[L].evaluate(true, true);
 		this.insertJQ.append('<div class="' + css_prefix + 'element_bot_spacer"></div>');
-	  this.updateHashtags();
+	  this.updateBookmarks();
 	  return this;
 	}
 	// Detach method (remove from the DOM)
 	_.unbind = function() {
 		this.unbindMouse();
 		this.unbindKeyboard();
+		this.toolbar.detachToolbar();
+		this.toolbar = false;
 		$('#account_bar .content').html('');
 		this.bound = false;
 		return this;
@@ -117,6 +126,13 @@ var Workspace = P(function(_) {
 			out.push(ac);
 		return out;
 	}
+	// Run a func on all children.  Func should be function that expects the Element to act on as input
+	_.commandChildren = function(func) {
+		var children = this.children();
+		for(var i = 0; i < children.length; i++)
+			children[i].commandChildren(func);
+		return this;
+	}
 	// Workspace is itself
 	_.getWorkspace = function() {
 		return this;
@@ -128,18 +144,19 @@ var Workspace = P(function(_) {
 			start = child.numberBlock(start);
 		});
 	}
-	// Check for all hashtags and update the hashtag list
-  _.updateHashtags = function() {
-    var hashtags = this.insertJQ.find('span.' + css_prefix + 'hashtag');
-    var $hashtag = $('#hashtags');
-    $hashtag.html('');
+	// Check for all bookmarks and update the bookmarks list
+  _.updateBookmarks = function() {
+    var bookmarks = this.insertJQ.find('.' + css_prefix + 'bookmark');
+    var $bookmark = $('#bookmarks');
+    $bookmark.html('');
     var _this = this;
-    var tags = [];
-    hashtags.each(function(i, hash) {
+    var marks = [];
+    bookmarks.each(function(i, hash) {
     	hash = $(hash);
-    	var link = $('<a href="#">#' + hash.text() + '</a>');
-    	tags.push(hash.text());
-    	$('<li/>').append(link).appendTo($hashtag);
+    	var el = Element.byId[hash.attr(css_prefix + 'element_id')*1];
+    	var link = $('<a href="#">' + el.block.toString() + '</a>');
+    	marks.push(el.block.toString());
+    	$('<li/>').append(link).appendTo($bookmark);
     	link.on('click', function(e) {
     		var offset = hash.position().top + _this.jQ.scrollTop();
     		_this.jQ.scrollTop(offset);
@@ -147,7 +164,7 @@ var Workspace = P(function(_) {
     		return false;
     	});
     });
-    this.hashtags = tags;
+    this.bookmarks = marks;
   }
   _.save = function(force) {
   	ajaxQueue.saveNeeded(this, force);

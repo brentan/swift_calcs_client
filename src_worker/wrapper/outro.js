@@ -29,7 +29,7 @@ obj.onprogress = function(input_module) { return function(e){
 		input_module.updateProgress((e.loaded / e.total)*0.5);
 }; }(Module);
 var loadGiac = function(v) {
-	obj.open('GET','giac' + v + '.js',true);
+	obj.open('GET','/libraries/giac' + v + '.js',true);
 	obj.send(null);
 }
 sendMessage({command: 'giac_version'});

@@ -25,6 +25,7 @@ var Element = P(function(_) {
   _.hidden = true;
 	_.error = false;
 	_.savedProperties = [];
+	_.outputBox = false;
 	_.warn = false;
 	_.klass = [];
 	_.mark_for_deletion = false;
@@ -79,8 +80,9 @@ var Element = P(function(_) {
 	_.regenerateHtml = function() {
 		this.jQ = $('<div style="display:none;" ' + css_prefix + 'element_id=' + this.id + ' class="' + css_prefix + 'element '
 			+ jQuery.map(this.klass, function(k) { return (css_prefix + k) }).join(' ') + '">'
-			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"><span></span></td><td class="' + css_prefix + 'element_insert_td">'
-			+ this.innerHtml() + '</td></tr></tbody></table></div>');
+			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"><i class="fa fa-exclamation-triangle"></i><span></span><div class="' + css_prefix + 'element_collapse">'
+			+ '<div class="' + css_prefix + 'expand"><i class="fa fa-caret-right"></i></div><div class="' + css_prefix + 'collapse"><i class="fa fa-caret-down"></i></div></div></td>'
+			+ '<td class="' + css_prefix + 'element_insert_td">' + this.innerHtml() + '</td></tr></tbody></table></div>');
 		var parent = this;
 		this.insertJQ = (this.jQ.find("." + css_prefix + "insert").length == 0) ? this.jQ.find("." + css_prefix + "element_insert_td").first() : this.jQ.find("." + css_prefix + "insert").first();
 		this.leftJQ = this.jQ.find("." + css_prefix + "element_td").first();
@@ -96,12 +98,18 @@ var Element = P(function(_) {
 	}
 	// Allow blocks to define handlers to run after being attached.
 	_.postInsertHandler = function() {
+		if(this.jQ.find('.' + css_prefix + 'output_box').length) this.outputBox = outputBox(this);
 		if(this.toParse) {
 			this.parse(this.toParse);
 			this.toParse = false;
 		}
 		if(this.hasChildren && (this.children().length == 0)) // Add default item
 			math().appendTo(this).show(0);
+		if(this.collapsed) { // If parse shows this to be collapsed, we need to immediately collapse it
+			this.collapsed = false;
+			this.collapse(true);
+		} else if(this.hasChildren)
+			this.collapseArrow();
 		return this;
 	}
 	// Allow blocks to define handlers to run before being destroyed.
@@ -311,7 +319,7 @@ var Element = P(function(_) {
 			this.jQ.slideDown({duration: duration});
 		else 
 			this.jQ.css('display', '');
-		window.setTimeout(function(_this) { return function() { _this.reflow(); }; }(this));
+		window.setTimeout(function(_this) { return function() { _this.reflow(); }; }(this), 100);
 		return this;
 	}
 	_.reflow = function() {
@@ -341,16 +349,24 @@ var Element = P(function(_) {
 			out.push(ac);
 		return out;
 	}
+	_.commandChildren = function(func) {
+		// Will run the func command on myself, and then command all children with the same function
+		func(this);
+		var children = this.children();
+		for(var i = 0; i < children.length; i++)
+			children[i].commandChildren(func);
+		return this;
+	}
 	_.firstGenAncestor = function() {
 		for(var w = this; !(w.parent instanceof Workspace); w = w.parent) {}
 		return w;
 	}
 	_.setDepth = function() {
-		this.depth = 0;
-		for(var w = this; !(w.parent instanceof Workspace); w = w.parent) { this.depth++; }
-		jQuery.each(this.children(), function(i, child) {
-			child.setDepth();
-		});
+		var to_run = function(_this) {
+			_this.depth = 0;
+			for(var w = _this; !(w.parent instanceof Workspace); w = w.parent) { _this.depth++; }
+		}
+		this.commandChildren(to_run);
 		this.workspace.renumber();
 		return this;
 	}
@@ -415,12 +431,14 @@ var Element = P(function(_) {
 			//this.jQ.stop().css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, {duration: 1500, complete: function() { $(this).css('background-color','')} } );
 			var eval_id = giac.registerEvaluation(fullEvaluation);
 			this.continueEvaluation(eval_id, fullEvaluation);
-			this.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
+			if(this.outputBox) this.outputBox.calculating();
 			if(fullEvaluation) {
 			//this.jQ.stop().css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 				for(var el = this[R]; el !== 0; el = el[R]) {
-					el.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
+					if(el.outputBox) el.outputBox.calculating();
 					el.jQ.find('i.fa-spinner').remove();
+					el.jQ.find('div.' + css_prefix + 'element.error').removeClass('error');
+					el.jQ.find('div.' + css_prefix + 'element.warn').removeClass('warn');
 				}
 			} 
 		} else {
@@ -429,7 +447,7 @@ var Element = P(function(_) {
 			//this.jQ.stop().css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 			var eval_id = giac.registerEvaluation(false);
 			this.continueEvaluation(eval_id, false);
-			this.jQ.find('.' + css_prefix + 'output_box').addClass('calculating');
+			if(this.outputBox) this.outputBox.calculating();
 		}
 		return this;
 	}
@@ -458,7 +476,7 @@ var Element = P(function(_) {
 	}
 	_.addSpinner = function(eval_id) {
 		if(this.allowOutput()) {
-			this.leftJQ.find('i').remove();
+			this.leftJQ.find('i.fa-spinner').remove();
 			if((typeof eval_id !== 'undefined') && giac.manual_evaluation[eval_id])
 				this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>'); // Manual mode spinner should not be hidden
 			else
@@ -499,7 +517,7 @@ var Element = P(function(_) {
 
 	// Call the next item
 	_.evaluateNext = function(evaluation_id, move_to_next) {
-		this.leftJQ.find('i').remove();
+		this.leftJQ.find('i.fa-spinner').remove();
 		if(this[R] && move_to_next)
 			this[R].continueEvaluation(evaluation_id, move_to_next)
 		else if(move_to_next && (this.parent instanceof Element))
@@ -573,9 +591,12 @@ var Element = P(function(_) {
 	_.start_target = 0;
 	_.mouseMove = function(e) {
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
+		var answer_field = $(e.target).closest('div.answer');
 		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
     if(math_field.length) 
     	var new_target = MathQuill(math_field[0]);
+    else if(answer_field.length) 
+    	var new_target = MathQuill(answer_field[0]);
     else if(command_field.length) 
     	var new_target = CommandBlock.byId[command_field.attr('data-id')*1];
     else
@@ -599,9 +620,13 @@ var Element = P(function(_) {
 	_.mouseDown = function(e) {
 		this.start_target = -1;
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
+		var answer_field = $(e.target).closest('div.answer');
 		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
     if(math_field.length) {
     	this.start_target = MathQuill(math_field[0]);
+    	this.start_target.mouseDown(e);
+	  } else if(answer_field.length) {
+    	this.start_target = MathQuill(answer_field[0]);
     	this.start_target.mouseDown(e);
 	  } else if(command_field.length) {
     	this.start_target = CommandBlock.byId[command_field.attr('data-id')*1];
@@ -610,9 +635,12 @@ var Element = P(function(_) {
 	}
 	_.mouseUp = function(e) {
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
+		var answer_field = $(e.target).closest('div.answer');
 		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
     if(math_field.length) 
     	var new_target = MathQuill(math_field[0]);
+    else if(answer_field.length) 
+    	var new_target = MathQuill(answer_field[0]);
     else if(command_field.length) 
     	var new_target = CommandBlock.byId[command_field.attr('data-id')*1];
     else
@@ -623,7 +651,7 @@ var Element = P(function(_) {
     else if(this.start_target == new_target) {
     	this.start_target.mouseUp(e);
     	this.start_target.focus();
-    	if(!(this.start_target instanceof CommandBlock))
+    	if(math_field.length)
       	this.workspace.unblurToolbar();
     	// Pass control to the mathField, since we are click/dragging within it
     	return false;
@@ -634,11 +662,56 @@ var Element = P(function(_) {
 		if(this.focusedItem) this.focusedItem.mouseOut(e);
 	}
 	_.mouseClick = function(e) {
-		if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'focusableItems').length) {
+		if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'collapse').length) 
+			this.collapse();
+		else if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'expand').length) 
+			this.expand();
+		else if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'focusableItems').length) {
 			var focusable = this.getFocusableByX($(e.target).closest('div.' + css_prefix + 'focusableItems').attr('data-id')*1, e.originalEvent.pageX);
 			focusable.focus(e.originalEvent.pageX);
 		}
 		return false;
+	}
+	_.collapsed = false;
+	_.collapse = function(immediately) {
+		if(!this.hasChildren) return this;
+		if(this.collapsed) return this;
+		this.expandArrow();
+		this.collapsed = true;
+		var expand = $('<div class="' + css_prefix + 'expand" style="display:none;"><i class="fa fa-ellipsis-v"></i></div>');
+		expand.insertAfter(this.insertJQ);
+		if(immediately) {
+			this.insertJQ.hide();
+			expand.show();
+		} else {
+			this.insertJQ.slideUp({duration: 500});
+			expand.slideDown({duration: 500});
+		}
+		if(!immediately) this.workspace.save();
+		return this;
+	}
+	_.expand = function(immediately) {
+		if(!this.hasChildren) return this;
+		if(!this.collapsed) return this;
+		this.collapseArrow();
+		this.collapsed = false;
+		if(immediately) {
+			this.insertJQ.show();
+			this.insertJQ.next('.' + css_prefix + 'expand').remove();
+		}	else {
+			this.insertJQ.slideDown({duration: 500});
+			this.insertJQ.next('.' + css_prefix + 'expand').slideUp({duration: 500, always: function() { $(this).remove(); } });
+		}
+		if(!immediately) this.workspace.save();
+		return this;
+	}
+	_.collapseArrow = function() {
+		this.leftJQ.find('div.' + css_prefix + 'expand').removeClass('show');
+		this.leftJQ.find('div.' + css_prefix + 'collapse').addClass('show');
+	}
+	_.expandArrow = function() {
+		this.leftJQ.find('div.' + css_prefix + 'expand').addClass('show');
+		this.leftJQ.find('div.' + css_prefix + 'collapse').removeClass('show');
 	}
 	/* Keyboard events
   Keyboard events are handled by focusable items, but they report meta-events of interest to us (namely, attempt to move the cursor)
@@ -678,6 +751,7 @@ var Element = P(function(_) {
 			return true;
 		} else {
 			//We reached the children, we need to jump in.  If there are no children, we add an implicit block //BRENTAN: Check at some point to override what is the 'implicit' block for each type?
+			this.expand();
 			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir, x_location)) 
 				return true;
 			else if(this.ends[-dir] === 0) {
@@ -723,6 +797,7 @@ var Element = P(function(_) {
 			return true;
 		} else {
 			//We reached the children, we need to jump in.  If there are no children, we add an implicit block //BRENTAN: Check at some point to override what is the 'implicit' block for each type?
+			this.expand();
 			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir)) 
 				return true;
 			else if(this.ends[-dir] === 0) {
@@ -775,7 +850,7 @@ var Element = P(function(_) {
 		for(var i = 0; i < this.focusableItems.length; i++) {
 			for(var j = 0; j < this.focusableItems[i].length; j++) {
 				if(this.focusableItems[i][j] === -1) continue;
-				if(this.focusableItems[i][j] instanceof CommandBlock) continue;
+	  		if((this.focusableItems[i][j] instanceof CommandBlock) && !this.focusableItems[i][j].editable) continue;
 				if(!this.focusableItems[i][j].empty()) return false;
 			}
 		}
@@ -795,34 +870,13 @@ var Element = P(function(_) {
 	_.focus = function(dir) {
 		if(!this.blurred) return this;
 		this.workspace.focus();
-		this.workspace.detachToolbar();
+		this.workspace.blurToolbar(this);
 		if(this.workspace.activeElement)
 			this.workspace.activeElement.blur();
 		this.blurred = false;
 		this.workspace.activeElement = this;
 		if(this.leftJQ) this.leftJQ.addClass(css_prefix + 'focused');
 		if(this.jQ) this.jQ.addClass(css_prefix + 'focused');
-		// Check if we are in view, and if not, scroll:
-		if(this instanceof text) 
-			return this;
-		else
-			return this.scrollToMe(dir);
-	}
-	_.scrollToMe = function(dir) {
-		if(this.jQ) {
-			var top = this.jQ.position().top;
-			var bottom = top + this.jQ.height();
-			var to_move_top = Math.min(0, top);
-			var to_move_bot = Math.max(0, bottom - this.workspace.jQ.height()+20);
-			if(dir === R)
-				this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_bot);
-			else if(dir === L)
-				this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top);
-			else if((to_move_bot > 0) && (to_move_top < 0)) 
-					this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top);
-			else
-				this.workspace.jQ.scrollTop(this.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
-		}
 		return this;
 	}
 	_.blur = function() {
@@ -906,16 +960,24 @@ var Element = P(function(_) {
   		this.toParse = args;
   		return this;
   	}
-  	for(var k = 0; k < this.savedProperties.length; k++) {
-  		if(args[k].match(/^[+-]?(?:\d*\.)?\d+$/)) args[i+k] = 1.0 * args[k];
-  		if(args[k] === "false") args[k] = false;
-  		if(args[k] === "true") args[k] = true;
-  		this[this.savedProperties[k]] = args[k];
-  	}
+  	if(!args.length) return this;
+  	if(this.hasChildren || this.savedProperties.length) {
+			var arg_list = args[0].split(',');
+	  	for(var j = 0; j < arg_list.length; j++) {
+	  		var name = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$1");
+	  		var val = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$2").trim();
+	  		if(val.match(/^[+-]?(?:\d*\.)?\d+$/)) val = 1.0 * val;
+	  		if(val === "false") val = false;
+	  		if(val === "true") val = true;
+	  		this[name] = val;
+	  	}
+	  	var k = 1;
+	  } else
+	  	var k = 0;
   	var count = 0;
   	for(var i = 0; i < this.focusableItems.length; i++) {
   		for(var j = 0; j < this.focusableItems[i].length; j++) {
-	  		if(this.focusableItems[i][j] instanceof CommandBlock) continue; //Ignore command blocks, those are created with the block and have no saveable options
+	  		if((this.focusableItems[i][j] instanceof CommandBlock) && !this.focusableItems[i][j].editable) continue; //Ignore command blocks, those are created with the block and have no saveable options
 	  		if(this.focusableItems[i][j] === -1) {
 	  			// We are at the children.  We simply parse this and the resultant blocks become my children
 	  			var blocks = parse(args[count + k]);
@@ -930,11 +992,14 @@ var Element = P(function(_) {
   }
   _.argumentList = function() {
   	var output = [];
+  	var arg_list = this.hasChildren ? ['collapsed: ' + this.collapsed] : [];
   	for(var k = 0; k < this.savedProperties.length; k++) 
-  		output.push(this[this.savedProperties[k]]);
+  		arg_list.push(this.savedProperties[k] + ": " + this[this.savedProperties[k]]);
+  	if(arg_list.length)
+  		output.push(arg_list.join(', '));
   	for(var i = 0; i < this.focusableItems.length; i++) {
   		for(var j = 0; j < this.focusableItems[i].length; j++) {
-	  		if(this.focusableItems[i][j] instanceof CommandBlock) continue; //Ignore command blocks, those are created with the block and have no saveable options
+	  		if((this.focusableItems[i][j] instanceof CommandBlock) && !this.focusableItems[i][j].editable) continue; //Ignore command blocks, those are created with the block and have no saveable options
 	  		if(this.focusableItems[i][j] === -1) {
 	  			//We need to zip up the children
 	  			var child_string = '';
@@ -989,6 +1054,7 @@ var LogicBlock = P(Element, function(_, super_) {
 var LogicCommand = P(Element, function(_, super_) {
 	_.klass = ['logic_command'];
 	_.logicResult = false;
+	_.fullEvaluation = true;
 	_.init = function() {
 		super_.init.call(this);
 	}
@@ -999,3 +1065,6 @@ var Loop = P(Element, function(_, super_) {
 		super_.init.call(this);
 	}
 });
+SwiftCalcs.elementById = function(id) {
+	return Element.byId[id];
+}

@@ -1,5 +1,4 @@
 var for_loop = P(Loop, function(_, super_) {
-	_.savedProperties = [];
 	_.klass = ['for'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
@@ -11,7 +10,6 @@ var for_loop = P(Loop, function(_, super_) {
 	_.finishField = 0;
 	_.stepField = 0;
 	_.lineNumber = true;
-	_.outputBox = 0;
 
 	_.init = function(latex_var, latex_start, latex_finish, latex_step) {
 		super_.init.call(this);
@@ -46,7 +44,6 @@ var for_loop = P(Loop, function(_, super_) {
 			blur: this.submissionHandler(this)
 		}});
 		this.focusableItems = [[registerCommand(this, 'for', { }), this.varField, this.startField, this.finishField, this.stepField], [-1], [registerCommand(this, 'end', { })]];
-		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.varField.write(this.latex_var);
 		this.startField.write(this.latex_start);
 		this.finishField.write(this.latex_finish);
@@ -116,12 +113,10 @@ var for_loop = P(Loop, function(_, super_) {
 			errors.push('Step Size: ' + result[2].returned);
 
 		if(errors.length) {
-			giac.errors_encountered = true;
-			this.outputBox.removeClass('calculating warn').addClass('error');
-			this.outputBox.html(errors.join('<BR>'));
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+			this.outputBox.setError(errors.join('<BR>'));
+			this.outputBox.expand();
 		} else {
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+			this.outputBox.collapse();
 			this.start_val -= this.step_val; // Seed first iteration value
 			this.count = 0;
 		}
@@ -136,34 +131,31 @@ var for_loop = P(Loop, function(_, super_) {
 			if(this.start_val < this.finish_val) {
 				this.count++;
 				if((this.start_val + this.step_val) >= this.finish_val) {
-					this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+					this.outputBox.collapse();
 				} else {
 					if(this.count == 20) {
-						this.outputBox.removeClass('calculating error').addClass('warn');
-						this.outputBox.html('<div class="warning">Further output from this loop has been temporarily suppressed to increase computation speed.</div>');
-						this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+						this.outputBox.setWarning('Further output from this loop has been temporarily suppressed to increase computation speed.');
+						this.outputBox.expand();
 					}
 					if(this.count >= 20)
 						this.suppress_output = true;
 				}
 				if(this.count == 1000) {
-					this.outputBox.removeClass('calculating error').addClass('warn');
-					this.outputBox.html('<div class="warning">This loop has processed over 1,000 iterations.  <a href="#">Abort Computation</a></div>');
-			    this.outputBox.find('a').on('click', function(e) {
-			      giac.cancelEvaluations();
+					this.outputBox.setWarning('This loop has processed over 1,000 iterations.  <a href="#">Abort Computation</a>');
+			    this.outputBox.jQinner.find('a').on('click', function(e) {
+			      giac.cancelEvaluations($(this));
 						$(this).closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
 			      return false;
 			    });
-					this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+					this.outputBox.expand();
 				}
 				this.startIteration(evaluation_id);
 			} else {
 				if(this.count == 0) {
-					this.outputBox.removeClass('calculating error').addClass('warn');
-					this.outputBox.html('<div class="warning">No iterations were performed for this loop.  Stop criterion was immediately reached.</div>');
-					this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+					this.outputBox.setWarning('No iterations were performed for this loop.  Stop criterion was immediately reached.');
+					this.outputBox.expand();
 				} else
-					this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+					this.outputBox.collapse();
 				giac.execute(evaluation_id, this.move_to_next, [], this, 'scopeSaved');
 			}
 		} else
@@ -174,10 +166,8 @@ var for_loop = P(Loop, function(_, super_) {
 	}
 	_.startIterationCallback = function(result, evaluation_id) {
 		if(!result[0].success) {
-			giac.errors_encountered = true;
-			this.outputBox.removeClass('calculating warn').addClass('error');
-			this.outputBox.html('Error setting iterator value: ' + result[0].returned);
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+			this.outputBox.setError('Error setting iterator value: ' + result[0].returned);
+			this.outputBox.expand();
 		}
 		if(this.ends[L])
 			this.ends[L].continueEvaluation(evaluation_id, true)
@@ -209,14 +199,12 @@ var for_loop = P(Loop, function(_, super_) {
 });
 var continue_block = P(Element, function(_, super_) {
 	_.lineNumber = true;
-	_.outputBox = 0;
 	_.evaluatable = true;
 	_.command_name = 'continue';
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML(this.command_name, this.id) + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
 	_.postInsertHandler = function() {
-		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.focusableItems = [[registerCommand(this, this.command_name, { allowDelete: true})]];
 		super_.postInsertHandler.call(this);
 		return this;
@@ -237,20 +225,18 @@ var continue_block = P(Element, function(_, super_) {
 			if(!skip_spinner_removal) {
 				for(var el = this.parent; el instanceof Element; el = el.parent) {
 					if(el instanceof Loop) break;
-					else el.leftJQ.find('i').remove(); // Remove spinners from parents that we skip (never have their childrenEvaluated callback called)
+					else el.leftJQ.find('i.fa-spinner').remove(); // Remove spinners from parents that we skip (never have their childrenEvaluated callback called)
 				}
 			}
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+			this.outputBox.collapse();
 			return found_loop;
 		} else {
-			this.outputBox.removeClass('calculating error').addClass('warn');
-			this.outputBox.html('<div class="warning">Statement is not within a loop.  Block has been ignored.</div>');
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
+			this.outputBox.setWarning('Statement is not within a loop.  Block has been ignored.');
+			this.outputBox.expand();
 			return false;
 		}
 	}
 	_.focus = function(dir) {
-		console.log('break/cont focus: ' + dir);
 		super_.focus.call(this);
 		this.parentLoop(true);
 		if(dir === 0) {

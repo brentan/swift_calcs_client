@@ -18,6 +18,7 @@ var ajaxQueueClass = P(function(_) {
 
 	_.suppress = false;
 	_.saving = false;
+	_.save_message = 'All changes are saved';
 	_.init = function() {
 		this.holding_pen = {};
 		this.jQ = $('.save_div');
@@ -35,7 +36,7 @@ var ajaxQueueClass = P(function(_) {
 		var post_data = {
 			workspace_id: id,
 			name: this.holding_pen[id].workspace.name,
-			hashtags: this.holding_pen[id].workspace.hashtags,
+			bookmarks: this.holding_pen[id].workspace.bookmarks,
 			data: this.holding_pen[id].workspace.toString()
 		}
 		this.holding_pen[id] = false;
@@ -81,7 +82,7 @@ var ajaxQueueClass = P(function(_) {
 				if(val) hide = false;
 			});
 			if(hide) {
-				this.jQ.html('All changes are saved');
+				this.jQ.html(this.save_message);
 				this.saving = false;
 			}
 		}

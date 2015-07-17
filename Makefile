@@ -33,11 +33,16 @@ BUILD_JS = $(BUILD_DIR)/swift_calcs$(VERSION).js
 BUILD_JS_WORKER = $(BUILD_DIR)/giac_worker$(VERSION).js
 BUILD_CSS = $(BUILD_DIR)/swift_calcs$(VERSION).css
 UGLY_JS = $(BUILD_DIR)/swift_calcs$(VERSION).min.js
+UGLY_JS_MAP_URL = swift_calcs$(VERSION).js.map
+UGLY_JS_MAP = $(BUILD_DIR)/$(UGLY_JS_MAP_URL)
 UGLY_JS_WORKER = $(BUILD_DIR)/giac_worker$(VERSION).min.js
+UGLY_JS_WORKER_MAP_URL = giac_worker$(VERSION).js.map
+UGLY_JS_WORKER_MAP = $(BUILD_DIR)/$(UGLY_JS_WORKER_MAP_URL)
+CLEAN += $(BUILD_DIR)/*$(VERSION).*
 
 # programs and flags
 UGLIFY ?= ./node_modules/.bin/uglifyjs
-UGLIFY_OPTS ?= --mangle --compress hoist_vars=true
+UGLIFY_OPTS ?= --mangle --compress hoist_vars=true --source-map-include-sources
 
 LESSC ?= ./node_modules/.bin/lessc
 LESS_OPTS ?=
@@ -59,22 +64,28 @@ BUILD_DIR_EXISTS = $(BUILD_DIR)/.exists--used_by_Makefile
 all: css uglify
 
 app: css js js_worker
-	rm -rf ./$(APP_DIR)/public/swift_calcs*.js
-	rm -rf ./$(APP_DIR)/public/giac_worker*.js
-	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).js ./$(APP_DIR)/public/swift_calcs$(VERSION).js
-	cp -f $(BUILD_DIR)/giac_worker$(VERSION).js ./$(APP_DIR)/public/giac_worker$(VERSION).js
+	rm -rf ./$(APP_DIR)/public/libraries/swift_calcs*.js
+	rm -rf ./$(APP_DIR)/public/libraries/giac_worker*.js
+	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).js ./$(APP_DIR)/public/libraries/swift_calcs$(VERSION).js
+	cp -f $(BUILD_DIR)/giac_worker$(VERSION).js ./$(APP_DIR)/public/libraries/giac_worker$(VERSION).js
 	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
 
 app_ugly: css uglify uglify_worker
-	rm -rf ./$(APP_DIR)/public/swift_calcs*.js
-	rm -rf ./$(APP_DIR)/public/giac_worker*.js
-	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).min.js ./$(APP_DIR)/public/swift_calcs$(VERSION).js
-	cp -f $(BUILD_DIR)/giac_worker$(VERSION).min.js ./$(APP_DIR)/public/giac_worker$(VERSION).js
+	rm -rf ./$(APP_DIR)/public/libraries/swift_calcs*.js
+	rm -rf ./$(APP_DIR)/public/libraries/giac_worker*.js
+	rm -rf ./$(APP_DIR)/public/libraries/swift_calcs*.js.map
+	rm -rf ./$(APP_DIR)/public/libraries/giac_worker*.js.map
+	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).min.js ./$(APP_DIR)/public/libraries/swift_calcs$(VERSION).js
+	cp -f $(BUILD_DIR)/giac_worker$(VERSION).min.js ./$(APP_DIR)/public/libraries/giac_worker$(VERSION).js
+	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).js.map ./$(APP_DIR)/public/libraries/swift_calcs$(VERSION).js.map
+	cp -f $(BUILD_DIR)/giac_worker$(VERSION).js.map ./$(APP_DIR)/public/libraries/giac_worker$(VERSION).js.map
 	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
 
 js: $(BUILD_JS)
 uglify: $(UGLY_JS)
 css: $(BUILD_CSS)
+clean:
+	rm -rf $(CLEAN)
 
 $(PJS_SRC): $(NODE_MODULES_INSTALLED)
 
@@ -82,7 +93,7 @@ $(BUILD_JS): $(INTRO) $(SOURCES) $(OUTRO) $(BUILD_DIR_EXISTS)
 	cat $^ | ./script/escape-non-ascii > $@
 
 $(UGLY_JS): $(BUILD_JS) $(NODE_MODULES_INSTALLED)
-	$(UGLIFY) $(UGLIFY_OPTS) < $< > $@
+	$(UGLIFY) $< $(UGLIFY_OPTS) --source-map $(UGLY_JS_MAP) --source-map-url $(UGLY_JS_MAP_URL) -o $@
 
 $(BUILD_CSS): $(CSS_SOURCES) $(NODE_MODULES_INSTALLED) $(BUILD_DIR_EXISTS)
 	$(LESSC) $(LESS_OPTS) $(CSS_MAIN) > $@
@@ -102,4 +113,4 @@ $(BUILD_JS_WORKER): $(INTRO_WORKER) $(SOURCES_WORKER) $(OUTRO_WORKER) $(BUILD_DI
 	cat $^ | ./script/escape-non-ascii > $@
 
 $(UGLY_JS_WORKER): $(BUILD_JS_WORKER) $(NODE_MODULES_INSTALLED)
-	$(UGLIFY) $(UGLIFY_OPTS) < $< > $@
+	$(UGLIFY) $< $(UGLIFY_OPTS) --source-map $(UGLY_JS_WORKER_MAP) --source-map-url $(UGLY_JS_WORKER_MAP_URL) -o $@

@@ -3,16 +3,21 @@ A command block is a document element that has some command as its output,
 and allows a cursor on either its left or right side.  The user can move the cursor
 left or right around the element, and delete etc.  Used to simulate cursor commands
 around a command block (like an 'else') so that these items can be deleted.
+
+Option 'allowDelete' will turn the commandBlock into a math block with the remaining text if a portion of the command block text is deleted
+Option 'editable' will allow the deletion/insertion of new characters into the block
 */
 
 var CommandBlock = P(function(_) {
 
 	_.allowDelete = false;
+	_.cursorPlaced = false;
 	_.jQ = 0;
 	_.location = 0;
 	_.anchor = 0;
 	_.cursor = 0;
 	_.element = 0;
+	_.editable = false;
 
   var id = 0;
   function uniqueCommandId() { return id += 1; }
@@ -23,6 +28,7 @@ var CommandBlock = P(function(_) {
 		this.element = el;
 		this.handlers = options.handlers;
 		this.allowDelete = options.allowDelete;
+		this.editable = options.editable;
     this.id = uniqueCommandId();
     CommandBlock.byId[this.id] = this;
     this.cursor = $('<span class="' + css_prefix + 'cursor">&#8203;</span>');
@@ -87,8 +93,8 @@ var CommandBlock = P(function(_) {
 	    case 'Ctrl-Del':
 	    case 'Shift-Del':
 	    case 'Del':
-    		if(this.allowDelete || this.element.empty()) { 
-    			// 'allow' means we turn into a math block
+    		if(this.allowDelete || this.editable || this.element.empty()) { 
+    			// 'allowDelete' means we turn into a math block
     			if(this.children().hasClass('highlighted')) {
     				this.children().slice(min(this.location, this.anchor), max(this.location,this.anchor)).remove();
     				this.location = min(this.anchor, this.location);
@@ -104,7 +110,13 @@ var CommandBlock = P(function(_) {
     					this.children().eq(this.location).remove();
     				}
     			}
-    			this.changeToMath();
+    			if(this.allowDelete)
+    				this.changeToMath();
+		    	else if(this.editable) {
+		    		this.element.workspace.save();
+		    		if(this.handlers.onSave) this.handlers.onSave();
+    				this.placeCursor(this.location);
+		    	}
     		} else {
     			// delete out
   				if((this.location == 0) && (description.indexOf('Backspace') > -1)) 
@@ -120,7 +132,7 @@ var CommandBlock = P(function(_) {
     		break;
     	case 'Enter':
     		if(this.location === 0) {
-    			// Enter pressed in last location.  Check if this is last focusable, or if next is the children area
+    			// Enter pressed in first location.  Check if this is first focusable, or if next is the children area
     			var child_count = 0;
     			var el_count = 0;
     			var count = 0;
@@ -157,6 +169,7 @@ var CommandBlock = P(function(_) {
     				this.handlers.moveOutOf(R, this);
     		}	else
     			this.handlers.moveOutOf(R, this);
+    		break;
     	default:
     		return;
 		}
@@ -164,7 +177,7 @@ var CommandBlock = P(function(_) {
 	}
 	_.changeToMath = function() {
 		this.clearCursor();
-		var math = this.html(this.children());
+		var math = this.text(this.children());
 		var math_el = elements.math();
 		math_el.insertAfter(this.element).show(0).focus(L);
 		math_el.write(math);
@@ -178,35 +191,58 @@ var CommandBlock = P(function(_) {
 	}
 	_.cut = function(event) {
 		this.copy(event);
-    if(!this.allowDelete)
+    if(!this.allowDelete && !this.editable)
     	showNotice('Cut operation changed to Copy operation');
-    else if(this.children().hasClass('highlighted')) 
+    else if(this.children().hasClass('highlighted')) {
     	this.keystroke('Del', { });
+    	if(this.editable) {
+    		this.element.workspace.save();
+		    if(this.handlers.onSave) this.handlers.onSave();
+    	}
+    }
 		return this;
+	}
+	_.empty = function() {
+		return this.toString().length == 0
 	}
 	_.copy = function(event) {
 		if(this.children().hasClass('highlighted')) 
-			var text = this.html(this.jQ.children('var.highlighted'));
+			var text = this.text(this.jQ.children('var.highlighted'));
 		else
 			var text = '';
 		this.element.workspace.clipboard = text; this.element.workspace.selectFn(text); 
 		return this;
 	}
 	_.write = function(text) {
-		if(text.trim() == '') return this.flash();
-    if(this.allowDelete || this.element.empty()) {
+		if((text.trim() == '') && !this.editable) return this.flash();
+		if(this.editable && text.match(/({|})/)) return this.flash(); // Don't allow some special characters?
+    if(this.allowDelete || this.editable || this.element.empty()) {
 			if(this.children().hasClass('highlighted')) {
 				this.children().slice(min(this.location, this.anchor), max(this.location,this.anchor)).remove();
 				this.location = min(this.anchor, this.location);
 			}
-			if(this.location == 0)
-				$('<var/>').html(text).insertBefore(this.children().eq(0));
-			else
-				$('<var/>').html(text).insertAfter(this.children().eq(this.location-1));
-			this.location++;
-			this.changeToMath();
+			text = text.split('');
+			for(var i = 0; i < text.length; i++) {
+				if(this.location == 0)
+					$('<var/>').html(text[i]).prependTo(this.jQ);
+				else
+					$('<var/>').html(text[i]).insertAfter(this.children().eq(this.location-1));
+				this.location++;
+			}
+			if(this.allowDelete)
+				this.changeToMath();
+    	else if(this.editable) {
+    		this.element.workspace.save();
+		    if(this.handlers.onSave) this.handlers.onSave();
+    		this.placeCursor(this.location);
+    	}
     } else
     	this.flash();
+	}
+	_.paste = function(text) {
+		var clear = this.cursorPlaced;
+		this.write(text);
+		if(!clear) this.clearCursor();
 	}
   _.flash = function() {
     var el = this.jQ.closest('.sc_element');
@@ -219,6 +255,20 @@ var CommandBlock = P(function(_) {
 		});
 		return fullHtml;
 	}
+	_.text = function(els) {
+	  var fullText = '';
+		els.each(function() {
+		  fullText += $(this).text();
+		});
+		return fullText;
+	}
+  _.toString = function() {
+		var clear = this.cursorPlaced;
+		if(clear) this.clearCursor();
+  	var out = this.text(this.children());
+		if(clear) this.updateHighlight();
+		return out;
+  }
 	_.mouseOut = function(e) {
 		this.clearCursor();
 	}
@@ -243,6 +293,23 @@ var CommandBlock = P(function(_) {
 		}
     else 
     	this.updateHighlight();
+    this.scrollToMe(dir);
+	}
+	_.scrollToMe = function(dir) {
+		if(this.jQ) {
+			var top = this.jQ.position().top;
+			var bottom = top + this.jQ.height();
+			var to_move_top = Math.min(0, top);
+			var to_move_bot = Math.max(0, bottom - this.element.workspace.jQ.height()+20);
+			if((to_move_bot > 0) && (to_move_top < 0)) {
+				if(dir === R)
+					this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_bot);
+				else
+					this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_top);
+			}	else
+				this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
+		}
+		return this;
 	}
 	_.findTarget = function(e) {
 		var x_loc = e.originalEvent.pageX;
@@ -291,13 +358,17 @@ var CommandBlock = P(function(_) {
 		this.clearCursor();
 		this.location = location;
 		this.anchor = location;
-		 if(location == 0) {
+		 if((location == 0) && (this.children().length == 0)) {
+			this.jQ.prepend(this.cursor);
+			this.blinkCursor();
+		 } else if(location == 0) {
 			this.children().first().prepend(this.cursor);
 			this.blinkCursor();
 		} else {
 			this.cursor.appendTo(this.children()[location-1]);
 			this.blinkCursor();
 		}
+		this.cursorPlaced = true;
 	}
 	_.blinkCursor = function() {
 		var _this = this;
@@ -322,8 +393,12 @@ var CommandBlock = P(function(_) {
     this.children().removeClass('highlighted');
     this.cursor.removeClass('blink');
 		this.cursor.detach();
+		this.cursorPlaced = false;
 	}
-
+	_.clear = function() {
+		this.jQ.html('');
+		return this;
+	}
 });
 
 var commandBlockHTML = function(name, id) {

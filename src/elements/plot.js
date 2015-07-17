@@ -4,7 +4,6 @@ CURRENTLY LIMITED TO LINE PLOTS, CREATED WITH C3 (in the Swift Calcs repo).  Sho
 */
 var plot = P(Element, function(_, super_) {
 	_.lineNumber = false;
-	_.outputBox = 0;
 	_.lineNumber = true;
 	_.klass = ['plot'];
 	_.evaluatable = true;
@@ -39,7 +38,6 @@ var plot = P(Element, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
 		this.plotBox = this.jQ.find('.' + css_prefix + 'plot_box');
 		super_.postInsertHandler.call(this);
 		this.xminField.latex(this.x_min);
@@ -128,8 +126,10 @@ var plot = P(Element, function(_, super_) {
   }
   _.argumentList = function() {
   	var output = [];
+  	var arg_list = [];
   	for(var k = 0; k < this.savedProperties.length; k++) 
-  		output.push(this[this.savedProperties[k]]);
+  		arg_list.push(this.savedProperties[k] + ": " + this[this.savedProperties[k]]);
+  	output.push(arg_list.join(', '));
   	for(var i = 0; i < this.subplots.length; i++) 
   		output.push(this.subplots[i].toString());
   	return output;
@@ -140,12 +140,15 @@ var plot = P(Element, function(_, super_) {
   		this.toParse = args;
   		return this;
   	}
-  	for(var k = 0; k < this.savedProperties.length; k++) {
-  		if(args[k].match(/^[+-]?(?:\d*\.)?\d+$/)) args[i+k] = 1.0 * args[k];
-  		if(args[k] === "false") args[k] = false;
-  		if(args[k] === "true") args[k] = true;
-  		this[this.savedProperties[k]] = args[k];
+		var arg_list = args[0].split(',');
+  	for(var j = 0; j < arg_list.length; j++) {
+  		var name = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$1");
+  		var val = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$2").trim();
+  		if(val === "false") val = false;
+  		if(val === "true") val = true;
+  		this[name] = val;
   	}
+  	var k = 1;
   	for(var i = k; i < args.length; i++) {
   		var el = args[i].split('___');
   		if(plot_types[el[0]]) 
@@ -193,12 +196,10 @@ var plot = P(Element, function(_, super_) {
 			}
 		} else errors.push('X<sub>max</sub>: ' + result[0].returned);
 		if(errors.length) {
-			giac.errors_encountered = true;
-			this.outputBox.removeClass('calculating warn').addClass('error');
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
-			this.outputBox.find('div.answer').html(errors.join('<BR>'));
+			this.outputBox.expand();
+			this.outputBox.setError(errors.join('<BR>'));
 		} else
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+			this.outputBox.collapse();
 
 		// Start handling the subplots
 		if(this.shouldBeEvaluated(evaluation_id)) {
@@ -335,7 +336,7 @@ var subplot = P(function(_) {
 		return '';
 	}
 	_.postInsertHandler = function() {
-		this.outputBox = this.jQ.find('.' + css_prefix + 'output_box');
+		this.outputBox = outputBox(this);
 		this.parent.focusableItems.push(this.mathField);
 		for(var i = 1; i < this.to_parse.length; i++)
 			this.mathField[i-1].clear().latex(this.to_parse[i]);
@@ -424,20 +425,18 @@ var line_plot = P(subplot, function(_, super_) {
 			if(result[0].returned == '[]') {
 				this.plotData = {};
 				this.parent.showOptions();
-				this.outputBox.removeClass('calculating error').addClass('warn');
-				this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
-				this.outputBox.find('div.answer').html('<div class="warning">Nothing to plot.  If you are trying to plot a function, such as f(x), be sure to include the "(x)" portion in the input</div>');
+				this.outputBox.expand();
+				this.outputBox.setWarning('Nothing to plot.  If you are trying to plot a function, such as f(x), be sure to include the "(x)" portion in the input');
 			} else {
-				this.outputBox.closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+				this.outputBox.collapse();
 				this.plotData = {type: 'line', data: handlePlotOutput(result[0].returned), legend: this.mathField[0].text()};
 			}
 		} else {
 			this.plotData = {};
 			this.parent.showOptions();
-			giac.errors_encountered = true;
-			this.outputBox.removeClass('calculating warn').addClass('error');
-			this.outputBox.closest('div.' + css_prefix + 'answer_table').show({ duration: 400 });
-			this.outputBox.find('div.answer').html(result[0].returned);
+			this.outputBox.expand();
+			this.outputBox.setError(result[0].returned);
+			this.parent.jQ.addClass('error');
 		}
 	}
 	_.toString = function() {

@@ -41,6 +41,10 @@ var ii = 0;
 var receiveMessage = function(command) {
   if(command.giac_version)
     return loadGiac(command.giac_version);
+  if(command.increase_timeout) {
+    timeout_length += 10;
+    return Module.caseval('timeout ' + timeout_length);
+  }
   if(command.varList) {
     // If we are asking for the variable list, we simply get that list and return it immediately
     var vars = Module.caseval('VARS').slice(1,-1).split(',');
@@ -90,37 +94,55 @@ var receiveMessage = function(command) {
 		}
     // Otherwise, lets use giac for our evaluation. 
     // Is this an expression that is setting the value of a variable?  If not, we add some simplification, unit converstion, and set output to latex
-		if(!command.commands[ii].nomarkup && to_send.indexOf(":=") === -1) {
+    if(to_send.indexOf(":=") !== -1) {
+      // Assignment.  Do the assignment first, then return the value
+      // Test for setting protected variable names
+      if(to_send.match(/^[\s]*(i|e|pi)[\s]*:=.*$/)) {
+        if(to_send.match(/^[\s]*i[\s]*:=.*$/))
+          output[ii] = {success: false, returned: 'variable name <i>i</i> is protected and defined as sqrt(-1)', warnings: []}
+        else if(to_send.match(/^[\s]*e[\s]*:=.*$/))
+          output[ii] = {success: false, returned: 'variable name <i>e</i> is protected and defined as 2.71828', warnings: []}
+        else 
+          output[ii] = {success: false, returned: 'variable name <i>&pi;</i> is protected and defined as 3.14159', warnings: []}
+        continue;
+      }
+      // Do the assignment.  Test if there were errors, if so, report those.  If not, and output is asked for, we return the value of the stored variable
+      var test_output = { success: true, returned: Module.casevalWithTimeout(to_send) };
+      test_output = testError(test_output, ii);
+      if(test_output.success) {
+        to_send = to_send.replace(/^[\s]*([a-zA-Z0-9_]+).*$/,'$1');
+      } else {
+        command.commands[ii].force_output_for_scoped = false;
+        output.push(test_output);
+      }
+    } 
+    if(!command.commands[ii].nomarkup || command.commands[ii].force_output_for_scoped) {
       // if to_send has units associated with it, we attempt to convert to that unit.  On failure, we revert to auto unit handling
-      var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : 'simplify';
+      var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : '';
       if(command.commands[ii].approx)
         simplify_command = 'evalf(' + simplify_command;
       else
         simplify_command = '(' + simplify_command;
       if(command.commands[ii].unit) { // If provided, this is a 2 element array.  The first is the unit in evaluatable text, the second is an HTML representation
-        output.push({ success: true, returned: Module.caseval('latex(' + simplify_command + '(convert(' + to_send + ',' + command.commands[ii].unit[0] + '))))') });
+        output.push({ success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(convert(' + to_send + ',' + command.commands[ii].unit[0] + '))))') });
         if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
           // Perhaps the auto-unit conversion messed this up...remove it
           // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...
           errors[ii] = null;
           warnings[ii] = [];
-          output[ii] = { success: true, returned: Module.caseval('latex(' + simplify_command + '(usimplify(' + to_send + '))))') };
+          output[ii] = { success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(usimplify(' + to_send + '))))') };
           if(!errors[ii] && (output[ii].returned.indexOf('Incompatible units') === -1))
             warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit[1]);  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
         } 
       } else 
-        output.push({ success: true, returned: Module.caseval('latex(' + simplify_command + '(usimplify(' + to_send + '))))') });
+        output.push({ success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(usimplify(' + to_send + '))))') });
       // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
-			if(errors[ii])
-				output[ii] = { success: true, returned: Module.caseval(to_send) }
+			if(errors[ii] && errors[ii].indexOf('Timeout') === -1)
+				output[ii] = { success: true, returned: Module.casevalWithTimeout(to_send) }
 		} else {
-      // Test for setting i
-      if(to_send.match(/^[ ]*i[ ]*:=.*$/)) {
-        output[ii] = {success: false, returned: 'variable name <i>i</i> is protected and defined as sqrt(-1)', warnings: []}
-        continue;
-      }
-			output.push({ success: true, returned: Module.caseval(to_send) });
+      output.push({ success: true, returned: Module.casevalWithTimeout(to_send) });
     }
+    output[ii] = testError(output[ii],ii);
     // Work through the warnings.  If any are present and suggesting a different input, lets evaluate that instead
 		for(var j = 0; j < warnings[ii].length; j++) {
 			if(warnings[ii][j].indexOf('Perhaps you meant') > -1) {
@@ -128,21 +150,12 @@ var receiveMessage = function(command) {
 				to_send = warnings[ii][j].replace('Perhaps you meant ','');
 				errors[ii] = null;
 				warnings[ii] = [];
-				output[ii] = { success: true, returned: Module.caseval(to_send)};
+				output[ii] = { success: true, returned: Module.casevalWithTimeout(to_send)};
 				break;
 			}
 		}
-    // If there were errors, set the output to the error.  Check both the errors array and the direct output. 
-    // Also check for an undefined result, which returns a bit of a complex result from giac
-		if(errors[ii]) 
-			output[ii] = {success: false, returned: errors[ii] };
-		else if(output[ii].returned.indexOf("GIAC_ERROR") > -1)
-			output[ii] = {success: false, returned: fix_message(output[ii].returned.replace('GIAC_ERROR:',''))};
-		else if(output[ii].returned == '"\\,\\mathrm{undef}\\,"') {
-			output[ii] = {success: true, returned: ''}
-			warnings[ii].push('Undefined result');
-		}
-		//console.log('GIAC OUT: ' + output[ii].returned);
+    // Change 1e-4 scientific notation to latex form
+		output[ii].returned = output[ii].returned.replace(/([0-9]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
     // Set any warnings to the output
 		output[ii].warnings = warnings[ii];
 	}
@@ -159,13 +172,26 @@ this.addEventListener("message", function (evt) {
   receiveMessage(JSON.parse(evt.data));
 },false);
 
+var testError = function(output, ii) {
+  // If there were errors, set the output to the error.  Check both the errors array and the direct output. 
+  // Also check for an undefined result, which returns a bit of a complex result from giac
+  if(errors[ii]) 
+    output = {success: false, returned: errors[ii] };
+  else if(output.returned.indexOf("GIAC_ERROR") > -1)
+    output = {success: false, returned: fix_message(output.returned.replace('GIAC_ERROR:',''))};
+  else if(output.returned == '"\\,\\mathrm{undef}\\,"') {
+    output = {success: true, returned: ''}
+    warnings[ii].push('Undefined result');
+  }
+  return output;
+}
 var Module = {
   preRun: [],
   postRun: [],
   print: function(text) {
   	if(text.indexOf('error') > -1)
   		errors[ii] = fix_message(text);
-  	else if((text.trim() != '') && (text.indexOf('Success') === -1))
+  	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1))
   		warnings[ii].push(fix_message(text));
   },
   printErr: function(text) {
@@ -174,8 +200,20 @@ var Module = {
   setStatus: function(text) {
     if (Module.setStatus.interval) clearInterval(Module.setStatus.interval);
     sendMessage({command: 'setStatus', value: text});
-    if(text === '')
+    if(text === '') {
   		Module.caseval = Module.cwrap('_ZN4giac7casevalEPKc', 'string', ['string']);    
+      // Initialize timeout
+      Module.caseval('timeout ' + timeout_length);
+      Module.caseval('ckevery 10000');
+    }
+  },
+  casevalWithTimeout: function(text) {
+    try {
+      return Module.caseval(text);
+    } catch(e) {
+      errors[ii] = fix_message('Timeout: Maximum execution time of ' + timeout_length + ' seconds exceeded.  <a href="#" class="increase_timeout">Increase Timeout to ' + (timeout_length + 10) + ' seconds</a>');
+      return '';
+    }
   },
   updateProgress: function(percent) {
   	sendMessage({command: 'updateProgress', value: percent});

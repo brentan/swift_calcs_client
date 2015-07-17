@@ -164,7 +164,7 @@ Workspace.open(function(_) {
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];   
       // If the click is on the left-hand side (the line number), we select the element
       var force_select = false;
-      if((selected_target.length == 0) && $(e.target).closest('td.' + css_prefix + 'element_td').length && !(e.shiftKey)) {
+      if((selected_target.length == 0) && $(e.target).closest('td.' + css_prefix + 'element_td').length && !(e.shiftKey) && !$(e.target).closest('div.' + css_prefix + 'collapse').length && !$(e.target).closest('div.' + css_prefix + 'expand').length) {
         if(target.focusedItem) target.focusedItem.mouseOut(e);
         _this.clearSelection();
         _this.createSelection(target.jQ);
@@ -248,9 +248,9 @@ Workspace.open(function(_) {
               new_target = _this.ends[R];
           }
 		    	target = new_target;
-          mousemoveup(e_up, 'mouseUp');
 		      new_target.focus();
 		      new_target.mouseDown(e_up);
+          mousemoveup(e_up, 'mouseUp');
 		    }
         function force_click_handler(e_up) {
           new_target = Element.byId[$(e_up.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];

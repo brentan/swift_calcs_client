@@ -32,14 +32,10 @@ var text = P(EditableBlock, function(_, super_) {
       this.workspace.activeElement.blur();
     } 
     super_.focus.call(this);
-    this.workspace.attachToolbar(this, this.workspace.textToolbar());
+    this.workspace.attachToolbar(this, this.workspace.toolbar.textToolbar());
     this.textField.toolbar = $('#toolbar');
     this.textField.focus(dir || 0);
     return this;
-  }
-  _.blur = function() {
-    this.updateHashtags();
-    return super_.blur.call(this);
   }
   _.append = function(html) {
     this.textField.html(this.textField.html() + html);
@@ -62,7 +58,7 @@ var text = P(EditableBlock, function(_, super_) {
         return;
       case 'mathMode':
         rangy.getSelection(this.textField.$editor[0]).deleteFromDocument();
-        if((cleanHtml(this.textField.html()) === '') || (cleanHtml(this.textField.html()) === '<br>')) {
+        if(cleanHtml(this.textField.html(), false) === '') {
           math().insertAfter(this).show(0).focus();
           this.remove();
         } else if(this.textField.endPosition()) {
@@ -84,10 +80,6 @@ var text = P(EditableBlock, function(_, super_) {
       case 'backColor':
       case 'foreColor':
       case 'fontName':
-        if($(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) {
-          $(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).startContainer.parentNode).stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, {duration: 400, complete: function() { $(this).css('background-color','');}});
-          return; 
-        }
         param = option;
         break;
       case 'H1':
@@ -194,7 +186,6 @@ var text = P(EditableBlock, function(_, super_) {
       return this.mouseClick(e); //We aren't really doing anything...
     else if(this.start_target == new_target) {
       // Pass control to the textField, since we are click/dragging within it
-      this.updateHashtags();
       this.focus()
       return false;
     } else  //We clicked in one area and dragged to another, just select the whole element
@@ -215,10 +206,6 @@ var text = P(EditableBlock, function(_, super_) {
   _.copy = function(e) { 
     super_.copy.call(this,e);
     return false;
-  }
-  _.updateHashtags = function() {
-    var _this = this;
-    window.setTimeout(function() { _this.workspace.updateHashtags(); }, 250);
   }
 });
 
@@ -291,37 +278,6 @@ var WYSIWYG = P(function(_) {
         return;
       }
       if((ch == '.') || (ch == ':') || (ch == '-')) t.checkOnSpace = true;
-      if(!ch.match(/[a-z0-9]/i) && $(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) {
-        rangy.getSelection(t.$editor[0]).deleteFromDocument();
-        var hashtag = rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode;
-        var $span = $('<span>&#8203;</span>');
-        $span.insertAfter($(hashtag));
-        range = rangy.createRange();
-        range.selectNode($span[0]);
-        range.select();
-        t.write((ch == ' ' ? '&nbsp;' : ch) + "<span id='move_caret'></span>");
-        $span.remove();
-        $span = t.$editor.find('#move_caret');
-        range = rangy.createRange();
-        range.setStartBefore($span[0]);
-        range.setEndBefore($span[0]);
-        range.select();
-        $span.remove();
-        e.preventDefault();
-        t.el.updateHashtags();
-      }
-      if(ch == '#') {
-        // We are adding in a hashtag
-        e.preventDefault();
-        rangy.getSelection(t.$editor[0]).deleteFromDocument();
-        t.write('<span class="' + css_prefix + 'hashtag">&#8203;<span id="move_caret"></span></span>');
-        var $span = t.$editor.find('#move_caret');
-        var hashtag = $span.parent()[0];
-        $span.remove();
-        var range = rangy.createRange();
-        range.selectNodeContents(hashtag);
-        range.select();
-      }
     })
     .on('keydown', function(e){
       var key = stringify(e);
@@ -329,8 +285,6 @@ var WYSIWYG = P(function(_) {
         return t.el.workspace.keystroke(key, e);
       if(key.match(/Shift-.*/))
         t.el.shft = true;
-      if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) 
-        window.setTimeout(function() { t.el.updateHashtags(); }, 50);
       switch (key) {
         case 'Shift-Tab':
           var li_parent = t.isSelectionInsideElement('li');
@@ -339,7 +293,7 @@ var WYSIWYG = P(function(_) {
             var startContainer = range.startContainer;
             var startOffset = range.startOffset;
             range.setStart(li_parent,0)
-            if(cleanHtml(range.toHtml()).length == 0) {
+            if(cleanHtml(range.toHtml(), false).length == 0) {
               var holder = $(li_parent).parent('ul, ol');
               var ul = holder.is('ul');
               if(holder.parent('ul, ol').length > 0) {
@@ -366,7 +320,7 @@ var WYSIWYG = P(function(_) {
             var startContainer = range.startContainer;
             var startOffset = range.startOffset;
             range.setStart(li_parent,0)
-            if(cleanHtml(range.toHtml()).length == 0) {
+            if(cleanHtml(range.toHtml(), false).length == 0) {
               if($(li_parent).next().is('ul, ol') && $(li_parent).prev().is('ul, ol')) {
                 // merge the preceeding, suceeding lists
                 var next = $(li_parent).next();
@@ -421,35 +375,24 @@ var WYSIWYG = P(function(_) {
             // Start of text box.  Insert a math box before this, but hold focus here
             math().insertBefore(t.el).show();
           } else {
-            if($(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) {
-              var hashtag = rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode;
-              var $span = $('<span>&#8203;</span>');
-              $span.insertAfter($(hashtag));
-              range = rangy.createRange();
-              range.selectNode($span[0]);
-              range.select();
-              t.el.updateHashtags();
-            }
+            break;
+            /* 
+            // Attempt to handle line breaks myself, since browser do it differently.  IS THIS NEEDED??
             var range = rangy.getSelection(t.$editor[0]).getRangeAt(0).cloneRange();
             var $span = $('<span/>');
             $span.appendTo(t.$editor);
             range.setEndBefore($span[0]);
             var html = cleanHtml(range.toHtml());
             $span.remove();
-            if(html.slice(0,4).toLowerCase() == '<br>') {
-              //just before a newline...slice and add math block
-              t.split();
-              math().insertAfter(t.el).show().focus(R);
-            } else {
-              //just add a line break
-              t.write('<br><span id="move_caret"></span>');
-              var $span = t.$editor.find('#move_caret');
-              range = rangy.createRange();
-              range.setStartBefore($span[0]);
-              range.setEndBefore($span[0]);
-              range.select();
-              $span.remove();
-            }
+            //just add a line break
+            t.write('<br><span id="move_caret"></span>');
+            var $span = t.$editor.find('#move_caret');
+            range = rangy.createRange();
+            range.setStartBefore($span[0]);
+            range.setEndBefore($span[0]);
+            range.select();
+            $span.remove();
+            */
           }
           e.preventDefault(); 
           break;
@@ -468,7 +411,7 @@ var WYSIWYG = P(function(_) {
           if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) return;
           // Check if we are in first spot.  If so, delete backwards OR highlight block
           if(t.startPosition()) {
-            if((cleanHtml(t.html()) === '') || (cleanHtml(t.html()) === '<br>')) {
+            if(cleanHtml(t.html(), false) === '') {
               if(t.el.moveOutLeftRight(t.el.textField, L)) 
                 t.el.remove(0); //Only delete me if I successfully moved into a neighbor
               else
@@ -487,7 +430,6 @@ var WYSIWYG = P(function(_) {
             }
             e.preventDefault();
           }
-          window.setTimeout(function() { t.el.updateHashtags(); }, 50);
           break;
         case 'Ctrl-Shift-Del':
         case 'Ctrl-Del':
@@ -496,7 +438,7 @@ var WYSIWYG = P(function(_) {
           if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) return;
           // Same as above, but at the end position
           if(t.endPosition()) {
-            if((cleanHtml(t.html()) === '') || (cleanHtml(t.html()) === '<br>')) {
+            if(cleanHtml(t.html(), false) === '') {
               if(t.el.moveOutLeftRight(t.el.textField, R)) t.el.remove(0); //Only delete me if I successfully moved into a neighbor
             } else {
               if(t.el[R]) {
@@ -506,7 +448,6 @@ var WYSIWYG = P(function(_) {
             }
             e.preventDefault();
           }
-          window.setTimeout(function() { t.el.updateHashtags(); }, 50);
           break;
         case 'Left':
           // If already at start, move into previous element
@@ -585,9 +526,6 @@ var WYSIWYG = P(function(_) {
           // Redirect the paste event to the workspace textarea, which will then handle it
           t.el.workspace.pasteHandler(e);
         } else {
-          //If we are pasting into a hashtag, remove the hashtag
-          if($(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).hasClass(css_prefix + 'hashtag')) 
-            $(rangy.getSelection(t.$editor[0]).getRangeAt(0).startContainer.parentNode).removeClass(css_prefix + 'hashtag')
           // SyncCode after paste
           function syncAfterPaste() {
             t.write('<span class="caret_position" style="display:none;">&#65279;</span>');
@@ -601,7 +539,6 @@ var WYSIWYG = P(function(_) {
               rangy.getSelection(t.$editor[0]).deleteFromDocument();
               t.$editor.find('.caret_position').remove();
             }
-            t.el.updateHashtags();
           }
           window.setTimeout(syncAfterPaste);
         }
@@ -621,17 +558,33 @@ var WYSIWYG = P(function(_) {
     try {
       if(dir === L) {
         this.select(0);
-        this.el.scrollToMe(L);
+        this.scrollToMe(L);
       } else if(dir === R) {
         this.select(R);
-        this.el.scrollToMe(R);
+        this.scrollToMe(R);
       } else if(dir > 1) {
         this.setCaretFromXdir(dir, dir2);
-        this.el.scrollToMe(dir2);
+        this.scrollToMe(dir2);
       }
     } catch(e) {
     }
     this.updateToolbar();
+  }
+  _.scrollToMe = function(dir) {
+    if(this.$editor) {
+      var top = this.$editor.position().top;
+      var bottom = top + this.$editor.height();
+      var to_move_top = Math.min(0, top);
+      var to_move_bot = Math.max(0, bottom - this.el.workspace.jQ.height()+20);
+      if((to_move_bot > 0) && (to_move_top < 0)) {
+        if(dir === R)
+          this.el.workspace.jQ.scrollTop(this.el.workspace.jQ.scrollTop() + to_move_bot);
+        else
+          this.el.workspace.jQ.scrollTop(this.el.workspace.jQ.scrollTop() + to_move_top);
+      } else
+        this.el.workspace.jQ.scrollTop(this.el.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
+    }
+    return this;
   }
   _.magicCommands = function() {
     // Magic Commands checks if the line conforms to one of the magic commands and if so, will
@@ -641,29 +594,18 @@ var WYSIWYG = P(function(_) {
     var $span = $('<span/>');
     $span.prependTo(this.$editor);
     range.setStartAfter($span[0]);
-    var html = cleanHtml(range.toHtml()).slice(-20);
+    var html = cleanHtml(range.toHtml()).replace(/<\/div>/gi,'').slice(-20);
     var front = '';
     $span.remove();
-    if(html.match(/<br>[ \t]*[0-9]+[.\-:]$/) || html.match(/^[ \t]*[0-9]+[.\-:]$/)) {
+    if(html.match(/<(br|div)>[ \t]*[0-9]+[.\-:]$/i) || html.match(/^[ \t]*(&#8203;)?[0-9]+[.\-:]$/)) {
       if(html.match(/^[ \t]*[0-9]+[.\-:]$/)) front = '&#8203;';
       this.replaceToBeginningOfLine(front + "<ol><li><span id='caret_position'>OK</span></li></ol>");
       return true;
-    } else if(html.match(/<br>[ \t]*-?[.\-:]$/) || html.match(/^[ \t]*-?[.\-:]$/)) {
+    } else if(html.match(/<(br|div)>[ \t]*-?[.\-:]$/i) || html.match(/^[ \t]*(&#8203;)?-?[.\-:]$/)) {
       if(html.match(/^[ \t]*-?[.\-:]$/)) front = '&#8203;';
       this.replaceToBeginningOfLine(front + "<ul><li><span id='caret_position'>OK</span></li></ul>");
       return true;
-    } else if(html.match(/<br>#$/) || html.match(/^#$/)) {
-      if(html.match(/^#$/)) front = '&#8203;';
-      this.replaceToBeginningOfLine(front + "<span id='caret_position'>OK</span>");
-      this.write('<span class="' + css_prefix + 'hashtag">&#8203;<span id="move_caret"></span></span>');
-      var $span = this.$editor.find('#move_caret');
-      var hashtag = $span.parent()[0];
-      $span.remove();
-      var range = rangy.createRange();
-      range.selectNodeContents(hashtag);
-      range.select();
-      return true;
-    }
+    } 
     return false;
   }
   // Will replace from the caret position to the line start with the provided HTML.  If
@@ -676,8 +618,8 @@ var WYSIWYG = P(function(_) {
     $span.prependTo(this.$editor);  
     range.setStartAfter($span[0]);
     while(true) {
-      if(cleanHtml(range.toHtml()) == '') break;
-      if(cleanHtml(range.toHtml()).slice(-4) == '<br>') break;
+      var up_to = cleanHtml(range.toHtml()).replace(/<\/div>/ig, '');
+      if(up_to.match(/<(br|div)\/?>$/i)) break;
       if(range.endOffset > 0)
         range.setEnd(range.endContainer, range.endOffset - 1);
       else
@@ -755,7 +697,7 @@ var WYSIWYG = P(function(_) {
 
   // Is the editor Empty ?
   _.empty = function(){
-    return this.$e.val().trim() == '';
+    return (this.$e.val().trim() == '') || (this.$e.val().trim() == '<br>');
   };
 
   // Function call when click on viewHTML button
@@ -862,7 +804,7 @@ var WYSIWYG = P(function(_) {
     var $span = $('<span/>');
     $span.prependTo(this.$editor);  
     range.setStartAfter($span[0]);
-    var start = cleanHtml(range.toHtml()) == '';
+    var start = cleanHtml(range.toHtml(), false) == '';
     $span.remove();
     return start;
   }
@@ -986,10 +928,11 @@ var WYSIWYG = P(function(_) {
 
 });
 
-var cleanHtml = SwiftCalcs.cleanHtml = function(html) {
-  // This function strips all html elements out, except <br> and <br/>
-  html = html.replace(/<[bB]+[rR]+\/?>/g, "LEFT_br_RIGHT");
+var cleanHtml = SwiftCalcs.cleanHtml = function(html, keep_br_div) {
+  if(typeof keep_br_div === 'undefined') keep_br_div = true;
+  // This function strips all html elements out, except <br> and div
+  if(keep_br_div) html = html.replace(/<(\/?)(br|div)\/?>/ig, "LEFT_$1$2_RIGHT");
   html = html.replace(/<[^<>]*>/g,'');
-  html = html.replace(/LEFT_br_RIGHT/g, "<br>");
+  if(keep_br_div) html = html.replace(/LEFT_(\/?)(br|div)_RIGHT/ig, "<$1$2>");
   return html;
 }

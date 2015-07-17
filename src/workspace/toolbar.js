@@ -7,6 +7,41 @@
  *******************************************************/
 
 Workspace.open(function(_) {
+
+	_.bindToolbar = function() {
+		this.toolbar = Toolbar($('#toolbar_holder'));
+	}
+	_.reshapeToolbar = function() {
+		if(!this.toolbar) return;
+		var height = this.toolbar.toolbar_holder.height();
+		this.jQ.css('top', (100-35+height) + 'px');
+	}
+	_.attachToolbar = function(el, options) {
+		if(!this.toolbar) return;
+		this.toolbar.attachToolbar(el, options);
+		this.reshapeToolbar();
+	}
+	_.detachToolbar = function() {
+		if(!this.toolbar) return;
+		this.toolbar.detachToolbar();
+	}
+	_.blurToolbar = function(el) {
+		if(!this.toolbar) return;
+		this.toolbar.blurToolbar(el);
+	}
+	_.unblurToolbar = function() {
+		if(!this.toolbar) return;
+		this.toolbar.unblurToolbar();
+	}
+});
+
+var Toolbar = SwiftCalcs.toolbar = P(function(_) {
+
+	_.toolbar = false;
+	_.toolbar_holder = false;
+	_.init = function(toolbar_holder) {
+		this.toolbar_holder = toolbar_holder;
+	}
 	var current_toolbar_target = 0;
 	_.attachToolbar = function(el, options) {
 		if(current_toolbar_target === el) return;
@@ -71,28 +106,24 @@ Workspace.open(function(_) {
 			return $ul;
 		}
 		//build up the toolbar
-		var $ul = buildMenu(el, options);
-		$ul.attr('id', 'toolbar').addClass('base');
-		$('#toolbar_holder').append($ul);
+		this.toolbar = buildMenu(el, options);
+		this.toolbar.attr('id', 'toolbar').addClass('base');
+		this.toolbar_holder.append(this.toolbar);
 		if(el.klass && el.klass.length) 
-			$('#toolbar_holder').addClass(css_prefix + el.klass.join(' ' + css_prefix));
-		this.reshapeToolbar();
+			this.toolbar_holder.addClass(css_prefix + el.klass.join(' ' + css_prefix));
 	}
 	_.detachToolbar = function() {
 		current_toolbar_target = false;
-		$('#toolbar_holder').removeClass().addClass('toolbar');
-		$('#toolbar').remove();
+		this.toolbar_holder.removeClass().addClass('toolbar');
+		if(this.toolbar) this.toolbar.remove();
+		this.toolbar = false;
 	}
 	_.blurToolbar = function(el) {
 		if(el && (el !== current_toolbar_target)) return;
-		$('#toolbar').addClass('blurred');
+		if(this.toolbar) this.toolbar.addClass('blurred');
 	}
 	_.unblurToolbar = function() {
-		$('#toolbar').removeClass('blurred');
-	}
-	_.reshapeToolbar = function() {
-		var height = $('#toolbar_holder').height();
-		this.jQ.css('top', (100-35+height) + 'px');
+		if(this.toolbar) this.toolbar.removeClass('blurred');
 	}
 
 	// Return the default textToolbar with extra options.  To_add is appended to the menu, and to_remove will remove any items with matching id
@@ -523,9 +554,9 @@ Workspace.open(function(_) {
 				toolbar.push(to_add[i]);
 		}
 		if(to_remove) {
-			for(var i=0; i > toolbar.length; i++) {
-				if(to_remove[cur_item.id])
-					cur_item.skip = true;
+			for(var i=0; i < toolbar.length; i++) {
+				if(to_remove[toolbar[i].id])
+					toolbar[i].skip = true;
 			}
 		}
 		return toolbar;

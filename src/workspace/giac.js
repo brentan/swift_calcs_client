@@ -1,10 +1,7 @@
 
 /* object that deals with evaluations, and setting the evaluation queue */
 var GiacHandler = P(function(_) {
-	_.giac_ready = false;
 	_.auto_evaluation = true;
-	_.errors_encountered = false;
-	_.varCallbackCounter = 0;
 	// Evaluation handling functions.  Each array element keeps track of which first Gen element, by id, is currently being evaluated.  Set to false to stop evaluation or when complete
 	_.init = function() {
 		this.evaluations = [];
@@ -12,6 +9,10 @@ var GiacHandler = P(function(_) {
 	  this.manual_evaluation = [];
 	  this.variable_list = [];
 	  this.object_list = [];
+		this.giac_ready = false;
+		this.aborting = false;
+		this.errors_encountered = false;
+		this.varCallbackCounter = 0;
 	}
 	_.registerEvaluation = function(full) {
 		this.evaluations.push(true);
@@ -49,12 +50,44 @@ var GiacHandler = P(function(_) {
 		for(var i = 0; i < to_do.length; i++)
 			this.manual_evaluation[to_do[i]] = true; 
 	}
-	_.cancelEvaluations = function() {
+	_.kill = function() {
+		// Will totally destroy the webworker and then give a link to restart it
+		this.worker.terminate();
+		this.worker = false;
+		this.init();
+		setError('Math Engine Terminated.  All calculations are frozen.  <a href="#">Restart Math Engine and Recalculate Sheet</a>');
+		$('.status_bar').find('a').on('click', function() {
+			$(this).hide();
+			SwiftCalcs.giac.restart();
+		})
+	}
+	_.restart = function() {
+		// Will reload the webworker if its been destroyed
+		if(this.worker) return;
+		loadWorker(this);
+		SwiftCalcs.active_workspace.ends[L].evaluate(true, true);
+	}
+	_.aborting = false;
+	_.cancelEvaluations = function(el) { 
+		// User initiated abort.  Initiate the abort, let the user know the abort is happening, and if 10 seconds pass with no response, add option to force quit
+		// If el is passed, set to 'aborting' and use that to allow for full worker kill if no response occurs
 		var to_cancel = this.current_evaluations();
 		for(var i = 0; i < to_cancel.length; i++)
 			this.cancelEvaluation(to_cancel[i]); 
-		setError('Computation was aborted by the user.');
-		SwiftCalcs.active_workspace.jQ.find('i.fa-spinner').remove();
+		if(el) {
+			var el_new = $('<span>Aborting...</span>');
+			el.replaceWith(el_new);
+			this.aborting = window.setTimeout(function() { 
+				el_new.html('Aborting... <strong>The math engine may be frozen: <a href="#">Kill Math Engine</a></strong>');
+				el_new.find('a').on('click', function(e) { 
+					$(this).hide();
+					$('i.fa-spinner').remove();
+					SwiftCalcs.giac.kill();
+					return false;
+				});
+			}, 5000);
+		} else
+			this.aborting = 1;
 		return this;
 	}
 	_.evaluationComplete = function(eval_id) {
@@ -209,12 +242,12 @@ var giac = SwiftCalcs.giac = GiacHandler();
 /*
 This file handles communications with giac, which lives in a webworker
 */
-(function(giacHandler) {
+var loadWorker = function(giacHandler) {
 
 	startProgress('Loading Computational Library');
 	setProgress(0);
 
-  var giac = giacHandler.worker = new Worker("giac_worker" + window.SwiftCalcs_version + ".js");
+  var giac = giacHandler.worker = new Worker("/libraries/giac_worker" + window.SwiftCalcs_version + ".js");
   giac.addEventListener("message", function (evt) {
     handleResponse(JSON.parse(evt.data));
   },false);
@@ -228,6 +261,12 @@ This file handles communications with giac, which lives in a webworker
 
   var handleResponse = function(response) {
     var text = response.value
+		if(giacHandler.aborting) {
+			window.clearTimeout(giacHandler.aborting);
+			setError('This computation has been aborted by the user');
+			giacHandler.aborting = false;
+			$('i.fa-spinner').remove();
+		}
     switch(response.command) {
     	case 'giac_version':
 				giac.postMessage(JSON.stringify({giac_version: window.giac_version}));
@@ -272,4 +311,5 @@ This file handles communications with giac, which lives in a webworker
   }
 
 
-}(giac));
+};
+loadWorker(giac);

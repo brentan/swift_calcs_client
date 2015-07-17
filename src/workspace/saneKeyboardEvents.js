@@ -85,7 +85,7 @@ function stringify(evt) {
   return modifiers.join('-');
 }
 
-var saneKeyboardEvents = (function() {
+var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
 
   // create a keyboard events shim that calls callbacks at useful times
   // and exports useful public methods
