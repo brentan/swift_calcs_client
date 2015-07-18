@@ -23,14 +23,17 @@ var Workspace = P(function(_) {
 	_.server_id = -1;
 	_.name = '';
 	_.hash = '';
+	_.server_version = 1;
 
   var id = 0;
   function uniqueWorkspaceId() { return id += 1; }
 
   // Create the workspace, pass in an optional name
-	_.init = function(name, hash) { 
+	_.init = function(name, hash, server_id, server_version) { 
 		if((typeof name === 'undefined') || (typeof name === 'undefined')) 
 			throw "Workspace initialized with no name or hash";
+		if(server_id) this.server_id = server_id;
+		if(server_version) ajaxQueue.known_server_version[this.server_id] = server_version;
 		this.name = name;
 		this.hash = hash;
 		this.ends = {};
@@ -61,15 +64,21 @@ var Workspace = P(function(_) {
 		this.bindMouse();
 		this.bindKeyboard();
 		SwiftCalcs.active_workspace = this;
+    $('.fatal_div').hide();
+    ajaxQueue.suppress = false;
 		this.bound = true;
 		return this;
 	}
-	_.rename = function(new_name, new_hash) {
+	_.rename = function(new_name, new_hash, new_server_id) {
 		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
-		if(new_hash) this.hash = new_hash;
 		if(new_name) {
 			this.name = new_name;
 			$('#account_bar .content').find("input." + css_prefix + "workspace_name").val(this.name);
+			if(new_hash && new_server_id) {// new hash and server id provided means this is a duplication event.  Do not save, just update my hash
+				this.hash = new_hash;
+				this.server_id = new_server_id;
+				ajaxQueue.known_server_version[this.server_id] = 1;
+			} 
 			this.save();
 		}
 	}
@@ -95,7 +104,11 @@ var Workspace = P(function(_) {
 	  this.ends[L].evaluate(true, true);
 		this.insertJQ.append('<div class="' + css_prefix + 'element_bot_spacer"></div>');
 	  this.updateBookmarks();
+	  this.reset_server_base(to_parse);
 	  return this;
+	}
+	_.reset_server_base = function(base) {
+	  ajaxQueue.server_version[this.server_id] = base; // Seed the diff so that we load it with the current version that we just got from the server
 	}
 	// Detach method (remove from the DOM)
 	_.unbind = function() {

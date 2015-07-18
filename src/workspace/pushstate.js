@@ -60,8 +60,7 @@ var PushState = P(function(_) {
 						$('.file_loader_background').hide();
 						$('.loading_box').hide();
 						if(SwiftCalcs.active_workspace) SwiftCalcs.active_workspace.unbind();
-						var workspace = SwiftCalcs.Workspace(response.name, response.hash);
-						workspace.server_id = response.id;
+						var workspace = SwiftCalcs.Workspace(response.name, response.hash, response.id, response.version);
 						workspace.bind($('.workspace_holder'));
 						workspace.load(response.data);
 						window.setTimeout(function() { SwiftCalcs.active_workspace.blur().focus(); SwiftCalcs.active_workspace.ends[-1].focus(-1); });
