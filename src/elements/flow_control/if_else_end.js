@@ -7,6 +7,7 @@ var if_block = P(LogicBlock, function(_, super_) {
 	_.hasChildren = true;
 	_.mathField = 0;
 	_.lineNumber = true;
+	_.helpText = "<<if <[TEST]>>>\nIf the result of TEST is true (or non-zero), the block will be evaluated.  Otherwise, the block is skipped.  Examples: if x = 2, if x > 4";
 
 	_.init = function(latex) {
 		super_.init.call(this);
@@ -103,6 +104,7 @@ var if_block = P(LogicBlock, function(_, super_) {
 });
 var else_block = P(LogicCommand, function(_, super_) {
 	_.mathField = false;
+	_.helpText = "<<else>>\nIf none of the previous if or elseif blocks have been true, the commands in the else block will be evaluated";
 	_.init = function() {
 		super_.init.call(this);
 	}
@@ -177,6 +179,7 @@ var else_block = P(LogicCommand, function(_, super_) {
 });
 var else_if_block = P(else_block, function(_, super_) {
 	_.latex = '';
+	_.helpText = "<<elseif <[TEST]>>>\nIf the result of TEST is true (or non-zero) and no previous if or elseif block has been true, the block will be evaluated.  Otherwise, the block is skipped.  Examples: elseif x = 2, elseif x > 4";
 	_.init = function(latex) {
 		super_.init.call(this);
 		this.latex = latex || '';

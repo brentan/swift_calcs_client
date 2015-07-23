@@ -16,6 +16,7 @@ var plot = P(Element, function(_, super_) {
 	_.xminField = 0;
 	_.xmaxField = 0;
 	_.attached = false;
+	_.helpText = "<<plot>>\nCreate a line plot from a function.  Example: Plot x^2 as a function of x";
 
 	_.init = function() {
 		super_.init.call(this);

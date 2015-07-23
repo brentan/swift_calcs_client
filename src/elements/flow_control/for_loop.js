@@ -10,6 +10,7 @@ var for_loop = P(Loop, function(_, super_) {
 	_.finishField = 0;
 	_.stepField = 0;
 	_.lineNumber = true;
+	_.helpText = "<<For <[J]> from <[START]> to <[FINISH]> by <[STEP]>>>\nFor loop.  Iterate over contents, with J increasing in value from START (inclusive) until FINISH (non-inclusive) with a step size of STEP.";
 
 	_.init = function(latex_var, latex_start, latex_finish, latex_step) {
 		super_.init.call(this);
@@ -201,6 +202,7 @@ var continue_block = P(Element, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
 	_.command_name = 'continue';
+	_.helpText = "<<continue>>\nWithin a loop, a continue command will immediately cease the current loop iteration and return to the start of the loop to begin the next iteration.";
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML(this.command_name, this.id) + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
@@ -254,6 +256,7 @@ var continue_block = P(Element, function(_, super_) {
 });
 var break_block = P(continue_block, function(_, super_) {
 	_.command_name = 'break';
+	_.helpText = "<<break>>\nWithin a loop, a break command will immediately cease all iterations and exit the loop.";
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		var parentLoop = this.parentLoop();
 		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) {

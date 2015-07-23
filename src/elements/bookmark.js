@@ -1,6 +1,7 @@
 
 var bookmark = P(EditableBlock, function(_, super_) {
 	_.klass = ['bookmark'];
+	_.helpText = "<<Bookmark>>\nCreate a bookmark at this location in the worksheet.  Find your bookmarks quickly with the <i>bookmarks</i> link at the rigth of the screen, and search for bookmarks when opening documents in the file browser.";
 
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + commandBlockHTML('', this.id) + helpBlock() + '</div>';

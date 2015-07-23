@@ -36,9 +36,15 @@ var SwiftCalcs = {};
 		return null;
 	}
 
-  var helpBlock = function() { // BRENTAN: Todo, just vaporware right now...
-    return '&nbsp;&nbsp;<a class="vaporware ' + css_prefix + 'help_circle" href="" onclick="showNotice(\'This feature is not yet available\'); return false;"><span class="vaporware fa fa-question-circle"></span></a>';
+  // Help circles.  Added to blocks that have help associated with them.  On click, a small help bubble will appear with information
+  var helpBlock = function() {
+    return '&nbsp;&nbsp;<a class="' + css_prefix + 'help_circle" href="#"><span class="fa fa-question-circle"></span></a>';
   }
+  $('body').on('click', 'a.' + css_prefix + 'help_circle', function(e) { 
+    var el = SwiftCalcs.elementById($(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id')*1)
+    if(el && el.helpText) SwiftCalcs.createTooltip(el.helpText, $(this));
+    return false;
+  });
 
   /* Math helpers
    * These functions help create and register math elements.  They are used by various elements that have Math input or output secionts
