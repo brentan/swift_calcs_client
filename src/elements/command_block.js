@@ -1,7 +1,8 @@
 /*
 A command block is a document element that has some command as its output,
-and allows a cursor on either its left or right side.  The user can move the cursor
-left or right around the element, and delete etc.  Used to simulate cursor commands
+and allows a cursor.  The user can move the cursor
+left or right around the element, and delete etc.  The command block is also
+editable, depending upon settings. It is used to simulate cursor commands
 around a command block (like an 'else') so that these items can be deleted.
 
 Option 'allowDelete' will turn the commandBlock into a math block with the remaining text if a portion of the command block text is deleted

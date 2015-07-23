@@ -211,7 +211,10 @@ var Module = {
     try {
       return Module.caseval(text);
     } catch(e) {
-      errors[ii] = fix_message('Timeout: Maximum execution time of ' + timeout_length + ' seconds exceeded.  <a href="#" class="increase_timeout">Increase Timeout to ' + (timeout_length + 10) + ' seconds</a>');
+      if(e.message)
+        errors[ii] = fix_message(e.message);
+      else
+        errors[ii] = fix_message('Timeout: Maximum execution time of ' + timeout_length + ' seconds exceeded.  <a href="#" class="increase_timeout">Increase Timeout to ' + (timeout_length + 10) + ' seconds</a>');
       return '';
     }
   },

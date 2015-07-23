@@ -1,0 +1,53 @@
+.sc_tooltip, .sc_arrow:after {
+  background: #777777;
+  border: 1px solid #ffffff;
+}
+
+.sc_tooltip {
+	display: inline-block;
+  position: absolute;
+  padding: 6px;
+  color: #ffffff;
+  font-size: 11px;
+  border-radius: 5px;
+  margin-top: 10px;
+  text-align: left;
+  box-shadow: 0 0 7px #777777;
+  z-index: 99;
+  max-width: 200px;
+  .code {
+  	font-family: monospace;
+  	font-size: 12px;
+  }
+  .explanation {
+  	font-style: italic;
+  	color: #dddddd;
+  }
+}
+.sc_arrow {
+  width: 55px;
+  height: 16px;
+  overflow: hidden;
+  position: absolute;
+  &.left {
+  	left: 20px;
+  }
+  &.right {
+  	right: 0px;
+  }
+  margin-left: -35px;
+  top: -16px;
+  &:after {
+	  content: "";
+	  position: absolute;
+	  left: 20px;
+	  top: 10px;
+	  width: 25px;
+	  height: 25px;
+	  box-shadow: 0 0 7px #777777;
+	  -webkit-transform: rotate(45deg);
+	  -moz-transform:    rotate(45deg);
+	  -ms-transform:     rotate(45deg);
+	  -o-transform:      rotate(45deg);
+  }
+}

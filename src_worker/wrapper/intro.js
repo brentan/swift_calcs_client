@@ -1,6 +1,6 @@
 var constants = {};
 var user_vars = {};
-var timeout_length = 5;
+var timeout_length = 20;
 // Helper to bind a new object into the constant hash
 var newConstant = function(name, ob) {
 	constants[name] = ob;
