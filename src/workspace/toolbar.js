@@ -85,7 +85,10 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				})
 				if(cur_item.sub) {
 					cur_item.pulldown = true;
-					$li.append(buildMenu(element, cur_item.sub));
+					if(cur_item.sub_klass)
+						$li.append(buildMenu(element, cur_item.sub).addClass(cur_item.sub_klass));
+					else
+						$li.append(buildMenu(element, cur_item.sub));
 				}
 				if(cur_item.colorPicker) {
 					cur_item.pulldown = true;
@@ -98,6 +101,10 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				if(cur_item.units) {
 					cur_item.pulldown = true;
 					$li.append(UnitPicker(element, cur_item.units));
+				}
+				if(cur_item.commands) {
+					cur_item.pulldown = true;
+					$li.append(CommandPicker(element, cur_item.commands));
 				}
 				if(cur_item.pulldown)
 					$div.addClass('pulldown');
@@ -380,6 +387,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			title: 'Symbols',
 			method: function(el) { el.command('\\infinity'); },
 			sub: [
+				{html: '&nbsp;&nbsp;<span style="font-family: serif;">&#8734;</span>&nbsp;&nbsp;', title: 'Infinity', method: function(el) { el.command('\\infinity'); } },
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">+&#8734;</span>&nbsp;&nbsp;', title: 'Plus-Infinity', method: function(el) { el.command('+'); el.command('\\infinity'); } },
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">-&#8734;</span>&nbsp;&nbsp;', title: 'Minus-Infinity', method: function(el) { el.command('-'); el.command('\\infinity'); } },
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">i</span>&nbsp;&nbsp;', title: '(-1)^(1/2)', method: function(el) { el.command('i'); } },
@@ -510,30 +518,24 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			id: 'matrix',
 			html: '<span style="position: relative; top: -7px;padding-right:4px;"><span style="font-size:18px;">[</span><span style="font-size: 13px;color: #888888;"><span class="fa fa-th"></span></span><span style="font-size: 18px;">]</span></span>',
 			title: 'Matices',
+			sub_klass: 'commandPicker',
 			method: function(el) { el.command('\\bmatrix'); },
 			sub: [
-				{html: 'Insert Matrix', title: 'Insert Matrix', method: function(el) { el.command('\\bmatrix'); } },
-				{html: 'Add Column Before (,)', title: 'Add Column Before', method: function(el) { el.command('matrix_add_column_before'); } },
-				{html: 'Add Column After (,)', title: 'Add Column After', method: function(el) { el.command('matrix_add_column_after'); } },
-				{html: 'Add Row Before (;)', title: 'Add Row Before', method: function(el) { el.command('matrix_add_row_before'); } },
-				{html: 'Add Row After (;)', title: 'Add Row After', method: function(el) { el.command('matrix_add_row_after'); } },
+				{html: '<kbd>[</kbd>Insert Matrix&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', title: 'Insert Matrix', method: function(el) { el.command('\\bmatrix'); } },
+				{html: '<kbd>,</kbd>Add Column Before&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', title: 'Add Column Before', method: function(el) { el.command('matrix_add_column_before'); } },
+				{html: '<kbd>,</kbd>Add Column After&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', title: 'Add Column After', method: function(el) { el.command('matrix_add_column_after'); } },
+				{html: '<kbd>;</kbd>Add Row Before&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', title: 'Add Row Before', method: function(el) { el.command('matrix_add_row_before'); } },
+				{html: '<kbd>;</kbd>Add Row After&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', title: 'Add Row After', method: function(el) { el.command('matrix_add_row_after'); } },
 				{html: 'Remove Column', title: 'Remove Column', method: function(el) { el.command('matrix_remove_column'); } },
 				{html: 'Remove Row', title: 'Remove Row', method: function(el) { el.command('matrix_remove_row'); } },
 			]
 		},
+		{ id: '|' },
 		{
-			id: 'matrixMath',
-			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">&#8857;</div>',
-			title: 'Matrix/Vector Operations',
-			sub: [
-				{html: 'Elementwise Multiplication (.*)', title: 'Elementwise Multiplication', method: function(el) { el.command('.'); el.command('*'); } },
-				{html: 'Elementwise Division (./)', title: 'Elementwise Division', method: function(el) { el.command('.'); el.command('/'); } },
-				{html: 'Elementwise Power (.^)', title: 'Elementwise Power', method: function(el) { el.command('.'); el.command('^'); } },
-				{html: 'Dot Product', title: 'Dot Product', method: function(el) { el.command('d'); el.command('o'); el.command('t'); el.command('('); } },
-				{html: 'Cross Product', title: 'Cross Product', method: function(el) { el.command('c'); el.command('r'); el.command('o'); el.command('s'); el.command('s'); el.command('('); } },
-				{html: 'Determinate', title: 'Determinate', method: function(el) { el.command('d'); el.command('e'); el.command('t'); el.command('('); } },
-				{html: 'Transpose', title: 'Transpose', method: function(el) { el.command('t'); el.command('r'); el.command('a'); el.command('n'); el.command('('); } }
-			]
+			id: 'commands',
+			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">Command Library</div>',
+			title: 'Command Library',
+			commands: function(el, cmd, unit) { el.command(cmd, unit); }
 		},
 		{
 			id: 'mode',
@@ -824,12 +826,12 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		];
 		var output = '';
 		for(var i=0; i < units.length; i++) {
-			output += '<li><div class="item ignore" style="width:160px;" title="">' + units[i].id + '<span style="display:inline-block; float:right;"><span class="fa fa-caret-right"></span></span></div><ul>';
+			output += '<li><div class="item ignore" style="width:160px;" title=""><span class="fa fa-caret-right"></span>' + units[i].id + '</div><ul>';
 			for(var j=0; j < units[i].sub.length; j++) 
-				output += '<li><div class="item unit" title="' + units[i].sub[j].unit + '">' + units[i].sub[j].name + '</div></li>';
+				output += '<li><div class="item unit" title="' + units[i].sub[j].unit + '"><span class="code">' + units[i].sub[j].unit.replace(/\^([0-9]+)/g,"<sup>$1</sup>") + '</span>: ' + units[i].sub[j].name + '</div></li>';
 			output += '</ul></li>';
 		}	
-		var top_option = $('<li/>').html('<div class="item">Insert Unit Picker (\')</div>');
+		var top_option = $('<li/>').html('<div class="item">Insert Unit Picker <kbd>\'</kbd></div>');
 		top_option.on('mousedown', function(e) {
 			func(el, '\\Unit');
 			e.stopPropagation();
@@ -841,6 +843,17 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		out_box.find('.ignore').on('mousedown', function(e) {
 			e.stopPropagation();
 			e.preventDefault();
+		}).on('mouseenter', function(e) {
+			var ul = $(this).next('ul');
+			window.setTimeout(function() {
+				ul.css({top: '0px', left: '100%'});
+				var move_up = min(0, $( window ).height() - (ul.offset().top + ul.height()));
+				var move_left = min(0, $( window ).width() - (ul.offset().left + ul.width()));
+				if(move_up < 0)
+					ul.css('top', move_up + 'px');
+				if(move_left < 0)
+					ul.css('left', move_left + 'px');
+			});
 		});
 		out_box.find('.unit').on('mousedown', function(e) {
 			func(el, 'unit', $(this).attr('title'));
@@ -850,6 +863,333 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			forceHide(this);
 		});
 		out_box.addClass('unitPicker').prepend(top_option);
+		return out_box;
+	}
+	var CommandPicker = function(el, func) {
+		var commands = {
+	    Algebra: [
+	      { text: 'Approximate', giac_func: 'approx(' },
+	      { text: 'Combine Fractions', giac_func: 'comDenom(' },
+	      { text: 'Get Denominator', giac_func: 'denom(' },
+	      { text: 'Get Numerator', giac_func: 'numer(' },
+	      { text: 'Inverse', giac_func: 'inv(' },
+	      { text: 'Partial Fraction Decomposition', giac_func: 'partfrac(' },
+	      { text: 'Polynomial Degree', giac_func: 'degree(' },
+	      { text: 'Test for Variable in Expression', giac_func: 'has(' },
+	    ],
+	    Calculus: [
+	      { text: 'Curl', giac_func: 'curl(' },
+	      { text: 'Divergence', giac_func: 'divergence(' },
+	      { text: 'Gradient', giac_func: 'gradient(' },
+	      { text: 'Hessian', giac_func: 'hessian(' },
+	      { text: 'Laplacian', giac_func: 'laplacian(' },
+	    ],
+	    Complex_Numbers: [
+	      { text: 'Argument of Complex Number', giac_func: 'arg(' },
+	      { text: 'Complex Conjugate', giac_func: 'conj(' },
+	      { text: 'Imaginary Part', giac_func: 'im(' },
+	      { text: 'Real Part', giac_func: 're(' },
+	    ],
+	    Exponentials_and_Logs: [
+	      { text: 'Antilog base 10', giac_func: 'alog10(' },
+	      { text: 'Exponential', giac_func: 'exp(' },
+	      { text: 'Log base 10', giac_func: 'log10(' },
+	      { text: 'Log base b', giac_func: 'logb(' },
+	      { text: 'Natural Log', giac_func: 'ln(' },
+	      [ 'Hyperbolic Functions',
+	        { text: 'Hyperbolic Sine', giac_func: 'sinh(' },
+	        { text: 'Hyperbolic Cosine', giac_func: 'cosh(' },
+	        { text: 'Hyperbolic Tangent', giac_func: 'tanh(' },
+	        { text: 'Hyperbolic Arcsine', giac_func: 'asinh(' },
+	        { text: 'Hyperbolic Arccosine', giac_func: 'acosh(' },
+	        { text: 'Hyperbolic Arctangent', giac_func: 'atanh(' },
+	      ],
+	      [ 'Algabraic Manipulations',
+	        { text: 'Convert trig -> exp', giac_func: 'trig2exp(' },
+	        { text: 'Convert exp -> trig', giac_func: 'exp2trig(' },
+	        { text: 'Convert atrig -> ln', giac_func: 'atrig2ln(' },
+	        { text: 'Convert hyp -> exp', giac_func: 'hyp2exp(' },
+	        { text: 'Convert exp -> pow', giac_func: 'exp2pow(' },
+	        { text: 'Convert pow -> exp', giac_func: 'pow2exp(' }
+	      ]
+	    ],
+	    Integer_Math: [
+	      { text: 'Divisors', giac_func: 'divisors(' },
+	      { text: 'Greatest Common Divisor', giac_func: 'gcd(' },
+	      { text: 'Inverse', giac_func: 'inv(' },
+	      { text: 'Lowest Common Multilple', giac_func: 'lcm(' },
+	      { text: 'Prime Factors', giac_func: 'factors(' },
+	      { text: 'Sign (+/-)', giac_func: 'sign(' },
+	      { text: 'Test if Even', giac_func: 'even(' },
+	      { text: 'Test if Odd', giac_func: 'odd(' },
+	      [ 'Primes',
+	        { text: 'Find Prime Number', giac_func: 'ithprime(' },
+	        { text: 'Next Prime', giac_func: 'nextprime(' },
+	        { text: 'Previous Prime', giac_func: 'prevprime(' },
+	        { text: 'Prime Factors', giac_func: 'factors(' },
+	        { text: 'Prime Factor Decomposition', giac_func: 'ifactor(' },
+	        { text: 'Primes less than n', giac_func: 'nprimes(' },
+	        { text: 'Test if Prime', giac_func: 'is_prime(' },
+	      ]
+	    ],
+	    Matrices_and_Lists: [
+
+        { text: 'Cross Product', giac_func: 'cross(' },
+        { text: 'Determinant', giac_func: 'det(' },
+        { text: 'Dot Product', giac_func: 'dot(' },
+	      { text: 'Empty Matrix', giac_func: 'matrix(' },
+	      { text: 'Make Matrix from Expression', giac_func: 'makemat(' },
+	      { text: 'Random Matrix', giac_func: 'randMat(' },
+	      [ 'Elementwise Math',
+	      	{ text: 'Elementwise Addition', giac_func: '+'},
+	      	{ text: 'Elementwise Substraction', giac_func: '-'},
+	      	{ text: 'Elementwise Multiplication', giac_func: '.*'},
+	      	{ text: 'Elementwise Division', giac_func: './'},
+	      	{ text: 'Elementwise Power', giac_func: '.^'},
+	      ],
+	      [ 'Factorizations',
+	        { text: 'Cholesky Decomposition', giac_func: 'cholesky(' },
+	        { text: 'LU Decomposition', giac_func: 'lu(' },
+	        { text: 'QR Decomposition', giac_func: 'qr(' },
+	        { text: 'SVD Decomposition', giac_func: 'svd(' },
+	      ],
+	      [ 'Matrix Norms',
+	        { text: 'Adjunct Matrix', giac_func: 'trn(' },
+	        { text: 'Frobenius Norm', giac_func: 'frobenius_norm(' },
+	        { text: 'Hessenberg Reduction', giac_func: 'hessenberg(' },
+	        { text: 'Hilbert Matrix', giac_func: 'hilbert(' },
+	        { text: 'Identity Matrix', giac_func: 'identity(' },
+	        { text: 'Jordan Matrix', giac_func: 'egvl(' },
+	        { text: 'L1 Norm', giac_func: 'l1norm(' },
+	        { text: 'L2 Norm', giac_func: 'l2norm(' },
+	        { text: 'Linfinity Norm', giac_func: 'linfnorm(' },
+	        { text: 'Maximum Column l1<sub>norm</sub>', giac_func: 'colnorm(' },
+	        { text: 'Maximum Row l1<sub>norm</sub>', giac_func: 'rownorm(' },
+	        { text: 'Smith Normalization', giac_func: 'ismith(' },
+	      ],
+	      [ 'Structure',
+	        { text: 'Append', giac_func: 'append(' },
+	        { text: 'Concatenate', giac_func: 'concat(' },
+	        { text: 'Delete Columns', giac_func: 'delcols(' },
+	        { text: 'Delete Rows', giac_func: 'delrows(' },
+	        { text: 'Flatten Matrix to List', giac_func: 'flatten(' },
+	        { text: 'List Length', giac_func: 'length(' },
+	        { text: 'Matrix Dimension', giac_func: 'dim(' },
+	        { text: 'Number of Columns', giac_func: 'coldim(' },
+	        { text: 'Number of Rows', giac_func: 'rowdim(' },
+	        { text: 'Prepend', giac_func: 'prepend(' },
+	        { text: 'Swap Columns', giac_func: 'colswap(' },
+	        { text: 'Number of Columns', giac_func: 'ncols(' },
+	        { text: 'Number of Rows', giac_func: 'nrows(' },
+	        { text: 'Reverse List', giac_func: 'revlist(' },
+	        { text: 'Rotate List', giac_func: 'rotate(' },
+	        { text: 'Shift List', giac_func: 'shift(' },
+	        { text: 'Swap Rows', giac_func: 'rowSwap(' },
+	        { text: 'Transpose', giac_func: 'tran(' },
+	      ],
+	      [ 'Search',
+	        { text: 'Count Elements Equal to Value', giac_func: 'count_eq(' },
+	        { text: 'Count Elements Greater than Value', giac_func: 'count_sup(' },
+	        { text: 'Count Elements Less Than Value', giac_func: 'count_inf(' },
+	        { text: 'Find in List', giac_func: 'find(' },
+	        { text: 'Get Diagonal', giac_func: 'diag(' },
+	      ],
+	      [ 'Statistics',
+	        { text: 'Correlation', giac_func: 'correlation(' },
+	        { text: 'Covariance', giac_func: 'covariance(' },
+	        { text: 'Frequencies / Histogram', giac_func: 'frequencies(' },
+	        { text: 'List Variance', giac_func: 'variance(' },
+	        { text: 'Maximum', giac_func: 'max(' },
+	        { text: 'Mean / Average', giac_func: 'mean(' },
+	        { text: 'Median', giac_func: 'median(' },
+	        { text: 'Minimum', giac_func: 'min(' },
+	        { text: 'Quantile', giac_func: 'quantile(' },
+	        { text: '1st Quartile', giac_func: 'quartile1(' },
+	        { text: '3rd Quartile', giac_func: 'quartile3(' },
+	        { text: 'Standard Deviation', giac_func: 'stddev(' },
+	      ],
+	      [ 'Linear Algebra',
+	        { text: 'Adjacent Element Difference', giac_func: 'deltalist(' },
+	        { text: 'Condition Number', giac_func: 'cond(' },
+	        { text: 'Cross Product', giac_func: 'cross(' },
+	        { text: 'Determinant', giac_func: 'det(' },
+	        { text: 'Dot Product', giac_func: 'dot(' },
+	        { text: 'Eigenvalues', giac_func: 'eigenvals(' },
+	        { text: 'Eigenvectors', giac_func: 'egv(' },
+	        { text: 'Inverse', giac_func: 'inv(' },
+	        { text: 'Matrix Rank', giac_func: 'rank(' },
+	      ],
+	      [ 'Polynomial List',
+	        { text: 'Evaluate List as Polynomial', giac_func: 'polyEval(' },
+	        { text: 'List to Polynomial', giac_func: 'poly2symb(' },
+	        { text: 'Roots of Polynomial List', giac_func: 'proot(' },
+	      ]
+	    ],
+	    Probability: [
+	      { text: 'Frequencies / Histogram', giac_func: 'frequencies(' },
+	      { text: 'Combinations', giac_func: 'nCr(' },
+	      { text: 'Permutations', giac_func: 'nPr(' },
+	      { text: 'Student T-Test', giac_func: 'studentt(' },
+	      [ 'Probability Distributions',
+	        { text: 'Beta Probability', giac_func: 'betad(' },
+	        { text: 'Binomial Probability', giac_func: 'binomial(' },
+	        { text: 'Cauchy Probability', giac_func: 'cauchy(' },
+	        { text: 'Chi<sup>2</sup> Probability', giac_func: 'chisquare(' },
+	        { text: 'Exponential Probability', giac_func: 'exponential(' },
+	        { text: 'Fisher-Snedecor Probability', giac_func: 'fisher(' },
+	        { text: 'Gamma Probability', giac_func: 'gammad(' },
+	        { text: 'Geometric Probability', giac_func: 'geometric(' },
+	        { text: 'Negative Binomial Probability', giac_func: 'negbinomial(' },
+	        { text: 'Normal Probability', giac_func: 'normald(' },
+	        { text: 'Poisson Probability', giac_func: 'poisson(' },
+	        { text: 'Student Probability', giac_func: 'student(' },
+	        { text: 'Uniform Probability', giac_func: 'uniform(' },
+	        { text: 'Weibull Probability', giac_func: 'weilbull(' },
+	      ],
+	      [ 'Cumulative Distributions',
+	        { text: 'Beta Cumulative Distribution Function', giac_func: 'betad_cdf(' },
+	        { text: 'Binomial Cumulative Distribution Function', giac_func: 'binomial_cdf(' },
+	        { text: 'Cauchy Cumulative Distribution Function', giac_func: 'cauchy_cdf(' },
+	        { text: 'Chi<sup>2</sup> Cumulative Distribution Function', giac_func: 'chisquare_cdf(' },
+	        { text: 'Exponential Cumulative Distribution Function', giac_func: 'exponential_cdf(' },
+	        { text: 'Fisher-Snedecor Cumulative Distribution Function', giac_func: 'fisher_cdf(' },
+	        { text: 'Gamma Cumulative Distribution Function', giac_func: 'gammad_cdf(' },
+	        { text: 'Geometric Cumulative Distribution Function', giac_func: 'geometric_cdf(' },
+	        { text: 'Negative Binomial Cumulative Distribution Function', giac_func: 'negbinomial_cdf(' },
+	        { text: 'Normal Cumulative Distribution Function', giac_func: 'normald_cdf(' },
+	        { text: 'Poisson Cumulative Distribution Function', giac_func: 'poisson_cdf(' },
+	        { text: 'Student Cumulative Distribution Function', giac_func: 'student_cdf(' },
+	        { text: 'Uniform Cumulative Distribution Function', giac_func: 'uniform_cdf(' },
+	        { text: 'Weibull Cumulative Distribution Function', giac_func: 'weilbull_cdf(' },
+	      ],
+	      [ 'Inverse Distributions',
+	        { text: 'Beta Inverse Cumulative Distribution Function', giac_func: 'betad_icdf(' },
+	        { text: 'Binomial Inverse Cumulative Distribution Function', giac_func: 'binomial_icdf(' },
+	        { text: 'Cauchy Inverse Cumulative Distribution Function', giac_func: 'cauchy_icdf(' },
+	        { text: 'Chi<sup>2</sup> Inverse Cumulative Distribution Function', giac_func: 'chisquare_icdf(' },
+	        { text: 'Exponential Inverse Cumulative Distribution Function', giac_func: 'exponential_icdf(' },
+	        { text: 'Fisher-Snedecor Inverse Cumulative Distribution Function', giac_func: 'fisher_icdf(' },
+	        { text: 'Gamma Inverse Cumulative Distribution Function', giac_func: 'gammad_icdf(' },
+	        { text: 'Geometric Inverse Cumulative Distribution Function', giac_func: 'geometric_icdf(' },
+	        { text: 'Negative Binomial Inverse Cumulative Distribution Function', giac_func: 'negbinomial_icdf(' },
+	        { text: 'Normal Inverse Cumulative Distribution Function', giac_func: 'normald_icdf(' },
+	        { text: 'Poisson Inverse Cumulative Distribution Function', giac_func: 'poisson_icdf(' },
+	        { text: 'Student Inverse Cumulative Distribution Function', giac_func: 'student_icdf(' },
+	        { text: 'Uniform Inverse Cumulative Distribution Function', giac_func: 'uniform_icdf(' },
+	        { text: 'Weibull Inverse Cumulative Distribution Function', giac_func: 'weilbull_icdf(' },
+	      ]
+	    ],
+	    Random_Numbers: [
+	      { text: 'Random Number', giac_func: 'rand(' },
+	      { text: 'Random Matrix', giac_func: 'randMat(' },
+	      { text: 'Random Polynomial', giac_func: 'randpoly(' },
+	      [ 'Other Distributions', 
+	        { text: 'Random Number (Uniform Distribution)', giac_func: 'rand(' },
+	        { text: 'Random Number (Binomial Distribution)', giac_func: 'randbinomial(' },
+	        { text: 'Random Number (Chi<sup>2</sup> Distribution)', giac_func: 'randchisquare(' },
+	        { text: 'Random Number (Exponential Distribution)', giac_func: 'randexp(' },
+	        { text: 'Random Number (Fisher-Snedecor Distribution)', giac_func: 'randfisher(' },
+	        { text: 'Random Number (Geometric Distribution)', giac_func: 'randgeometric(' },
+	        { text: 'Random Number (Normal Distribution)', giac_func: 'randnorm(' },
+	        { text: 'Random Number (Poisson Distribution)', giac_func: 'randpoisson(' },
+	        { text: 'Random Number (Student Distribution)', giac_func: 'randstudent(' },
+	      ]
+	    ],  
+	    Real_Numbers: [
+	      { text: 'Bernoulli Number', giac_func: 'bernoulli(' },
+	      { text: 'Beta Function', giac_func: 'Beta(' },
+	      { text: 'Ceiling', giac_func: 'ceil(' },
+	      { text: 'Complimentary Error Function', giac_func: 'erfc(' },
+	      { text: 'Error Function', giac_func: 'erf(' },
+	      { text: 'Euler\'s Function', giac_func: 'euler(' },
+	      { text: 'Floor', giac_func: 'floor(' },
+	      { text: 'Fractional Part', giac_func: 'fPart(' },
+	      { text: 'Gamma Function', giac_func: 'Gamma(' },
+	      { text: 'Integer Part', giac_func: 'iPart(' },
+	      { text: 'Round', giac_func: 'round(' },
+	      { text: 'Sign (+/-)', giac_func: 'sign(' },
+	      { text: '1st Tchebyshev Polynomial', giac_func: 'tchebyshev1(' },
+	      { text: '2nd Tchebyshev Polynomial', giac_func: 'tchebyshev2(' },
+	    ],
+	    Trigonometry: [
+	      { text: 'Sine', giac_func: 'sin(' },
+	      { text: 'Cosine', giac_func: 'cos(' },
+	      { text: 'Tangent', giac_func: 'tan(' },
+	      { text: 'Arcsine', giac_func: 'asin(' },
+	      { text: 'Arccosine', giac_func: 'acos(' },
+	      { text: 'Arctangent', giac_func: 'atan(' },
+	      { text: 'Secant', giac_func: 'sec(' },
+	      { text: 'Cosecant', giac_func: 'csc(' },
+	      { text: 'Cotangent', giac_func: 'cot(' },
+	      { text: 'Arcsecant', giac_func: 'asec(' },
+	      { text: 'Arccosecant', giac_func: 'acsc(' },
+	      { text: 'Arccotangent', giac_func: 'acot(' },
+	      [ 'Hyperbolic Functions',
+	        { text: 'Hyperbolic Sine', giac_func: 'sinh(' },
+	        { text: 'Hyperbolic Cosine', giac_func: 'cosh(' },
+	        { text: 'Hyperbolic Tangent', giac_func: 'tanh(' },
+	        { text: 'Hyperbolic Arcsine', giac_func: 'asinh(' },
+	        { text: 'Hyperbolic Arccosine', giac_func: 'acosh(' },
+	        { text: 'Hyperbolic Arctangent', giac_func: 'atanh(' },
+	      ],
+	      [ 'Algabraic Manipulations',
+	        { text: 'Convert cos -> sin/tan', giac_func: 'cos2sintan(' },
+	        { text: 'Convert sin -> cos/tan', giac_func: 'sin2costan(' },
+	        { text: 'Convert tan -> sin/cos', giac_func: 'tan2sincos(' },
+	        { text: 'Convert tan -> sin/cos<sup>2</sup>', giac_func: 'tan2sincos2(' },
+	        { text: 'Convert tan -> cos/sin<sup>2</sup>', giac_func: 'tan2cossin2(' },
+	        { text: 'Convert trig -> exp', giac_func: 'trig2exp(' },
+	        { text: 'Convert acos -> asin', giac_func: 'acos2asin(' },
+	        { text: 'Convert acos -> atan', giac_func: 'acos2atan(' },
+	        { text: 'Convert asin -> acos', giac_func: 'asin2acos(' },
+	        { text: 'Convert asin -> atan', giac_func: 'asin2atan(' },
+	        { text: 'Convert atan -> acos', giac_func: 'atan2acos(' },
+	        { text: 'Convert atan -> asin', giac_func: 'atan2asin(' },
+	        { text: 'Convert atrig -> ln', giac_func: 'atrig2ln(' },
+	        { text: 'Convert trig(x) -> tan(x/2)', giac_func: 'halftan(' },
+	        { text: 'Convert hyp -> exp', giac_func: 'hyp2exp(' }
+	      ]
+	    ],
+	  };
+		var output = '';
+		$.each(commands, function(k, v) {
+			output += '<li><div class="item ignore" title=""><span class="fa fa-caret-right"></span>' + k.replace(/_/g,' ') + '</div><ul>';
+			for(var i = 0; i < v.length; i++) {
+				if(v[i].giac_func) 
+					output += '<li><div class="item command" title="' + v[i].giac_func + '"><span class="code">' + v[i].giac_func.replace(/\_([a-zA-Z0-9]+)/g,"<sub>$1</sub>").replace('(','') + ':</span> ' + v[i].text + '</div></li>';
+				else {
+					output += '<li><div class="item ignore" title=""><span class="fa fa-caret-right"></span>' + v[i][0] + '</div><ul>';
+					for(var j = 1; j < v[i].length; j++)
+						output += '<li><div class="item command" title="' + v[i][j].giac_func + '"><span class="code">' + v[i][j].giac_func.replace(/\_([a-zA-Z0-9]+)/g,"<sub>$1</sub>").replace('(','') + ':</span> ' + v[i][j].text + '</div></li>';
+					output += '</ul></li>';
+				}
+			}
+			output += '</ul></li>';
+		});
+		var out_box = $('<ul/>').html(output);
+		out_box.find('.ignore').on('mousedown', function(e) {
+			e.stopPropagation();
+			e.preventDefault();
+		}).on('mouseenter', function(e) {
+			var ul = $(this).next('ul');
+			window.setTimeout(function() {
+				ul.css({top: '0px', left: '100%'});
+				var move_up = min(0, $( window ).height() - (ul.offset().top + ul.height()));
+				var move_left = min(0, $( window ).width() - (ul.offset().left + ul.width()));
+				if(move_up < 0)
+					ul.css('top', move_up + 'px');
+				if(move_left < 0)
+					ul.css('left', move_left + 'px');
+			});
+		});
+		out_box.find('.command').on('mousedown', function(e) {
+			func(el, 'command', $(this).attr('title'));
+			e.stopPropagation();
+			e.preventDefault();
+		}).on('mouseup', function(e) {
+			forceHide(this);
+		});
+		out_box.addClass('commandPicker');
 		return out_box;
 	}
 

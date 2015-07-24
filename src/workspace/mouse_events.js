@@ -90,6 +90,7 @@ Workspace.open(function(_) {
 			dragOverWorkspace(e_drag);
 		}
 		function dragStart(e_drag) {
+      $(e_drag.target).addClass('dragging');
       e_drag.originalEvent.dataTransfer.setData("text/plain", "Draggable Element");
     	// We started a drag, so remove mouesup listener as we dont want it firing
       $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
@@ -103,6 +104,7 @@ Workspace.open(function(_) {
 		function dragEnd(e_drag) {
     	_this.dragging = false;
 			_this.mousedown = false;
+      $(e_drag.target).removeClass('dragging');
     	// Remove listeners
 			$(e_drag.target).off('dragend', dragEnd);
     	_this.insertJQ.find('.' + css_prefix + 'element').off('dragenter', dragEnter);

@@ -75,6 +75,8 @@ var math = P(EditableBlock, function(_, super_) {
 	_.was_scoped = false;
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
+			if(_this.empty())
+				_this.outputBox.collapse();
 			if(_this.needsEvaluation) {
 				//console.log(mathField.text());
 				var to_compute = mathField.text();
@@ -205,6 +207,10 @@ var math = P(EditableBlock, function(_, super_) {
 	_.copyAnswer = function() {
 		var latex = this.outputMathBox.getSelection();
 		math().insertAfter(this).show(450).focus(L).write(latex !== '' ? latex : this.answerLatex).closePopup();
+	}
+	_.closePopup = function() {
+		this.mathField.closePopup();
+		return this;
 	}
 	_.toggleApprox = function() {
 		this.approx = !this.approx;
@@ -348,9 +354,10 @@ var math = P(EditableBlock, function(_, super_) {
   _.write = function(text) { 
   	if(this.unitMode) {
   		this.unitMode.flash();
-  		return;
+  		return this;
   	}
   	super_.write.apply(this, arguments);
+  	return this;
   }
 
 });

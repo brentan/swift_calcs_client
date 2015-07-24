@@ -29,6 +29,7 @@ var Element = P(function(_) {
 	_.warn = false;
 	_.klass = [];
 	_.mark_for_deletion = false;
+	_.lastFocusedItem = false;
 	_.suppress_output = false; // Also will suppress children output.  Will not suppress warnings/errors
 	_.depth = 0;
 	_.blurred = true;
@@ -98,7 +99,7 @@ var Element = P(function(_) {
 	}
 	// Allow blocks to define handlers to run after being attached.
 	_.postInsertHandler = function() {
-		if(this.jQ.find('.' + css_prefix + 'output_box').length) this.outputBox = outputBox(this);
+		if(this.jQ.find('.' + css_prefix + 'output_box').length) this.outputBox = outputBox(this).setWidth();
 		if(this.toParse) {
 			this.parse(this.toParse);
 			this.toParse = false;
@@ -323,12 +324,29 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.reflow = function() {
+		this.setWidth();
 		for(var i = 0; i < this.focusableItems.length; i++) 
 			for(var j = 0; j < this.focusableItems[i].length; j++)
 				if((this.focusableItems[i][j] !== -1) && this.focusableItems[i][j].reflow) this.focusableItems[i][j].reflow();
 		var children = this.children();
 		for(var i = 0; i < children.length; i++)
 			children[i].reflow();
+	}
+	// Set max-width on math blocks inside this element
+	_.setWidth = function() {
+		if(this.outputBox) this.outputBox.setWidth();
+		for(var i = 0; i < this.focusableItems.length; i++) {
+			var tot = 0;
+			for(var j = 0; j < this.focusableItems[i].length; j++) {
+				if((this.focusableItems[i][j] !== -1) && this.focusableItems[i][j].setWidth) 
+					tot++;
+			}
+			for(var j = 0; j < this.focusableItems[i].length; j++) {
+				if((this.focusableItems[i][j] !== -1) && this.focusableItems[i][j].setWidth) 
+					this.focusableItems[i][j].setWidth(max(150, (this.jQ.closest('.' + css_prefix + 'element').width() - 150) / tot));
+			}
+		}
+		return this;
 	}
 	_.hide = function(duration) {
 		duration = typeof duration === 'undefined' ? 0 : duration;
@@ -869,6 +887,7 @@ var Element = P(function(_) {
 	_.focusedItem = 0; 
 	_.focus = function(dir) {
 		if(!this.blurred) return this;
+		this.lastFocusedItem = false;
 		this.workspace.focus();
 		this.workspace.blurToolbar(this);
 		if(this.workspace.activeElement)
@@ -884,7 +903,10 @@ var Element = P(function(_) {
 		if(this.blurred) return this;
 		this.blurred = true;
 		SwiftCalcs.destroyTooltip();
-  	if(this.focusedItem) this.focusedItem.blur();
+  	if(this.focusedItem) {
+  		this.lastFocusedItem = this.focusedItem;
+  		this.focusedItem.blur();
+  	}
 		if(this.workspace.activeElement == this) { this.workspace.lastActive = this; this.workspace.activeElement = 0; }
 		if(this.leftJQ) this.leftJQ.removeClass(css_prefix + 'focused');
 		if(this.jQ) this.jQ.removeClass(css_prefix + 'focused');

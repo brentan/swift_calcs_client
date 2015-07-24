@@ -230,7 +230,7 @@ var CommandBlock = P(function(_) {
 					$('<var/>').html(text[i]).insertAfter(this.children().eq(this.location-1));
 				this.location++;
 			}
-			if(this.allowDelete)
+			if(this.allowDelete || this.element.empty())
 				this.changeToMath();
     	else if(this.editable) {
     		this.element.workspace.save();

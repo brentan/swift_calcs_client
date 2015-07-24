@@ -50,6 +50,10 @@ var outputBox = P(function(_) {
 			el.expand();
 		return this;
 	}
+	_.setWidth = function() {
+		this.jQ.find('.mq-math-mode').css({maxWidth: max(200, this.jQ.closest('.' + css_prefix + 'element').width() - 150) + 'px', overflowX: 'auto'}).find('.mq-root-block').css('width','auto');
+		return this;
+	}
 	_.collapse = function(immediately) {
 		if(this.collapsed) return this;
 		this.collapsed = true;
@@ -61,6 +65,7 @@ var outputBox = P(function(_) {
 	}
 	_.expand = function(immediately) {
 		if(!this.collapsed) return this;
+		this.setWidth();
 		this.collapsed = false;
 		if(immediately)
 			this.tableJQ.show();

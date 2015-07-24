@@ -313,5 +313,8 @@ var SwiftCalcs = {};
   })('prototype', ({}).hasOwnProperty);
 
   $(window).on('resize', function() {
-    if(SwiftCalcs.active_workspace) SwiftCalcs.active_workspace.reshapeToolbar();
+    if(SwiftCalcs.active_workspace) {
+      SwiftCalcs.active_workspace.reshapeToolbar();
+      SwiftCalcs.active_workspace.setWidth();
+    }
   });

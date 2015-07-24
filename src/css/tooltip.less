@@ -4,7 +4,6 @@
 }
 
 .sc_tooltip, .sc_help_popup {
-  position: absolute;
   padding: 6px;
   border-radius: 5px;
   margin-top: 10px;
@@ -26,6 +25,7 @@
   }
 }
 .sc_tooltip {
+  position: absolute;
 	display: inline-block;
   font-size: 11px;
   max-width: 300px;
@@ -45,12 +45,13 @@
   }
 }
 .sc_help_popup {
+  position: fixed;
 	display: none;
 	border-bottom-right-radius: 0px;
 	border-bottom-left-radius: 0px;
 	border-bottom-width: 0px;
-	left:0px;
-	right:0px;
+	width:240px;
+	right:25px;
 	bottom: 0px;
   font-size: 12px;
   .code {

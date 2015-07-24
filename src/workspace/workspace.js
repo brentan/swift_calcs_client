@@ -146,6 +146,10 @@ var Workspace = P(function(_) {
 			children[i].commandChildren(func);
 		return this;
 	}
+	_.setWidth = function() {
+		this.commandChildren(function(_this) { _this.setWidth(); });
+		return this;
+	}
 	// Workspace is itself
 	_.getWorkspace = function() {
 		return this;

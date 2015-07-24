@@ -65,7 +65,7 @@ var receiveMessage = function(command) {
   }
   // If we are starting a new evaluation, restart giac to reset everything
 	if(command.restart)
-		Module.caseval('restart');
+		Module.caseval('restart;srand;');
 	var output = [];
   // Errors and warnings are sometimes (but not always!) caught with Module.printErr (they are sometimes also just returned by caseval directly)
   // to deal with that we define these in the global scope and set them with printErr as things happen
@@ -73,7 +73,7 @@ var receiveMessage = function(command) {
 	warnings = [];
   // If we need to load a scope, do it here
 	if(command.previous_scope)
-		Module.caseval('unarchive("' + command.previous_scope + '")');
+		Module.caseval('unarchive("' + command.previous_scope + '");srand;');
   // Iterate over the command list
 	for(ii = 0; ii < command.commands.length; ii++) {
 		var to_send = command.commands[ii].command.trim();
