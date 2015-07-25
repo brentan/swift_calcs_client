@@ -932,6 +932,14 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	        { text: 'Test if Prime', giac_func: 'is_prime(' },
 	      ]
 	    ],
+	    Logic: [
+	    	{ text: 'Boolean True', giac_func: 'true(' },
+	    	{ text: 'Boolean False', giac_func: 'false(' },
+	    	{ text: 'Logical And', giac_func: 'and(' },
+	    	{ text: 'Logical Or', giac_func: 'or(' },
+	    	{ text: 'Logical Xor', giac_func: 'xor(' },
+	    	{ text: 'Logical Inverse', giac_func: 'not(' },
+	    ],
 	    Matrices_and_Lists: [
 
         { text: 'Cross Product', giac_func: 'cross(' },
