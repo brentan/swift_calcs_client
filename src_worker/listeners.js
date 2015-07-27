@@ -203,11 +203,13 @@ var Module = {
     if(text === '') {
   		Module.caseval = Module.cwrap('_ZN4giac7casevalEPKc', 'string', ['string']);    
       // Initialize timeout
-      Module.caseval('timeout ' + timeout_length);
-      Module.caseval('ckevery 10000');
+      // Module.caseval('timeout ' + timeout_length);
+      // Module.caseval('ckevery 10000');
     }
   },
   casevalWithTimeout: function(text) {
+    return Module.caseval(text);
+    /*
     try {
       return Module.caseval(text);
     } catch(e) {
@@ -216,7 +218,7 @@ var Module = {
       else
         errors[ii] = fix_message('Timeout: Maximum execution time of ' + timeout_length + ' seconds exceeded.  <a href="#" class="increase_timeout">Increase Timeout to ' + (timeout_length + 10) + ' seconds</a>');
       return '';
-    }
+    }*/
   },
   updateProgress: function(percent) {
   	sendMessage({command: 'updateProgress', value: percent});
