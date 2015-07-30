@@ -189,6 +189,7 @@ var Workspace = P(function(_) {
   _.toString = function() {
 		var out = [];
 		jQuery.each(this.children(), function(i, child) {
+			if(child.implicit) return;
 			out.push(child.toString());
 		});
 		return out.join("\n");

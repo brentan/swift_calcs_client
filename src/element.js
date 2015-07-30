@@ -146,7 +146,9 @@ var Element = P(function(_) {
 			this.postInsert();
 		}
 		this.setDepth();
-		if(this.workspace) this.workspace.save();
+		if(this.implicit && (this[L] == 0) && (this[R] == 0))
+			this.implicit = false;
+		if(this.workspace && !this.implicit) this.workspace.save();
 		return this;
 	}
 	_.insertAfter = function(sibling) {
@@ -171,7 +173,9 @@ var Element = P(function(_) {
 			this.postInsert();
 		}
 		this.setDepth();
-		if(this.workspace) this.workspace.save();
+		if(this.implicit && (this[L] == 0) && (this[R] == 0))
+			this.implicit = false;
+		if(this.workspace && !this.implicit) this.workspace.save();
 		return this;
 	}
 	_.prependTo = function(parent) {
@@ -251,7 +255,9 @@ var Element = P(function(_) {
 				this.jQ.detach().appendTo(target.insertJQ);
 		}
 		this.setDepth();
-		if(this.workspace) this.workspace.save();
+		if(this.implicit && (this[L] == 0) && (this[R] == 0))
+			this.implicit = false;
+		if(this.workspace && !this.implicit) this.workspace.save();
 		return this;
 	}
 	/* Destroy methods.
@@ -306,7 +312,7 @@ var Element = P(function(_) {
 		}
 		this.detach();
 		this.workspace.renumber();
-		this.workspace.save();
+		if(!this.implicit) this.workspace.save();
 		return this;
 	}
 	/* Visibility Methods
@@ -610,13 +616,13 @@ var Element = P(function(_) {
 	_.mouseMove = function(e) {
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
 		var answer_field = $(e.target).closest('div.answer');
-		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
+		var focusable_field = $(e.target).closest('span.' + css_prefix + 'focusable');
     if(math_field.length) 
     	var new_target = MathQuill(math_field[0]);
     else if(answer_field.length) 
     	var new_target = MathQuill(answer_field[0]);
-    else if(command_field.length) 
-    	var new_target = CommandBlock.byId[command_field.attr('data-id')*1];
+    else if(focusable_field.length) 
+    	var new_target = aFocusableItem.byId[focusable_field.attr('data-focusable-id')*1];
     else
     	var new_target = -1;
     if(this.start_target === 0) 
@@ -639,28 +645,28 @@ var Element = P(function(_) {
 		this.start_target = -1;
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
 		var answer_field = $(e.target).closest('div.answer');
-		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
+		var focusable_field = $(e.target).closest('span.' + css_prefix + 'focusable');
     if(math_field.length) {
     	this.start_target = MathQuill(math_field[0]);
     	this.start_target.mouseDown(e);
 	  } else if(answer_field.length) {
     	this.start_target = MathQuill(answer_field[0]);
     	this.start_target.mouseDown(e);
-	  } else if(command_field.length) {
-    	this.start_target = CommandBlock.byId[command_field.attr('data-id')*1];
+	  } else if(focusable_field.length) {
+    	this.start_target = aFocusableItem.byId[focusable_field.attr('data-focusable-id')*1];
     	this.start_target.mouseDown(e);
     }
 	}
 	_.mouseUp = function(e) {
 		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
 		var answer_field = $(e.target).closest('div.answer');
-		var command_field = $(e.target).closest('span.' + css_prefix + 'command');
+		var focusable_field = $(e.target).closest('span.' + css_prefix + 'focusable');
     if(math_field.length) 
     	var new_target = MathQuill(math_field[0]);
     else if(answer_field.length) 
     	var new_target = MathQuill(answer_field[0]);
-    else if(command_field.length) 
-    	var new_target = CommandBlock.byId[command_field.attr('data-id')*1];
+    else if(focusable_field.length) 
+    	var new_target = aFocusableItem.byId[focusable_field.attr('data-focusable-id')*1];
     else
     	var new_target = -1;
     // Are we clicking/dragging within the area?
@@ -754,7 +760,7 @@ var Element = P(function(_) {
 			if(this.depth === 0) {
 				// No parent.  
 				if((dir === R) && (!(this instanceof EditableBlock) || !this.empty())) {
-					math().insertAfter(this).setImplicit().show(0).focus(L);
+					math().setImplicit().insertAfter(this).show(0).focus(L);
 					return true;
 				} else
 					return false;
@@ -773,7 +779,7 @@ var Element = P(function(_) {
 			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir, x_location)) 
 				return true;
 			else if(this.ends[-dir] === 0) {
-				math().appendTo(this).show().focus().setImplicit();
+				math().setImplicit().appendTo(this).show().focus();
 				return true;
 			}
 		}
@@ -797,7 +803,7 @@ var Element = P(function(_) {
 			if(this.depth === 0) {
 				// No parent.  
 				if((dir === R) && (!(this instanceof EditableBlock) || !this.empty())) {
-					math().insertAfter(this).setImplicit().show(0).focus(L);
+					math().setImplicit().insertAfter(this).show(0).focus(L);
 					return true;
 				} else
 					return false;
@@ -819,7 +825,7 @@ var Element = P(function(_) {
 			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir)) 
 				return true;
 			else if(this.ends[-dir] === 0) {
-				math().appendTo(this).show().focus().setImplicit();
+				math().setImplicit().appendTo(this).show().focus();
 				return true;
 			}
 		}
@@ -844,7 +850,7 @@ var Element = P(function(_) {
 		if(next === -1) {
 			if(this.ends[dir] && this.ends[dir].moveInFrom(dir, x_location)) return true;
 			else if(this.ends[dir] === 0) {
-				math().appendTo(this).show().focus().setImplicit();
+				math().setImplicit().appendTo(this).show().focus();
 				return true;
 			}
 			return false;
@@ -896,6 +902,19 @@ var Element = P(function(_) {
 		this.workspace.activeElement = this;
 		if(this.leftJQ) this.leftJQ.addClass(css_prefix + 'focused');
 		if(this.jQ) this.jQ.addClass(css_prefix + 'focused');
+		if(dir === 0) { // default '0' focus is to look for first mathquill item in first row.  
+			for(var i = 0; i < this.focusableItems[0].length; i++) {
+				if(this.focusableItems[0][i].mathquill) {
+					this.focusableItems[0][i].focus(L);
+					break;
+				}
+			}
+		} else if(dir === L) {
+			this.focusableItems[0][0].focus(L);
+		} else if(dir === R) {
+			this.focusableItems[this.focusableItems.length-1][this.focusableItems[this.focusableItems.length - 1].length - 1].focus(R);
+		} else if(!dir && this.focusedItem)
+			this.focusedItem.focus();
 		return this;
 	}
 	_.blur = function() {
@@ -963,10 +982,18 @@ var Element = P(function(_) {
   }
   _.paste = function(text) { 
   	if(this.focusedItem) this.focusedItem.paste(text);
+  	return this;
   }
   _.write = function(text) { // Like paste, but no blurring afterwards
   	if(this.focusedItem) this.focusedItem.write(text);
+  	return this;
   }
+	_.AppendText = function() {
+		if(this.hasChildren)
+			text().prependTo(this).show().focus(L);
+		else
+			text().insertAfter(this).show().focus(L);
+	}
   /*
    parse and toString are NEAR opposite methods.  toString will convert the element into a 
    string that is parse-able by the global 'parse' function (global within the SC scope).
@@ -985,15 +1012,7 @@ var Element = P(function(_) {
   	}
   	if(!args.length) return this;
   	if(this.hasChildren || this.savedProperties.length) {
-			var arg_list = args[0].split(',');
-	  	for(var j = 0; j < arg_list.length; j++) {
-	  		var name = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$1");
-	  		var val = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$2").trim();
-	  		if(val.match(/^[+-]?(?:\d*\.)?\d+$/)) val = 1.0 * val;
-	  		if(val === "false") val = false;
-	  		if(val === "true") val = true;
-	  		this[name] = val;
-	  	}
+  		this.parseSavedProperties(args[0]);
 	  	var k = 1;
 	  } else
 	  	var k = 0;
@@ -1013,6 +1032,19 @@ var Element = P(function(_) {
   	}
   	return this;
   }
+  // Parse the portion of the parse expression dealing with saved properties
+  _.parseSavedProperties = function(args) {
+		var arg_list = args.split(',');
+  	for(var j = 0; j < arg_list.length; j++) {
+  		var name = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$1");
+  		var val = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$2").trim();
+  		if(val.match(/^[+-]?(?:\d*\.)?\d+$/)) val = 1.0 * val;
+  		if(val === "false") val = false;
+  		if(val === "true") val = true;
+  		this[name] = val;
+  	}
+  	return this;
+  }
   _.argumentList = function() {
   	var output = [];
   	var arg_list = this.hasChildren ? ['collapsed: ' + this.collapsed] : [];
@@ -1027,6 +1059,7 @@ var Element = P(function(_) {
 	  			//We need to zip up the children
 	  			var child_string = '';
 	  			jQuery.each(this.children(), function(n, child) {
+						if(child.implicit) return;
 	  				child_string += child.toString();
 	  			});
 	  			output.push(child_string);

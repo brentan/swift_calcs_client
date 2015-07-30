@@ -33,22 +33,28 @@ var ajaxQueueClass = P(function(_) {
 	Queue management functions
 	*/
 
-	_.commit = function(id) {
+	_.commit = function(id, full) {
 		this.running[id] = true;
 		this.jQ.html('Saving...');
 		this.should_be_server_version[id] = this.holding_pen[id].workspace.toString();
-		// Create diff between what we have now and what we are trying to commit up
-		var diff = diff_patch.diff_main(this.server_version[id], this.should_be_server_version[id], true);
-	  var patch_list = diff_patch.patch_make(this.server_version[id], this.should_be_server_version[id], diff);
-	  patch_list = diff_patch.patch_toText(patch_list);
-
 		var post_data = {
 			workspace_id: id,
 			name: this.holding_pen[id].workspace.name,
 			bookmarks: this.holding_pen[id].workspace.bookmarks,
-			patch: patch_list,
 			known_server_version: this.known_server_version[id]
 		}
+
+		if(full) {
+			// For force saves, we push up the whole document...we do this in case something is corrupted, which shouldnt happen...so eventually we may just remove this
+			post_data.full_resave = this.should_be_server_version[id];
+		} else {
+			// Create diff between what we have now and what we are trying to commit up
+			var diff = diff_patch.diff_main(this.server_version[id], this.should_be_server_version[id], true);
+		  var patch_list = diff_patch.patch_make(this.server_version[id], this.should_be_server_version[id], diff);
+		  patch_list = diff_patch.patch_toText(patch_list);
+		  post_data.patch = patch_list;
+		}
+
 		this.holding_pen[id] = false;
 		$.ajax({
       type: "POST",
@@ -129,7 +135,7 @@ var ajaxQueueClass = P(function(_) {
 				timer: false,
 				workspace: workspace
 			};
-			ajaxQueue.commit(workspace.server_id);
+			ajaxQueue.commit(workspace.server_id, true);
 		} else {
 			this.holding_pen[workspace.server_id] = {
 				timer: window.setTimeout(function() { ajaxQueue.commit(workspace.server_id); }, 2000),

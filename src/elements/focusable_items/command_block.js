@@ -9,31 +9,22 @@ Option 'allowDelete' will turn the commandBlock into a math block with the remai
 Option 'editable' will allow the deletion/insertion of new characters into the block
 */
 
-var CommandBlock = P(function(_) {
+var CommandBlock = P(aFocusableItem, function(_, super_) {
 
 	_.allowDelete = false;
 	_.cursorPlaced = false;
-	_.jQ = 0;
 	_.location = 0;
 	_.anchor = 0;
 	_.cursor = 0;
-	_.element = 0;
 	_.editable = false;
 
-  var id = 0;
-  function uniqueCommandId() { return id += 1; }
-  this.byId = {};
-
-	_.init = function(span, el, options) {
-		this.jQ = span;
-		this.element = el;
+	_.init = function(span, klass, el, options) {
+		super_.init.call(this, span, klass, el, options);
 		this.handlers = options.handlers;
 		this.allowDelete = options.allowDelete;
 		this.editable = options.editable;
-    this.id = uniqueCommandId();
-    CommandBlock.byId[this.id] = this;
     this.cursor = $('<span class="' + css_prefix + 'cursor">&#8203;</span>');
-    this.jQ.attr('data-id', this.id);
+		this.jQ.html('<var>' + klass.split('').join('</var><var>') + '</var>');
 	}
 
 	_.children = function() {
@@ -111,7 +102,7 @@ var CommandBlock = P(function(_) {
     					this.children().eq(this.location).remove();
     				}
     			}
-    			if(this.allowDelete)
+    			if(this.allowDelete || this.element.empty())
     				this.changeToMath();
 		    	else if(this.editable) {
 		    		this.element.workspace.save();
@@ -130,6 +121,9 @@ var CommandBlock = P(function(_) {
     		break;
     	case 'Tab':
     		this.handlers.moveOutOf(R, this);
+    		break;
+    	case 'Shift-Tab':
+    		this.handlers.moveOutOf(L, this);
     		break;
     	case 'Enter':
     		if(this.location === 0) {
@@ -237,7 +231,9 @@ var CommandBlock = P(function(_) {
 		    if(this.handlers.onSave) this.handlers.onSave();
     		this.placeCursor(this.location);
     	}
-    } else
+    } else if((text == '=') && (this.location == 0) && (this.element.storeAsVariable) && !this.element.scoped)
+    	this.element.storeAsVariable();
+  	else
     	this.flash();
 	}
 	_.paste = function(text) {
@@ -245,10 +241,6 @@ var CommandBlock = P(function(_) {
 		this.write(text);
 		if(!clear) this.clearCursor();
 	}
-  _.flash = function() {
-    var el = this.jQ.closest('.sc_element');
-    el.stop().css("background-color", "#ffe0e0").animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')} , duration: 400 });
-  }
 	_.html = function(els) {
 	  var fullHtml = '';
 		els.each(function() {
@@ -280,7 +272,7 @@ var CommandBlock = P(function(_) {
 		this.clearCursor();
 	}
 	_.focus = function(dir) {
-		this.element.setFocusedItem(this);
+		super_.focus.call(this, dir);
 		if(dir === R)
 			this.placeCursor(this.children().length);
 		else if(dir === L)
@@ -295,22 +287,6 @@ var CommandBlock = P(function(_) {
     else 
     	this.updateHighlight();
     this.scrollToMe(dir);
-	}
-	_.scrollToMe = function(dir) {
-		if(this.jQ) {
-			var top = this.jQ.position().top;
-			var bottom = top + this.jQ.height();
-			var to_move_top = Math.min(0, top);
-			var to_move_bot = Math.max(0, bottom - this.element.workspace.jQ.height()+20);
-			if((to_move_bot > 0) && (to_move_top < 0)) {
-				if(dir === R)
-					this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_bot);
-				else
-					this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_top);
-			}	else
-				this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
-		}
-		return this;
 	}
 	_.findTarget = function(e) {
 		var x_loc = e.originalEvent.pageX;
@@ -331,10 +307,6 @@ var CommandBlock = P(function(_) {
 	}
 	_.mouseDown = function(e) {
 		this.placeCursor(this.findTarget(e));
-	}
-	_.cursorX = function() {
-    if(this.cursor && this.cursor.offset()) return this.cursor.offset().left;
-    return undefined;
 	}
 	_.updateHighlight = function() {
 		this.clearCursor();
@@ -401,18 +373,9 @@ var CommandBlock = P(function(_) {
 		return this;
 	}
 });
-
-var commandBlockHTML = function(name, id) {
-	nameHTML = '<var>' + name.split('').join('</var><var>') + '</var>';
-	return '<span class="' + css_prefix + "command " + css_prefix + name + id + '">' + nameHTML + '</span>';
-}
-var codeBlockHTML = function(name, id) {
-	return commandBlockHTML(name, id).replace(css_prefix + 'command', css_prefix + 'command ' + css_prefix + 'code');
-}
-var registerCommand = function(_this, klass, options) {
-	klass = '.' + css_prefix + klass + _this.id;
-  var default_options = getDefaultOptions(_this);
-	jQuery.extend(true, default_options, options);
-	return CommandBlock(_this.jQ.find(klass), _this, default_options);
-}
-
+var CodeBlock = P(CommandBlock, function(_, super_) {
+	_.init = function(span, klass, el, options) {
+		super_.init.call(this, span, klass, el, options);
+		this.jQ.addClass(css_prefix + 'CommandBlock');
+	}
+});

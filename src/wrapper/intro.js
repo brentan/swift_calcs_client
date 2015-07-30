@@ -27,15 +27,6 @@ var SwiftCalcs = {};
     R = 1;
 	function noop() {}
 
-	// Class helper.  Returns the type of an element
-	var elementType = function(el) {  // BRENTAN, where is this used, and is it really needed over a simple instanceof?
-		for (var key in elements) {
-		  if (elements.hasOwnProperty(key) && (el instanceof elements[key])) 
-		  	return key;
-		}
-		return null;
-	}
-
   // Help circles.  Added to blocks that have help associated with them.  On click, a small help bubble will appear with information
   var helpBlock = function() {
     return '&nbsp;&nbsp;<a class="' + css_prefix + 'help_circle" href="#"><span class="fa fa-question-circle"></span></a>';
@@ -45,19 +36,6 @@ var SwiftCalcs = {};
     if(el && el.helpText) SwiftCalcs.createTooltip(el.helpText, $(this));
     return false;
   });
-
-  /* Math helpers
-   * These functions help create and register math elements.  They are used by various elements that have Math input or output secionts
-   */
-
-  // This returns a span that can be used in elements to drop in a math block.  it adds the secondary class that is passed in, if any
-  var mathSpan = function(klass) {
-  	if(klass)
-  		klass = ' ' + css_prefix + klass;
-  	else
-  		klass = '';
-  	return '<span class="' + css_prefix + 'math' + klass + '"></span>';
-  }
 
   // This returns the answer block which is used to show the results from a calculation
   var answerSpan = function(klass) {
@@ -71,73 +49,7 @@ var SwiftCalcs = {};
         + '<td rowspan=2 class="' + css_prefix + 'output_box"><table><tbody><tr><td><div class="answer"></div></td><td class="answer_menu"></td></tr></tbody></table></td></tr>'
         + '<tr><td class="' + css_prefix + 'answer_table_1b">&nbsp;</td></tr></tbody></table></div>';
   }
-  var getDefaultOptions = function(_this) {
-    return {handlers: {
-      deleteOutOf: function(dir, field) {
-        // find next focusable item, and if there isn't one or if its the children, do the appropriate action
-        for(var i = 0; i < _this.focusableItems.length; i++) {
-          for(var j = 0; j < _this.focusableItems[i].length; j++)
-            if(_this.focusableItems[i][j] == field) break;
-          if(_this.focusableItems[i][j] == field) break;
-        }
-        if(((dir === L) && (j == 0)) || ((dir === R) && (j == (_this.focusableItems[i].length-1)))) {
-          var i_new = i + dir;
-          var j_new = dir === L ? _this.focusableItems[i].length-1 : 0;
-        } else {
-          var i_new = i;
-          var j_new = j + dir;
-        }
-        if(((i == 0) && (j == 0) && (dir == L)) || ((i == (_this.focusableItems.length - 1)) && (j == (_this.focusableItems[_this.focusableItems.length - 1].length - 1)) && (dir == R))) {
-          // leftward or rightward delete out of element
-          if((_this instanceof EditableBlock) && _this.empty() && _this.moveOutLeftRight(field, dir)) _this.remove(0);
-          else if(_this[dir] && (_this[dir] instanceof EditableBlock) && _this[dir].empty()) _this[dir].remove(0);
-          else if(_this[dir]) _this.workspace.selectDir(_this[dir],dir);
-          else if(_this.depth) _this.workspace.selectDir(_this.parent,dir);
-          return;
-        }
-        if(_this.focusableItems[i_new][j_new] === -1) {
-          if(_this.ends[-dir] && (_this.ends[-dir] instanceof EditableBlock) && _this.ends[-dir].empty()) _this.ends[-dir].remove(0);
-          else _this.workspace.selectDir(_this.ends[-dir],dir);
-          return;
-        } 
-        if((i_new == 0) && (j_new == 0) && (dir == L) && (_this.focusableItems[0][0] instanceof CommandBlock) && _this.empty()) {
-          // Special case, this is where the cursor would be right after a magic command is transformed into a special block.  Backspace should revert to the magic command in a math block
-          _this.mark_for_deletion = true;
-          _this.moveOutLeftRight(field, dir);
-          _this.focusableItems[0][0].changeToMath();
-          return;
-        }
-        _this.moveOutLeftRight(field, dir);
-        return;
-      },
-      upOutOf: function(field) {
-        window.setTimeout(function() { _this.moveOutUpDown(field, L, field.cursorX()); });
-      },
-      downOutOf: function(field) {
-        window.setTimeout(function() { _this.moveOutUpDown(field, R, field.cursorX()); });
-      },
-      moveOutOf: function(dir, field) {
-        window.setTimeout(function() { _this.moveOutLeftRight(field, dir); });
-      },
-      selectOutOf: function(dir, field) { 
-        window.setTimeout(function() { _this.workspace.selectDir(_this, dir); _this.workspace.selectionChanged(); });
-      }
-    }};
-  }
-  // This function will attach a math editable field by looking for a field with the provided class name (if provided)
-  // It assumes the DOM element exists
-  var registerMath = function(_this, klass, options) {
-  	if(klass && (klass.length > 0))
-  		klass = '.' + css_prefix + klass;
-  	else
-  		klass = '';
-    var default_options = getDefaultOptions(_this);
-		jQuery.extend(true, default_options, options);
-  	var mathField = MathQuill.MathField(_this.jQ.find('span.' + css_prefix + 'math' + klass)[0], default_options);
-		mathField.setElement(_this);
-		return mathField;
-  }
-// BRENTAN Examing HTML And pull images etc into their own blocks etc
+  // BRENTAN Examing HTML And pull images etc into their own blocks etc
   // Take in HTML, clean it, and then return an array of elements to insert based on the HTML
   var sanitize = function(html) {
     var output = DOMPurify.sanitize(html, {
@@ -218,6 +130,8 @@ var SwiftCalcs = {};
     result = result.trim();
     if(result == 'false') return false;
     if(result == 'true') return true;
+    if(result == '\\false') return false;
+    if(result == '\\true') return true;
     if(result.match(/^[0-9\.]+$/)) 
       return ((result * 1) != 0);
     return false;

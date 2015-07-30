@@ -24,18 +24,18 @@ var plot = P(Element, function(_, super_) {
 		this.subplots = [];
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('plot', this.id) + 'x<sub>min</sub>:&nbsp;'
-			+ mathSpan('x_min')
+		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'plot') + 'x<sub>min</sub>:&nbsp;'
+			+ focusableHTML('MathQuill',  'x_min')
 			+ '&nbsp;x<sub>max</sub>:&nbsp;'
-			+ mathSpan('x_max')  + helpBlock() + '<BR>'  + answerSpan()
+			+ focusableHTML('MathQuill',  'x_max')  + helpBlock() + '<BR>'  + answerSpan()
 			+ '</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div><div class="' + css_prefix + 'plot_box"></div>';
 	}
 	_.postInsertHandler = function() {
-		this.xminField = registerMath(this, 'x_min', { handlers: {
+		this.xminField = registerFocusable(MathQuill, this, 'x_min', { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.xmaxField = registerMath(this, 'x_max', { handlers: {
+		this.xmaxField = registerFocusable(MathQuill, this, 'x_max', { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
@@ -43,7 +43,7 @@ var plot = P(Element, function(_, super_) {
 		super_.postInsertHandler.call(this);
 		this.xminField.latex(this.x_min);
 		this.xmaxField.latex(this.x_max);
-		this.focusableItems = [[registerCommand(this, 'plot', { }), this.xminField, this.xmaxField]];
+		this.focusableItems = [[registerFocusable(CodeBlock,this, 'plot', { }), this.xminField, this.xmaxField]];
 		this.attached = true;
 		var _this = this;
 		// Add the 'another plot' link
@@ -399,14 +399,14 @@ var subplot = P(function(_) {
 });
 var line_plot = P(subplot, function(_, super_) {
 	_.innerHtml = function() {
-		return '<b>line-plot</b>: plot the function ' + mathSpan('plot' + this.id) + ' as a function of ' + mathSpan('var' + this.id);
+		return '<b>line-plot</b>: plot the function ' + focusableHTML('MathQuill',  'plot' + this.id) + ' as a function of ' + focusableHTML('MathQuill',  'var' + this.id);
 	}
 	_.postInsertHandler = function() {
-		this.mathField[1] = registerMath(this.parent, 'var' + this.id, { handlers: {
+		this.mathField[1] = registerFocusable(MathQuill, this.parent, 'var' + this.id, { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.mathField[0] = registerMath(this.parent, 'plot' + this.id, { handlers: {
+		this.mathField[0] = registerFocusable(MathQuill, this.parent, 'plot' + this.id, { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});

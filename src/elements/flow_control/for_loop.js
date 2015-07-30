@@ -21,30 +21,30 @@ var for_loop = P(Loop, function(_, super_) {
 		this.touched = [false, false, false, false];
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('for', this.id) + mathSpan('var') 
-		+ '&nbsp;from&nbsp;' + mathSpan('start')  
-		+ '&nbsp;to&nbsp;' + mathSpan('finish')  
-		+ '&nbsp;by&nbsp;' + mathSpan('step') + helpBlock()
-		+ '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'focusableItems" data-id="2">' + codeBlockHTML('end', this.id) + '</div>';
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'for') + focusableHTML('MathQuill',  'var') 
+		+ '&nbsp;from&nbsp;' + focusableHTML('MathQuill',  'start')  
+		+ '&nbsp;to&nbsp;' + focusableHTML('MathQuill',  'finish')  
+		+ '&nbsp;by&nbsp;' + focusableHTML('MathQuill',  'step') + helpBlock()
+		+ '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'focusableItems" data-id="2">' + focusableHTML('CodeBlock', 'end') + '</div>';
 	}
 	_.postInsertHandler = function() {
-		this.varField = registerMath(this, 'var', { handlers: {
+		this.varField = registerFocusable(MathQuill, this, 'var', { ghost: 'j', handlers: {
 			enter: this.enterPressed(this,1),
 			blur: this.submissionHandler(this)
 		}});
-		this.startField = registerMath(this, 'start', { handlers: {
+		this.startField = registerFocusable(MathQuill, this, 'start', { ghost: 'start', handlers: {
 			enter: this.enterPressed(this,2),
 			blur: this.submissionHandler(this)
 		}});
-		this.finishField = registerMath(this, 'finish', { handlers: {
+		this.finishField = registerFocusable(MathQuill, this, 'finish', { ghost: 'finish', handlers: {
 			enter: this.enterPressed(this,3),
 			blur: this.submissionHandler(this)
 		}});
-		this.stepField = registerMath(this, 'step', { handlers: {
+		this.stepField = registerFocusable(MathQuill, this, 'step', { ghost: 'step', handlers: {
 			enter: this.enterPressed(this,4),
 			blur: this.submissionHandler(this)
 		}});
-		this.focusableItems = [[registerCommand(this, 'for', { }), this.varField, this.startField, this.finishField, this.stepField], [-1], [registerCommand(this, 'end', { })]];
+		this.focusableItems = [[registerFocusable(CodeBlock,this, 'for', { }), this.varField, this.startField, this.finishField, this.stepField], [-1], [registerFocusable(CodeBlock,this, 'end', { })]];
 		this.varField.write(this.latex_var);
 		this.startField.write(this.latex_start);
 		this.finishField.write(this.latex_finish);
@@ -61,7 +61,7 @@ var for_loop = P(Loop, function(_, super_) {
 				if(_this.ends[L] && (_this.ends[L] instanceof math) && _this.ends[L].empty())
 					_this.ends[L].focus(L);
 				else
-					math().prependTo(_this).show().focus();
+					math().setImplicit().prependTo(_this).show().focus();
 			}	else 
 				_this.focusableItems[0][to_focus+1].focus(-1);
 		};
@@ -176,14 +176,6 @@ var for_loop = P(Loop, function(_, super_) {
 			this.childrenEvaluated(evaluation_id);
 		return false;
 	}
-	_.focus = function(dir) {
-		super_.focus.call(this);
-		if(dir === 0)
-			this.varField.focus(L);
-		else if(!dir && this.focusedItem)
-			this.focusedItem.focus();
-		return this;
-	}
   _.toString = function() {
   	return '{for}{{' + this.argumentList().join('}{') + '}}';
   }
@@ -204,10 +196,10 @@ var continue_block = P(Element, function(_, super_) {
 	_.command_name = 'continue';
 	_.helpText = "<<continue>>\nWithin a loop, a continue command will immediately cease the current loop iteration and return to the start of the loop to begin the next iteration.";
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML(this.command_name, this.id) + helpBlock() + '<BR>' + answerSpan() + '</div>';
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', this.command_name) + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
 	_.postInsertHandler = function() {
-		this.focusableItems = [[registerCommand(this, this.command_name, { allowDelete: true})]];
+		this.focusableItems = [[registerFocusable(CodeBlock,this, this.command_name, { allowDelete: true})]];
 		super_.postInsertHandler.call(this);
 		return this;
 	}
@@ -245,9 +237,8 @@ var continue_block = P(Element, function(_, super_) {
 			if(this[R])
 				this[R].focus(dir);
 			else
-				math().insertAfter(this).show().focus(dir).setImplicit();
-		} else if(!dir && this.focusedItem)
-			this.focusedItem.focus();
+				math().setImplicit().insertAfter(this).show().focus(dir);
+		} 
 		return this;
 	}
   _.toString = function() {

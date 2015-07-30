@@ -15,14 +15,14 @@ var if_block = P(LogicBlock, function(_, super_) {
 		this.else_blocks = [];
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('if', this.id) + mathSpan('logic') + helpBlock() + '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'focusableItems" data-id="2">' + codeBlockHTML('end', this.id) + '</div>';
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'if') + focusableHTML('MathQuill',  'logic') + helpBlock() + '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'focusableItems" data-id="2">' + focusableHTML('CodeBlock', 'end') + '</div>';
 	}
 	_.postInsertHandler = function() {
-		this.mathField = registerMath(this, 'logic', { handlers: {
+		this.mathField = registerFocusable(MathQuill, this, 'logic', { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.focusableItems = [[registerCommand(this, 'if', { }), this.mathField], [-1], [registerCommand(this, 'end', { })]];
+		this.focusableItems = [[registerFocusable(CodeBlock,this, 'if', { }), this.mathField], [-1], [registerFocusable(CodeBlock,this, 'end', { })]];
 		this.mathField.setExpressionMode(true);
 		this.mathField.write(this.latex);
 		super_.postInsertHandler.call(this);
@@ -92,14 +92,6 @@ var if_block = P(LogicBlock, function(_, super_) {
 	_.changed = function(el) {
 		this.needsEvaluation = true;
 	}
-	_.focus = function(dir) {
-		super_.focus.call(this);
-		if(dir === 0)
-			this.mathField.focus(L);
-		else if(!dir && this.focusedItem)
-			this.focusedItem.focus();
-		return this;
-	}
 
 });
 var else_block = P(LogicCommand, function(_, super_) {
@@ -112,7 +104,7 @@ var else_block = P(LogicCommand, function(_, super_) {
 		return 'true';
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('else', this.id) + helpBlock() + '<BR>' + answerSpan() + '</div>';
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'else') + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
 	_.postInsertHandler = function() {
 		this.attachItems();
@@ -120,7 +112,7 @@ var else_block = P(LogicCommand, function(_, super_) {
 		return this;
 	}
 	_.attachItems = function() {
-		this.focusableItems = [[registerCommand(this, 'else', { allowDelete: true})]];
+		this.focusableItems = [[registerFocusable(CodeBlock,this, 'else', { allowDelete: true})]];
 	}
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		this.rightParent();
@@ -157,8 +149,7 @@ var else_block = P(LogicCommand, function(_, super_) {
 				this[R].focus(dir);
 			else
 				math().insertAfter(this).show().focus(dir);
-		} else if(!dir && this.focusedItem)
-			this.focusedItem.focus();
+		} 
 		return this;
 	}
 	_.handle_response = function(result, any_yet) {
@@ -185,17 +176,17 @@ var else_if_block = P(else_block, function(_, super_) {
 		this.latex = latex || '';
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + codeBlockHTML('elseif', this.id) + mathSpan('logic') + helpBlock() + '<BR>' + answerSpan() + '</div>';
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'elseif') + focusableHTML('MathQuill',  'logic') + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
 	_.command = function() {
 		return this.mathField.text();
 	}
 	_.attachItems = function() {
-		this.mathField = registerMath(this, 'logic', { handlers: {
+		this.mathField = registerFocusable(MathQuill, this, 'logic', { handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.focusableItems = [[registerCommand(this, 'elseif', { }), this.mathField]];
+		this.focusableItems = [[registerFocusable(CodeBlock,this, 'elseif', { }), this.mathField]];
 		this.mathField.setExpressionMode(true);
 		this.mathField.write(this.latex);
 	}
@@ -222,10 +213,6 @@ var else_if_block = P(else_block, function(_, super_) {
 	_.focus = function(dir) {
 		super_.focus.call(this);
 		this.rightParent();
-		if(dir === 0)
-			this.mathField.focus(L);
-		else if(!dir && this.focusedItem)
-			this.focusedItem.focus();
 		return this;
 	}
 });

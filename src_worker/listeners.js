@@ -208,7 +208,15 @@ var Module = {
     }
   },
   casevalWithTimeout: function(text) {
-    return Module.caseval(text);
+    try {
+      return Module.caseval(text);
+    } catch(e) {
+      if(e.message)
+        errors[ii] = fix_message(e.message);
+      else
+        errors[ii] = fix_message('An unknown error occurred.  This has been recorded with the Swift Calcs dev team.');
+      return '';
+    }
     /*
     try {
       return Module.caseval(text);

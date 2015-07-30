@@ -1,7 +1,7 @@
-var math = P(EditableBlock, function(_, super_) {
-	_.klass = ['math'];
-	_.mathField = 0;
-	_.implicit = false;
+/* Math output is an extension of Element that has some built in commands
+   to support math output in the output box, as well as some other functionality */
+
+var MathOutput = P(EditableBlock, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
 	_.unitMode = false;
@@ -15,102 +15,16 @@ var math = P(EditableBlock, function(_, super_) {
 
 
   var ans_id = 0;
-  function uniqueAnsId() { return ans_id += 1; }
-	_.init = function(latex) {
-		super_.init.call(this);
-		this.latex = latex || '';
-	}
-	_.innerHtml = function() {
-		return mathSpan('input') + '<BR>' + answerSpan();
-	}
+  _.uniqueAnsId = function() { return ans_id += 1; }
+
 	_.postInsertHandler = function() {
-		this.mathField = registerMath(this, 'input', { handlers: {
-			enter: this.enterPressed(this),
-			blur: this.submissionHandler(this)
-		}});
-		this.focusableItems = [[this.mathField]];
-		this.mathField.write(this.latex);
 		super_.postInsertHandler.call(this);
 		this.outputMathBox = MathQuill.MathField(this.outputBox.jQ.find('div.answer')[0]);
 		this.outputMathBox.setElement(this).setStaticMode(this);
 		return this;
 	}
-	_.enterPressed = function(_this) {
-		return function(mathField) {
-			var to_compute = mathField.text();
-			if(elements[to_compute.toLowerCase()]) {
-				_this.needsEvaluation = false;
-				_this.mark_for_deletion = true;
-				elements[to_compute.toLowerCase()]().insertAfter(_this).show().focus(0);
-				_this.remove(0);
-			} else {
-				_this.submissionHandler(_this)(mathField);
-				math().insertAfter(_this).show().setImplicit().focus(0);
-			}
-		};
-	}
-	_.changeToText = function(to_text) {
-		this.mark_for_deletion = true;
-		if(to_text === '#') to_text = 'bookmark';
-		if(elements[to_text.toLowerCase()]) {
-			this.needsEvaluation = false;
-			elements[to_text.toLowerCase()]().insertAfter(this).show().focus(0);
-		}	else {
-			// Not a specific command, so we turn in to a text box
-			if(this[L] instanceof text) {
-				var left = cleanHtml(this[L].toString());
-				var line_break = '<br>';
-				if((to_text == '') && (left.slice(-4).toLowerCase() != '<br>'))
-					line_break = '<br><br>';
-				if((to_text != '') && (left.slice(-4).toLowerCase() == '<br>'))
-					line_break = '';
-				var el = this[L].append(line_break + to_text).focus(R);
-			} else 
-				var el = text(to_text).insertAfter(this).show().focus(R);
-			if ((to_text.length > 0) && !el.textField.magicCommands()) 
-				el.append('&nbsp;').focus(R);
-		}
-		this.remove(0);
-	}
-	_.was_scoped = false;
-	_.submissionHandler = function(_this) {
-		return function(mathField) {
-			if(_this.empty())
-				_this.outputBox.collapse();
-			if(_this.needsEvaluation) {
-				//console.log(mathField.text());
-				var to_compute = mathField.text();
-				if(to_compute.match(/^.*=.*=[\s]*$/)) { // Trailing = sign is a mathCad thing, use it to force output, and then remove the equal sign
-					mathField.moveToRightEnd().keystroke('Shift-Left',{preventDefault: function() {}}).keystroke('Del',{preventDefault: function() {}}).blur();
-					_this.outputMode = 2;
-					to_compute = mathField.text();
-				}
-				if(elements[to_compute.toLowerCase()]) {
-					_this.mark_for_deletion = true;
-					_this.needsEvaluation = false;
-					elements[to_compute.toLowerCase()]().insertAfter(_this).show();
-					_this.remove(0);
-					return;
-				}
-				if(to_compute.indexOf(':=') > -1) {
-					_this.scoped = true;
-					_this.was_scoped = true;
-					_this.fullEvaluation = true;
-				}	else if(_this.was_scoped) {
-					_this.scoped = false;
-					_this.was_scoped = false;
-					_this.fullEvaluation = true;
-				} else {
-					_this.scoped = false;
-					_this.fullEvaluation = false;
-					if(to_compute.trim() === '')
-						_this.needsEvaluation = false;
-				}
-				_this.commands = [{command: to_compute, unit: _this.workspace.latexToUnit(_this.expectedUnits), approx: _this.approx, simplify: _this.factor_expand, force_output_for_scoped: (_this.outputMode == 2)}];
-				_this.evaluate();
-				_this.needsEvaluation = false;
-			}
-		};
+	_.genCommand = function(to_compute) {
+		return [{command: to_compute, unit: this.workspace.latexToUnit(this.expectedUnits), approx: this.approx, simplify: this.factor_expand, force_output_for_scoped: (this.outputMode == 2)}];
 	}
 	_.evaluationFinished = function(result) {
 		this.last_result = result;
@@ -145,17 +59,20 @@ var math = P(EditableBlock, function(_, super_) {
 				} else {
 					// Create the pulldown menu
 					menu.append('<div class="pulldown_item" data-action="copyAnswer"><i class="fa fa-fw"></i>&nbsp; Copy to new line</div>');
-					if(!this.scoped)
+					if(!this.scoped && this.storeAsVariable)
 						menu.append('<div class="pulldown_item" data-action="storeAsVariable"><i class="fa fa-fw"></i>&nbsp; Assign to variable</div>');
 					if(result[0].returned.indexOf('\\Unit') > -1)
 						menu.append('<div class="pulldown_item" data-action="enableUnitMode"><i class="fa fa-fw"></i>&nbsp; Change units</div>');
 					menu.append('<div class="pulldown_item" data-action="toggleApprox"><i class="fa fa-toggle-' + (this.approx ? 'on' : 'off') + ' fa-fw"></i>&nbsp; Approximate mode (1/2 &#8594; 0.5)</div>');
 					var factor = 'off';
 					var expand = 'off';
+					var simplify = 'off';
 					if(this.factor_expand === 'factor') factor = 'on';
 					if(this.factor_expand === 'expand') expand = 'on';
-					menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
+					if(this.factor_expand === 'simplify') simplify = 'on';
 					menu.append('<div class="pulldown_item" data-action="toggleExpand"><i class="fa fa-toggle-' + expand + ' fa-fw"></i>&nbsp; Expand</div>');
+					menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
+					menu.append('<div class="pulldown_item" data-action="toggleSimplify"><i class="fa fa-toggle-' + simplify + ' fa-fw"></i>&nbsp; Simplify</div>');
 				}
 			}
 			if(result[0].warnings.length > 0) {
@@ -168,22 +85,28 @@ var math = P(EditableBlock, function(_, super_) {
 				}
 			}
 		} else {
-			this.outputMathBox.jQ.hide();
-			if(this.fullEvaluation) 
-				if(!this.scoped) this.was_scoped = true; // Reset was scoped for next evaluation
-			this.outputBox.jQ.removeClass('calculating warn');
-			this.outputBox.setError(result[0].returned,true);
-			if(this.outputMode == 1) {
-				this.outputMathBox.clear();
-				this.outputMathBox.jQ.hide();
-				this.outputBox.collapse();
-				this.expandArrow();
-			} else {
-				this.collapseArrow();
-				this.outputBox.expand();
-			}
+			this.setError(result[0].returned);
 		}  
 		return true;
+	}
+	_.setError = function(error) {
+		this.outputMathBox.jQ.hide();
+		this.outputBox.jQ.removeClass('calculating error warn unit_input hide_pulldown');
+		this.outputBox.jQ.find('.warning').remove();
+		this.outputBox.jQ.find('.error').remove();
+		this.outputBox.jQ.find('td.answer_menu').html('');
+		this.outputBox.tableJQ.next("div." + css_prefix + "calculation_stopped").slideUp({duration: 250, always: function() { $(this).remove(); } });
+		if(this.fullEvaluation && !this.scoped) this.was_scoped = true; // Reset was scoped for next evaluation.
+		this.outputBox.setError(error, true);
+		if(this.outputMode == 1) {
+			this.outputMathBox.clear();
+			this.outputMathBox.jQ.hide();
+			this.outputBox.collapse();
+			this.expandArrow();
+		} else {
+			this.collapseArrow();
+			this.outputBox.expand();
+		}
 	}
 	_.collapse = function() {
 		this.outputMode = 1;
@@ -198,45 +121,32 @@ var math = P(EditableBlock, function(_, super_) {
 		this.workspace.save();
 		return this;
 	}
-	_.storeAsVariable = function() {
-    this.focus(-1);
-    this.outputMode = 2;
-    this.mathField.moveToLeftEnd().write("latex{ans_{" + uniqueAnsId() + "}=}").closePopup();
-    this.mathField.keystroke('Left', { preventDefault: function() { } }).keystroke('Shift-Home', { preventDefault: function() { } });
-	}
 	_.copyAnswer = function() {
 		var latex = this.outputMathBox.getSelection();
 		math().insertAfter(this).show(450).focus(L).write(latex !== '' ? latex : this.answerLatex).closePopup();
 	}
-	_.closePopup = function() {
-		this.mathField.closePopup();
-		return this;
-	}
 	_.toggleApprox = function() {
 		this.approx = !this.approx;
 		this.needsEvaluation = true;
-		this.submissionHandler(this)(this.mathField);
+		this.submissionHandler(this)();
 	}
 	_.toggleExpand = function() {
 		if(this.factor_expand == 'expand') this.factor_expand = false;
 		else this.factor_expand = 'expand';
 		this.needsEvaluation = true;
-		this.submissionHandler(this)(this.mathField);
+		this.submissionHandler(this)();
 	}
 	_.toggleFactor = function() {
 		if(this.factor_expand == 'factor') this.factor_expand = false;
 		else this.factor_expand = 'factor';
 		this.needsEvaluation = true;
-		this.submissionHandler(this)(this.mathField);
+		this.submissionHandler(this)();
 	}
-
-	_.AppendText = function() {
-		text().insertAfter(this).show().focus(L)
-	}
-	_.PrependBlankItem = function() {
-		//add a blank block just before this one
-		math().insertBefore(this).show();
-		this.focus(L);
+	_.toggleSimplify = function() {
+		if(this.factor_expand == 'simplify') this.factor_expand = false;
+		else this.factor_expand = 'simplify';
+		this.needsEvaluation = true;
+		this.submissionHandler(this)();
 	}
 	_.mouseUp = function(e) {
 		// Test for clicks on unit box in answer, which should allow unit conversions
@@ -277,7 +187,10 @@ var math = P(EditableBlock, function(_, super_) {
 		this.unitMode.setElement(this);
 		this.unitMode.setUnitMode(true);
 		this.unitMode.focus();
-		this.mathField.hideCursor();
+		for(var i = 0; i < this.focusableItems.length; i++) {
+			for(var j = 0; j < this.focusableItems[i].length; j++)
+				if((this.focusableItems[i][j] != -1) && this.focusableItems[i][j].mathquill) this.focusableItems[i][j].hideCursor();
+		}
 		if(this.expectedUnits)
 			this.unitMode.latex(this.expectedUnits).keystroke('Left',{preventDefault: function() { } });
 		else
@@ -290,37 +203,17 @@ var math = P(EditableBlock, function(_, super_) {
 		this.outputBox.jQ.removeClass('unit_input').find(".unit_add").remove();
 		this.unitMode = false;
 		this.needsEvaluation = true;
-		this.submissionHandler(this)(this.mathField);
-	}
-	_.focus = function(dir) {
-		super_.focus.call(this, dir);
-		if(dir)
-			this.mathField.focus(dir);
-		else if(dir === 0)
-			this.mathField.focus(L);
-		return this;
+		this.submissionHandler(this)();
 	}
 	_.blur = function() {
 		if(this.unitMode) this.unitMode.blur();
 		super_.blur.call(this);
-		if(this.implicit && this.empty())
-			this.remove();
 		return this;
 	}
-  _.toString = function() {
-  	return '{math}{{' + this.argumentList().join('}{') + '}}';
-  }
 
 	// Callback for math elements notifying that this element has been changed
 	_.changed = function(el) {
-		this.implicit = false;
 		if(this.outputMode === 1) this.outputMode = 0;
-		this.needsEvaluation = true;
-	}
-	_.setImplicit = function() {
-		if(!((this[L] == 0) && (this[R] == 0)))
-			this.implicit = true;
-		return this;
 	}
   _.keystroke = function(description, evt) { 
   	if(this.unitMode) return this.unitMode.keystroke(description, evt);
@@ -349,15 +242,14 @@ var math = P(EditableBlock, function(_, super_) {
   		this.unitMode.flash();
   		return;
   	}
-  	super_.paste.apply(this, arguments);
+  	return super_.paste.apply(this, arguments);
   }
   _.write = function(text) { 
   	if(this.unitMode) {
   		this.unitMode.flash();
   		return this;
   	}
-  	super_.write.apply(this, arguments);
-  	return this;
+  	return super_.write.apply(this, arguments);
   }
 
 });

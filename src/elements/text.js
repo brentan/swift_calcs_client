@@ -286,6 +286,16 @@ var WYSIWYG = P(function(_) {
       if(key.match(/Shift-.*/))
         t.el.shft = true;
       switch (key) {
+        case 'Ctrl-O':
+        case 'Meta-O':
+          window.openFileDialog();
+          e.preventDefault();
+          break;
+        case 'Ctrl-S':
+        case 'Meta-S':
+          t.el.workspace.save(true);
+          e.preventDefault();
+          break;
         case 'Shift-Tab':
           var li_parent = t.isSelectionInsideElement('li');
           if(li_parent && rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {

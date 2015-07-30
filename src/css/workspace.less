@@ -15,8 +15,8 @@ div.sc_element_container {
     display: inline-block;
     &.blink { visibility: hidden; }
   }
-  .sc_command {
-    &.sc_code {
+  .sc_CommandBlock {
+    &.sc_CodeBlock {
       font-size:1.1em;
       color: #0000cc;
       font-weight: normal;
@@ -125,6 +125,47 @@ div.sc_element_container {
       font-style: italic;
       text-align: center;
       font-size: 10px;
+    }
+    table.sc_giac_element {
+      width: 100%;
+      & > tbody > tr > td {
+        vertical-align: top;
+      }
+      td.sc_var_store {
+        width: 1px;
+        white-space: nowrap;
+        span.sc_var_store {
+          display: none;
+          span.sc_var_store {
+            display: inline-block;
+            width: auto;
+          }
+        }
+        span.equality { 
+          display: inline-block;
+          margin: 0px 3px;
+          font-size: 16px;
+          font-family: Symbola, "Times New Roman", serif;
+        }
+      }
+      div.sc_add_equation {
+        display: inline-block;
+        cursor: pointer;
+        font-size: 11px;
+        font-style: italic;
+        color: #999999;
+        &:hover {
+          color: #111111;
+          text-decoration: underline;
+        }
+      }
+      i.fa-remove {
+        color: #aaaaaa;
+        cursor: pointer;
+        &:hover {
+          color: #444444;
+        }
+      }
     }
     div.sc_answer_table {
       display: none;
@@ -334,6 +375,18 @@ div.sc_element_container {
       color: #afafaf;
       .mq-math-mode.mq-editable-field.mq-focused {
         color: black;
+        .mq-true {
+          color: #77BB77;
+        }
+        .mq-false {
+          color: #BB7777;
+        }
+      }
+      .mq-true {
+        color: #afafaf;
+      }
+      .mq-false {
+        color: #afafaf;
       }
     }
     &.sc_logic_block > table > tbody > tr > td > div.sc_insert > div.sc_logic_command {
@@ -346,13 +399,25 @@ div.sc_element_container {
     &:hover > table > tbody > tr > td.sc_element_insert_td > .sc_help_circle {
       display: inline-block;
     }
+    &:hover > table > tbody > tr > td.sc_element_insert_td > table.sc_giac_element .sc_help_circle {
+      display: inline-block;
+    }
+    &.sc_focused > table > tbody > tr > td.sc_element_insert_td > .sc_help_circle { 
+      display: inline-block;
+    }
+    &.sc_focused > table > tbody > tr > td.sc_element_insert_td > div > .sc_help_circle { 
+      display: inline-block;
+    }
+    &.sc_focused > table > tbody > tr > td.sc_element_insert_td > table.sc_giac_element .sc_help_circle { 
+      display: inline-block;
+    }
   }
   & > .sc_element {
     padding-right: 30px;
   }
-  .sc_math {
+  .sc_element.sc_math {
     cursor: text;
-    &.sc_input.mq-math-mode.mq-editable-field {
+    .sc_math.mq-math-mode.mq-editable-field {
       border-width: 0px;
     }
   }
@@ -371,7 +436,7 @@ div.sc_element_container {
 
   }
   .sc_bookmark {
-    .sc_command, .sc_command var { 
+    .sc_CommandBlock, .sc_CommandBlock var { 
       font-size: 14px;
       font-family: monospace;
       color: #55bb55;

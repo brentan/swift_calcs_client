@@ -151,8 +151,8 @@ Workspace.open(function(_) {
     var mouseDown = function(e) {
     	if (e.which !== 1) return;
     	_this.mousedown = true;
-      if($(e.target).closest('.mq-popup').length) {
-        // Ignore mouse events for clicks on popup menu, those are handled elsewhere
+      if($(e.target).closest('.mq-popup, .' + css_prefix + 'tooltip').length) {
+        // Ignore mouse events for clicks on popup menu and tooltip, those are handled elsewhere
         e.preventDefault();
         return;
       }
@@ -337,7 +337,7 @@ Workspace.open(function(_) {
             else if((target !== _this.ends[R]) || (_this.ends[R] instanceof math))
               new_target = _this.ends[R];
             else {
-              new_target = math().insertAfter(_this.ends[R]).show().setImplicit();
+              new_target = math().setImplicit().insertAfter(_this.ends[R]).show();
               new_target.start_target = -1; // Fake a 'mousedown' event on the element
               target = new_target;
             }

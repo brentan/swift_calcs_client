@@ -92,6 +92,16 @@ Workspace.open(function(_) {
       case 'Meta-Z':
         alert('Haven\'t integrated the undo stack yet....sorry');
         break;
+      case 'Ctrl-O':
+      case 'Meta-O':
+        window.openFileDialog();
+        evt.preventDefault();
+        break;
+      case 'Ctrl-S':
+      case 'Meta-S':
+        this.save(true);
+        evt.preventDefault();
+        break;
       case 'Ctrl-Shift-A':
       case 'Meta-Shift-A':
         // Select everything
@@ -230,10 +240,11 @@ Workspace.open(function(_) {
       // Nothing selected or selection is within the active element.  
       if((to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') || to_paste.match(/^[0-9\.]*$/)) {
         // This was a cut/copy -> paste from within a mathquill block, or is numeric in nature.  We should insert it into the current block, if possible, or insert it afterwards
-        if(elementType(this.activeElement) === 'math')
+        if(this.activeElement.focusedItem && this.activeElement.focusedItem.mathquill)
           return this.activeElement.write(to_paste);
-        else
-          return math().insertAfter(this.activeElement).show(0).focus(R);
+        else {
+          return math().insertAfter(this.activeElement).show(0).focus(R).write(to_paste);
+        }
       } else if(to_paste.slice(0,11) === 'SWIFTCALCS:') 
         var blocks = parse(to_paste.slice(11));
       else {

@@ -870,11 +870,15 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	    Algebra: [
 	      { text: 'Approximate', giac_func: 'approx(' },
 	      { text: 'Combine Fractions', giac_func: 'comDenom(' },
+	      { text: 'Expand', giac_func: 'expand(' },
+	      { text: 'Factor', giac_func: 'factor(' },
 	      { text: 'Get Denominator', giac_func: 'denom(' },
 	      { text: 'Get Numerator', giac_func: 'numer(' },
 	      { text: 'Inverse', giac_func: 'inv(' },
 	      { text: 'Partial Fraction Decomposition', giac_func: 'partfrac(' },
 	      { text: 'Polynomial Degree', giac_func: 'degree(' },
+	      { text: 'Regroup', giac_func: 'regroup(' },
+	      { text: 'Simplify', giac_func: 'simplify(' },
 	      { text: 'Test for Variable in Expression', giac_func: 'has(' },
 	    ],
 	    Calculus: [

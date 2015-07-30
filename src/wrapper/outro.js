@@ -10,6 +10,9 @@
 		'continue': continue_block,
 		'break': break_block,
 		'plot': plot,
-		'bookmark': bookmark
+		'bookmark': bookmark,
+		'solve': solve,
 	}
+	for(var i = 0; i < giac_elements_to_add.length; i++) 
+		elements[giac_elements_to_add[i].key] = SwiftCalcs.elements[giac_elements_to_add[i].key] = giac_elements_to_add[i].el;
 }());
