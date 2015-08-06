@@ -45,6 +45,7 @@ var Workspace = P(function(_) {
 	}
 	// Attach the workspace to the DOM and regenerate HTML
 	_.bind = function(el) {
+		ans_id = 0;
 		this.jQ = $(el);
 		this.jQ.html(""); // Clear the target
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
@@ -76,10 +77,11 @@ var Workspace = P(function(_) {
 			$('#account_bar .content').find("input." + css_prefix + "workspace_name").val(this.name);
 			if(new_hash && new_server_id) {// new hash and server id provided means this is a duplication event.  Do not save, just update my hash
 				this.hash = new_hash;
+				ajaxQueue.server_version[new_server_id] = ajaxQueue.server_version[this.server_id];
 				this.server_id = new_server_id;
 				ajaxQueue.known_server_version[this.server_id] = 1;
-			} 
-			this.save();
+			} else
+				this.save();
 		}
 	}
 	_.load = function(to_parse) {

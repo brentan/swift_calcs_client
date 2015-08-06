@@ -24,8 +24,6 @@ var GiacHandler = P(function(_) {
 	_.setEvaluationElement = function(eval_id, el) {
 		if(this.evaluations[eval_id] === false) return this;
 		this.evaluations[eval_id] = el.firstGenAncestor().id;
-		//console.log(el.jQ[0]);
-		//this.start_time = new Date();
 		if(!this.giac_ready) return this; // Don't update status bar until computation is complete!
 		startProgress();
 		if(this.evaluation_full[eval_id] && (el.depth == 0)) {
@@ -101,6 +99,8 @@ var GiacHandler = P(function(_) {
 			} else
 				setComplete();
 		}
+		//var endtime = new Date().getTime();
+		//console.log(endtime - window.start_time);
 		return this;
 	}
 	var varToLatex = function(var_name) {
@@ -227,6 +227,8 @@ var GiacHandler = P(function(_) {
 			this.setEvaluationElement(hash.eval_id, el);
 		}
 		if(this.giac_ready && ((typeof hash.eval_id === 'undefined') || this.auto_evaluation || this.manual_evaluation[hash.eval_id])) {
+			//if(typeof window.start_time === 'undefined')
+	  	//	window.start_time = new Date().getTime();
 			this.worker.postMessage(JSON.stringify(hash));
 		}	else {
 			if(this.giac_ready) 
@@ -272,8 +274,6 @@ var loadWorker = function(giacHandler) {
 				giac.postMessage(JSON.stringify({giac_version: window.giac_version}));
       	return;
     	case 'results':
-    		//var end_time = new Date();
-    		//console.log(giacHandler.start_time - end_time);
     		Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
     		break;
     	case 'variable':

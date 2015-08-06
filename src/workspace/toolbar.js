@@ -10,6 +10,8 @@ Workspace.open(function(_) {
 
 	_.bindToolbar = function() {
 		this.toolbar = Toolbar($('#toolbar_holder'));
+		this.attachToolbar(this, this.toolbar.mathToolbar()); // Add the math toolbar by default so that the toolbar is populated
+		this.blurToolbar(this);
 	}
 	_.reshapeToolbar = function() {
 		if(!this.toolbar) return;
@@ -44,7 +46,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	}
 	var current_toolbar_target = 0;
 	_.attachToolbar = function(el, options) {
-		if(current_toolbar_target === el) return;
+		if(current_toolbar_target === el) this.unblurToolbar();
 		this.detachToolbar();
 		current_toolbar_target = el;
 		// Helper function to build the toolbar.  Parses the options
@@ -492,9 +494,9 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			method: function(el) { el.command('\\derivative'); },
 			sub: [
 				{html: '<div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:13px;font-size:13px;display:inline-block;">d<span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:13px;">dx</div>', method: function(el) { el.command('\\derivative'); }, title: 'Derivative' },
-				{html: '<div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:13px;font-size:13px;display:inline-block;">d<sup>2</sup><span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:13px;">dx<sup>2</sup></div>', method: function(el) { el.command('\\derivatived'); }, title: 'Second Derivative' },
+				{html: '<div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:13px;font-size:13px;display:inline-block;">d<sup><span class="fa fa-square-o"></sup><span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:13px;">dx<sup><span class="fa fa-square-o"></sup></div>', method: function(el) { el.command('\\derivatived'); }, title: 'Higher Order Derivative' },
 				{html: '<div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:13px;font-size:13px;display:inline-block;">&#8706;<span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:13px;">&#8706;x</div>', method: function(el) { el.command('\\pderivative'); }, title: 'Partial Derivative' },
-				{html: '<div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:13px;font-size:13px;display:inline-block;">&#8706;<sup>2</sup><span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:13px;">&#8706;x<sup>2</sup></div>', method: function(el) { el.command('\\pderivatived'); }, title: 'Partial Second Derivative' },
+				{html: '<div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:13px;font-size:13px;display:inline-block;">&#8706;<sup><span class="fa fa-square-o"></sup><span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:13px;">&#8706;x<sup><span class="fa fa-square-o"></sup></div>', method: function(el) { el.command('\\pderivatived'); }, title: 'Partial Higher Order Derivative' },
 			]
 		},
 		{
@@ -526,8 +528,8 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{html: '<kbd>,</kbd>Add Column After&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', title: 'Add Column After', method: function(el) { el.command('matrix_add_column_after'); } },
 				{html: '<kbd>;</kbd>Add Row Before&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', title: 'Add Row Before', method: function(el) { el.command('matrix_add_row_before'); } },
 				{html: '<kbd>;</kbd>Add Row After&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', title: 'Add Row After', method: function(el) { el.command('matrix_add_row_after'); } },
-				{html: 'Remove Column', title: 'Remove Column', method: function(el) { el.command('matrix_remove_column'); } },
-				{html: 'Remove Row', title: 'Remove Row', method: function(el) { el.command('matrix_remove_row'); } },
+				{html: '<kbd>&lt;</kbd>Remove Column', title: 'Remove Column', method: function(el) { el.command('matrix_remove_column'); } },
+				{html: '<kbd>:</kbd>Remove Row', title: 'Remove Row', method: function(el) { el.command('matrix_remove_row'); } },
 			]
 		},
 		{ id: '|' },
@@ -831,7 +833,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				output += '<li><div class="item unit" title="' + units[i].sub[j].unit + '"><span class="code">' + units[i].sub[j].unit.replace(/\^([0-9]+)/g,"<sup>$1</sup>") + '</span>: ' + units[i].sub[j].name + '</div></li>';
 			output += '</ul></li>';
 		}	
-		var top_option = $('<li/>').html('<div class="item">Insert Unit Picker <kbd>\'</kbd></div>');
+		var top_option = $('<li/>').html('<div class="item">Insert Unit Picker <kbd style="font-size:14px;">"</kbd></div>');
 		top_option.on('mousedown', function(e) {
 			func(el, '\\Unit');
 			e.stopPropagation();

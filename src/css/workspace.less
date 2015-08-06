@@ -131,6 +131,17 @@ div.sc_element_container {
       & > tbody > tr > td {
         vertical-align: top;
       }
+      span.equality { 
+        display: inline-block;
+        margin: 0px 3px;
+        font-size: 16px;
+        font-family: Symbola, "Times New Roman", serif;
+      }
+      span.eqnum, span.eqinit {
+        .mq-math-mode.mq-editable-field {
+          border-width: 0px;
+        }
+      }
       td.sc_var_store {
         width: 1px;
         white-space: nowrap;
@@ -140,12 +151,6 @@ div.sc_element_container {
             display: inline-block;
             width: auto;
           }
-        }
-        span.equality { 
-          display: inline-block;
-          margin: 0px 3px;
-          font-size: 16px;
-          font-family: Symbola, "Times New Roman", serif;
         }
       }
       div.sc_add_equation {
@@ -251,6 +256,7 @@ div.sc_element_container {
               border-radius: 5px;
               border-top-right-radius: 0px;
               z-index: 99;
+              box-shadow: 0px 5px 5px #888888;
               div.pulldown_item {
                 white-space: nowrap;
                 font-size: 11px;
@@ -455,7 +461,7 @@ div.sc_element_container {
 	.sc_selected {
 		background-color: #B4D5FE;
     border-color: #B4D5FE;
-    .sc_math.mq-math-mode.mq-editable-field, .mq-math-mode.mq-editable-field {
+    .sc_math.mq-math-mode.mq-editable-field, .mq-math-mode.mq-editable-field, .sc_SelectBox {
       border-color: #B4D5FE;
       &.mq-focused {
         border-color: #B4D5FE;

@@ -150,7 +150,7 @@ var getDefaultOptions = function(_this) {
   }};
 }
 var registerFocusable = function(focusable, _this, klass_in, options) {  
-	klass = '.' + css_prefix + klass_in;
+	klass = '.' + css_prefix + klass_in.replace(/ /g, '_');
   var default_options = getDefaultOptions(_this);
 	jQuery.extend(true, default_options, options);
 	if(focusable === MathQuill) {
@@ -161,6 +161,7 @@ var registerFocusable = function(focusable, _this, klass_in, options) {
 		return focusable(_this.jQ.find(klass), klass_in, _this, default_options);
 }
 var focusableHTML = function(focusable, name) {
+	name = name.replace(/ /g, '_');
 	if(focusable === 'MathQuill')
 		return '<span class="' + css_prefix + 'math ' + css_prefix + name + '"></span>';
 	else

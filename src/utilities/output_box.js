@@ -51,7 +51,9 @@ var outputBox = P(function(_) {
 		return this;
 	}
 	_.setWidth = function() {
-		this.jQ.find('.mq-math-mode').css({maxWidth: max(200, this.jQ.closest('.' + css_prefix + 'element').width() - 150) + 'px', overflowX: 'auto'}).find('.mq-root-block').css('width','auto');
+		this.jQ.find('.mq-math-mode').css({maxWidth: '200px'});
+		var wide = this.jQ.closest('.' + css_prefix + 'content').length ? (this.jQ.closest('.' + css_prefix + 'content').width() - 60) : (this.jQ.closest('.' + css_prefix + 'element').width() - 150);
+		this.jQ.find('.mq-math-mode').show().css({maxWidth: max(200, wide) + 'px', overflowX: 'auto'}).find('.mq-root-block').css('width','auto');
 		return this;
 	}
 	_.collapse = function(immediately) {

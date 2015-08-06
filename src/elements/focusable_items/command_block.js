@@ -128,7 +128,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     	case 'Enter':
     		if(this.location === 0) {
     			// Enter pressed in first location.  Check if this is first focusable, or if next is the children area
-    			var child_count = 0;
+    			var child_count = -2;
     			var el_count = 0;
     			var count = 0;
     			for(var i = 0; i < this.element.focusableItems.length; i++) {
@@ -142,8 +142,8 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     				math().appendTo(this.element).show(0);
     			else if(el_count == 0) // Add item before parent
 						math().insertBefore(this.element).show(0);
-    			else // Move to previous focusable
-    				this.handlers.moveOutOf(L, this);
+    			else // Move to next focusable
+    				this.handlers.moveOutOf(R, this);
     		}	else if(this.location == this.children().length) {
     			// Enter pressed in last location.  Check if this is last focusable, or if next is the children area
     			var child_count = 0;

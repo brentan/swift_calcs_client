@@ -47,11 +47,12 @@ var solve = P(GiacGeneric, function(_, super_) {
   	var equations_to_add = this.number_of_equations;
   	this.number_of_equations = 1;
   	for(var i = 1; i < equations_to_add; i++)
-  		this.addEquation();
+  		this.addEquation(false, true);
+  	this.redoFocusableList();
   	return this;
   }
   _.eq_id = 1;
-  _.addEquation = function(focus) {
+  _.addEquation = function(focus, skip_focusable) {
   	// Add a new equation line to the solver list
 		var html = '<div class="' + css_prefix + 'focusableItems">' + focusableHTML('MathQuill',  'eq' + this.eq_id) + '&nbsp;<i class="fa fa-remove ' + css_prefix + 'hide_print"></i></div>';
 		this.jQ.find('.' + css_prefix + 'add_equation').before(html);
@@ -62,7 +63,7 @@ var solve = P(GiacGeneric, function(_, super_) {
 		this.eqFields[this.number_of_equations].setExpressionMode(true);
 		this.eq_id++;
 		this.number_of_equations++;
-		this.redoFocusableList();
+		if(!skip_focusable) this.redoFocusableList();
 		this.varField.setGhost('variable list');
 		if(focus) this.eqFields[this.number_of_equations-1].focus(1);
   }
@@ -119,18 +120,21 @@ var solve = P(GiacGeneric, function(_, super_) {
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/))
+				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i))
 					errors.push('Invalid variable name (' + _this.workspace.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
-				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*(,[a-z][a-z0-9_]*)*$/))
+				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*(,[a-z][a-z0-9_]*)*$/i))
 					errors.push('Invalid variable list (' + _this.workspace.latexToHtml(_this.varField.latex()) + ').  Please enter a valid comma-seperated list of variables');
 				if(_this.ask_initial_guess && !_this.guessField.empty() && (_this.guessField.text().split(',').length !== _this.varField.text().split(',').length))
 					errors.push('Invalid guesses.  Please ensure you provide 1 guess for each variable you are solving for (enter as a comma-seperated list)');
+				for(var i = 0; i < _this.eqFields.length; i++)
+					if(_this.eqFields[i].empty()) errors.push('Equation ' + (y+1) + ' is currently empty.  Please add an equation.');
 				if(errors.length && _this.outputMathBox) {
+					_this.workspace.save();
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {
 					var eqs = [];
-					$.each(_this.eqFields, function(i, v) { if(!v.empty()) { eqs.push(v.text()); } });
+					$.each(_this.eqFields, function(i, v) { eqs.push(v.text()); });
 					var start_command = '';
 					var end_command = '';
 					if(_this.ask_initial_guess) {
@@ -146,13 +150,34 @@ var solve = P(GiacGeneric, function(_, super_) {
 						end_command += ', newton_solver';
 					}
 					if(_this.varField.text().split(',').length > 1) // What if there are commas within each element? like a matrix?
-						var var_command = '[' + _this.varField.text() + ']';
+						var var_command = '[\'' + _this.varField.text().split(',').join("','") + '\']';
 					else
-						var var_command = _this.varField.text();
+						var var_command = '\'' + _this.varField.text() + '\'';
 					if(eqs.length > 1)
-						_this.commands = _this.genCommand(start_command + 'solve([' + eqs.join(', ').replace(/==/g,'=') + '], ' + var_command + end_command + ')');
+						var command = start_command + 'solve([' + eqs.join(', ').replace(/==/g,'=') + '], ' + var_command + end_command + ')';
 					else
-						_this.commands = _this.genCommand(start_command + 'solve(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + end_command + ')');
+						var command = start_command + 'solve(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + end_command + ')';
+					if(_this.ask_initial_guess) {
+						// Numeric solver...units were dropped, so we use the guess to restore units
+						var guess_text = _this.guessField.text();
+						if(guess_text.trim() == '') guess_text = (_this.varField.text().split(',').length > 1) ? $.map(_this.varField.text().split(','), function() { return 1; }).join(',') : 1;
+						if(_this.varField.text().split(',').length > 1) // What if there are commas within each element? like a matrix?
+							_this.commands = _this.genCommand('[val] .* [mksa_base(' + guess_text.replace(/,/g, '),mksa_base(') + ')]'); // convert answer back to appropriate units
+						else
+							_this.commands = _this.genCommand('[val] * mksa_base(' + guess_text + ')'); // convert answer back to appropriate units
+						_this.commands[0].unit_convert = true;
+						// BRENTAN: TODO: The provided guess units should allow us to autoconvert the answer in to the desired units as well...
+					} else {
+						// Symbolic solver
+						_this.commands = _this.genCommand('[val]');
+						_this.commands[0].unit_convert = true;
+					}
+					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
+					_this.commands.unshift({command: command, nomarkup: true, pre_command: (_this.ask_initial_guess ? 'mksareduce_mode(1);' : 'mksavariable_mode(1);') }); 
+
+					if(_this.ask_initial_guess) // insert guess into the equations to see if it causes a unit error
+						_this.commands.push({command: "((" + _this.varField.text() + ")->(" + _this.eqFields[0].text().replace(/==/g,'-') + "))(" + guess_text + ")", nomarkup: true});
+
 					_this.fullEvaluation = (_this.scoped || _this.was_scoped);
 					_this.evaluate();
 					_this.needsEvaluation = false;
@@ -161,24 +186,27 @@ var solve = P(GiacGeneric, function(_, super_) {
 		};
 	}
 	_.evaluationFinished = function(result) {
-		if(result[0].returned && result[0].success) {
+		if(this.ask_initial_guess && !result[2].success) {
+			if(result[2].returned.match(/Incompatible units Error/))
+				result[1].warnings.push('Error during unit consistency check: Ensure your intial guess has the proper expected units, and that units in the equations balance')
+			else
+				result[1].warnings.push(result[2].returned);
+		}
+		if(result[1].returned && result[1].success) {
 			this.was_scoped = false;
 			// Test for no result
-			if(result[0].returned.match(/[\s]*\\begin{bmatrix[0-9]+}\\end{bmatrix[0-9]+}[\s]*/)) { 
-				result[0].returned = ''; 
-				result[0].warnings.push('No results found'); 
-			} else if(result[0].returned.match(/Incompatible units Error/)) { // Units error
-				result[0].success = false;
-				result[0].returned = "Incompatible units Error: Please check your equation to ensure units balance";
+			if(result[1].returned.match(/[\s]*\\begin{bmatrix[0-9]+}\\end{bmatrix[0-9]+}[\s]*/)) { 
+				result[1].returned = ''; 
+				result[1].warnings.push('No results found'); 
 			} else {
 				if(this.number_of_equations > 1) 
 					var to_add = "\\left\\{ " + this.varField.text() + " \\right\\}"
 				else
 					var to_add = this.varField.text();
-				result[0].returned = to_add + " \\whitespace\\Longrightarrow \\whitespace " + result[0].returned;
+				result[1].returned = to_add + " \\whitespace\\Longrightarrow \\whitespace " + result[1].returned;
 			}
 		}
-		var to_return = super_.evaluationFinished.call(this, result);
+		var to_return = super_.evaluationFinished.call(this, [result[1]]); // Transform to array with result 1 in spot 0, as that is what is expected in evaluationFinished
 		this.last_result = result;
 		return to_return;
 	}
@@ -199,7 +227,7 @@ var solve = P(GiacGeneric, function(_, super_) {
 				this.redoFocusableList();
 			} 
 		}
-		if(this.eqFields[0].touched && this.varField.touched)
+		if(this.eqFields[0].touched && !this.eqFields[0].empty() && this.varField.touched)
 			this.needsEvaluation = true;
 	}
 });

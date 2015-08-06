@@ -14,6 +14,11 @@ var bookmark = P(EditableBlock, function(_, super_) {
 		this.leftJQ.append('<span class="fa fa-bookmark"></span>');
 		return this;
 	}
+	_.remove = function(duration) {
+		super_.remove.call(this, duration);
+		this.workspace.updateBookmarks();
+		return this;
+	}
 	_.focus = function(dir) {
 		super_.focus.call(this);
 		if(dir)

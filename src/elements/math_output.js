@@ -1,6 +1,7 @@
 /* Math output is an extension of Element that has some built in commands
    to support math output in the output box, as well as some other functionality */
 
+var ans_id = 0;
 var MathOutput = P(EditableBlock, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
@@ -9,14 +10,16 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 	_.expectedUnits = false;
 	_.approx = false;
 	_.factor_expand = false;
+	_.pre_command = false;
 	_.answerLatex = '';
 	// Output mode has three values: 0 is auto, 1 is force hide, 2 is force show
 	_.outputMode = 0
 
 
-  var ans_id = 0;
   _.uniqueAnsId = function() { return ans_id += 1; }
-
+  _.setAnswerIdCounter = function(val) {
+  	ans_id = max(ans_id, val);
+  }
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
 		this.outputMathBox = MathQuill.MathField(this.outputBox.jQ.find('div.answer')[0]);
@@ -24,7 +27,19 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		return this;
 	}
 	_.genCommand = function(to_compute) {
-		return [{command: to_compute, unit: this.workspace.latexToUnit(this.expectedUnits), approx: this.approx, simplify: this.factor_expand, force_output_for_scoped: (this.outputMode == 2)}];
+		var to_send = [{command: to_compute, unit: this.workspace.latexToUnit(this.expectedUnits), approx: this.approx, simplify: this.factor_expand}];
+		if(this.pre_command)
+			to_send.pre_command = this.pre_command;
+		return to_send;
+	}
+	_.PrependBlankItem = function(el) {
+		if(el === this.focusableItems[0][0]) {
+			//add a blank block just before this one
+			math().insertBefore(this).show();
+			this.focus(L);
+			return true;
+		} else
+			return false;
 	}
 	_.evaluationFinished = function(result) {
 		this.last_result = result;
@@ -71,7 +86,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 					if(this.factor_expand === 'expand') expand = 'on';
 					if(this.factor_expand === 'simplify') simplify = 'on';
 					menu.append('<div class="pulldown_item" data-action="toggleExpand"><i class="fa fa-toggle-' + expand + ' fa-fw"></i>&nbsp; Expand</div>');
-					menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
+					//menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
 					menu.append('<div class="pulldown_item" data-action="toggleSimplify"><i class="fa fa-toggle-' + simplify + ' fa-fw"></i>&nbsp; Simplify</div>');
 				}
 			}

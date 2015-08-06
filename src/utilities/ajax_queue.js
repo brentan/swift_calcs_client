@@ -22,7 +22,6 @@ var ajaxQueueClass = P(function(_) {
 		this.holding_pen = {};
 		this.server_version = {};
 		this.known_server_version = {};
-		this.server_version_number = {};
 		this.should_be_server_version = {};
 		this.jQ = $('.save_div');
 		this.jQ_fatal = $('.fatal_div');

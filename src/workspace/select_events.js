@@ -116,7 +116,7 @@ Workspace.open(function(_) {
   _.replaceSelection = function(replacement, focus) {
   	if(this.selection.length == 0) throw("Nothing is selected to be replaced")
   	replacement.insertBefore(this.selection[0]).show();
-  	if(focus) replacement.focus();
+  	if(focus) replacement.focus(R);
   	jQuery.each(this.selection, function(i,v) { v.mark_for_deletion = true; });
   	jQuery.each(this.selection, function(i,v) { v.remove(0); });
   	this.clearSelection();

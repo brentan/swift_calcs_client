@@ -65,7 +65,7 @@ var receiveMessage = function(command) {
   }
   // If we are starting a new evaluation, restart giac to reset everything
 	if(command.restart)
-		Module.caseval('restart;srand;');
+		Module.caseval('restart;srand;complex_mode:=1;');
 	var output = [];
   // Errors and warnings are sometimes (but not always!) caught with Module.printErr (they are sometimes also just returned by caseval directly)
   // to deal with that we define these in the global scope and set them with printErr as things happen
@@ -76,8 +76,30 @@ var receiveMessage = function(command) {
 		Module.caseval('unarchive("' + command.previous_scope + '");srand;');
   // Iterate over the command list
 	for(ii = 0; ii < command.commands.length; ii++) {
+    if(command.commands[ii].pre_command)
+      Module.caseval(command.commands[ii].pre_command);
 		var to_send = command.commands[ii].command.trim();
 		warnings.push([]);
+    if(command.commands[ii].unit_convert && (ii > 0)) {
+      Module.caseval('mksareduce_mode(0);mksavariable_mode(0);'); // disable the special unit command modes
+      // Unit convert is a special command.  It means the previous answer, if successful, had units removed and replaced with variable names with mksa_remove and mksa_var.  That answer
+      // now needs to be converted back into unit space.  We do that here and insert into this command where the string [val] is placed.
+      if(!output[ii-1].success) {
+        // previous item was a failure.  copy its results here and continue
+        output[ii] = output[ii -1];
+        continue;
+      }
+      // Copy previous warnings over
+      warnings[ii] = warnings[ii - 1];
+      if(output[ii-1].returned.trim() == '[]') output[ii-1].returned = '[undef]';
+      to_send = to_send.replace(/\[val\]/g, output[ii-1].returned.replace(/u__/g,'_'));
+      var test_output = { success: true, returned: Module.casevalWithTimeout(to_send) };
+      test_output = testError(test_output, ii);
+      if(!test_output.success) { // See if this threw an error, likely a bad units error.  If not, we let full calculation continue
+        output.push(test_output);
+        continue;
+      }
+    }
     // If the command is simply a variable name (or object.property transformed to object__property), 
     // and this command is in our global constants array, output its toString value directly
 		if(to_send.match(/^[a-z][a-z0-9_]*$/i) && constants[to_send]) {
@@ -94,7 +116,7 @@ var receiveMessage = function(command) {
 		}
     // Otherwise, lets use giac for our evaluation. 
     // Is this an expression that is setting the value of a variable?  If not, we add some simplification, unit converstion, and set output to latex
-    if(to_send.indexOf(":=") !== -1) {
+    if(to_send.match(/^[\s]*[a-z][a-z0-9_]*(\([a-z0-9_,]+\))?[\s]*:=/i)) {
       // Assignment.  Do the assignment first, then return the value
       // Test for setting protected variable names
       if(to_send.match(/^[\s]*(i|e|pi)[\s]*:=.*$/)) {
@@ -112,13 +134,13 @@ var receiveMessage = function(command) {
       if(test_output.success) {
         to_send = to_send.replace(/^[\s]*([a-zA-Z0-9_]+).*$/,'$1');
       } else {
-        command.commands[ii].force_output_for_scoped = false;
         output.push(test_output);
+        continue;
       }
     } 
-    if(!command.commands[ii].nomarkup || command.commands[ii].force_output_for_scoped) {
+    if(!command.commands[ii].nomarkup) {
       // if to_send has units associated with it, we attempt to convert to that unit.  On failure, we revert to auto unit handling
-      var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : '';
+      var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : 'factor';
       if(command.commands[ii].approx)
         simplify_command = 'evalf(' + simplify_command;
       else
@@ -130,16 +152,18 @@ var receiveMessage = function(command) {
           // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...
           errors[ii] = null;
           warnings[ii] = [];
-          output[ii] = { success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(usimplify(' + to_send + '))))') };
+          output[ii] = { success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + '))))') };
           if(!errors[ii] && (output[ii].returned.indexOf('Incompatible units') === -1))
             warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit[1]);  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
         } 
-      } else 
-        output.push({ success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(usimplify(' + to_send + '))))') });
+      } else
+        output.push({ success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + '))))') });
       // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
 			if(errors[ii] && errors[ii].indexOf('Timeout') === -1)
 				output[ii] = { success: true, returned: Module.casevalWithTimeout(to_send) }
-		} else {
+      // Change 1e-4 scientific notation to latex form
+      output[ii].returned = output[ii].returned.replace(/([0-9]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
+    } else {
       output.push({ success: true, returned: Module.casevalWithTimeout(to_send) });
     }
     output[ii] = testError(output[ii],ii);
@@ -154,8 +178,6 @@ var receiveMessage = function(command) {
 				break;
 			}
 		}
-    // Change 1e-4 scientific notation to latex form
-		output[ii].returned = output[ii].returned.replace(/([0-9]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
     // Set any warnings to the output
 		output[ii].warnings = warnings[ii];
 	}
@@ -177,12 +199,14 @@ var testError = function(output, ii) {
   // Also check for an undefined result, which returns a bit of a complex result from giac
   if(errors[ii]) 
     output = {success: false, returned: errors[ii] };
+  else if(output.returned.indexOf("Incompatible units Error") > -1)
+    output = {success: false, returned: fix_message("Incompatible units Error: Please check your equation to ensure units balance")};
   else if(output.returned.indexOf("GIAC_ERROR") > -1)
     output = {success: false, returned: fix_message(output.returned.replace('GIAC_ERROR:',''))};
   else if(output.returned == '"\\,\\mathrm{undef}\\,"') {
     output = {success: true, returned: ''}
     warnings[ii].push('Undefined result');
-  }
+  } 
   return output;
 }
 var Module = {
@@ -191,7 +215,7 @@ var Module = {
   print: function(text) {
   	if(text.indexOf('error') > -1)
   		errors[ii] = fix_message(text);
-  	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1))
+  	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1) && !text.match(/declared as global/))
   		warnings[ii].push(fix_message(text));
   },
   printErr: function(text) {

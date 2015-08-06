@@ -59,15 +59,15 @@ var text = P(EditableBlock, function(_, super_) {
       case 'mathMode':
         rangy.getSelection(this.textField.$editor[0]).deleteFromDocument();
         if(cleanHtml(this.textField.html(), false) === '') {
-          math().insertAfter(this).show(0).focus();
+          math().insertAfter(this).show(0).focus(-1);
           this.remove();
         } else if(this.textField.endPosition()) {
-          math().insertAfter(this).show(0).focus();
+          math().insertAfter(this).show(0).focus(-1);
         } else if(this.textField.startPosition()) {
-          math().insertBefore(this).show(0).focus();
+          math().insertBefore(this).show(0).focus(-1);
         } else {
           this.textField.split();
-          math().insertAfter(this).show(0).focus();
+          math().insertAfter(this).show(0).focus(-1);
         }
         this.textField.syncCode();
         return;

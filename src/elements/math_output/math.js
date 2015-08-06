@@ -21,6 +21,10 @@ var math = P(MathOutput, function(_, super_) {
 		if(this.latex.trim().length > 0)
 			this.mathField.write(this.latex);
 		super_.postInsertHandler.call(this);
+		// Test for ans_n as variable assigned in this item.  If so, we need to up the ans_id count
+		if(this.mathField.text().match(/^.*ans_[{]?[0-9]+[}]?.*:=.*$/))
+			this.setAnswerIdCounter(this.mathField.text().replace(/^.*ans_[{]?([0-9]+)[}]?.*:=.*$/,"$1")*1);
+
 		return this;
 	}
 	_.enterPressed = function(_this) {
@@ -38,15 +42,15 @@ var math = P(MathOutput, function(_, super_) {
 		};
 	}
 	_.changeToText = function(to_text) {
-		if(to_text.match(/^[a-z][a-z0-9_]* := [a-z0-9\.-]+$/i)) {
+		if(to_text.match(/^[^=]* := [a-z0-9\.-]+$/i)) {
 			// Case of var_name = command.  See if command accepts this type of format (has to allow scoped basically)
-      var command = to_text.replace(/^[a-z][a-z0-9_]* := ([a-z0-9\.-]*)$/i,"$1");
+      var command = to_text.replace(/^[^=]* := ([a-z0-9\.-]*)$/i,"$1");
       if(SwiftCalcs.elements[command.toLowerCase()]) {
       	var new_el = SwiftCalcs.elements[command.toLowerCase()]();
       	if(new_el.storeAsVariable) {
       		// Good to go
 					this.mark_for_deletion = true;
-      		var var_name = to_text.replace(/^([a-z][a-z0-9_]*) := [a-z0-9\.-]*$/i,"$1");
+      		var var_name = to_text.replace(/^([^=]*) := [a-z0-9\.-]*$/i,"$1");
 					this.needsEvaluation = false;
 					new_el.insertAfter(this).show().focus(0);
 					new_el.storeAsVariable(var_name);
@@ -121,11 +125,6 @@ var math = P(MathOutput, function(_, super_) {
 				_this.needsEvaluation = false;
 			}
 		};
-	}
-	_.PrependBlankItem = function() {
-		//add a blank block just before this one
-		math().insertBefore(this).show();
-		this.focus(L);
 	}
 	_.storeAsVariable = function() {
     this.focus(-1);
