@@ -4,7 +4,7 @@
  * each block when needed.  
  *******************************************************/
 
-Workspace.open(function(_) {
+Worksheet.open(function(_) {
 	_.bindDragging = function(e, selected_target, click_handler, drag_done_handler) {
 		var _this = this;
 		function dragOver(e_drag) {
@@ -65,29 +65,29 @@ Workspace.open(function(_) {
 			$(e_drag.target).on('dragover', dragOver).on('dragleave', dragLeave).on('drop', dragDrop);
 			dragOver(e_drag);
 		}
-		function dragOverWorkspace(e_drag) {
+		function dragOverWorksheet(e_drag) {
 			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
   		_this.ends[R].jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
     	e_drag.preventDefault();
 		}
-		function dragDropWorkspace(e_drag) {
+		function dragDropWorksheet(e_drag) {
 			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
-			dragLeaveWorkspace(e_drag);
+			dragLeaveWorksheet(e_drag);
   		drag_done_handler(_this.ends[R], false, R);
   		e_drag.preventDefault();
 		}
-		function dragLeaveWorkspace(e_drag) {
+		function dragLeaveWorksheet(e_drag) {
 			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
 			_this.ends[R].jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
-			_this.insertJQ.off('dragover', dragOverWorkspace).off('dragleave', dragLeaveWorkspace).off('drop', dragDropWorkspace);
+			_this.insertJQ.off('dragover', dragOverWorksheet).off('dragleave', dragLeaveWorksheet).off('drop', dragDropWorksheet);
 			_this.ends[R].jQ.find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
     	e_drag.preventDefault();
 		}
-		function dragEnterWorkspace(e_drag) {
+		function dragEnterWorksheet(e_drag) {
 			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
 			if(_this.ends[R].jQ.hasClass(css_prefix + 'selected')) return; // Don't do drag handlers on selected elements
-			_this.insertJQ.on('dragover', dragOverWorkspace).on('dragleave', dragLeaveWorkspace).on('drop', dragDropWorkspace);
-			dragOverWorkspace(e_drag);
+			_this.insertJQ.on('dragover', dragOverWorksheet).on('dragleave', dragLeaveWorksheet).on('drop', dragDropWorksheet);
+			dragOverWorksheet(e_drag);
 		}
 		function dragStart(e_drag) {
       $(e_drag.target).addClass('dragging');
@@ -99,7 +99,7 @@ Workspace.open(function(_) {
       var to_listen = _this.insertJQ.find('.' + css_prefix + 'element');
     	to_listen.on('dragenter', dragEnter);
     	//to_listen.find('table, div').on('dragenter', dragEnter); // WHY WAS THIS ADDED?  DOES NOT SEEM TO BE USEFUL
-    	_this.insertJQ.on('dragenter', dragEnterWorkspace);
+    	_this.insertJQ.on('dragenter', dragEnterWorksheet);
 		}
 		function dragEnd(e_drag) {
     	_this.dragging = false;
@@ -109,7 +109,7 @@ Workspace.open(function(_) {
 			$(e_drag.target).off('dragend', dragEnd);
     	_this.insertJQ.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
     	_this.insertJQ.find('.' + css_prefix + 'element').find('*').off('dragenter', dragEnter);
-    	_this.insertJQ.off('dragenter', dragEnterWorkspace);
+    	_this.insertJQ.off('dragenter', dragEnterWorksheet);
     	selected_target.off('dragstart', dragStart);
     	e_drag.preventDefault();
 		}
@@ -156,8 +156,8 @@ Workspace.open(function(_) {
         e.preventDefault();
         return;
       }
-      if($(e.target).closest('input.' + css_prefix + 'workspace_name').length) {
-        // Let the workspace name input box handle its own click events
+      if($(e.target).closest('input.' + css_prefix + 'worksheet_name').length) {
+        // Let the worksheet name input box handle its own click events
         _this.clearSelection();
         return;
       }
@@ -190,7 +190,7 @@ Workspace.open(function(_) {
             target = _this.ends[R];
         }
       }
-      if(target === 0) throw("Somehow we have an empty workspace, which should never be allowed to occur");
+      if(target === 0) throw("Somehow we have an empty worksheet, which should never be allowed to occur");
       // docmousemove and mouseup share a lot, so combine them here:
       function mousemoveup(e, command) {
         var selectFromTargets = function(start_target, end_target) {

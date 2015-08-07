@@ -27,7 +27,7 @@ var GiacHandler = P(function(_) {
 		if(!this.giac_ready) return this; // Don't update status bar until computation is complete!
 		startProgress();
 		if(this.evaluation_full[eval_id] && (el.depth == 0)) {
-			var total = el.workspace.insertJQ.children('.' + css_prefix + 'element').length;
+			var total = el.worksheet.insertJQ.children('.' + css_prefix + 'element').length;
 			var me = 0;
 			for(var ell = el[L]; ell instanceof Element; ell = ell[L])
 				me++;
@@ -63,7 +63,7 @@ var GiacHandler = P(function(_) {
 		// Will reload the webworker if its been destroyed
 		if(this.worker) return;
 		loadWorker(this);
-		SwiftCalcs.active_workspace.ends[L].evaluate(true, true);
+		SwiftCalcs.active_worksheet.ends[L].evaluate(true, true);
 	}
 	_.aborting = false;
 	_.cancelEvaluations = function(el) { 
@@ -146,7 +146,7 @@ var GiacHandler = P(function(_) {
     $vars.html('');
     var _this = this;
     $.each(response.userVarList, function(i, varr) {
-    	var link = $('<div class="var_name"><span class="fa fa-fw fa-caret-right"></span>' + SwiftCalcs.active_workspace.latexToHtml(varToLatex(varr)) + '</div>');
+    	var link = $('<div class="var_name"><span class="fa fa-fw fa-caret-right"></span>' + SwiftCalcs.active_worksheet.latexToHtml(varToLatex(varr)) + '</div>');
     	link.appendTo($vars);
     	link.on('click', function(e) {
     		$(this).next('div.var_callback').remove();
@@ -154,8 +154,8 @@ var GiacHandler = P(function(_) {
     		if(caret.hasClass('fa-caret-right')) {
 	    		caret.removeClass('fa-caret-right').addClass('fa-caret-down');
 	    		$('<div id="var_callback_' + _this.varCallbackCounter + '" class="var_callback"><span class="fa fa-spinner fa-pulse"></span></div>').insertAfter($(this));
-	    		var last_scope = SwiftCalcs.active_workspace.ends[R].previousScope();
-	    		if(last_scope) last_scope = last_scope.workspace.id + '_' + last_scope.id;
+	    		var last_scope = SwiftCalcs.active_worksheet.ends[R].previousScope();
+	    		if(last_scope) last_scope = last_scope.worksheet.id + '_' + last_scope.id;
 	    		else last_scope = false;
 	    		_this.sendCommand({variable: true, previous_scope: last_scope, commands: [{command: varr}], callback_id:_this.varCallbackCounter });
 	    		_this.varCallbackCounter++;
@@ -171,7 +171,7 @@ var GiacHandler = P(function(_) {
 		var $el = $('#var_callback_' + response.callback_id);
 		if($el.length == 0) return;
 		if(response.results[0].success)
-			$el.html(SwiftCalcs.active_workspace.latexToHtml(response.results[0].returned));
+			$el.html(SwiftCalcs.active_worksheet.latexToHtml(response.results[0].returned));
 		else
 			$el.html('ERROR: ' + response.results[0].returned);
 	}
@@ -185,13 +185,13 @@ var GiacHandler = P(function(_) {
 	_.manual_mode = function(mode) {
 		if(!mode) {
 			// Auto mode
-			$('.workspace_holder').removeClass(css_prefix + 'manual_evaluation');
+			$('.worksheet_holder').removeClass(css_prefix + 'manual_evaluation');
 			this.auto_evaluation = true;
       $('a.auto_off').closest('li').show(); 
       $('a.calc_now').closest('li').hide();
       $('a.auto_on').closest('li').hide();
 		} else {
-			$('.workspace_holder').addClass(css_prefix + 'manual_evaluation');
+			$('.worksheet_holder').addClass(css_prefix + 'manual_evaluation');
 			this.auto_evaluation = false;
       $('a.auto_off').closest('li').hide(); 
       $('a.calc_now').closest('li').show();
@@ -212,13 +212,13 @@ var GiacHandler = P(function(_) {
 	_.execute = function(eval_id, move_to_next, commands, el, callback) {
 		if(this.evaluations[eval_id] === true) {
 			var previous_el = el.previousScope();
-			var previous_scope = (previous_el instanceof Element) ? (previous_el.workspace.id + '_' + previous_el.id) : false;
+			var previous_scope = (previous_el instanceof Element) ? (previous_el.worksheet.id + '_' + previous_el.id) : false;
 			var restart = true;
 		} else {
 			var previous_scope = false;
 			var restart = false;
 		}
-		var next_scope = el.workspace.id + '_' + el.id;
+		var next_scope = el.worksheet.id + '_' + el.id;
 		this.sendCommand({eval_id: eval_id, restart: restart, scoped: el.scoped, move_to_next: move_to_next, commands: commands, previous_scope: previous_scope, next_scope: next_scope, callback_id: el.id, callback_function: callback}, el);
 	}
 	_.sendCommand = function(hash, el) {
@@ -301,7 +301,7 @@ var loadWorker = function(giacHandler) {
       case 'setStatus':
         if(text === '') {
         	giacHandler.giac_ready = true;
-					$('.workspace_holder').removeClass(css_prefix + 'giac_loading');
+					$('.worksheet_holder').removeClass(css_prefix + 'giac_loading');
 					giac.postMessage(JSON.stringify({varList: true}));
         	return;
         }

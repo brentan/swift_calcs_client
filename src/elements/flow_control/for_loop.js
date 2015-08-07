@@ -90,24 +90,24 @@ var for_loop = P(Loop, function(_, super_) {
 		this.iterator = this.varField.text().trim();
 		var errors=[];
 		if(!this.iterator.match(/^[a-z][a-z0-9_]*$/))
-			errors.push('Iterator: Invalid iterator name (' + this.workspace.latexToHtml(this.iterator) + ').  Please enter a valid variable name');
+			errors.push('Iterator: Invalid iterator name (' + this.worksheet.latexToHtml(this.iterator) + ').  Please enter a valid variable name');
 		if(result[0].success) {
 			if(!result[0].returned.match(/^[0-9\.e\-]+$/))
-				errors.push('Start Value: Non-numeric result encountered: ' + this.workspace.latexToHtml(result[0].returned));
+				errors.push('Start Value: Non-numeric result encountered: ' + this.worksheet.latexToHtml(result[0].returned));
 			else
 				this.start_val = 1.0 * result[0].returned;
 		} else
 			errors.push('Start Value: ' + result[0].returned);
 		if(result[1].success) {
 			if(!result[1].returned.match(/^[0-9\.e\-]+$/))
-				errors.push('Final Value: Non-numeric result encountered: ' + this.workspace.latexToHtml(result[1].returned));
+				errors.push('Final Value: Non-numeric result encountered: ' + this.worksheet.latexToHtml(result[1].returned));
 			else
 				this.finish_val = 1.0 * result[1].returned;
 		} else
 			errors.push('Final Value: ' + result[1].returned);
 		if(result[2].success) {
 			if(!result[2].returned.match(/^[0-9\.e\-]+$/))
-				errors.push('Step Size: Non-numeric result encountered: ' + this.workspace.latexToHtml(result[2].returned));
+				errors.push('Step Size: Non-numeric result encountered: ' + this.worksheet.latexToHtml(result[2].returned));
 			else
 				this.step_val = 1.0 * result[2].returned;
 		} else

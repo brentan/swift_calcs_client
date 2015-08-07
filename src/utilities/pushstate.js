@@ -51,19 +51,19 @@ var PushState = P(function(_) {
 			$('.file_loader').hide();
 			$.ajax({
 	      type: "POST",
-	      url: "/workspace_commands",
+	      url: "/worksheet_commands",
 	      dataType: 'json',
 	      cache: false,
-	      data: { command: 'get_workspace', data: {hash: fragment.replace(/worksheets\/([a-f0-9]*).*$/i,"$1")} }, 
+	      data: { command: 'get_worksheet', data: {hash: fragment.replace(/worksheets\/([a-f0-9]*).*$/i,"$1")} }, 
 	      success: function(response) {
 	      	if(response.success) {
 						$('.file_loader_background').hide();
 						$('.loading_box').hide();
-						if(SwiftCalcs.active_workspace) SwiftCalcs.active_workspace.unbind();
-						var workspace = SwiftCalcs.Workspace(response.name, response.hash, response.id, response.version);
-						workspace.bind($('.workspace_holder'));
-						workspace.load(response.data);
-						window.setTimeout(function() { SwiftCalcs.active_workspace.blur().focus(); SwiftCalcs.active_workspace.ends[-1].focus(-1); });
+						if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
+						var worksheet = SwiftCalcs.Worksheet(response.name, response.hash, response.id, response.version);
+						worksheet.bind($('.worksheet_holder'));
+						worksheet.load(response.data);
+						window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
 	      	}	else {
 						$('.loading_box').hide();
 						$('.file_loader').show();

@@ -3,7 +3,7 @@
  * Note that the actual listeners are in 'saneKeyboardEvents',
  * which is borrowed from the Mathquill source and is an API
  * that cleanly deals with cross-browser issues.  We feed it
- * a hidden textarea to bind events to, as well as the workspace
+ * a hidden textarea to bind events to, as well as the worksheet
  * to call actions on.  The actions it will call are:
  *
  * keystroke(string description, event) - Called for all
@@ -23,7 +23,7 @@
  * here
  *******************************************************/
 
-Workspace.open(function(_) {
+Worksheet.open(function(_) {
   _.pasting = false;
   _.bindKeyboard = function() {
     if(this.bound) return this;

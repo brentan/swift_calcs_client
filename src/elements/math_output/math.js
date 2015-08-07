@@ -117,7 +117,7 @@ var math = P(MathOutput, function(_, super_) {
 					_this.fullEvaluation = false;
 					if(to_compute.trim() === '') {
 						_this.needsEvaluation = false;
-						_this.workspace.save();
+						_this.worksheet.save();
 					}
 				}
 				_this.commands = _this.genCommand(to_compute);

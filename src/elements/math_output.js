@@ -27,7 +27,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		return this;
 	}
 	_.genCommand = function(to_compute) {
-		var to_send = [{command: to_compute, unit: this.workspace.latexToUnit(this.expectedUnits), approx: this.approx, simplify: this.factor_expand}];
+		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, simplify: this.factor_expand}];
 		if(this.pre_command)
 			to_send.pre_command = this.pre_command;
 		return to_send;
@@ -127,13 +127,13 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		this.outputMode = 1;
 		this.outputBox.collapse();
 		this.expandArrow();
-		this.workspace.save();
+		this.worksheet.save();
 		return this;
 	}
 	_.expand = function() {
 		this.outputMode = 2;
 		this.evaluationFinished(this.last_result);
-		this.workspace.save();
+		this.worksheet.save();
 		return this;
 	}
 	_.copyAnswer = function() {

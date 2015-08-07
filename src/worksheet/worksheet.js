@@ -1,13 +1,13 @@
 
 /*
-A workspace is a large container block that houses more blocks, and has its own variable scope for mathjs.
-Workspaces are attached/removed to/from the DOM after initialization with the 'bind'/'unbind' command
+A worksheet is a large container block that houses more blocks, and has its own variable scope for mathjs.
+Worksheets are attached/removed to/from the DOM after initialization with the 'bind'/'unbind' command
 
-To create a workspace, you initialize an object by passing in:
-- Nothing: Create new workspace, default name based on current time
-- String: Create a new workspace with the passed string as its name
+To create a worksheet, you initialize an object by passing in:
+- Nothing: Create new worksheet, default name based on current time
+- String: Create a new worksheet with the passed string as its name
 */
-var Workspace = P(function(_) {
+var Worksheet = P(function(_) {
 	_.parent = 0;
   _[L] = 0;
   _[R] = 0;
@@ -26,12 +26,12 @@ var Workspace = P(function(_) {
 	_.server_version = 1;
 
   var id = 0;
-  function uniqueWorkspaceId() { return id += 1; }
+  function uniqueWorksheetId() { return id += 1; }
 
-  // Create the workspace, pass in an optional name
+  // Create the worksheet, pass in an optional name
 	_.init = function(name, hash, server_id, server_version) { 
 		if((typeof name === 'undefined') || (typeof name === 'undefined')) 
-			throw "Workspace initialized with no name or hash";
+			throw "Worksheet initialized with no name or hash";
 		if(server_id) this.server_id = server_id;
 		if(server_version) ajaxQueue.known_server_version[this.server_id] = server_version;
 		this.name = name;
@@ -41,9 +41,9 @@ var Workspace = P(function(_) {
 		this.ends[L] = 0;
 		this.hashtags = [];
 		this.selection = [];
-		this.id = uniqueWorkspaceId();
+		this.id = uniqueWorksheetId();
 	}
-	// Attach the workspace to the DOM and regenerate HTML
+	// Attach the worksheet to the DOM and regenerate HTML
 	_.bind = function(el) {
 		ans_id = 0;
 		this.jQ = $(el);
@@ -51,8 +51,8 @@ var Workspace = P(function(_) {
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
 		this.jQ.append(this.insertJQ);
 		this.insertJQ.append('<div class="' + css_prefix + 'element_top_spacer"></div>');
-		$('#account_bar .content').html('<div class="' + css_prefix + 'workspace_name"><i class="fa fa-fw fa-file-text-o"></i><input type=text class="' + css_prefix + 'workspace_name"></div>');
-		$('#account_bar input.' + css_prefix + 'workspace_name').val(this.name);
+		$('#account_bar .content').html('<div class="' + css_prefix + 'worksheet_name"><i class="fa fa-fw fa-file-text-o"></i><input type=text class="' + css_prefix + 'worksheet_name"></div>');
+		$('#account_bar input.' + css_prefix + 'worksheet_name').val(this.name);
 		var _this = this;
 		$('#account_bar .content').find('input').on('blur', function(e) {
 			_this.name = $(this).val();
@@ -64,7 +64,7 @@ var Workspace = P(function(_) {
     this.bindToolbar();
 		this.bindMouse();
 		this.bindKeyboard();
-		SwiftCalcs.active_workspace = this;
+		SwiftCalcs.active_worksheet = this;
     $('.fatal_div').hide();
     ajaxQueue.suppress = false;
 		this.bound = true;
@@ -74,7 +74,7 @@ var Workspace = P(function(_) {
 		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
 		if(new_name) {
 			this.name = new_name;
-			$('#account_bar .content').find("input." + css_prefix + "workspace_name").val(this.name);
+			$('#account_bar .content').find("input." + css_prefix + "worksheet_name").val(this.name);
 			if(new_hash && new_server_id) {// new hash and server id provided means this is a duplication event.  Do not save, just update my hash
 				this.hash = new_hash;
 				ajaxQueue.server_version[new_server_id] = ajaxQueue.server_version[this.server_id];
@@ -97,7 +97,7 @@ var Workspace = P(function(_) {
 	      after = blocks[i];
 	    }
 	  } else {
-			math().appendTo(this).show(0);
+			math().appendTo(this).show(0).focus(-1);
 	  }
 	  this.commandChildren(function(_this) { _this.needsEvaluation = false }); // Set to false as we are loading a document and dont want to trigger a save
 	  ajaxQueue.suppress = false;
@@ -152,11 +152,11 @@ var Workspace = P(function(_) {
 		this.commandChildren(function(_this) { _this.setWidth(); });
 		return this;
 	}
-	// Workspace is itself
-	_.getWorkspace = function() {
+	// Worksheet is itself
+	_.getWorksheet = function() {
 		return this;
 	}
-	// Renumber all the lines in the workspace
+	// Renumber all the lines in the worksheet
 	_.renumber = function() {
 		var start = 1;
 		jQuery.each(this.children(), function(i, child) {
@@ -196,7 +196,7 @@ var Workspace = P(function(_) {
 		});
 		return out.join("\n");
   }
-	// Debug.  Print entire workspace tree
+	// Debug.  Print entire worksheet tree
 	_.printTree = function() {
 		var out = '';
 		if(this.children().length > 0) {

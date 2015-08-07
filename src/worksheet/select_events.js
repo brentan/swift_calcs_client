@@ -4,14 +4,14 @@
  * 
  * Mouse events also add/subtract from selection
  * Selected items are held in the 'selection' property
- * in the workspace.  It is assumed that all items are
+ * in the worksheet.  It is assumed that all items are
  * of the same generation in the tree (depth ==) and
  * that they are ordered from top to bottom.  Commands
  * that add or manipulate the selection array should ensure
  * compliance with this assumption
  *******************************************************/
 
-Workspace.open(function(_) {
+Worksheet.open(function(_) {
 	var last_dir = 0;
 	_.selectDir = function(el, dir) {
 		// Select up/left or down/right, depending on dir.  if nothing has been selected yet, el becomes first selection

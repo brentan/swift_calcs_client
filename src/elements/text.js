@@ -27,12 +27,12 @@ var text = P(EditableBlock, function(_, super_) {
     return this;
   }
   _.focus = function(dir) {
-    if(this.workspace.activeElement && (this.workspace.activeElement !== this)) {
-      this.workspace.activeElement.blurred = false;
-      this.workspace.activeElement.blur();
+    if(this.worksheet.activeElement && (this.worksheet.activeElement !== this)) {
+      this.worksheet.activeElement.blurred = false;
+      this.worksheet.activeElement.blur();
     } 
     super_.focus.call(this);
-    this.workspace.attachToolbar(this, this.workspace.toolbar.textToolbar());
+    this.worksheet.attachToolbar(this, this.worksheet.toolbar.textToolbar());
     this.textField.toolbar = $('#toolbar');
     this.textField.focus(dir || 0);
     return this;
@@ -156,14 +156,14 @@ var text = P(EditableBlock, function(_, super_) {
       this.start_target = new_target;
     // Are we clicking/dragging within the area?
     if((this.start_target == new_target) && (this.start_target === -1)) {
-      this.workspace.selectionChanged(true);
+      this.worksheet.selectionChanged(true);
       return false; //We aren't really doing anything...
     } else if(this.start_target == new_target) {
       // Pass control to the textField (by returning false, we prevent bubbling), since we are click/dragging within it
       this.focus(); 
       return false;
     } else { //We clicked in one area and dragged to another, just select the whole element
-      this.workspace.blurToolbar();
+      this.worksheet.blurToolbar();
       return true;
     }
   }
@@ -192,7 +192,7 @@ var text = P(EditableBlock, function(_, super_) {
       return true;
   }
   _.mouseOut = function(e) {
-    this.workspace.blurToolbar();
+    this.worksheet.blurToolbar();
   }
   _.mouseClick = function(e) {
     if(super_.mouseClick.call(this,e)) return true;
@@ -272,17 +272,17 @@ var WYSIWYG = P(function(_) {
     t.$editor 
     .on('keypress', function(e) {
       var ch = String.fromCharCode(e.which);
-      if(t.el.workspace.selection.length > 0) {
+      if(t.el.worksheet.selection.length > 0) {
         e.preventDefault();
-        t.el.workspace.replaceSelection(math(ch), true);
+        t.el.worksheet.replaceSelection(math(ch), true);
         return;
       }
       if((ch == '.') || (ch == ':') || (ch == '-')) t.checkOnSpace = true;
     })
     .on('keydown', function(e){
       var key = stringify(e);
-      if(t.el.workspace.selection.length > 0)
-        return t.el.workspace.keystroke(key, e);
+      if(t.el.worksheet.selection.length > 0)
+        return t.el.worksheet.keystroke(key, e);
       if(key.match(/Shift-.*/))
         t.el.shft = true;
       switch (key) {
@@ -293,7 +293,7 @@ var WYSIWYG = P(function(_) {
           break;
         case 'Ctrl-S':
         case 'Meta-S':
-          t.el.workspace.save(true);
+          t.el.worksheet.save(true);
           e.preventDefault();
           break;
         case 'Shift-Tab':
@@ -409,9 +409,9 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Shift-A':
         case 'Meta-Shift-A':
           // Select everything
-          t.el.workspace.selectAll();
+          t.el.worksheet.selectAll();
           t.el.mouseOut({});
-          t.el.workspace.focus();
+          t.el.worksheet.focus();
           e.preventDefault();
           break;
         case 'Ctrl-Shift-Backspace':
@@ -434,8 +434,8 @@ var WYSIWYG = P(function(_) {
                 });
                 break;
               } else if(t.el[L]) {
-                t.el.workspace.selectDir(t.el[L],L);
-                t.el.workspace.focus();
+                t.el.worksheet.selectDir(t.el[L],L);
+                t.el.worksheet.focus();
               }
             }
             e.preventDefault();
@@ -452,8 +452,8 @@ var WYSIWYG = P(function(_) {
               if(t.el.moveOutLeftRight(t.el.textField, R)) t.el.remove(0); //Only delete me if I successfully moved into a neighbor
             } else {
               if(t.el[R]) {
-                t.el.workspace.selectDir(t.el[R],R);
-                t.el.workspace.focus();
+                t.el.worksheet.selectDir(t.el[R],R);
+                t.el.worksheet.focus();
               }
             }
             e.preventDefault();
@@ -484,9 +484,9 @@ var WYSIWYG = P(function(_) {
         case 'Shift-Left':
         case 'Shift-Up':
           if(t.startPosition()) {
-            t.el.workspace.selectDir(t.el, L);
-            t.el.workspace.selectionChanged();
-            t.el.workspace.activeElement = t.el;
+            t.el.worksheet.selectDir(t.el, L);
+            t.el.worksheet.selectionChanged();
+            t.el.worksheet.activeElement = t.el;
             e.preventDefault();
           }
           break;
@@ -495,9 +495,9 @@ var WYSIWYG = P(function(_) {
         case 'Shift-Down':
         case 'Shift-Right':
           if(t.endPosition()) {
-            t.el.workspace.selectDir(t.el, R);
-            t.el.workspace.selectionChanged();
-            t.el.workspace.activeElement = t.el;
+            t.el.worksheet.selectDir(t.el, R);
+            t.el.worksheet.selectionChanged();
+            t.el.worksheet.activeElement = t.el;
             e.preventDefault();
           }
           break;
@@ -516,9 +516,9 @@ var WYSIWYG = P(function(_) {
       t.el.shft = false;
     })
     .on('paste', function(e) {
-      if(t.el.workspace.selection.length > 0) {
-        // If something is highlighted in the workspace, just pass control up to the workspace paste handler
-        t.el.workspace.pasteHandler(e);
+      if(t.el.worksheet.selection.length > 0) {
+        // If something is highlighted in the worksheet, just pass control up to the worksheet paste handler
+        t.el.worksheet.pasteHandler(e);
       } else {
         if(window.clipboardData)
           var to_paste = window.clipboardData.getData('Text');
@@ -527,14 +527,14 @@ var WYSIWYG = P(function(_) {
         if((to_paste.slice(0,11) == 'SWIFTCALCS:') || (to_paste.slice(0,6) == 'latex{')) {
           // This is a paste from a mathquill elements, OR it is a Swiftcalcs selection paste. 
           if(t.html().trim() == '')
-            t.el.workspace.selection = [t.el];
+            t.el.worksheet.selection = [t.el];
           else {
             t.split();
             var temp_el = text().insertAfter(t.el).show();
-            t.el.workspace.selection = [temp_el];
+            t.el.worksheet.selection = [temp_el];
           }
-          // Redirect the paste event to the workspace textarea, which will then handle it
-          t.el.workspace.pasteHandler(e);
+          // Redirect the paste event to the worksheet textarea, which will then handle it
+          t.el.worksheet.pasteHandler(e);
         } else {
           // SyncCode after paste
           function syncAfterPaste() {
@@ -558,12 +558,12 @@ var WYSIWYG = P(function(_) {
   };
   _.focus = function(dir, dir2) {
     if(this.el.blurred) return this.el.focus(dir);
-    this.el.workspace.unblurToolbar();
+    this.el.worksheet.unblurToolbar();
     if(this.blurred) {
       this.blurred = false;
-      var start_scroll = this.el.workspace.jQ.scrollTop();
+      var start_scroll = this.el.worksheet.jQ.scrollTop();
       this.$creator.focus(); 
-      this.el.workspace.jQ.scrollTop(start_scroll);
+      this.el.worksheet.jQ.scrollTop(start_scroll);
     }
     try {
       if(dir === L) {
@@ -585,14 +585,14 @@ var WYSIWYG = P(function(_) {
       var top = this.$editor.position().top;
       var bottom = top + this.$editor.height();
       var to_move_top = Math.min(0, top);
-      var to_move_bot = Math.max(0, bottom - this.el.workspace.jQ.height()+20);
+      var to_move_bot = Math.max(0, bottom - this.el.worksheet.jQ.height()+20);
       if((to_move_bot > 0) && (to_move_top < 0)) {
         if(dir === R)
-          this.el.workspace.jQ.scrollTop(this.el.workspace.jQ.scrollTop() + to_move_bot);
+          this.el.worksheet.jQ.scrollTop(this.el.worksheet.jQ.scrollTop() + to_move_bot);
         else
-          this.el.workspace.jQ.scrollTop(this.el.workspace.jQ.scrollTop() + to_move_top);
+          this.el.worksheet.jQ.scrollTop(this.el.worksheet.jQ.scrollTop() + to_move_top);
       } else
-        this.el.workspace.jQ.scrollTop(this.el.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
+        this.el.worksheet.jQ.scrollTop(this.el.worksheet.jQ.scrollTop() + to_move_top + to_move_bot);
     }
     return this;
   }
@@ -744,7 +744,7 @@ var WYSIWYG = P(function(_) {
     var t = this;
     if(!force && t.$editor.is(':visible')) {
       t.$e.val(t.$editor.html());
-      t.el.workspace.save();
+      t.el.worksheet.save();
     }
     else
       t.$editor.html(t.$e.val());

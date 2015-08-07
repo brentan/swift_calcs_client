@@ -2,7 +2,7 @@
  * Helper function to transform latex into HTML or evaluatable text *
  ********************************************************************/
 
-Workspace.open(function(_) {
+Worksheet.open(function(_) {
 	var mathField = false;
 	var bindMathfield = function() {
 		if(mathField) return;

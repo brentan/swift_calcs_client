@@ -27,14 +27,14 @@ var aFocusableItem = P(function(_) {
 			var top = this.jQ.position().top;
 			var bottom = top + this.jQ.height();
 			var to_move_top = Math.min(0, top);
-			var to_move_bot = Math.max(0, bottom - this.element.workspace.jQ.height()+20);
+			var to_move_bot = Math.max(0, bottom - this.element.worksheet.jQ.height()+20);
 			if((to_move_bot > 0) && (to_move_top < 0)) {
 				if(dir === R)
-					this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_bot);
+					this.element.worksheet.jQ.scrollTop(this.element.worksheet.jQ.scrollTop() + to_move_bot);
 				else
-					this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_top);
+					this.element.worksheet.jQ.scrollTop(this.element.worksheet.jQ.scrollTop() + to_move_top);
 			}	else
-				this.element.workspace.jQ.scrollTop(this.element.workspace.jQ.scrollTop() + to_move_top + to_move_bot);
+				this.element.worksheet.jQ.scrollTop(this.element.worksheet.jQ.scrollTop() + to_move_top + to_move_bot);
 		}
 		return this;
 	}
@@ -116,13 +116,13 @@ var getDefaultOptions = function(_this) {
         if((dir === L) && _this.scoped && _this.clearVariableStore) return _this.clearVariableStore(true);
         else if((_this instanceof EditableBlock) && _this.empty() && _this.moveOutLeftRight(field, dir)) _this.remove(0);
         else if(_this[dir] && (_this[dir] instanceof EditableBlock) && _this[dir].empty()) _this[dir].remove(0);
-        else if(_this[dir]) _this.workspace.selectDir(_this[dir],dir);
-        else if(_this.depth) _this.workspace.selectDir(_this.parent,dir);
+        else if(_this[dir]) _this.worksheet.selectDir(_this[dir],dir);
+        else if(_this.depth) _this.worksheet.selectDir(_this.parent,dir);
         return;
       }
       if(_this.focusableItems[i_new][j_new] === -1) {
         if(_this.ends[-dir] && (_this.ends[-dir] instanceof EditableBlock) && _this.ends[-dir].empty()) _this.ends[-dir].remove(0);
-        else _this.workspace.selectDir(_this.ends[-dir],dir);
+        else _this.worksheet.selectDir(_this.ends[-dir],dir);
         return;
       } 
       if((i_new == 0) && (j_new == 0) && (dir == L) && (_this.focusableItems[0][0] instanceof CommandBlock) && _this.empty()) {
@@ -145,7 +145,7 @@ var getDefaultOptions = function(_this) {
       window.setTimeout(function() { _this.moveOutLeftRight(field, dir); });
     },
     selectOutOf: function(dir, field) { 
-      window.setTimeout(function() { _this.workspace.selectDir(_this, dir); _this.workspace.selectionChanged(); });
+      window.setTimeout(function() { _this.worksheet.selectDir(_this, dir); _this.worksheet.selectionChanged(); });
     }
   }};
 }

@@ -130,6 +130,17 @@ var receiveMessage = function(command) {
       }
       // Do the assignment.  Test if there were errors, if so, report those.  If not, and output is asked for, we return the value of the stored variable
       var test_output = { success: true, returned: Module.casevalWithTimeout(to_send) };
+      // Work through the warnings.  If any are present and suggesting a different input, lets evaluate that instead
+      for(var j = 0; j < warnings[ii].length; j++) {
+        if(warnings[ii][j].indexOf('Perhaps you meant') > -1) {
+          // Use the cas suggestion, as we probably want to use that
+          to_send = warnings[ii][j].replace('Perhaps you meant ','');
+          errors[ii] = null;
+          warnings[ii] = [];
+          test_output = { success: true, returned: Module.casevalWithTimeout(to_send)};
+          break;
+        }
+      }
       test_output = testError(test_output, ii);
       if(test_output.success) {
         to_send = to_send.replace(/^[\s]*([a-zA-Z0-9_]+).*$/,'$1');
@@ -140,7 +151,10 @@ var receiveMessage = function(command) {
     } 
     if(!command.commands[ii].nomarkup) {
       // if to_send has units associated with it, we attempt to convert to that unit.  On failure, we revert to auto unit handling
-      var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : 'factor';
+      if(to_send.match(/(==|>|<|!=|<=|>=)/))
+        var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : '';
+      else
+        var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : 'factor';
       if(command.commands[ii].approx)
         simplify_command = 'evalf(' + simplify_command;
       else
@@ -167,17 +181,6 @@ var receiveMessage = function(command) {
       output.push({ success: true, returned: Module.casevalWithTimeout(to_send) });
     }
     output[ii] = testError(output[ii],ii);
-    // Work through the warnings.  If any are present and suggesting a different input, lets evaluate that instead
-		for(var j = 0; j < warnings[ii].length; j++) {
-			if(warnings[ii][j].indexOf('Perhaps you meant') > -1) {
-				// Use the cas suggestion, as we probably want to use that
-				to_send = warnings[ii][j].replace('Perhaps you meant ','');
-				errors[ii] = null;
-				warnings[ii] = [];
-				output[ii] = { success: true, returned: Module.casevalWithTimeout(to_send)};
-				break;
-			}
-		}
     // Set any warnings to the output
 		output[ii].warnings = warnings[ii];
 	}
@@ -213,7 +216,7 @@ var Module = {
   preRun: [],
   postRun: [],
   print: function(text) {
-  	if(text.indexOf('error') > -1)
+  	if(text.match(/error/) && !text.match(/Warning/))
   		errors[ii] = fix_message(text);
   	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1) && !text.match(/declared as global/))
   		warnings[ii].push(fix_message(text));
@@ -230,6 +233,12 @@ var Module = {
       // Module.caseval('timeout ' + timeout_length);
       // Module.caseval('ckevery 10000');
     }
+  },
+  caseval2: function(text) {
+    console.log("IN: " + text);
+    var out = Module.caseval2(text);
+    console.log("OUT: " + out);
+    return out;
   },
   casevalWithTimeout: function(text) {
     try {

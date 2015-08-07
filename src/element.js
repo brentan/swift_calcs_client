@@ -1,10 +1,10 @@
 
 /*
-Element is the basic class that defines any block in the workspace.  Blocks can contain other blocks.  Basic navigation:
+Element is the basic class that defines any block in the worksheet.  Blocks can contain other blocks.  Basic navigation:
 [L]: left/up sibling block
 [R]: right/down sibling block
-parent: enclosing block or workspace
-workspace: workspace to which this block belongs
+parent: enclosing block or worksheet
+worksheet: worksheet to which this block belongs
 children: array of child blocks
 ends[L]: left/upmost child block
 ends[R]: right/downmost child block
@@ -19,7 +19,7 @@ Most methods are chainable
 var Element = P(function(_) {
   _[L] = 0;
   _[R] = 0;
-  _.workspace = 0;
+  _.worksheet = 0;
   _.parent = 0;
   _.jQ = 0;
   _.hidden = true;
@@ -129,7 +129,7 @@ var Element = P(function(_) {
 	*/
 	_.insertNextTo = function(sibling, location) {
 		this.parent = sibling.parent;
-		this.updateWorkspace(this.parent.getWorkspace());
+		this.updateWorksheet(this.parent.getWorksheet());
 		this[-location] = sibling;
 		if(sibling[location] !== 0) {
 			sibling[location][-location] = this;
@@ -148,7 +148,7 @@ var Element = P(function(_) {
 		this.setDepth();
 		if(this.implicit && (this[L] == 0) && (this[R] == 0))
 			this.implicit = false;
-		if(this.workspace && !this.implicit) this.workspace.save();
+		if(this.worksheet && !this.implicit) this.worksheet.save();
 		return this;
 	}
 	_.insertAfter = function(sibling) {
@@ -159,7 +159,7 @@ var Element = P(function(_) {
 	}
 	_.insertInto = function(parent, location) {
 		this.parent = parent;
-		this.updateWorkspace(parent.getWorkspace());
+		this.updateWorksheet(parent.getWorksheet());
 		this[-location] = parent.ends[location];
 		parent.ends[location] = this;
 		if(parent.ends[-location] === 0) parent.ends[-location] = this;
@@ -175,7 +175,7 @@ var Element = P(function(_) {
 		this.setDepth();
 		if(this.implicit && (this[L] == 0) && (this[R] == 0))
 			this.implicit = false;
-		if(this.workspace && !this.implicit) this.workspace.save();
+		if(this.worksheet && !this.implicit) this.worksheet.save();
 		return this;
 	}
 	_.prependTo = function(parent) {
@@ -189,11 +189,11 @@ var Element = P(function(_) {
 		replaced.remove();
 		return this;
 	}
-	// Update the workspace of this block and all children
-	_.updateWorkspace = function(workspace) {
-		this.workspace = workspace;
+	// Update the worksheet of this block and all children
+	_.updateWorksheet = function(worksheet) {
+		this.worksheet = worksheet;
 		jQuery.each(this.children(), function(i, child) {
-			child.updateWorkspace(workspace);
+			child.updateWorksheet(worksheet);
 		});
 		return this;
 	}
@@ -230,7 +230,7 @@ var Element = P(function(_) {
 		// Next, insert me into/next to my target
 		if(insertInto === false) {
 			this.parent = target.parent;
-			this.updateWorkspace(this.parent.getWorkspace());
+			this.updateWorksheet(this.parent.getWorksheet());
 			this[-location] = target;
 			if(target[location] !== 0) {
 				target[location][-location] = this;
@@ -244,7 +244,7 @@ var Element = P(function(_) {
 				this.jQ.detach().insertAfter(target.jQ);
 		} else {
 			this.parent = target;
-			this.updateWorkspace(target.getWorkspace());
+			this.updateWorksheet(target.getWorksheet());
 			this[-location] = target.ends[location];
 			target.ends[location] = this;
 			if(target.ends[-location] === 0) target.ends[-location] = this;
@@ -257,13 +257,13 @@ var Element = P(function(_) {
 		this.setDepth();
 		if(this.implicit && (this[L] == 0) && (this[R] == 0))
 			this.implicit = false;
-		if(this.workspace && !this.implicit) this.workspace.save();
+		if(this.worksheet && !this.implicit) this.worksheet.save();
 		return this;
 	}
 	/* Destroy methods.
 	Detach simply writes this elements jQ as a 0.  It assumes it has already been 
 	removed from the DOM elsewhere, likely when a parent had its jQ removed.  It propagates
-	to all children, and is used when a workspace is unbound but kept in memory.
+	to all children, and is used when a worksheet is unbound but kept in memory.
 
 	The remove method is the clean destroy.  Before calling destroy, it will
 	navigate the tree to update points to this object to correctly point around it
@@ -311,8 +311,8 @@ var Element = P(function(_) {
 			this[R].merge();
 		}
 		this.detach();
-		this.workspace.renumber();
-		if(!this.implicit) this.workspace.save();
+		this.worksheet.renumber();
+		if(!this.implicit) this.worksheet.save();
 		return this;
 	}
 	/* Visibility Methods
@@ -382,21 +382,21 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.firstGenAncestor = function() {
-		for(var w = this; !(w.parent instanceof Workspace); w = w.parent) {}
+		for(var w = this; !(w.parent instanceof Worksheet); w = w.parent) {}
 		return w;
 	}
 	_.setDepth = function() {
 		var to_run = function(_this) {
 			_this.depth = 0;
-			for(var w = _this; !(w.parent instanceof Workspace); w = w.parent) { _this.depth++; }
+			for(var w = _this; !(w.parent instanceof Worksheet); w = w.parent) { _this.depth++; }
 		}
 		this.commandChildren(to_run);
-		this.workspace.renumber();
+		this.worksheet.renumber();
 		return this;
 	}
-	// return current workspace
-	_.getWorkspace = function() {
-		return this.workspace;
+	// return current worksheet
+	_.getWorksheet = function() {
+		return this.worksheet;
 	}	
 
 	/*
@@ -412,13 +412,13 @@ var Element = P(function(_) {
 	*/
 	_.move_to_next = false;
 	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method) and whether we also need to evaluate ancesctor/succeeding blocks (fullEvaluation)
-	// This function assigns this evaluation stream a unique id, and registers it in Workspace.  Other functions can cancel this evaluation stream with this unique id.
+	// This function assigns this evaluation stream a unique id, and registers it in Worksheet.  Other functions can cancel this evaluation stream with this unique id.
 	_.evaluate = function(force, force_full) {
 		if(typeof force === 'undefined') force = false;
 		if(typeof force_full === 'undefined') force_full = false;
 		if(this.mark_for_deletion) return;
 		if(!this.needsEvaluation && !force) return this;
-		if(this.needsEvaluation) this.workspace.save();
+		if(this.needsEvaluation) this.worksheet.save();
 		var fullEvaluation = force_full || this.fullEvaluation;
 
 	  // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue
@@ -579,8 +579,8 @@ var Element = P(function(_) {
 		return false;
 	}
 
-	// Journey up parents to the workspace.  Evaluation is linear in the first generation children of workspace.  Below that level,
-	// Children blocks may have non-linear evaluation (such as 'for' loops, etc).  We need to find our ancestor who is a workspace
+	// Journey up parents to the worksheet.  Evaluation is linear in the first generation children of worksheet.  Below that level,
+	// Children blocks may have non-linear evaluation (such as 'for' loops, etc).  We need to find our ancestor who is a worksheet
 	// first generation child, then start the evaluation process there and move inwards/downwards.  
 	// Bring/remove cursor focus to/from the block, if possible
 	// Call all post insert handlers
@@ -593,7 +593,7 @@ var Element = P(function(_) {
 	}
 	/* Event Handlers
 
-	The actual bindings are taken care of at the workspace level, but these functions get called if this element is the target.  These functions
+	The actual bindings are taken care of at the worksheet level, but these functions get called if this element is the target.  These functions
 	are already built out with support for clicking/dragging with math blocks inside elements.  If more nuanced control is needed, these should be overwritten
 
 	Mouse events: these are handled directly by SwiftCalcs using listeners.  The functions here are called by the listerners directly:
@@ -629,7 +629,7 @@ var Element = P(function(_) {
     	this.start_target = new_target;
     // Are we clicking/dragging within the area?
     if((this.start_target == new_target) && (this.start_target === -1)) {
-    	this.workspace.selectionChanged(true);
+    	this.worksheet.selectionChanged(true);
     	return false; //We aren't really doing anything...
     } else if(this.start_target == new_target) {
     	this.start_target.mouseMove(e);
@@ -637,7 +637,7 @@ var Element = P(function(_) {
     	return false;
     } else { //We clicked in one area and dragged to another, just select the whole element
 			if(this.focusedItem) this.focusedItem.mouseOut(e);
-      this.workspace.blurToolbar();
+      this.worksheet.blurToolbar();
     	return true;
     }
 	}
@@ -676,7 +676,7 @@ var Element = P(function(_) {
     	this.start_target.mouseUp(e);
     	this.start_target.focus();
     	if(math_field.length)
-      	this.workspace.unblurToolbar();
+      	this.worksheet.unblurToolbar();
     	// Pass control to the mathField, since we are click/dragging within it
     	return false;
     } else  //We clicked in one area and dragged to another, just select the whole element
@@ -711,7 +711,7 @@ var Element = P(function(_) {
 			this.insertJQ.slideUp({duration: 500});
 			expand.slideDown({duration: 500});
 		}
-		if(!immediately) this.workspace.save();
+		if(!immediately) this.worksheet.save();
 		return this;
 	}
 	_.expand = function(immediately) {
@@ -726,7 +726,7 @@ var Element = P(function(_) {
 			this.insertJQ.slideDown({duration: 500});
 			this.insertJQ.next('.' + css_prefix + 'expand').slideUp({duration: 500, always: function() { $(this).remove(); } });
 		}
-		if(!immediately) this.workspace.save();
+		if(!immediately) this.worksheet.save();
 		return this;
 	}
 	_.collapseArrow = function() {
@@ -894,12 +894,12 @@ var Element = P(function(_) {
 	_.focus = function(dir) {
 		if(!this.blurred) return this;
 		this.lastFocusedItem = false;
-		this.workspace.focus();
-		this.workspace.blurToolbar(this);
-		if(this.workspace.activeElement)
-			this.workspace.activeElement.blur();
+		this.worksheet.focus();
+		this.worksheet.blurToolbar(this);
+		if(this.worksheet.activeElement)
+			this.worksheet.activeElement.blur();
 		this.blurred = false;
-		this.workspace.activeElement = this;
+		this.worksheet.activeElement = this;
 		if(this.leftJQ) this.leftJQ.addClass(css_prefix + 'focused');
 		if(this.jQ) this.jQ.addClass(css_prefix + 'focused');
 		if(dir === 0) { // default '0' focus is to look for first mathquill item in first row.  
@@ -918,7 +918,7 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.blur = function() {
-    this.workspace.blurToolbar(this);
+    this.worksheet.blurToolbar(this);
 		if(this.blurred) return this;
 		this.blurred = true;
 		SwiftCalcs.destroyTooltip();
@@ -926,13 +926,13 @@ var Element = P(function(_) {
   		this.lastFocusedItem = this.focusedItem;
   		this.focusedItem.blur();
   	}
-		if(this.workspace.activeElement == this) { this.workspace.lastActive = this; this.workspace.activeElement = 0; }
+		if(this.worksheet.activeElement == this) { this.worksheet.lastActive = this; this.worksheet.activeElement = 0; }
 		if(this.leftJQ) this.leftJQ.removeClass(css_prefix + 'focused');
 		if(this.jQ) this.jQ.removeClass(css_prefix + 'focused');
 		return this;
 	}
 	_.windowBlur = function() {
-    this.workspace.blurToolbar(this);
+    this.worksheet.blurToolbar(this);
 		this.blurred = true;
   	if(this.focusedItem) this.focusedItem.windowBlur();
 		if(this.leftJQ) this.leftJQ.removeClass(css_prefix + 'focused');
@@ -958,7 +958,7 @@ var Element = P(function(_) {
 	}
 	/* 
 	 Keyboard events.  Will forward the event to whatever item is focusable.  The focusable item should respond to:
-	 If cut/copy handles the cut/copy directly, and should set workspace.clipboard to the appropriate value and return true,
+	 If cut/copy handles the cut/copy directly, and should set worksheet.clipboard to the appropriate value and return true,
 	 or return false and let the browser handle it after bubbling up
 	 keystroke (description, event)
 	 typedText (text)
@@ -1073,7 +1073,7 @@ var Element = P(function(_) {
   	throw("toString called on 'Element' type.  Element is an abtract class that should never be initialized on its own.  Only classes that extend this should ever be created.");
   }
 
-	// Debug.  Print entire workspace tree
+	// Debug.  Print entire worksheet tree
 	_.printTree = function() {
 		var out = '<li>' + this.id;
 		if(this.children().length > 0) {

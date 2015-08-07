@@ -4,12 +4,12 @@ Commands can be queued through this class and then commands run in batches to re
 calls. 
 
 The main calls are:
-saveNeeded(workspace): called to indicate we should save.  After a save needed, a 2 second timer is started, after which the save occurs
+saveNeeded(worksheet): called to indicate we should save.  After a save needed, a 2 second timer is started, after which the save occurs
 if saveNeeded is again called in this timespan, the timer resets.
 
 TODO: Error handling.  What if the server doesnt respond?  Etc.
 
-TODO: Update all of this to rely on real-time (SSE? websockets?) and allow real-time, multi-user editing of workspaces
+TODO: Update all of this to rely on real-time (SSE? websockets?) and allow real-time, multi-user editing of worksheets
 */
 
 
@@ -35,11 +35,11 @@ var ajaxQueueClass = P(function(_) {
 	_.commit = function(id, full) {
 		this.running[id] = true;
 		this.jQ.html('Saving...');
-		this.should_be_server_version[id] = this.holding_pen[id].workspace.toString();
+		this.should_be_server_version[id] = this.holding_pen[id].worksheet.toString();
 		var post_data = {
-			workspace_id: id,
-			name: this.holding_pen[id].workspace.name,
-			bookmarks: this.holding_pen[id].workspace.bookmarks,
+			worksheet_id: id,
+			name: this.holding_pen[id].worksheet.name,
+			bookmarks: this.holding_pen[id].worksheet.bookmarks,
 			known_server_version: this.known_server_version[id]
 		}
 
@@ -57,7 +57,7 @@ var ajaxQueueClass = P(function(_) {
 		this.holding_pen[id] = false;
 		$.ajax({
       type: "POST",
-      url: "/workspace_elements",
+      url: "/worksheet_elements",
       dataType: 'json',
       cache: false,
       data: post_data, 
@@ -114,31 +114,31 @@ var ajaxQueueClass = P(function(_) {
 
 
 	/*
-	Public commands.  All require an item is attached to a workspace.
+	Public commands.  All require an item is attached to a worksheet.
 	*/
-	_.saveNeeded = function(workspace, force) {
+	_.saveNeeded = function(worksheet, force) {
 		if(force) this.suppress = false;
 		if(this.suppress) return;
 		if(!this.saving)
 			this.jQ.html('');
 		this.saving = true;
-		if(this.holding_pen[workspace.server_id] && this.holding_pen[workspace.server_id].timer) 
-			window.clearTimeout(this.holding_pen[workspace.server_id].timer);
-		if(this.running[workspace.server_id]) {
-			this.holding_pen[workspace.server_id] = {
+		if(this.holding_pen[worksheet.server_id] && this.holding_pen[worksheet.server_id].timer) 
+			window.clearTimeout(this.holding_pen[worksheet.server_id].timer);
+		if(this.running[worksheet.server_id]) {
+			this.holding_pen[worksheet.server_id] = {
 				timer: false,
-				workspace: workspace
+				worksheet: worksheet
 			};
 		} else if(force) {
-			this.holding_pen[workspace.server_id] = {
+			this.holding_pen[worksheet.server_id] = {
 				timer: false,
-				workspace: workspace
+				worksheet: worksheet
 			};
-			ajaxQueue.commit(workspace.server_id, true);
+			ajaxQueue.commit(worksheet.server_id, true);
 		} else {
-			this.holding_pen[workspace.server_id] = {
-				timer: window.setTimeout(function() { ajaxQueue.commit(workspace.server_id); }, 2000),
-				workspace: workspace
+			this.holding_pen[worksheet.server_id] = {
+				timer: window.setTimeout(function() { ajaxQueue.commit(worksheet.server_id); }, 2000),
+				worksheet: worksheet
 			};
 		}
 	}

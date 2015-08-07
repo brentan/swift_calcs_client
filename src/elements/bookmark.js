@@ -8,7 +8,7 @@ var bookmark = P(EditableBlock, function(_, super_) {
 	}
 	_.postInsertHandler = function() {
 		var _this = this;
-		this.block = registerFocusable(CommandBlock, this, '', { editable: true, handlers: {onSave: function() { _this.workspace.updateBookmarks(); } } });
+		this.block = registerFocusable(CommandBlock, this, '', { editable: true, handlers: {onSave: function() { _this.worksheet.updateBookmarks(); } } });
 		this.focusableItems = [[this.block]];
 		super_.postInsertHandler.call(this);
 		this.leftJQ.append('<span class="fa fa-bookmark"></span>');
@@ -16,7 +16,7 @@ var bookmark = P(EditableBlock, function(_, super_) {
 	}
 	_.remove = function(duration) {
 		super_.remove.call(this, duration);
-		this.workspace.updateBookmarks();
+		this.worksheet.updateBookmarks();
 		return this;
 	}
 	_.focus = function(dir) {

@@ -105,7 +105,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     			if(this.allowDelete || this.element.empty())
     				this.changeToMath();
 		    	else if(this.editable) {
-		    		this.element.workspace.save();
+		    		this.element.worksheet.save();
 		    		if(this.handlers.onSave) this.handlers.onSave();
     				this.placeCursor(this.location);
 		    	}
@@ -191,7 +191,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     else if(this.children().hasClass('highlighted')) {
     	this.keystroke('Del', { });
     	if(this.editable) {
-    		this.element.workspace.save();
+    		this.element.worksheet.save();
 		    if(this.handlers.onSave) this.handlers.onSave();
     	}
     }
@@ -205,7 +205,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 			var text = this.text(this.jQ.children('var.highlighted'));
 		else
 			var text = '';
-		this.element.workspace.clipboard = text; this.element.workspace.selectFn(text); 
+		this.element.worksheet.clipboard = text; this.element.worksheet.selectFn(text); 
 		return this;
 	}
 	_.write = function(text) {
@@ -227,7 +227,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 			if(this.allowDelete || this.element.empty())
 				this.changeToMath();
     	else if(this.editable) {
-    		this.element.workspace.save();
+    		this.element.worksheet.save();
 		    if(this.handlers.onSave) this.handlers.onSave();
     		this.placeCursor(this.location);
     	}

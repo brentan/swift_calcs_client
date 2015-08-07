@@ -6,7 +6,7 @@
  * to the 'attachToolbar' method
  *******************************************************/
 
-Workspace.open(function(_) {
+Worksheet.open(function(_) {
 
 	_.bindToolbar = function() {
 		this.toolbar = Toolbar($('#toolbar_holder'));

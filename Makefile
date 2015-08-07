@@ -16,8 +16,8 @@ PJS_SRC = ./node_modules/pjs/src/p.js
 SOURCES = \
   $(PJS_SRC) \
   $(SRC_DIR)/*.js \
-  $(SRC_DIR)/workspace/workspace.js \
-  $(SRC_DIR)/workspace/*.js \
+  $(SRC_DIR)/worksheet/worksheet.js \
+  $(SRC_DIR)/worksheet/*.js \
   $(SRC_DIR)/utilities/*.js \
   $(SRC_DIR)/elements/*.js \
   $(SRC_DIR)/elements/*/*.js 

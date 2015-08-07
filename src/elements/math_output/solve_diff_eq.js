@@ -119,8 +119,8 @@ var desolve = P(GiacGeneric, function(_, super_) {
   	var _this = this;
   	this.jQ.find('.' + css_prefix + 'content').find('.' + css_prefix + 'focusableItems').each(function() {
   		if(num >= _this.varFields.length) return;
-  		$(this).find('.eqnum').html(_this.workspace.latexToHtml(pre_syntax[0] + var_name + pre_syntax[1]));
-  		$(this).find('.eqinit').html(_this.workspace.latexToHtml(init_syntax[0] + _this.varFields[num].latex() + init_syntax[1] + init_cond + init_syntax[2]));
+  		$(this).find('.eqnum').html(_this.worksheet.latexToHtml(pre_syntax[0] + var_name + pre_syntax[1]));
+  		$(this).find('.eqinit').html(_this.worksheet.latexToHtml(init_syntax[0] + _this.varFields[num].latex() + init_syntax[1] + init_cond + init_syntax[2]));
   		num++;
   	});
   }
@@ -175,13 +175,13 @@ var desolve = P(GiacGeneric, function(_, super_) {
 				// check for anything that is empty
 				var errors = [];
 				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
-					errors.push('Invalid variable name (' + _this.workspace.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
+					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
 				for(var i = 0; i < _this.eqFields.length; i++)
 					if(_this.eqFields[i].empty()) errors.push('Equation ' + _this.numeric_mode ? ('y\'<sub>' + i + '</sub>') : (y+1) + ' is currently empty.  Please add an equation.');
 				if(_this.numeric_mode) {
 					// numeric solver odesolve
 					if(!_this.varField.text().match(/^[a-z][a-z0-9_]*$/i))
-						errors.push('Invalid variable name (' + _this.workspace.latexToHtml(_this.varField.latex()) + ').  Please enter a valid dependant variable name.  Ex: x');
+						errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid dependant variable name.  Ex: x');
 					for(var i = 0; i < _this.startFields.length; i++)
 						if(_this.startFields[i].empty()) errors.push('Initial condition for y<sub>' + i + '</sub> is currently empty.  Please add an initial condition.');
 					if(_this.endField.empty())
@@ -201,7 +201,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 						v = _this.varFields[i];
 						to_add = v.text();
 						if(!to_add.match(/^[a-z][a-z0-9_]*$/i))
-							errors.push("Invalid variable name (" + _this.workspace.latexToHtml(v.latex()) + ").  Please correct this error to continue.");
+							errors.push("Invalid variable name (" + _this.worksheet.latexToHtml(v.latex()) + ").  Please correct this error to continue.");
 						eq_vars.push(to_add);
 					}
 					var var_command = _this.varField.text() + '=' + _this.startField.text() + '..' + _this.endField.text() + ',';
@@ -217,7 +217,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 				} else {
 					// symbolic solver desolve
 					if(!_this.varField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_]*\)$/i))
-						errors.push('Invalid function name (' + _this.workspace.latexToHtml(_this.varField.latex()) + ').  Please enter a valid function with dependant variables.  Ex: f(x)');
+						errors.push('Invalid function name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid function with dependant variables.  Ex: f(x)');
 					var eqs = [];
 					$.each(_this.eqFields, function(i, v) { eqs.push(v.text()); });
 					var var_command = _this.varField.text({default: 'f(x)'});
@@ -229,7 +229,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 					_this.commands[0].unit_convert = true;
 				}
 				if(errors.length && _this.outputMathBox) {
-					_this.workspace.save();
+					_this.worksheet.save();
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {

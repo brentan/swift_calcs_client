@@ -227,8 +227,8 @@ var SwiftCalcs = {};
   })('prototype', ({}).hasOwnProperty);
 
   $(window).on('resize', function() {
-    if(SwiftCalcs.active_workspace) {
-      SwiftCalcs.active_workspace.reshapeToolbar();
-      SwiftCalcs.active_workspace.setWidth();
+    if(SwiftCalcs.active_worksheet) {
+      SwiftCalcs.active_worksheet.reshapeToolbar();
+      SwiftCalcs.active_worksheet.setWidth();
     }
   });

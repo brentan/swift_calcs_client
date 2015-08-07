@@ -137,8 +137,8 @@ var SelectBox = P(aFocusableItem, function(_, super_) {
 		return this;
 	}
 	_.copy = function(event) {
-		this.element.workspace.clipboard = this.text(); 
-		this.element.workspace.selectFn(this.text()); 
+		this.element.worksheet.clipboard = this.text(); 
+		this.element.worksheet.selectFn(this.text()); 
 		return this;
 	}
 	_.write = function(text) {

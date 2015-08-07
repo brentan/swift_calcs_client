@@ -121,15 +121,15 @@ var solve = P(GiacGeneric, function(_, super_) {
 				// check for anything that is empty
 				var errors = [];
 				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i))
-					errors.push('Invalid variable name (' + _this.workspace.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
+					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
 				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*(,[a-z][a-z0-9_]*)*$/i))
-					errors.push('Invalid variable list (' + _this.workspace.latexToHtml(_this.varField.latex()) + ').  Please enter a valid comma-seperated list of variables');
+					errors.push('Invalid variable list (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid comma-seperated list of variables');
 				if(_this.ask_initial_guess && !_this.guessField.empty() && (_this.guessField.text().split(',').length !== _this.varField.text().split(',').length))
 					errors.push('Invalid guesses.  Please ensure you provide 1 guess for each variable you are solving for (enter as a comma-seperated list)');
 				for(var i = 0; i < _this.eqFields.length; i++)
 					if(_this.eqFields[i].empty()) errors.push('Equation ' + (y+1) + ' is currently empty.  Please add an equation.');
 				if(errors.length && _this.outputMathBox) {
-					_this.workspace.save();
+					_this.worksheet.save();
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {

@@ -99,7 +99,7 @@ var regression = P(GiacGeneric, function(_, super_) {
 				// check for anything that is empty
 				var errors = [];
 				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
-					errors.push('Invalid variable name (' + _this.workspace.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
+					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
 		  	switch(_this.mode) {
 		  		case 'logistic':
 						if(_this.xdata.empty())
@@ -148,7 +148,7 @@ var regression = P(GiacGeneric, function(_, super_) {
 				_this.commands = _this.genCommand(out_command);
 				_this.commands[0].unit_convert = true;
 				if(errors.length && _this.outputMathBox) {
-					_this.workspace.save();
+					_this.worksheet.save();
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {

@@ -5,7 +5,7 @@
  It takes a string and parses it based on groupings of curly braces {}
  It walks through the string in a way that ensures the start/end of each item is based on the
  matching { and }, allowing for nesting.  The output is a list of elements, in order, based on the 
- provided to_paste, that can each then be inserted in turn into the workspace.
+ provided to_paste, that can each then be inserted in turn into the worksheet.
 
  The input string is assumed to be in SwiftCalcs format.  This is simply text with inline commands
  that are set apart using curly brackets (in this way, any text copy/pasted from anywhere can safely
