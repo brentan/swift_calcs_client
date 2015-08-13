@@ -51,7 +51,7 @@ var Worksheet = P(function(_) {
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
 		this.jQ.append(this.insertJQ);
 		this.insertJQ.append('<div class="' + css_prefix + 'element_top_spacer"></div>');
-		$('#account_bar .content').html('<div class="' + css_prefix + 'worksheet_name"><i class="fa fa-fw fa-file-text-o"></i><input type=text class="' + css_prefix + 'worksheet_name"></div>');
+		$('#account_bar .content').html('<div class="' + css_prefix + 'worksheet_name"><input type=text class="' + css_prefix + 'worksheet_name"></div>');
 		$('#account_bar input.' + css_prefix + 'worksheet_name').val(this.name);
 		var _this = this;
 		$('#account_bar .content').find('input').on('blur', function(e) {

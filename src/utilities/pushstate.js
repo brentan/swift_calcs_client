@@ -44,43 +44,48 @@ var PushState = P(function(_) {
   _.loadUrl = function(fragment) {
     if (!this.matchRoot()) return false;
     fragment = this.fragment = this.getFragment(fragment);
-
     if(fragment.match(/worksheets\//i)) {
-			$('.file_loader_background').show();
-			$('.loading_box').show();
-			$('.file_loader').hide();
-			$.ajax({
-	      type: "POST",
-	      url: "/worksheet_commands",
-	      dataType: 'json',
-	      cache: false,
-	      data: { command: 'get_worksheet', data: {hash: fragment.replace(/worksheets\/([a-f0-9]*).*$/i,"$1")} }, 
-	      success: function(response) {
-	      	if(response.success) {
-						$('.file_loader_background').hide();
-						$('.loading_box').hide();
-						if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-						var worksheet = SwiftCalcs.Worksheet(response.name, response.hash, response.id, response.version);
-						worksheet.bind($('.worksheet_holder'));
-						worksheet.load(response.data);
-						window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
-	      	}	else {
-						$('.loading_box').hide();
-						$('.file_loader').show();
-	      		showNotice(response.message, 'red');
-	      	}
-	      },
-	      error: function(err) {
-					$('.loading_box').hide();
-					$('.file_loader').show();
-	      	showNotice('Error: ' + err.responseText, 'red');
-	      	console.log(err);
-	      	//Depending on error, do we try again?
-	      	// TODO: Much better error handling!
-	      }
-	    });
-			return true;
-		}
+      window.showLoadingPopup();
+      $.ajax({
+        type: "POST",
+        url: "/worksheet_commands",
+        dataType: 'json',
+        cache: false,
+        data: { command: 'get_worksheet', data: {hash: fragment.replace(/worksheets\/([a-f0-9]*).*$/i,"$1")} }, 
+        success: function(response) {
+          if(response.success) {
+            window.hideDialogs();
+            if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
+            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash, response.id, response.version);
+            worksheet.bind($('.worksheet_holder'));
+            worksheet.load(response.data);
+            window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
+            if(response.folder_id) 
+              window.setCurrentFolder(response.folder_id, response.folder_url_end);
+          } else {
+            window.showFileDialog();
+            showNotice(response.message, 'red');
+          }
+        },
+        error: function(err) {
+          window.showFileDialog();
+          showNotice('Error: ' + err.responseText, 'red');
+          console.log(err);
+          //Depending on error, do we try again?
+          // TODO: Much better error handling!
+        }
+      });
+      return true;
+    } else if(fragment.match(/folders\//i)) {
+      var hash = fragment.replace(/folders\/([a-f0-9\-]*).*$/i,"$1").split('-');
+      if(hash.length == 0)
+        window.openFileDialog('0','all');
+      else if(hash.length == 1)
+        window.openFileDialog(hash[0], 'all');
+      else
+        window.openFileDialog(hash[0], hash[1]);
+      return true;
+    }
 		return false;
   }
   _.navigate = function(fragment, options) {
