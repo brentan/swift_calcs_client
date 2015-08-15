@@ -51,12 +51,12 @@ var PushState = P(function(_) {
         url: "/worksheet_commands",
         dataType: 'json',
         cache: false,
-        data: { command: 'get_worksheet', data: {hash: fragment.replace(/worksheets\/([a-f0-9]*).*$/i,"$1")} }, 
+        data: { command: 'get_worksheet', data: {hash: fragment.replace(/worksheets\/([^\/]*).*$/i,"$1")} }, 
         success: function(response) {
           if(response.success) {
             window.hideDialogs();
             if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash, response.id, response.version);
+            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash, response.id, response.version, response.rights_level);
             worksheet.bind($('.worksheet_holder'));
             worksheet.load(response.data);
             window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
@@ -77,13 +77,17 @@ var PushState = P(function(_) {
       });
       return true;
     } else if(fragment.match(/folders\//i)) {
-      var hash = fragment.replace(/folders\/([a-f0-9\-]*).*$/i,"$1").split('-');
+      var hash = fragment.replace(/folders\/([a-z0-9\-]*).*$/i,"$1").split('-');
       if(hash.length == 0)
         window.openFileDialog('0','all');
       else if(hash.length == 1)
         window.openFileDialog(hash[0], 'all');
       else
         window.openFileDialog(hash[0], hash[1]);
+      return true;
+    } else if(fragment.match(/bookmarks\//i)) {
+      var hash = fragment.replace(/bookmarks\/([^\/]*).*$/i,"$1")
+      window.openFileDialog(hash, 'bookmark');
       return true;
     }
 		return false;

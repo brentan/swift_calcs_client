@@ -24,18 +24,20 @@ var Worksheet = P(function(_) {
 	_.name = '';
 	_.hash = '';
 	_.server_version = 1;
+	_.rights = 0;
 
   var id = 0;
   function uniqueWorksheetId() { return id += 1; }
 
   // Create the worksheet, pass in an optional name
-	_.init = function(name, hash, server_id, server_version) { 
+	_.init = function(name, hash, server_id, server_version, rights) { 
 		if((typeof name === 'undefined') || (typeof name === 'undefined')) 
 			throw "Worksheet initialized with no name or hash";
 		if(server_id) this.server_id = server_id;
 		if(server_version) ajaxQueue.known_server_version[this.server_id] = server_version;
 		this.name = name;
 		this.hash = hash;
+		this.rights = rights;
 		this.ends = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
@@ -54,7 +56,13 @@ var Worksheet = P(function(_) {
 		$('#account_bar .content').html('<div class="' + css_prefix + 'worksheet_name"><input type=text class="' + css_prefix + 'worksheet_name"></div>');
 		$('#account_bar input.' + css_prefix + 'worksheet_name').val(this.name);
 		var _this = this;
-		$('#account_bar .content').find('input').on('blur', function(e) {
+		$('#account_bar .content').find('input').on('focus', function(e) {
+			if(_this.rights < 4) {
+				showNotice('You do not have sufficient rights to rename this document');
+				this.blur();
+			}
+		}).on('blur', function(e) {
+			if(_this.rights < 4) return;
 			_this.name = $(this).val();
 			_this.save();
 		}).on("keydown",function(e) {
@@ -68,7 +76,60 @@ var Worksheet = P(function(_) {
     $('.fatal_div').hide();
     ajaxQueue.suppress = false;
 		this.bound = true;
+		this.generateTopWarning();
 		return this;
+	}
+	var createWarningBox = function(els) {
+		var div = $('<div/>').addClass('top_warning').append(els);
+		var close = $('<div/>').addClass('fa fa-times close').appendTo(div);
+		close.on('click', function() {
+			$(this).closest('div.top_warning').slideUp({duration: 300, always: function() {$(this).remove(); }});
+		});
+		return div;
+	}
+	_.generateTopWarning = function() {
+		this.jQ.find('.top_warning').remove();
+		switch(this.rights) {
+			case -1: //new worksheet for user who is not logged in...
+				var els = $('<div/>').html('<strong>Welcome to SwiftCalcs</strong>.  To save this masterpiece or share it with others, you must first <a href="#" class="create">login or create an account with Swift Calcs</a>.<BR>Need some direction?  <a href="#" class="tutorial">Take a spin through our tutorial</a> for a quick primer.');
+				els.find('a.tutorial').on('click', function(e) {
+					window.loadTutorial();
+					e.preventDefault();
+					return false;
+				});
+				els.find('a.create').on('click', function(e) {
+					window.loadSigninBox();
+					e.preventDefault();
+					return false;
+				});
+				this.jQ.prepend(createWarningBox(els));
+				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
+				break;
+			case 1: //view-only
+				var els = $('<div/>').html('<strong>File is View Only</strong>.  Any changes you make will not be saved.');
+				this.jQ.prepend(createWarningBox(els));
+				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
+				break;
+			case 2: //view-only but can duplicate
+				if(window.user_logged_in) {
+					var els = $('<div/>').html('<strong>File is View Only</strong>.  To save any changes you have made to this worksheet, <a href="#" class="copy">create a copy of the worksheet</a> in your own folder.');
+					els.find('a.create').on('click', function(e) {
+						window.newWorksheet(true); 
+						e.preventDefault();
+						return false;
+					});
+				} else {
+					var els = $('<div/>').html('<strong>File is View Only</strong>.  You must <a href="#" class="create">login or create an account with Swift Calcs</a> to be able to make an editable copy of this document in order to save changes.');
+					els.find('a.create').on('click', function(e) {
+						window.loadSigninBox();
+						e.preventDefault();
+						return false;
+					});
+				}
+				this.jQ.prepend(createWarningBox(els));
+				this.save(); // Won't actually save, but will set the ajaxQueue.jQ to an appropriate message.
+				break;
+		}
 	}
 	_.rename = function(new_name, new_hash, new_server_id) {
 		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
@@ -186,7 +247,12 @@ var Worksheet = P(function(_) {
     this.bookmarks = marks;
   }
   _.save = function(force) {
-  	ajaxQueue.saveNeeded(this, force);
+  	if(this.rights >= 3)
+  		ajaxQueue.saveNeeded(this, force);
+  	else if(this.rights == 2)
+  		ajaxQueue.jQ.html('Create a duplicate to save your changes');
+  	else
+  		ajaxQueue.jQ.html('This document is view only.  Changes will not be saved.')
   }
   _.toString = function() {
 		var out = [];

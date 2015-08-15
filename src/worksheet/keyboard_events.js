@@ -94,7 +94,8 @@ Worksheet.open(function(_) {
         break;
       case 'Ctrl-O':
       case 'Meta-O':
-        window.openFileDialog();
+        window.loadFolder();
+        SwiftCalcs.giac.cancelEvaluations(); 
         evt.preventDefault();
         break;
       case 'Ctrl-S':
