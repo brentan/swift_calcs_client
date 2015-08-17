@@ -22,7 +22,7 @@ var Worksheet = P(function(_) {
 	_.mousedown = false;
 	_.server_id = -1;
 	_.name = '';
-	_.hash = '';
+	_.hash_string = '';
 	_.server_version = 1;
 	_.rights = 0;
 
@@ -30,13 +30,13 @@ var Worksheet = P(function(_) {
   function uniqueWorksheetId() { return id += 1; }
 
   // Create the worksheet, pass in an optional name
-	_.init = function(name, hash, server_id, server_version, rights) { 
+	_.init = function(name, hash_string, server_id, server_version, rights) { 
 		if((typeof name === 'undefined') || (typeof name === 'undefined')) 
-			throw "Worksheet initialized with no name or hash";
+			throw "Worksheet initialized with no name or hash_string";
 		if(server_id) this.server_id = server_id;
 		if(server_version) ajaxQueue.known_server_version[this.server_id] = server_version;
 		this.name = name;
-		this.hash = hash;
+		this.hash_string = hash_string;
 		this.rights = rights;
 		this.ends = {};
 		this.ends[R] = 0;
@@ -136,8 +136,8 @@ var Worksheet = P(function(_) {
 		if(new_name) {
 			this.name = new_name;
 			$('#account_bar .content').find("input." + css_prefix + "worksheet_name").val(this.name);
-			if(new_hash && new_server_id) {// new hash and server id provided means this is a duplication event.  Do not save, just update my hash
-				this.hash = new_hash;
+			if(new_hash && new_server_id) {// new hash_string and server id provided means this is a duplication event.  Do not save, just update my hash_string
+				this.hash_string = new_hash;
 				ajaxQueue.server_version[new_server_id] = ajaxQueue.server_version[this.server_id];
 				this.server_id = new_server_id;
 				ajaxQueue.known_server_version[this.server_id] = 1;
@@ -231,16 +231,16 @@ var Worksheet = P(function(_) {
     $bookmark.html('');
     var _this = this;
     var marks = [];
-    bookmarks.each(function(i, hash) {
-    	hash = $(hash);
-    	var el = Element.byId[hash.attr(css_prefix + 'element_id')*1];
+    bookmarks.each(function(i, hash_string) {
+    	hash_string = $(hash_string);
+    	var el = Element.byId[hash_string.attr(css_prefix + 'element_id')*1];
     	var link = $('<a href="#">' + el.block.toString() + '</a>');
     	marks.push(el.block.toString());
     	$('<li/>').append(link).appendTo($bookmark);
     	link.on('click', function(e) {
-    		var offset = hash.position().top + _this.jQ.scrollTop();
+    		var offset = hash_string.position().top + _this.jQ.scrollTop();
     		_this.jQ.scrollTop(offset);
-    		hash.stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')}, duration: 600});
+    		hash_string.stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')}, duration: 600});
     		return false;
     	});
     });

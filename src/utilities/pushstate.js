@@ -1,4 +1,4 @@
-/* object that deals with the URL, changing its properties OR hash depending on browser ability */
+/* object that deals with the URL, changing its properties OR hash_string depending on browser ability */
 var PushState = P(function(_) {
   var routeStripper = /^[#\/]|\s+$/g;
   var rootStripper = /^\/+|\/+$/g;
@@ -51,12 +51,12 @@ var PushState = P(function(_) {
         url: "/worksheet_commands",
         dataType: 'json',
         cache: false,
-        data: { command: 'get_worksheet', data: {hash: fragment.replace(/worksheets\/([^\/]*).*$/i,"$1")} }, 
+        data: { command: 'get_worksheet', data: {hash_string: fragment.replace(/worksheets\/([^\/]*).*$/i,"$1")} }, 
         success: function(response) {
           if(response.success) {
             window.hideDialogs();
             if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash, response.id, response.version, response.rights_level);
+            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level);
             worksheet.bind($('.worksheet_holder'));
             worksheet.load(response.data);
             window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
@@ -77,17 +77,17 @@ var PushState = P(function(_) {
       });
       return true;
     } else if(fragment.match(/folders\//i)) {
-      var hash = fragment.replace(/folders\/([a-z0-9\-]*).*$/i,"$1").split('-');
-      if(hash.length == 0)
+      var hash_string = fragment.replace(/folders\/([a-z0-9\-]*).*$/i,"$1").split('-');
+      if(hash_string.length == 0)
         window.openFileDialog('0','all');
-      else if(hash.length == 1)
-        window.openFileDialog(hash[0], 'all');
+      else if(hash_string.length == 1)
+        window.openFileDialog(hash_string[0], 'all');
       else
-        window.openFileDialog(hash[0], hash[1]);
+        window.openFileDialog(hash_string[0], hash_string[1]);
       return true;
     } else if(fragment.match(/bookmarks\//i)) {
-      var hash = fragment.replace(/bookmarks\/([^\/]*).*$/i,"$1")
-      window.openFileDialog(hash, 'bookmark');
+      var hash_string = fragment.replace(/bookmarks\/([^\/]*).*$/i,"$1")
+      window.openFileDialog(hash_string, 'bookmark');
       return true;
     }
 		return false;
@@ -155,7 +155,7 @@ var PushState = P(function(_) {
       var href = location.href.replace(/(javascript:|#).*$/, '');
       location.replace(href + '#' + fragment);
     } else {
-      location.hash = '#' + fragment;
+      location.hash_string = '#' + fragment;
     }
   }
   var decodeFragment = function(fragment) {

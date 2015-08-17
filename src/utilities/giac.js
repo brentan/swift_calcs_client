@@ -221,19 +221,19 @@ var GiacHandler = P(function(_) {
 		var next_scope = el.worksheet.id + '_' + el.id;
 		this.sendCommand({eval_id: eval_id, restart: restart, scoped: el.scoped, move_to_next: move_to_next, commands: commands, previous_scope: previous_scope, next_scope: next_scope, callback_id: el.id, callback_function: callback}, el);
 	}
-	_.sendCommand = function(hash, el) {
+	_.sendCommand = function(hash_string, el) {
 		if(el) {
-			if(this.evaluations[hash.eval_id] === false) return;
-			this.setEvaluationElement(hash.eval_id, el);
+			if(this.evaluations[hash_string.eval_id] === false) return;
+			this.setEvaluationElement(hash_string.eval_id, el);
 		}
-		if(this.giac_ready && ((typeof hash.eval_id === 'undefined') || this.auto_evaluation || this.manual_evaluation[hash.eval_id])) {
+		if(this.giac_ready && ((typeof hash_string.eval_id === 'undefined') || this.auto_evaluation || this.manual_evaluation[hash_string.eval_id])) {
 			//if(typeof window.start_time === 'undefined')
 	  	//	window.start_time = new Date().getTime();
-			this.worker.postMessage(JSON.stringify(hash));
+			this.worker.postMessage(JSON.stringify(hash_string));
 		}	else {
 			if(this.giac_ready) 
 				setManual('Auto-Evaluation is disabled.  <a href="#" onclick="SwiftCalcs.giac.manualEvaluation();$(this).html(\'Starting...\');return false;">Recalculate Now</a> &nbsp; <a href="#" onclick="SwiftCalcs.giac.manual_mode(false);$(this).html(\'Working...\');return false;">Re-enable Auto-Evaluation</a>');
-			window.setTimeout(function(_this) { return function() { _this.sendCommand(hash, el); }; }(this), 250);
+			window.setTimeout(function(_this) { return function() { _this.sendCommand(hash_string, el); }; }(this), 250);
 		}
 	}
 });

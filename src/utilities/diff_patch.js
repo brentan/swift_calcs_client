@@ -1505,7 +1505,7 @@ diff_match_patch.prototype.match_bitap_ = function(text, pattern, loc) {
     var rd = Array(finish + 2);
     rd[finish + 1] = (1 << d) - 1;
     for (var j = finish; j >= start; j--) {
-      // The alphabet (s) is a sparse hash, so the following line generates
+      // The alphabet (s) is a sparse hash_string, so the following line generates
       // warnings.
       var charMatch = s[text.charAt(j - 1)];
       if (d === 0) {  // First pass: exact match.
@@ -1546,7 +1546,7 @@ diff_match_patch.prototype.match_bitap_ = function(text, pattern, loc) {
 /**
  * Initialise the alphabet for the Bitap algorithm.
  * @param {string} pattern The text to encode.
- * @return {!Object} Hash of character locations.
+ * @return {!Object} hash_string of character locations.
  * @private
  */
 diff_match_patch.prototype.match_alphabet_ = function(pattern) {

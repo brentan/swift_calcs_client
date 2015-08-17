@@ -8,7 +8,7 @@ structure:
 	helpText: 'help text for tooltip bubble',
 	function_of: 'n', //List of variables that should be added to StoreAsVariable function.  Include when function returns an algebaric expression of variable 'n'
 	content: [ // An array where each item is a new row.  Items between <<>> will be tranformed into
-						 // the focusableItem with the same name.  Options can be sent with a hash list after the focusable item name
+						 // the focusableItem with the same name.  Options can be sent with a hash_string list after the focusable item name
 		"text:<<MathQuill>>",
 		"text2:<<SelectBox {options: { item: 'value', item2: 'value2' }}>>"
 	],
