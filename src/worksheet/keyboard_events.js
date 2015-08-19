@@ -90,8 +90,14 @@ Worksheet.open(function(_) {
     switch(description) {
       case 'Ctrl-Z':
       case 'Meta-Z':
-        alert('Haven\'t integrated the undo stack yet....sorry');
-        break;
+        this.restoreUndoPoint();
+        evt.preventDefault();
+        return;
+      case 'Ctrl-Y':
+      case 'Meta-Y':
+        this.restoreRedoPoint();
+        evt.preventDefault();
+        return;
       case 'Ctrl-O':
       case 'Meta-O':
         window.loadFolder();
