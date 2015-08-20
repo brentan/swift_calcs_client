@@ -88,6 +88,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     		if(this.allowDelete || this.editable || this.element.empty()) { 
     			// 'allowDelete' means we turn into a math block
     			if(this.children().hasClass('highlighted')) {
+    				this.scheduleUndoPoint();
     				this.children().slice(min(this.location, this.anchor), max(this.location,this.anchor)).remove();
     				this.location = min(this.anchor, this.location);
     			} else {
@@ -98,6 +99,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     					this.handlers.deleteOutOf(R, this);
     					break;
     				}	else {
+    					this.scheduleUndoPoint();
     					if(description.indexOf('Backspace') > -1) this.location--;
     					this.children().eq(this.location).remove();
     				}
@@ -212,6 +214,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		if((text.trim() == '') && !this.editable) return this.flash();
 		if(this.editable && text.match(/({|})/)) return this.flash(); // Don't allow some special characters?
     if(this.allowDelete || this.editable || this.element.empty()) {
+    	this.scheduleUndoPoint();
 			if(this.children().hasClass('highlighted')) {
 				this.children().slice(min(this.location, this.anchor), max(this.location,this.anchor)).remove();
 				this.location = min(this.anchor, this.location);
@@ -371,6 +374,22 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 	_.clear = function() {
 		this.jQ.html('');
 		return this;
+	}
+	_.currentState = function() {
+		return {
+			location: this.location,
+			anchor: this.anchor,
+			text: this.toString()
+		}
+	}
+	_.restoreState = function(data) {
+		this.location = data.location;
+		this.anchor = data.anchor;
+		this.jQ.html('');
+		var text = data.text.split('');
+		for(var i = 0; i < text.length; i++) 
+			$('<var/>').html(text[i]).appendTo(this.jQ);
+		this.updateHighlight();
 	}
 });
 var CodeBlock = P(CommandBlock, function(_, super_) {

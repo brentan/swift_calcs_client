@@ -57,6 +57,8 @@ var text = P(EditableBlock, function(_, super_) {
         this.textField.syncCode();
         return;
       case 'mathMode':
+        if(!rangy.getSelection(this.textField.$editor[0]).collapsed)
+          this.textField.setUndoPoint();
         rangy.getSelection(this.textField.$editor[0]).deleteFromDocument();
         if(cleanHtml(this.textField.html(), false) === '') {
           math().insertAfter(this).show(0).focus(-1);
@@ -93,6 +95,7 @@ var text = P(EditableBlock, function(_, super_) {
         command = 'formatBlock';
         break;
     }
+    this.textField.setUndoPoint();
     window.document.execCommand(command, false, param);
     var font_tag = this.textField.$editor.find('font').first();
     if(font_tag.length > 0) {
@@ -126,6 +129,7 @@ var text = P(EditableBlock, function(_, super_) {
       to_text = '<br>';
     if((to_text != '') && (left.slice(-4).toLowerCase() == '<br>')) 
       line_break = '';
+    // ADD UNDO SUPPORT HERE!
     var el = this[L].append(line_break + '<span id="place_caret"></span>' + to_text).focus();
     var $span = this[L].jQ.find('#place_caret');
     range = rangy.createRange();
@@ -272,6 +276,7 @@ var WYSIWYG = P(function(_) {
     t.$editor 
     .on('keypress', function(e) {
       var ch = String.fromCharCode(e.which);
+      t.scheduleUndoPoint();
       if(t.el.worksheet.selection.length > 0) {
         e.preventDefault();
         t.el.worksheet.replaceSelection(math(ch), true);
@@ -286,16 +291,26 @@ var WYSIWYG = P(function(_) {
       if(key.match(/Shift-.*/))
         t.el.shft = true;
       switch (key) {
+        case 'Ctrl-Z':
+        case 'Meta-Z':
+          t.el.worksheet.restoreUndoPoint();
+          e.preventDefault();
+          return;
+        case 'Ctrl-Y':
+        case 'Meta-Y':
+          t.el.worksheet.restoreRedoPoint();
+          e.preventDefault();
+          return;
         case 'Ctrl-O':
         case 'Meta-O':
           window.openFileDialog();
           e.preventDefault();
-          break;
+          return;
         case 'Ctrl-S':
         case 'Meta-S':
           t.el.worksheet.save(true);
           e.preventDefault();
-          break;
+          return;
         case 'Shift-Tab':
           var li_parent = t.isSelectionInsideElement('li');
           if(li_parent && rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {
@@ -307,6 +322,7 @@ var WYSIWYG = P(function(_) {
               var holder = $(li_parent).parent('ul, ol');
               var ul = holder.is('ul');
               if(holder.parent('ul, ol').length > 0) {
+                t.setUndoPoint();
                 var previous_items = $(li_parent).prevAll();
                 var next_items = $(li_parent).nextAll();
                 if(previous_items.length)
@@ -330,7 +346,8 @@ var WYSIWYG = P(function(_) {
             var startContainer = range.startContainer;
             var startOffset = range.startOffset;
             range.setStart(li_parent,0)
-            if(cleanHtml(range.toHtml(), false).length == 0) {
+            if(cleanHtml(range.toHtml(), false).length == 0) { 
+              t.setUndoPoint();
               if($(li_parent).next().is('ul, ol') && $(li_parent).prev().is('ul, ol')) {
                 // merge the preceeding, suceeding lists
                 var next = $(li_parent).next();
@@ -376,6 +393,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Enter':
         case 'Enter':
           // Delete whatever is highlighted
+          if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) t.setUndoPoint();
           rangy.getSelection(t.$editor[0]).deleteFromDocument();
           // First see if we are in a list.  If so, enter should add a new bullet
           if(t.isSelectionInsideElement('li')) {
@@ -418,7 +436,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Backspace':
         case 'Shift-Backspace':
         case 'Backspace':
-          if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) return;
+          if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {  t.setUndoPoint(); return; }
           // Check if we are in first spot.  If so, delete backwards OR highlight block
           if(t.startPosition()) {
             if(cleanHtml(t.html(), false) === '') {
@@ -439,13 +457,14 @@ var WYSIWYG = P(function(_) {
               }
             }
             e.preventDefault();
-          }
+          } else
+            t.scheduleUndoPoint();
           break;
         case 'Ctrl-Shift-Del':
         case 'Ctrl-Del':
         case 'Shift-Del':
         case 'Del':
-          if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) return;
+          if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) { t.setUndoPoint(); return; }
           // Same as above, but at the end position
           if(t.endPosition()) {
             if(cleanHtml(t.html(), false) === '') {
@@ -457,7 +476,8 @@ var WYSIWYG = P(function(_) {
               }
             }
             e.preventDefault();
-          }
+          } else
+            t.scheduleUndoPoint();
           break;
         case 'Left':
           // If already at start, move into previous element
@@ -503,6 +523,7 @@ var WYSIWYG = P(function(_) {
           break;
       } 
       t.checkOnSpace = false;
+      t.keydownState = t.currentState();
     })
     .on('focus', function(){
       t.focus();
@@ -512,8 +533,12 @@ var WYSIWYG = P(function(_) {
       if(!t.el.blurred) t.el.blur();
     })
     .on('keyup', function() {
+      t.keydownState = false;
       t.syncCode();
       t.el.shft = false;
+    })
+    .on('cut', function(e) {
+      t.setUndoPoint();
     })
     .on('paste', function(e) {
       if(t.el.worksheet.selection.length > 0) {
@@ -536,6 +561,7 @@ var WYSIWYG = P(function(_) {
           // Redirect the paste event to the worksheet textarea, which will then handle it
           t.el.worksheet.pasteHandler(e);
         } else {
+          t.setUndoPoint();
           // SyncCode after paste
           function syncAfterPaste() {
             t.write('<span class="caret_position" style="display:none;">&#65279;</span>');
@@ -622,6 +648,7 @@ var WYSIWYG = P(function(_) {
   // move_cursor is true, the html should contain a <span id='caret_position'></span> and
   // The caret will be inserted there (and the span removed)
   _.replaceToBeginningOfLine = function(html) {
+    this.setUndoPoint();
     // Select from caret to beginning of line
     var range = rangy.getSelection(this.$editor[0]).getRangeAt(0).cloneRange();
     var $span = $('<span/>');
@@ -670,6 +697,7 @@ var WYSIWYG = P(function(_) {
   }
   _.split = function() {
     var t = this;
+    this.setUndoPoint();
     rangy.getSelection(t.$editor[0]).deleteFromDocument();
     t.select_to(R);
     var to_move = rangy.getSelection(t.$editor[0]).toHtml();
@@ -723,6 +751,7 @@ var WYSIWYG = P(function(_) {
   _.html = function(html){
     var t = this;
     if(html){
+      this.setUndoPoint();
       t.$e.val(html);
       t.syncCode(true);
       return t;
@@ -832,6 +861,7 @@ var WYSIWYG = P(function(_) {
   }
   // Insert html just after cursor location
   _.write = function(html, move_cursor) {
+    this.scheduleUndoPoint();
     var el = $('<div/>');
     el.html(html);
     var frag = document.createDocumentFragment(), node;
@@ -934,6 +964,40 @@ var WYSIWYG = P(function(_) {
     range.setEndBefore($span[0]);
     rangy.getSelection().setSingleRange(range);
     $span.remove();
+  }
+  _.currentState = function() {
+    if(this.keydownState) return this.keydownState; // Why the hack? keypress is called AFTER the dom is updated..., but keydown is called for shift, ctrl, and other keys that add no info
+    var sel = rangy.getSelection(this.$editor[0]).getRangeAt(0); // Replace with var sel = window.getSelection(); to remove rangy
+    var span = $("<span class='range_end'>&#8203;</span>"); //zero width space
+    sel.collapse(false);
+    sel.insertNode(span[0]);
+    sel = rangy.getSelection(this.$editor[0]).getRangeAt(0);
+    var span2 = $("<span class='range_start'>&#8203;</span>"); //zero width space
+    sel.insertNode(span2[0]);
+    var html = this.$editor.html();
+    span.remove();
+    span2.remove();
+    return { html: html };
+  }
+  _.restoreState = function(data) {
+    this.$editor.html(data.html);
+    var range = rangy.createRange();
+    var span = this.$editor.find('span.range_start');
+    var span2 = this.$editor.find('span.range_end');
+    range.setStartAfter(span[0]);
+    range.setEndBefore(span2[0]);
+    range.select();
+    span.remove();
+    span2.remove();
+    this.$e.val(this.$editor.html());
+  }
+  _.scheduleUndoPoint = function() {
+    if(this.el && this.el.worksheet)
+      this.el.worksheet.scheduleUndoPoint(this);
+  }
+  _.setUndoPoint = function() {
+    if(this.el && this.el.worksheet)
+      this.el.worksheet.setUndoPoint(this);
   }
 
 });

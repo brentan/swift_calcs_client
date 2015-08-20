@@ -93,6 +93,14 @@ var aFocusableItem = P(function(_) {
 	_.clear = function() {
 		return this;
 	}
+	_.scheduleUndoPoint = function() {
+		if(this.element && this.element.worksheet)
+			this.element.worksheet.scheduleUndoPoint(this);
+	}
+	_.setUndoPoint = function() {
+		if(this.element && this.element.worksheet)
+			this.element.worksheet.setUndoPoint(this);
+	}
 });
 
 var getDefaultOptions = function(_this) {

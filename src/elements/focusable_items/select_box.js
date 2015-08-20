@@ -46,8 +46,10 @@ var SelectBox = P(aFocusableItem, function(_, super_) {
 			this.highlight(this.position);
 		this.opened = true;
 	}
-	_.select = function(index) {
+	_.select = function(index, skip_undo) {
 		if(this.position !== index) {
+			if(!skip_undo)
+				this.scheduleUndoPoint();
 			this.position = index;
 			this.changed();
 			this.evaluateElement();
@@ -176,6 +178,14 @@ var SelectBox = P(aFocusableItem, function(_, super_) {
 		} else 
 			this.select(0);
 		return this;
+	}
+	_.currentState = function() {
+		return {
+			position: this.position
+		}
+	}
+	_.restoreState = function(data) {
+		this.select(data.position, true);
 	}
 });
 
