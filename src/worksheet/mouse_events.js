@@ -267,6 +267,7 @@ Worksheet.open(function(_) {
         }
     		function drag_done_handler(el, into, dir) {
 		  		// Begin moving the selected elements to the new target
+          _this.startUndoStream();
 		  		_this.clearSelection(true);
           var eval_target = false;
           if(_this.selection.length > 0) {
@@ -301,6 +302,7 @@ Worksheet.open(function(_) {
             _this.selection[i].evaluate(true); // Evaluate the moved blocks
 		  		_this.createSelection(active_elements);
 		  		_this.focus();
+          _this.endUndoStream();
     		}
 	      // We can't preventDefault on mousedown, because that will kill the draggable calls.  But by allowing it, we blur the textarea.
 	      // Set 'dragging' to true so that we know we are in a situation where we are blurred.

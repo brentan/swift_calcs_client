@@ -390,6 +390,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		for(var i = 0; i < text.length; i++) 
 			$('<var/>').html(text[i]).appendTo(this.jQ);
 		this.updateHighlight();
+    this.element.worksheet.save();
 	}
 });
 var CodeBlock = P(CommandBlock, function(_, super_) {

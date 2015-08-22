@@ -175,6 +175,7 @@ var Worksheet = P(function(_) {
 	}
 	// Detach method (remove from the DOM)
 	_.unbind = function() {
+		this.clearUndoStack();
 		this.unbindMouse();
 		this.unbindKeyboard();
 		this.toolbar.detachToolbar();

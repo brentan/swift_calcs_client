@@ -38,6 +38,7 @@ var Element = P(function(_) {
 	_.needsEvaluation = false; // This is whether an evaluatable element, when evaluated directly (not in a queue through fullEvaluation), should be evaluated
 	_.evaluatable = false;     // Is this element evaluatable?  If not, just skip it
 	_.fullEvaluation = false;  // When evaluated, should this element evaluate ancestors and suceeding elements?
+	_.forceFullEvaluation = false; // Used by remove method to set later blocks to act like a full evaluation block temporarily
 	_.scoped = false;          // Can this element change the scope (set/change variables).  If so, we need to keep track of scope here
 	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
 
@@ -79,6 +80,7 @@ var Element = P(function(_) {
 	preRemoveHandler is called on this block immediately before the elements are removed from the DOM
 	*/
 	_.regenerateHtml = function() {
+		if(this.worksheet && this.worksheet.activeUndo) return this;
 		this.jQ = $('<div style="display:none;" ' + css_prefix + 'element_id=' + this.id + ' class="' + css_prefix + 'element '
 			+ jQuery.map(this.klass, function(k) { return (css_prefix + k) }).join(' ') + '">'
 			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"><i class="fa fa-exclamation-triangle"></i><span></span><div class="' + css_prefix + 'element_collapse">'
@@ -120,6 +122,17 @@ var Element = P(function(_) {
 		});
 		return this;
 	}
+	// Allow blocks to define handlers to run before being re-inserted (after a remove event, such as a deletion/undo)
+	// Essentially the reverse of preRemoveHandler.
+	_.preReinsertHandler = function() {
+		this.mark_for_deletion = false;
+		this.forceFullEvaluation = false;
+		this.jQ.show();
+		jQuery.each(this.children(), function(i, child) {
+			child.preReinsertHandler();
+		});
+		return this;
+	}
 
 	/* 
 	Insert methods
@@ -130,6 +143,7 @@ var Element = P(function(_) {
 	_.insertNextTo = function(sibling, location) {
 		this.parent = sibling.parent;
 		this.updateWorksheet(this.parent.getWorksheet());
+		if(this.worksheet && !this.implicit) this.worksheet.setUndoPoint(this, { command: 'insert' });
 		this[-location] = sibling;
 		if(sibling[location] !== 0) {
 			sibling[location][-location] = this;
@@ -160,6 +174,7 @@ var Element = P(function(_) {
 	_.insertInto = function(parent, location) {
 		this.parent = parent;
 		this.updateWorksheet(parent.getWorksheet());
+		if(this.worksheet && !this.implicit) this.worksheet.setUndoPoint(this, { command: 'insert' });
 		this[-location] = parent.ends[location];
 		parent.ends[location] = this;
 		if(parent.ends[-location] === 0) parent.ends[-location] = this;
@@ -185,8 +200,11 @@ var Element = P(function(_) {
 		return this.insertInto(parent, R);
 	}
 	_.replace = function(replaced) {
+		var stream = !this.trackingStream;
+		if(stream) this.startUndoStream();
 		this.insertAfter(replaced);
 		replaced.remove();
+		if(stream) this.endUndoStream();
 		return this;
 	}
 	// Update the worksheet of this block and all children
@@ -217,6 +235,7 @@ var Element = P(function(_) {
 	*/
 	_.move = function(target, location, insertInto) {
 		// First, basically remove this item from the tree
+		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'move', L: this[L], parent: this.parent });
 		if(this[L] !== 0) 
 			this[L][R] = this[R];
 		else
@@ -261,32 +280,40 @@ var Element = P(function(_) {
 		return this;
 	}
 	/* Destroy methods.
-	Detach simply writes this elements jQ as a 0.  It assumes it has already been 
+	Destroy writes this elements jQ as a 0 to fully delete it.  It assumes it has already been 
 	removed from the DOM elsewhere, likely when a parent had its jQ removed.  It propagates
-	to all children, and is used when a worksheet is unbound but kept in memory.
+	to all children, and is used when an element is removed from the undoManager
 
-	The remove method is the clean destroy.  Before calling destroy, it will
+	The remove method will
 	navigate the tree to update points to this object to correctly point around it
 	and patch the tree.  It will also detach elements from the DOM and call any
-	pre-descruction handlers.  After this is run, there should no longer be any pointers
-	to this object, so it should be garbage collected.
+	pre-descruction handlers.  After this is run, the only pointers
+	to this object should be in the undomanager, and after removal
+	from the manager there should be no references and it should be garbage collected.
 	*/
-	_.detach = function() {
-		this.jQ = 0;
-		$.each(this.children(), function(i, child) { child.detach(); });
+	_.destroy = function() {
+		$.each(this.children(), function(i, child) { child.destroy(); });
+		if(this.jQ) this.jQ.empty();
+		delete this[L];
+		delete this[R];
+		delete this.ends[L];
+		delete this.ends[R];
+		delete this.jQ;
 		return this;
 	}
 	_.remove = function(duration) {
+		// Add this to the undoManager
+		if(this.worksheet && !this.implicit) this.worksheet.setUndoPoint(this, { command: 'remove', L: this[L], parent: this.parent });
 		duration = typeof duration === 'undefined' ? 200 : duration;
 		this.preRemoveHandler();
-		if(this.fullEvaluation) {
+		if(this.fullEvaluation || this.forceFullEvaluation) {
 			if((this.depth == 0) && this[R]) {
 				var to_eval = this[R];
-				if(to_eval.mark_for_deletion) to_eval.fullEvaluation = true;
+				if(to_eval.mark_for_deletion) to_eval.forceFullEvaluation = true;
 				else window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
 			} else if(this.depth > 0) {
 				var to_eval = this.firstGenAncestor();
-				if(to_eval.mark_for_deletion) to_eval.fullEvaluation = true;
+				if(to_eval.mark_for_deletion) to_eval.forceFullEvaluation = true;
 				else window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
 			}
 		}
@@ -302,18 +329,50 @@ var Element = P(function(_) {
 			this.parent.ends[R] = this[L];
 		if(this.jQ !== 0) {
 			if(this.hidden || (duration == 0)) {
-				this.jQ.remove();
+				this.jQ.detach();
 			} else 
-				this.jQ.slideUp({duration: duration, always: function() { $(this).remove(); }});
+				this.jQ.slideUp({duration: duration, always: function() { $(this).detach(); }});
 		}
 		if((this[L] instanceof text) && (this[R] instanceof text) && !this[L].mark_for_deletion && !this[R].mark_for_deletion) {
 			// If we delete something between text nodes, we should merge those nodes
 			this[R].merge();
 		}
-		this.detach();
 		this.worksheet.renumber();
 		if(!this.implicit) this.worksheet.save();
 		return this;
+	}
+	// Undo/Redo restore
+	_.restoreState = function(action) {
+		// The command is what was done to the item, so we should do the inverse
+		switch(action.command) {
+			case 'remove':
+				if(action.L)
+					this.insertAfter(action.L);
+				else
+					this.appendTo(action.parent);
+				window.setTimeout(function(to_eval) { return function() { to_eval.evaluate(true); }; }(this), 100);
+				break;
+			case 'insert':
+				this.remove(0);
+				break;
+			case 'move':
+				// BRENTAN: Move restores are inefficient.  We may end up calling lots of forced full evaluations on elements
+				// that get canceled out, but only after starting evaluation.  This should work more like the mouse drag
+				// move, but that 'knows' about all the elements in the move, while here we only know about ourself...
+				if(this.fullEvaluation) {
+					//In a full evaluation scenario, we should evaluate the neighbor above as well...
+					var first = this.firstGenAncestor();
+					if(first == this) first = first[L];
+					if(first)
+						window.setTimeout(function(to_eval) { return function() { to_eval.evaluate(true, true); }; }(first), 100);
+				}
+				if(action.L)
+					this.move(action.L, R, false);
+				else
+					this.move(action.parent, L, true);
+				window.setTimeout(function(to_eval) { return function() { to_eval.evaluate(true); }; }(this), 100);
+				break;
+		}
 	}
 	/* Visibility Methods
 	Change visibility, optional animation
@@ -419,7 +478,7 @@ var Element = P(function(_) {
 		if(this.mark_for_deletion) return;
 		if(!this.needsEvaluation && !force) return this;
 		if(this.needsEvaluation) this.worksheet.save();
-		var fullEvaluation = force_full || this.fullEvaluation;
+		var fullEvaluation = force_full || this.fullEvaluation || this.forceFullEvaluation;
 
 	  // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue
 		var current_evaluations = giac.current_evaluations();
@@ -585,6 +644,7 @@ var Element = P(function(_) {
 	// Bring/remove cursor focus to/from the block, if possible
 	// Call all post insert handlers
 	_.postInsert = function() {
+		if(this.worksheet && this.worksheet.activeUndo) return this.preReinsertHandler();
 		this.postInsertHandler();
 		$.each(this.children(), function(i, child) {
 			child.postInsert();

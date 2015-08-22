@@ -250,13 +250,17 @@ Worksheet.open(function(_) {
         if(this.activeElement.focusedItem && this.activeElement.focusedItem.mathquill)
           return this.activeElement.write(to_paste);
         else {
-          return math().insertAfter(this.activeElement).show(0).focus(R).write(to_paste);
+          this.startUndoStream();
+          var el = math().insertAfter(this.activeElement).show(0).focus(R).write(to_paste);
+          this.endUndoStream();
+          return el;
         }
       } else if(to_paste.slice(0,11) === 'SWIFTCALCS:') 
         var blocks = parse(to_paste.slice(11));
       else {
         var blocks = sanitize(html ? html : to_paste); 
       }
+      this.startUndoStream();
       var after = this.activeElement;
       for(var i = 0; i < blocks.length; i++) {
         blocks[i].insertAfter(after).show(0);
@@ -265,6 +269,7 @@ Worksheet.open(function(_) {
       if((this.activeElement instanceof math) && (this.activeElement.mathField.text() == '')) this.activeElement.remove(0);
       if(i > 0)
         blocks[i-1].moveInFrom(R);
+      this.endUndoStream();
     } else {
       // Something was selected at paste at the element level or above...so we have to overwrite it
       if(to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') // This was a cut/copy -> paste from within a mathquill block.  We need to convert to a mathblock
@@ -274,6 +279,7 @@ Worksheet.open(function(_) {
       else {
         var blocks = sanitize(html ? html : to_paste);
       }
+      this.startUndoStream();
       if(blocks.length == 0) //Nothing to paste somehow...so just remove the highlighting and refocus
         this.deleteSelection(true, R);
       else {
@@ -285,6 +291,7 @@ Worksheet.open(function(_) {
         }
         blocks[i-1].moveInFrom(R);
       }
+      this.endUndoStream();
     }
   }
 });

@@ -990,6 +990,7 @@ var WYSIWYG = P(function(_) {
     span.remove();
     span2.remove();
     this.$e.val(this.$editor.html());
+    this.el.worksheet.save();
   }
   _.scheduleUndoPoint = function() {
     if(this.el && this.el.worksheet)

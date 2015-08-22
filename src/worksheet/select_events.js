@@ -115,15 +115,20 @@ Worksheet.open(function(_) {
   }
   _.replaceSelection = function(replacement, focus) {
   	if(this.selection.length == 0) throw("Nothing is selected to be replaced")
+  	var stream = !this.trackingStream;
+  	if(stream) this.startUndoStream();
   	replacement.insertBefore(this.selection[0]).show();
   	if(focus) replacement.focus(R);
   	jQuery.each(this.selection, function(i,v) { v.mark_for_deletion = true; });
   	jQuery.each(this.selection, function(i,v) { v.remove(0); });
   	this.clearSelection();
+  	if(stream) this.endUndoStream();
   	return this;
   }
   _.deleteSelection = function(focus, dir) {
   	if(this.selection.length == 0) return this;
+  	var stream = !this.trackingStream;
+  	if(stream) this.startUndoStream();
   	if(focus) {
   		// Determine if we need to add an implicit element
   		if(!(this.selection[0][L] instanceof EditableBlock) && !(this.selection[this.selection.length - 1][R] instanceof EditableBlock))
@@ -139,6 +144,7 @@ Worksheet.open(function(_) {
   	jQuery.each(this.selection, function(i,v) { v.mark_for_deletion = true; });
   	jQuery.each(this.selection, function(i,v) { v.remove(0); });
   	this.clearSelection();
+  	if(stream) this.endUndoStream();
   	return this;
   }
   _.selectionChanged = function(force) {
