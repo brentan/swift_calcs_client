@@ -48,6 +48,8 @@ var math = P(MathOutput, function(_, super_) {
       if(SwiftCalcs.elements[command.toLowerCase()]) {
       	var new_el = SwiftCalcs.elements[command.toLowerCase()]();
       	if(new_el.storeAsVariable) {
+					var stream = this.worksheet.trackingStream;
+					if(!stream) this.worksheet.startUndoStream();
       		// Good to go
 					this.mark_for_deletion = true;
       		var var_name = to_text.replace(/^([^=]*) := [a-z0-9\.-]*$/i,"$1");
@@ -55,6 +57,7 @@ var math = P(MathOutput, function(_, super_) {
 					new_el.insertAfter(this).show().focus(0);
 					new_el.storeAsVariable(var_name);
 					this.remove(0);
+					if(!stream) this.worksheet.endUndoStream();
 					return true;
       	} else
       		return false;
@@ -63,6 +66,8 @@ var math = P(MathOutput, function(_, super_) {
 		}
 		this.mark_for_deletion = true;
 		if(to_text === '#') to_text = 'bookmark';
+		var stream = this.worksheet.trackingStream;
+		if(!stream) this.worksheet.startUndoStream();
 		if(elements[to_text.toLowerCase()]) {
 			this.needsEvaluation = false;
 			elements[to_text.toLowerCase()]().insertAfter(this).show().focus(0);
@@ -82,13 +87,15 @@ var math = P(MathOutput, function(_, super_) {
 				el.append('&nbsp;').focus(R);
 		}
 		this.remove(0);
+		if(!stream) this.worksheet.endUndoStream();
 		return true;
 	}
 	_.was_scoped = false;
 	_.submissionHandler = function(_this) {
 		return function() {
-			if(_this.empty())
+			if(_this.empty()) {
 				_this.outputBox.collapse();
+			}
 			if(_this.needsEvaluation) {
 				//console.log(_this.mathField.text());
 				var to_compute = _this.mathField.text();
@@ -100,8 +107,11 @@ var math = P(MathOutput, function(_, super_) {
 				if(elements[to_compute.toLowerCase()]) {
 					_this.mark_for_deletion = true;
 					_this.needsEvaluation = false;
+					var stream = _this.worksheet.trackingStream;
+					if(!stream) _this.worksheet.startUndoStream();
 					elements[to_compute.toLowerCase()]().insertAfter(_this).show();
 					_this.remove(0);
+					if(!stream) _this.worksheet.endUndoStream();
 					return;
 				}
 				if(to_compute.indexOf(':=') > -1) {
@@ -142,7 +152,7 @@ var math = P(MathOutput, function(_, super_) {
 	}
 	_.blur = function() {
 		super_.blur.call(this);
-		if(this.implicit && this.empty())
+		if(this.implicit && this.empty() && this.inTree && !((this.parent.ends[L] === this) && (this.parent.ends[R] === this))) 
 			this.remove();
 		return this;
 	}

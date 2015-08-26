@@ -24,7 +24,8 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		this.allowDelete = options.allowDelete;
 		this.editable = options.editable;
     this.cursor = $('<span class="' + css_prefix + 'cursor">&#8203;</span>');
-		this.jQ.html('<var>' + klass.split('').join('</var><var>') + '</var>');
+    if(!this.editable && klass.length)
+			this.jQ.html('<var>' + klass.split('').join('</var><var>') + '</var>');
 	}
 
 	_.children = function() {
@@ -33,6 +34,12 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 	// API Functions that are called by the enclosing element //
 	_.keystroke = function(description, event) {
 		switch(description) {
+			case 'Ctrl-A':
+			case 'Meta-A':
+				this.anchor = 0;
+				this.location = this.children().length;
+				this.updateHighlight();
+				break;
 			case 'Left':
 				this.moveCursor(L);
 				break;
@@ -87,29 +94,29 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 	    case 'Del':
     		if(this.allowDelete || this.editable || this.element.empty()) { 
     			// 'allowDelete' means we turn into a math block
-    			if(this.children().hasClass('highlighted')) {
-    				this.scheduleUndoPoint();
-    				this.children().slice(min(this.location, this.anchor), max(this.location,this.anchor)).remove();
-    				this.location = min(this.anchor, this.location);
-    			} else {
-    				if((this.location == 0) && (description.indexOf('Backspace') > -1)) {
-    					this.handlers.deleteOutOf(L, this);
-    					break;
-    				}	else if((this.location == this.children().length) && (description.indexOf('Backspace') == -1)) {
-    					this.handlers.deleteOutOf(R, this);
-    					break;
-    				}	else {
-    					this.scheduleUndoPoint();
-    					if(description.indexOf('Backspace') > -1) this.location--;
-    					this.children().eq(this.location).remove();
-    				}
-    			}
-    			if(this.allowDelete || this.element.empty())
-    				this.changeToMath();
-		    	else if(this.editable) {
+    			if(this.editable) {
+	    			if(this.children().hasClass('highlighted')) {
+	    				this.scheduleUndoPoint();
+	    				this.children().slice(min(this.location, this.anchor), max(this.location,this.anchor)).remove();
+	    				this.location = min(this.anchor, this.location);
+	    			} else {
+	    				if((this.location == 0) && (description.indexOf('Backspace') > -1)) {
+	    					this.handlers.deleteOutOf(L, this);
+	    					break;
+	    				}	else if((this.location == this.children().length) && (description.indexOf('Backspace') == -1)) {
+	    					this.handlers.deleteOutOf(R, this);
+	    					break;
+	    				}	else {
+	    					this.scheduleUndoPoint();
+	    					if(description.indexOf('Backspace') > -1) this.location--;
+	    					this.children().eq(this.location).remove();
+	    				}
+	    			}
 		    		this.element.worksheet.save();
 		    		if(this.handlers.onSave) this.handlers.onSave();
     				this.placeCursor(this.location);
+    			} else {
+    				this.changeToMath();
 		    	}
     		} else {
     			// delete out
@@ -173,6 +180,8 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     event.preventDefault();
 	}
 	_.changeToMath = function() {
+		var stream = this.element.worksheet.trackingStream;
+		if(!stream) this.element.worksheet.startUndoStream();
 		this.clearCursor();
 		var math = this.text(this.children());
 		var math_el = elements.math();
@@ -182,6 +191,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		this.element.remove(0);
 		for(var i = 0; i < to_move; i++)
 			math_el.keystroke('Left', { preventDefault: function() { } });
+		if(!stream) this.element.worksheet.endUndoStream();
 	}
 	_.typedText = function(text) {
 		this.write(text);
@@ -270,6 +280,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 	}
 	_.blur = function() {
 		this.clearCursor();
+		if(this.handlers.blur) this.handlers.blur(this);
 	}
 	_.windowBlur = function() {
 		this.clearCursor();

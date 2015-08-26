@@ -76,6 +76,40 @@ var PushState = P(function(_) {
         }
       });
       return true;
+    } else if(fragment.match(/revisions\//i)) {
+      window.showLoadingPopup();
+      $.ajax({
+        type: "POST",
+        url: "/worksheet_commands",
+        dataType: 'json',
+        cache: false,
+        data: { command: 'get_revision', data: {hash_string: fragment.replace(/revisions\/([^\/]*).*$/i,"$1"), revision: fragment.replace(/revisions\/([^\/]*)\/([0-9]+).*$/i,"$2")} }, 
+        success: function(response) {
+          if(response.success) {
+            window.hideDialogs();
+            if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
+            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, -2);
+            worksheet.revision_id = response.revision_id;
+            worksheet.revision_rights_level = response.rights_level;
+            worksheet.bind($('.worksheet_holder'));
+            worksheet.load(response.data);
+            window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
+            if(response.folder_id) 
+              window.setCurrentFolder(response.folder_id, response.folder_url_end);
+          } else {
+            window.showFileDialog();
+            showNotice(response.message, 'red');
+          }
+        },
+        error: function(err) {
+          window.showFileDialog();
+          showNotice('Error: ' + err.responseText, 'red');
+          console.log(err);
+          //Depending on error, do we try again?
+          // TODO: Much better error handling!
+        }
+      });
+      return true;
     } else if(fragment.match(/folders\//i)) {
       var hash_string = fragment.replace(/folders\/([a-z0-9\-]*).*$/i,"$1").split('-');
       if(hash_string.length == 0)

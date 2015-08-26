@@ -3,7 +3,6 @@ Box to create a plot
 CURRENTLY LIMITED TO LINE PLOTS, CREATED WITH C3 (in the Swift Calcs repo).  Should be updated
 */
 var plot = P(Element, function(_, super_) {
-	_.lineNumber = false;
 	_.lineNumber = true;
 	_.klass = ['plot'];
 	_.evaluatable = true;

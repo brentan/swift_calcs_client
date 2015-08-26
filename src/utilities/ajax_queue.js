@@ -36,10 +36,19 @@ var ajaxQueueClass = P(function(_) {
 		this.running[id] = true;
 		this.jQ.html('Saving...');
 		this.should_be_server_version[id] = this.holding_pen[id].worksheet.toString();
+		if((this.holding_pen[id].worksheet.ends[L] === 0) && (this.holding_pen[id].worksheet.ends[R] === 0)) {
+			// This should never happen.  It indicates that the tree was corrupted.  Stop now to avoid destroying data.
+			ajaxQueue.jQ.html('Fatal error on save.  Saving disabled.');
+			ajaxQueue.jQ_fatal.show();
+			ajaxQueue.running[id] = false;
+			ajaxQueue.suppress = true;
+			ajaxQueue.saving = false;
+		}
 		var post_data = {
 			worksheet_id: id,
 			name: this.holding_pen[id].worksheet.name,
 			bookmarks: this.holding_pen[id].worksheet.bookmarks,
+			uploads: this.holding_pen[id].worksheet.uploads,
 			known_server_version: this.known_server_version[id]
 		}
 
@@ -53,7 +62,6 @@ var ajaxQueueClass = P(function(_) {
 		  patch_list = diff_patch.patch_toText(patch_list);
 		  post_data.patch = patch_list;
 		}
-
 		this.holding_pen[id] = false;
 		$.ajax({
       type: "POST",

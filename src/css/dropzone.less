@@ -1,0 +1,70 @@
+div.sc_element_container {
+    .sc_image_url_holder {
+        padding: 1px 3px;
+        display: inline-block;
+        border: 1px solid #ddeeff;
+        min-height: 22px;
+        min-width: 20px;
+    }
+    .sc_dropzone_box {
+        border: 3px dashed #999999;
+        height: 40px;
+        cursor: pointer;
+        margin: 4px 10px;
+        color: #999999;
+        font-size: 18px;
+        padding-top: 15px;
+        background: white;
+        text-align: center;
+        font-weight: bold;
+        -webkit-transition: all 0.3s ease-out;
+        -moz-transition: all 0.3s ease-out;
+        -ms-transition: all 0.3s ease-out;
+        -o-transition: all 0.3s ease-out;
+        transition: all 0.3s ease-out;
+        opacity: 1;
+        &.hover {
+            background: #dddddd;
+            color: black;
+            border-color: black;
+        }
+    }
+    .uploading_block_holder {
+        height: 26px;
+        position: relative;
+        margin-top: 1px;
+        .progress {
+            background-color: #ddddff;
+            &.sc_error {
+                background-color: #FFE6E6;
+            }
+            &.sc_upload_complete {
+                background-color: #E6FFE6;
+            }
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            width: 0%;
+            z-index: 1;
+        }
+        .text {
+            position: absolute;
+            padding: 4px 2px;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
+            overflow: hidden;
+            z-index: 2;
+        }
+        .sc_upload_complete {
+            background-color: #E6FFE6;
+            text-align: left;
+            font-style: italic;
+        }
+        .sc_error.sc_right {
+            text-align: right;
+        }
+    }
+}

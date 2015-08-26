@@ -5,66 +5,69 @@
  *******************************************************/
 
 Worksheet.open(function(_) {
+  function dragOver(e_drag) {
+    var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+    var top = el.jQ.offset().top;
+    // Are we an element that allows children, but doesnt have any?
+    if(el && el.hasChildren && (el.children().length == 0)) {
+      if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) {
+        el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
+        el.insertJQ.removeClass(css_prefix + 'dropTop');
+      } else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) {
+        el.insertJQ.removeClass(css_prefix + 'dropTop');
+        el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
+      } else {
+        el.insertJQ.addClass(css_prefix + 'dropTop');
+        el.jQ.removeClass(css_prefix + 'dropBot').removeClass(css_prefix + 'dropTop');
+      }
+    } else {
+      if((el instanceof importData) && $(e_drag.target).closest('.' + css_prefix + 'dropzone_box').length) 
+        el.jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot')
+      else if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
+        el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
+      else
+        el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
+    }
+    e_drag.preventDefault();
+  }
+
 	_.bindDragging = function(e, selected_target, click_handler, drag_done_handler) {
 		var _this = this;
-		function dragOver(e_drag) {
-			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-			var top = el.jQ.offset().top;
-			// Are we an element that allows children, but doesnt have any?
-			if(el && el.hasChildren && (el.children().length == 0)) {
-  			if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) {
-  				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
-  				el.insertJQ.removeClass(css_prefix + 'dropTop');
-  			} else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) {
-  				el.insertJQ.removeClass(css_prefix + 'dropTop');
-  				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
-  			} else {
-  				el.insertJQ.addClass(css_prefix + 'dropTop');
-  				el.jQ.removeClass(css_prefix + 'dropBot').removeClass(css_prefix + 'dropTop');
-  			}
-			} else {
-  			if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
-  				el.jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
-  			else
-  				el.jQ.removeClass(css_prefix + 'dropBot').addClass(css_prefix + 'dropTop');
-  		}
-    	e_drag.preventDefault();
-		}
-		function dragDrop(e_drag) {
-			dragLeave(e_drag);
-			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-			var top = el.jQ.offset().top;
-			var into = false;
-			var dir = L;
-			// Are we an element that allows children, but doesnt have any?
-			if(el && el.hasChildren && (el.children().length == 0)) {
-  			if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) 
-  				dir = R;
-  			else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) 
-  				dir = L;
-  			else 
-  				into = true;
-			} else {
-  			if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
-  				dir = R;
-  			else
-  				dir = L;
-  		}
-  		drag_done_handler(el, into, dir);
-  		e_drag.preventDefault();
-		}
-		function dragLeave(e_drag) {
-			var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
-			el.jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
-			$(e_drag.target).off('dragover', dragOver).off('dragleave', dragLeave).off('drop', dragDrop);
-			el.jQ.find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
-    	e_drag.preventDefault();
-		}
-		function dragEnter(e_drag) {
-			if($(e_drag.target).closest('.' + css_prefix + 'selected').length) return; // Don't do drag handlers on selected elements
-			$(e_drag.target).on('dragover', dragOver).on('dragleave', dragLeave).on('drop', dragDrop);
-			dragOver(e_drag);
-		}
+    function dragDrop(e_drag) {
+      dragLeave(e_drag);
+      var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+      var top = el.jQ.offset().top;
+      var into = false;
+      var dir = L;
+      // Are we an element that allows children, but doesnt have any?
+      if(el && el.hasChildren && (el.children().length == 0)) {
+        if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) 
+          dir = R;
+        else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) 
+          dir = L;
+        else 
+          into = true;
+      } else {
+        if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
+          dir = R;
+        else
+          dir = L;
+      }
+      drag_done_handler(el, into, dir);
+      e_drag.preventDefault();
+    }
+    function dragLeave(e_drag) {
+      var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+      el.jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
+      $(e_drag.target).off('dragover', dragOver).off('dragleave', dragDrop).off('drop', dragDrop);
+      el.jQ.find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
+      e_drag.preventDefault();
+    }
+    function dragEnter(e_drag) {
+      if($(e_drag.target).closest('.' + css_prefix + 'selected').length) return; // Don't do drag handlers on selected elements
+      $(e_drag.target).on('dragover', dragOver).on('dragleave', dragLeave).on('drop', dragDrop);
+      dragOver(e_drag);
+    }
 		function dragOverWorksheet(e_drag) {
 			if(!$(e_drag.target).hasClass(css_prefix + 'element_container')) return;
   		_this.ends[R].jQ.removeClass(css_prefix + 'dropTop').addClass(css_prefix + 'dropBot');
@@ -90,6 +93,7 @@ Worksheet.open(function(_) {
 			dragOverWorksheet(e_drag);
 		}
 		function dragStart(e_drag) {
+      _this.dragging = true;
       $(e_drag.target).addClass('dragging');
       e_drag.originalEvent.dataTransfer.setData("text/plain", "Draggable Element");
     	// We started a drag, so remove mouesup listener as we dont want it firing
@@ -128,9 +132,48 @@ Worksheet.open(function(_) {
 	};
 
   _.bindMouse = function() {
-  	if(this.bound) return this;
-    //context-menu event handling
+    if(this.bound) return this;
+    // Drag from outside into worksheet handling.  These events are ignored if a selection drag/drop or drag/drop from the toolbox occurs
     var _this = this;
+    function outside_dragDrop(e_drag) {
+      outside_dragLeave(e_drag);
+      var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+      var top = el.jQ.offset().top;
+      var into = false;
+      var dir = L;
+      // Are we an element that allows children, but doesnt have any?
+      if(el && el.hasChildren && (el.children().length == 0)) {
+        if(e_drag.originalEvent.pageY > (top + el.jQ.height()*0.75)) 
+          dir = R;
+        else if(e_drag.originalEvent.pageY < (top + el.jQ.height()*0.25)) 
+          dir = L;
+        else 
+          into = true;
+      } else {
+        if(e_drag.originalEvent.pageY > (top + el.jQ.height()/2))
+          dir = R;
+        else
+          dir = L;
+      }
+      _this.outside_drag_done_handler(e_drag, el, into, dir);
+      e_drag.preventDefault();
+    }
+    function outside_dragLeave(e_drag) {
+      var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
+      el.jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
+      $(e_drag.target).off('dragover', dragOver).off('dragleave', outside_dragLeave).off('drop', outside_dragDrop);
+      el.jQ.find('.' + css_prefix + 'dropTop').removeClass(css_prefix + 'dropTop');
+      e_drag.preventDefault();
+    }
+    function outside_dragEnter(e_drag) {
+      if(_this.dragging) return;
+      if($(e_drag.target).closest('.' + css_prefix + 'element').length == 0) return;
+      $(e_drag.target).on('dragover', dragOver).on('dragleave', outside_dragLeave).on('drop', outside_dragDrop);
+      dragOver(e_drag);
+      e_drag.preventDefault();
+    }
+    this.jQ.on('dragenter', outside_dragEnter);
+    //context-menu event handling
     var contextMenu = function(e) {
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id')];
       //BRENTAN: TODO: Check to see if something IS selected and if we right clicked on it...then handle appropriately
@@ -370,6 +413,7 @@ Worksheet.open(function(_) {
     this.unbindMouse = function() {
     	this.jQ.off('contextmenu.swiftcalcs', contextMenu);
     	this.jQ.off('mousedown.swiftcalcs', mouseDown);
+      this.jQ.off('dragenter', outside_dragEnter);
     	return this;
     };
   }

@@ -25,6 +25,8 @@ var Worksheet = P(function(_) {
 	_.hash_string = '';
 	_.server_version = 1;
 	_.rights = 0;
+	_.uploads = "";
+	_.revision_id = 0;
 
   var id = 0;
   function uniqueWorksheetId() { return id += 1; }
@@ -36,6 +38,7 @@ var Worksheet = P(function(_) {
 		if(server_id) this.server_id = server_id;
 		if(server_version) ajaxQueue.known_server_version[this.server_id] = server_version;
 		this.name = name;
+		this.bookmarks = [];
 		this.hash_string = hash_string;
 		this.rights = rights;
 		this.ends = {};
@@ -53,6 +56,7 @@ var Worksheet = P(function(_) {
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
 		this.jQ.append(this.insertJQ);
 		this.insertJQ.append('<div class="' + css_prefix + 'element_top_spacer"></div>');
+		this.insertJQ.append('<div class="' + css_prefix + 'element_bot_spacer"></div>');
 		$('#account_bar .content').html('<div class="' + css_prefix + 'worksheet_name"><input type=text class="' + css_prefix + 'worksheet_name"></div>');
 		$('#account_bar input.' + css_prefix + 'worksheet_name').val(this.name);
 		var _this = this;
@@ -72,6 +76,7 @@ var Worksheet = P(function(_) {
     this.bindToolbar();
 		this.bindMouse();
 		this.bindKeyboard();
+		this.bindUploads();
 		SwiftCalcs.active_worksheet = this;
     $('.fatal_div').hide();
     ajaxQueue.suppress = false;
@@ -90,6 +95,36 @@ var Worksheet = P(function(_) {
 	_.generateTopWarning = function() {
 		this.jQ.find('.top_warning').remove();
 		switch(this.rights) {
+			case -2: //revision of a worksheet
+				if(window.user_logged_in) {
+					var els = $('<div/>').html('<strong>File Revisions are View Only</strong>.  Any changes you make to this revision will not be saved.  You can <a href="#" class="copy">create a new worksheet from these revisions</a>, <a href="#" class="restore">restore the worksheet to this revision</a>, or <a href="#" class="back">go back to the current worksheet version</a>.');
+					els.find('a.copy').on('click', function(e) {
+						window.newWorksheet(true); 
+						e.preventDefault();
+						return false;
+					});
+				} else {
+					var els = $('<div/>').html('<strong>File Revisions are View Only</strong>.  Any changes you make to this revision will not be saved.  You can <a href="#" class="create">login or create an account with Swift Calcs</a> to create a copy of this worksheet based on this revision, you can <a href="#" class="restore">restore the worksheet to this revision</a>, or you can <a href="#" class="back">go back to the current worksheet version</a>.');
+					els.find('a.create').on('click', function(e) {
+						window.loadSigninBox();
+						e.preventDefault();
+						return false;
+					});
+				}
+				els.find('a.restore').on('click', function(e) {
+					window.restoreWorksheet();
+					e.preventDefault();
+					return false;
+				});
+				els.find('a.back').on('click', function(e) {
+					pushState.navigate('/worksheets/' + SwiftCalcs.active_worksheet.hash_string + '/' + encodeURIComponent(SwiftCalcs.active_worksheet.name.replace(/ /g,'_')), {trigger: true});
+					e.preventDefault();
+					return false;
+				});
+
+				this.jQ.prepend(createWarningBox(els));
+				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
+				break;
 			case -1: //new worksheet for user who is not logged in...
 				var els = $('<div/>').html('<strong>Welcome to SwiftCalcs</strong>.  To save this masterpiece or share it with others, you must first <a href="#" class="create">login or create an account with Swift Calcs</a>.<BR>Need some direction?  <a href="#" class="tutorial">Take a spin through our tutorial</a> for a quick primer.');
 				els.find('a.tutorial').on('click', function(e) {
@@ -113,7 +148,7 @@ var Worksheet = P(function(_) {
 			case 2: //view-only but can duplicate
 				if(window.user_logged_in) {
 					var els = $('<div/>').html('<strong>File is View Only</strong>.  To save any changes you have made to this worksheet, <a href="#" class="copy">create a copy of the worksheet</a> in your own folder.');
-					els.find('a.create').on('click', function(e) {
+					els.find('a.copy').on('click', function(e) {
 						window.newWorksheet(true); 
 						e.preventDefault();
 						return false;
@@ -165,8 +200,8 @@ var Worksheet = P(function(_) {
 	  ajaxQueue.jQ.html(ajaxQueue.save_message);
 	  giac.auto_evaluation = auto_evaluation;
 	  this.ends[L].evaluate(true, true);
-		this.insertJQ.append('<div class="' + css_prefix + 'element_bot_spacer"></div>');
 	  this.updateBookmarks();
+	  this.updateUploads();
 	  this.reset_server_base(to_parse);
 	  return this;
 	}
@@ -176,8 +211,12 @@ var Worksheet = P(function(_) {
 	// Detach method (remove from the DOM)
 	_.unbind = function() {
 		this.clearUndoStack();
+		this.unbindUploads();
 		this.unbindMouse();
 		this.unbindKeyboard();
+		var children = this.children();
+		for(var i = 0; i < children.length; i++)
+			children[i].destroy();
 		this.toolbar.detachToolbar();
 		this.toolbar = false;
 		$('#account_bar .content').html('');
@@ -199,7 +238,7 @@ var Worksheet = P(function(_) {
 	// List children
 	_.children = function() {
 		var out = [];
-		for(var ac = this.ends[L]; ac !== 0; ac = ac[R])
+		for(var ac = this.ends[L]; ac !== 0; ac = ac[R]) 
 			out.push(ac);
 		return out;
 	}
@@ -247,6 +286,17 @@ var Worksheet = P(function(_) {
     });
     this.bookmarks = marks;
   }
+	// Check for all bookmarks and update the bookmarks list
+  _.updateUploads = function() {
+    var uploads = this.insertJQ.find('.' + css_prefix + 'uploadedData');
+    var ids = [];
+    uploads.each(function(i, hash_string) {
+    	hash_string = $(hash_string);
+    	var el = Element.byId[hash_string.attr(css_prefix + 'element_id')*1];
+    	if(el.upload_id) ids.push(el.upload_id);
+    });
+    this.uploads = ids.join(',');
+  }
   _.save = function(force) {
   	if(this.rights >= 3)
   		ajaxQueue.saveNeeded(this, force);
@@ -258,7 +308,7 @@ var Worksheet = P(function(_) {
   _.toString = function() {
 		var out = [];
 		jQuery.each(this.children(), function(i, child) {
-			if(child.implicit) return;
+			if(child.implicit || child.no_save) return;
 			out.push(child.toString());
 		});
 		return out.join("\n");

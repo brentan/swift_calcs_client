@@ -244,6 +244,9 @@ Worksheet.open(function(_) {
   _.paste = function(to_paste, html) { 
     if(this.selection.length == 0) {
       if(!this.activeElement) return;
+      // See if we are pasting into a editable command block
+      if(this.activeElement.focusedItem && (this.activeElement.focusedItem instanceof CommandBlock) && this.activeElement.focusedItem.editable) 
+        return this.activeElement.focusedItem.paste(to_paste.replace(/\n/g,' '));
       // Nothing selected or selection is within the active element.  
       if((to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') || to_paste.match(/^[0-9\.]*$/)) {
         // This was a cut/copy -> paste from within a mathquill block, or is numeric in nature.  We should insert it into the current block, if possible, or insert it afterwards

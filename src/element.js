@@ -20,7 +20,9 @@ var Element = P(function(_) {
   _[L] = 0;
   _[R] = 0;
   _.worksheet = 0;
+  _.undo_count = 0; // Number of times this appears in the undo stack.  Used to make sure we don't destroy the element when we might want to get it back later through an undo method
   _.parent = 0;
+  _.no_save = false;
   _.jQ = 0;
   _.hidden = true;
 	_.error = false;
@@ -41,6 +43,7 @@ var Element = P(function(_) {
 	_.forceFullEvaluation = false; // Used by remove method to set later blocks to act like a full evaluation block temporarily
 	_.scoped = false;          // Can this element change the scope (set/change variables).  If so, we need to keep track of scope here
 	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
+	_.inTree = false;
 
 	//Give each element a unique ID, this is just for tracking purposes
   var id = 0;
@@ -141,9 +144,11 @@ var Element = P(function(_) {
 	be placed next to/into/in place of the provided target
 	*/
 	_.insertNextTo = function(sibling, location) {
+		if(this.inTree) return this; // Already added...
 		this.parent = sibling.parent;
 		this.updateWorksheet(this.parent.getWorksheet());
-		if(this.worksheet && !this.implicit) this.worksheet.setUndoPoint(this, { command: 'insert' });
+		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'insert' });
+		this.inTree = true;
 		this[-location] = sibling;
 		if(sibling[location] !== 0) {
 			sibling[location][-location] = this;
@@ -172,19 +177,28 @@ var Element = P(function(_) {
 		return this.insertNextTo(sibling, L);
 	}
 	_.insertInto = function(parent, location) {
+		if(this.inTree) return this; // Already added...
 		this.parent = parent;
 		this.updateWorksheet(parent.getWorksheet());
-		if(this.worksheet && !this.implicit) this.worksheet.setUndoPoint(this, { command: 'insert' });
+		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'insert' });
+		this.inTree = true;
 		this[-location] = parent.ends[location];
 		parent.ends[location] = this;
 		if(parent.ends[-location] === 0) parent.ends[-location] = this;
 		if(this[-location] !== 0) this[-location][location] = this;
 		if(parent.jQ) {
 			this.regenerateHtml();
-			if(location == L)
-				this.jQ.prependTo(parent.insertJQ);
-			else
-				this.jQ.appendTo(parent.insertJQ);
+			if(parent === this.worksheet) {
+				if(location == L)
+					this.jQ.insertAfter(parent.insertJQ.find('.' + css_prefix + 'element_top_spacer'));
+				else
+					this.jQ.insertBefore(parent.insertJQ.find('.' + css_prefix + 'element_bot_spacer'));
+			} else {
+				if(location == L)
+					this.jQ.prependTo(parent.insertJQ);
+				else
+					this.jQ.appendTo(parent.insertJQ);
+			}
 			this.postInsert();
 		}
 		this.setDepth();
@@ -282,7 +296,8 @@ var Element = P(function(_) {
 	/* Destroy methods.
 	Destroy writes this elements jQ as a 0 to fully delete it.  It assumes it has already been 
 	removed from the DOM elsewhere, likely when a parent had its jQ removed.  It propagates
-	to all children, and is used when an element is removed from the undoManager
+	to all children, and is used when an element is removed from the undoManager or when
+	this worksheet is unbound
 
 	The remove method will
 	navigate the tree to update points to this object to correctly point around it
@@ -292,8 +307,10 @@ var Element = P(function(_) {
 	from the manager there should be no references and it should be garbage collected.
 	*/
 	_.destroy = function() {
-		$.each(this.children(), function(i, child) { child.destroy(); });
+		if(this.hasChildren) $.each(this.children(), function(i, child) { child.destroy(); });
+		if(this.inTree) this.jQ.remove();
 		if(this.jQ) this.jQ.empty();
+		delete Element.byId[this.id];
 		delete this[L];
 		delete this[R];
 		delete this.ends[L];
@@ -302,8 +319,10 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.remove = function(duration) {
+		if(!this.inTree) return this; // Already removed...
 		// Add this to the undoManager
-		if(this.worksheet && !this.implicit) this.worksheet.setUndoPoint(this, { command: 'remove', L: this[L], parent: this.parent });
+		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'remove', L: this[L], parent: this.parent });
+		this.inTree = false;
 		duration = typeof duration === 'undefined' ? 200 : duration;
 		this.preRemoveHandler();
 		if(this.fullEvaluation || this.forceFullEvaluation) {
@@ -317,8 +336,6 @@ var Element = P(function(_) {
 				else window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
 			}
 		}
-		if((this[L] === 0) && (this[R] === 0))
-			math().appendTo(this.parent).show(0).focus(L);
 		if(this[L] !== 0) 
 			this[L][R] = this[R];
 		else
@@ -327,6 +344,8 @@ var Element = P(function(_) {
 			this[R][L] = this[L];
 		else
 			this.parent.ends[R] = this[L];
+		if((this.parent.ends[L] === 0) && (this.parent.ends[R] === 0)) 
+			math().appendTo(this.parent).show(0).focus(L);
 		if(this.jQ !== 0) {
 			if(this.hidden || (duration == 0)) {
 				this.jQ.detach();
@@ -337,6 +356,8 @@ var Element = P(function(_) {
 			// If we delete something between text nodes, we should merge those nodes
 			this[R].merge();
 		}
+		this[L] = 0;
+		this[R] = 0;
 		this.worksheet.renumber();
 		if(!this.implicit) this.worksheet.save();
 		return this;
@@ -349,7 +370,7 @@ var Element = P(function(_) {
 				if(action.L)
 					this.insertAfter(action.L);
 				else
-					this.appendTo(action.parent);
+					this.prependTo(action.parent);
 				window.setTimeout(function(to_eval) { return function() { to_eval.evaluate(true); }; }(this), 100);
 				break;
 			case 'insert':
@@ -428,6 +449,7 @@ var Element = P(function(_) {
 	// List children
 	_.children = function() {
 		var out = [];
+		if(!this.hasChildren) return out;
 		for(var ac = this.ends[L]; ac !== 0; ac = ac[R])
 			out.push(ac);
 		return out;
@@ -979,6 +1001,7 @@ var Element = P(function(_) {
 	}
 	_.blur = function() {
     this.worksheet.blurToolbar(this);
+		if(this.worksheet.activeElement == this) { this.worksheet.lastActive = this; this.worksheet.activeElement = 0; }
 		if(this.blurred) return this;
 		this.blurred = true;
 		SwiftCalcs.destroyTooltip();
@@ -986,7 +1009,6 @@ var Element = P(function(_) {
   		this.lastFocusedItem = this.focusedItem;
   		this.focusedItem.blur();
   	}
-		if(this.worksheet.activeElement == this) { this.worksheet.lastActive = this; this.worksheet.activeElement = 0; }
 		if(this.leftJQ) this.leftJQ.removeClass(css_prefix + 'focused');
 		if(this.jQ) this.jQ.removeClass(css_prefix + 'focused');
 		return this;
@@ -1119,7 +1141,7 @@ var Element = P(function(_) {
 	  			//We need to zip up the children
 	  			var child_string = '';
 	  			jQuery.each(this.children(), function(n, child) {
-						if(child.implicit) return;
+						if(child.implicit || child.no_save) return;
 	  				child_string += child.toString();
 	  			});
 	  			output.push(child_string);

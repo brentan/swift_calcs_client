@@ -118,9 +118,9 @@ Worksheet.open(function(_) {
   	var stream = !this.trackingStream;
   	if(stream) this.startUndoStream();
   	replacement.insertBefore(this.selection[0]).show();
-  	if(focus) replacement.focus(R);
   	jQuery.each(this.selection, function(i,v) { v.mark_for_deletion = true; });
   	jQuery.each(this.selection, function(i,v) { v.remove(0); });
+  	if(focus) replacement.focus(R);
   	this.clearSelection();
   	if(stream) this.endUndoStream();
   	return this;
@@ -131,8 +131,11 @@ Worksheet.open(function(_) {
   	if(stream) this.startUndoStream();
   	if(focus) {
   		// Determine if we need to add an implicit element
-  		if(!(this.selection[0][L] instanceof EditableBlock) && !(this.selection[this.selection.length - 1][R] instanceof EditableBlock))
-  			return this.replaceSelection(math().setImplicit(), true);
+  		if(!(this.selection[0][L] instanceof EditableBlock) && !(this.selection[this.selection.length - 1][R] instanceof EditableBlock)) {
+  			var item = this.replaceSelection(math().setImplicit(), true);
+  			if(stream) this.endUndoStream();
+  			return item;
+  		}
   		if(dir === L) {
 	  		if(this.selection[0][L]) this.selection[0][L].focus(R);
 	  		else this.selection[this.selection.length - 1][R].focus(L);

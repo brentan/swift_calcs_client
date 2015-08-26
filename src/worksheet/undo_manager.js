@@ -16,11 +16,13 @@ Worksheet.open(function(_) {
 	var redoArray = [];
 	var reverseAction = [];
 	var fullDestroy = function(ar) {
-		for(var i = 0; i < (ar.length-1); i++) { // Dont include last item, as that is the focus command
-			if(ar[i].el instanceof Element) ar[i].el.destroy();
+		for(var i = 0; i < (ar.length-1); i++) { // Don't include last item, as that is the focus command
+			if(ar[i].el instanceof Element) {
+				ar[i].el.undo_count--;
+				if(!ar[i].el.inTree && (ar[i].el.undo_count == 0)) ar[i].el.destroy();
+			}
 		}
 	}
-
 	_.trackingStream = false;
   _.undoTimer = false;
   _.undoHash = false;
@@ -45,8 +47,10 @@ Worksheet.open(function(_) {
   	if(ajaxQueue.suppress) return; // No need to register events while loading the sheet
   	if(this.activeUndo) {
   		// This was called by something being altered by an undo/redo action.  If this is an element, we use this to populate the undo/redoArray
-  		if(el instanceof Element)
+  		if(el instanceof Element) {
+  			el.undo_count++;
   			reverseAction.push({el: el, state: hash });
+  		}
   		return; 
   	}
     if(this.undoTimer && (this.undoElement == el)) {// Kill previous schedule 
@@ -55,6 +59,8 @@ Worksheet.open(function(_) {
       this.undoHash = 0;
     } else if(this.undoTimer) // Previous schedule is from another element.  Execute that one now
 			this.setUndoPoint(this.undoElement, this.undoHash, true);
+		if(el instanceof Element) 
+			el.undo_count++;
 		if(typeof hash === 'undefined') hash = el.currentState();
 		if(this.trackingStream)
 			undoArray[undoArray.length - 1].push({el: el, state: hash });
@@ -66,7 +72,8 @@ Worksheet.open(function(_) {
 			fullDestroy(undoArray[0]);
 			undoArray.shift();
 		}
-		redoArray = []; // Clear redo manager after a new undo point is set
+		while(redoArray.length) // Clear redo manager after a new undo point is set
+			fullDestroy(redoArray.pop());
 	}
 	_.startUndoStream = function() {
 		if(this.trackingStream) return; // This shouldn't happen....
@@ -121,6 +128,8 @@ Worksheet.open(function(_) {
 		for(var i = 0; i < (action.length - 1); i++) {
 			if(!(action[i].el instanceof Element)) //FocusableItem...just grab current state
 				reverseAction.push({ el: action[i].el, state: action[i].el.currentState() })
+			else
+				action[i].el.undo_count--;
 			// No else because the actual act of performing the undo/redo will create the redo/undo action for Elements
 			// Restore the state:
 			action[i].el.restoreState(action[i].state);
