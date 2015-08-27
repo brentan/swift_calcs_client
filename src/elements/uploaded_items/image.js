@@ -1,11 +1,11 @@
 
 var image = P(importData, function(_, super_) {
-	_.helpText = "<<Image>>\nInsert an image into your worksheet from elsewhere on the internet or from your machine.";
+	_.helpText = "<<image>>\nInsert an image into your worksheet from elsewhere on the internet or from your machine.";
 	_.focuasableName = 'image';
 
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', this.focuasableName) + helpBlock() + '</div>'
-			+ '<div class="' + css_prefix + 'focusableItems ' + css_prefix + 'upload_box" data-id="1">Insert from the web: <div class="' + css_prefix + 'image_url_holder">' + focusableHTML('CommandBlock', 'image_url')  + '&nbsp;</div><BR>'  + answerSpan() + '</div>'
+			+ '<div class="' + css_prefix + 'focusableItems ' + css_prefix + 'upload_box" data-id="1">Insert from the web: <div class="' + css_prefix + 'command_border">' + focusableHTML('CommandBlock', 'image_url')  + '&nbsp;</div><BR>'  + answerSpan() + '</div>'
 			+ '<div class="' + css_prefix + 'dropzone_box ' + css_prefix + 'upload_box">Click here or drag images to insert from your computer</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div>';
 	}
 	_.postInsertHandler = function() {
@@ -26,7 +26,6 @@ var image = P(importData, function(_, super_) {
 		return this;
 	}
 	_.webImage = function(text) {
-		this.jQ.find('.url_error').remove();
 		if(text.trim() == '') return this.outputBox.clearState().collapse();
 		if(!text.match(/^http/)) text = 'http://' + text; // Attempt to fix urls without protocol
 		if(text.match(/^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/i)) {
@@ -44,8 +43,11 @@ var image = P(importData, function(_, super_) {
 		    success: function(response) {
 					item.updateProgress(100);
 		    	if(response.success) {
+            var stream = !_this.worksheet.trackingStream;
+            if(stream) _this.worksheet.startUndoStream();
 		    		if(_this.worksheet) _this.worksheet.processUpload(_this, response);
 		    		_this.remove();
+            if(stream) _this.worksheet.endUndoStream();
 					} else {
 						item.setError(response.message);
 					}

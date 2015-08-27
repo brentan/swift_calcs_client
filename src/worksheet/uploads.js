@@ -35,6 +35,7 @@ Worksheet.open(function(_) {
         imageBlock().setUploadData(server_result.id, server_result.name).insertAfter(el).setURL(server_result.url).show();
         break;
     }
+    this.save();
     this.updateUploads();
   }
 	_.bindUploads = function() {
@@ -79,9 +80,11 @@ Worksheet.open(function(_) {
         var el = Element.byId[data.element_id];
         if(data.result.success) {
   		  	if(data.result.files[0].success) {
+            var stream = !_this.trackingStream;
+            if(stream) _this.startUndoStream();
             _this.processUpload(el, data.result.files[0]);
   		  		if(el) el.findUploadingBlock(data.upload_block_id).remove();
-  					_this.save();
+            if(stream) _this.endUndoStream();
   	  		} else {
   	  			errors = data.result.files[0].errors.file.join(', ');
   	  			if(el) el.findUploadingBlock(data.upload_block_id).setError('Error: ' + errors);
