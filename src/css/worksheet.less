@@ -126,6 +126,77 @@ div.sc_element_container {
       text-align: center;
       font-size: 10px;
     }
+    &.sc_uploadedData {
+      span.file_name {
+        font-style: italic;
+      }
+      span.equality { 
+        display: inline-block;
+        margin: 0px 3px;
+        font-size: 16px;
+        font-family: Symbola, "Times New Roman", serif;
+      }
+      div.warn {
+        text-align:center;
+        background-color:#FFFFD6;
+        border-radius:5px;
+        margin:3px;
+        padding:6px;
+      }
+      div.error {
+        text-align:center;
+        background-color:#FFD6D6;
+        border-radius:5px;
+        margin:3px;
+        padding:6px;
+      }
+      div.table {
+        overflow-x: scroll;
+        text-align: center;
+        max-height: 300px;
+        overflow-y: auto;
+        margin: 5px;
+        background-color:#f6f6f6;
+        border-radius: 4px;
+        table {
+          border-collapse: collapse;
+          .fa {
+            cursor: pointer;
+          }
+          td {
+            border: 1px solid #cccccc;
+            color: #666666;
+            &.header {
+              color: #222222;
+              border-width: 0px;
+            }
+            &.col_grey, &.row_grey {
+              color: #aaaaaa;
+              background-color: #e6e6e6;
+              &.header {
+                color: #222222;
+                background-color: transparent;
+              }
+            }
+            &.row_strong {
+              font-weight: bold;
+            }
+          }
+        }
+      }
+      div.explain {
+        text-align: center;
+        color: #999999;
+        font-size: 11px;
+        font-style: italic;
+        a {
+          color: #999999;
+          &:hover {
+            color: #555555;
+          }
+        } 
+      }
+    }
     table.sc_giac_element {
       width: 100%;
       & > tbody > tr > td {

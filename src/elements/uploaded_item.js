@@ -5,6 +5,10 @@
 
 var uploadedItem = P(Element, function(_, super_) {
 	_.upload_id = false;
+	_.upload_name = '';
+	_.url = false;
+	_.savedProperties = ['url', 'upload_id', 'upload_name'];
+
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
 		this.jQ.addClass(css_prefix + 'uploadedData');
@@ -18,6 +22,15 @@ var uploadedItem = P(Element, function(_, super_) {
 	_.preReinsertHandler = function() {
 		super_.preReinsertHandler.call(this);
 		window.setTimeout(function(w) { return function() { w.updateUploads(); }; }(this.worksheet));
+		return this;
+	}
+	_.setUploadData = function(id, name) {
+		this.upload_id = id;
+		this.upload_name = name;
+		return this;
+	}
+	_.setURL = function(url) {
+		this.url = url;
 		return this;
 	}
 });

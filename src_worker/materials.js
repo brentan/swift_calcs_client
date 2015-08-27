@@ -81,3 +81,4 @@ for (prop in materials) {
   materials[prop].name = prop;
   newConstant(prop, Material(materials[prop]));
 }
+//newConstant('testname', {propertyList: ['aa','bb'], methodList: [], aa: "[1,2,3]", bb: "[4,5,6]", toString: function() { return 'hello'; }, clone: function() { return 3; }});

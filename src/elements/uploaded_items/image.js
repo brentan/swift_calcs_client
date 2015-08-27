@@ -72,10 +72,8 @@ var image = P(importData, function(_, super_) {
 });
 
 var imageBlock = P(uploadedItem, function(_, super_) {
-	_.url = false;
-	_.savedProperties = ['url', 'upload_id'];
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'top ' + css_prefix + 'image" data-id="0">' + focusableHTML('CodeBlock', '') + '</div>'
+		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', '') + '</div>'
 	}
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
@@ -85,10 +83,6 @@ var imageBlock = P(uploadedItem, function(_, super_) {
 	}
 	_.empty = function() {
 		return false;
-	}
-	_.setUploadID = function(id) {
-		this.upload_id = id;
-		return this;
 	}
 	_.setURL = function(url) {
 		this.url = url;

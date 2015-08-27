@@ -17,6 +17,8 @@
 		'import': importData,
 		'image': image,
 		'imageBlock': imageBlock,
+		'csv': csv,
+		'csvBlock': csvBlock,
 	}
 	for(var i = 0; i < giac_elements_to_add.length; i++) 
 		elements[giac_elements_to_add[i].key] = SwiftCalcs.elements[giac_elements_to_add[i].key] = giac_elements_to_add[i].el;

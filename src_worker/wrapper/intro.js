@@ -7,7 +7,7 @@ var newConstant = function(name, ob) {
 }
 // Helper to create an output table.  Will take a 2D array and turn it into latex output
 var toTable = function(data) {
-	var out = '\\begin{matrix} ';
+	var out = '\\begin{matrix0} ';
 	var first_n = true;
 	for(var n = 0; n < data.length; n++) {
 		if(first_n)
@@ -23,7 +23,7 @@ var toTable = function(data) {
 			out += data[n][m];
 		}
 	}
-	return out + ' \\end{matrix}';
+	return out + ' \\end{matrix0}';
 }
 // Helper to convert 'number _unit' syntax into Mathquill \Unit{number}{unit} syntax
 var latexUnit = function(input) {

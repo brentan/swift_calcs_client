@@ -29,10 +29,10 @@ Worksheet.open(function(_) {
     // Choose the appropriate block based on the upload type:
     switch(server_result.data_type) {
       case 'csv':
-        console.log('CSV!');
+        csvBlock().setUploadData(server_result.id, server_result.name).insertAfter(el).setURL(server_result.url).show();
         break;
       case 'image':
-        imageBlock().setUploadID(server_result.id).insertAfter(el).setURL(server_result.url).show();
+        imageBlock().setUploadData(server_result.id, server_result.name).insertAfter(el).setURL(server_result.url).show();
         break;
     }
     this.updateUploads();

@@ -20,7 +20,7 @@ var importData = P(Element, function(_, super_) {
 	}
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', this.focuasableName) + helpBlock() 
-			+ '</div><div class="' + css_prefix + 'dropzone_box ' + css_prefix + 'upload_box">Click here or drag files here to import</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div>';
+			+ '</div><div class="' + css_prefix + 'dropzone_box ' + css_prefix + 'upload_box">Click here or drag files here to import<br><div style="font-size:0.6em; font-weight:normal; font-style: italic;">Supported File Types: Images, .CSV files</div></div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div>';
 	}
 	_.postInsertHandler = function() {
 		this.uploadBox = this.jQ.find('.' + css_prefix + 'upload_box');
