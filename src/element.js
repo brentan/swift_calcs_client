@@ -136,7 +136,13 @@ var Element = P(function(_) {
 		});
 		return this;
 	}
-
+	/*
+		Protection methods for insert.  If these methods are set, they are called when an item is inserted as a child
+		or when this element is inserted into another.  If they return false, the insertion is not allowed.  These can 
+		be used to ensure elements have a specific element type as a parent or child
+	*/
+	_.validateParent = false;
+	_.validateChild = false;
 	/* 
 	Insert methods
 
@@ -145,6 +151,16 @@ var Element = P(function(_) {
 	*/
 	_.insertNextTo = function(sibling, location) {
 		if(this.inTree) return this; // Already added...
+		if(this.validateParent && !this.validateParent(sibling.parent)) {
+			// This element cannot be inserted into a parent of this type
+			showNotice('This item cannot be inserted in this location','red');
+			return this;
+		}
+		if(sibling.parent.validateChild && !sibling.parent.validateChild(this)) {
+			// Parent does not allow children of this type.  Insert at next available position
+			showNotice('This item cannot be inserted here and was placed at the next allowable position');
+			return this.insertNextTo(sibling.parent, R);
+		}
 		this.parent = sibling.parent;
 		this.updateWorksheet(this.parent.getWorksheet());
 		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'insert' });
@@ -178,6 +194,16 @@ var Element = P(function(_) {
 	}
 	_.insertInto = function(parent, location) {
 		if(this.inTree) return this; // Already added...
+		if(this.validateParent && !this.validateParent(parent)) {
+			// This element cannot be inserted into a parent of this type
+			showNotice('This item cannot be inserted in this location','red');
+			return this;
+		}
+		if(parent.validateChild && !parent.validateChild(this)) {
+			// Parent does not allow children of this type.  Insert at next available position
+			showNotice('This item cannot be inserted here and was placed at the next allowable position');
+			return this.insertNextTo(parent, R);
+		}
 		this.parent = parent;
 		this.updateWorksheet(parent.getWorksheet());
 		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'insert' });
@@ -248,6 +274,20 @@ var Element = P(function(_) {
 	an element at the end based on dir
 	*/
 	_.move = function(target, location, insertInto) {
+		// Check if the move is allowed
+		if(insertInto) {
+			if((this.validateParent && !this.validateParent(target)) || (target.validateChild && !target.validateChild(this))) {
+				// This element cannot be inserted into a parent of this type
+				showNotice('This item cannot be moved to the requested location','red');
+				return this;
+			}
+		} else {
+			if((this.validateParent && !this.validateParent(target.parent)) || (target.parent.validateChild && !target.parent.validateChild(this))) {
+				// This element cannot be inserted into a parent of this type
+				showNotice('This item cannot be moved to the requested location','red');
+				return this;
+			}
+		}
 		// First, basically remove this item from the tree
 		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'move', L: this[L], parent: this.parent });
 		if(this[L] !== 0) 
@@ -404,9 +444,10 @@ var Element = P(function(_) {
 		this.hidden = false;
 		if((duration > 0) && (this.jQ !== 0))
 			this.jQ.slideDown({duration: duration});
-		else 
+		else if(this.jQ !== 0)
 			this.jQ.css('display', '');
-		window.setTimeout(function(_this) { return function() { _this.reflow(); }; }(this), 100);
+		if(this.jQ !== 0)
+			window.setTimeout(function(_this) { return function() { _this.reflow(); }; }(this), 100);
 		return this;
 	}
 	_.reflow = function() {
@@ -974,6 +1015,7 @@ var Element = P(function(_) {
 	 */
 	_.focusedItem = 0; 
 	_.focus = function(dir) {
+		if(!this.inTree) return this;
 		if(!this.blurred) return this;
 		this.lastFocusedItem = false;
 		this.worksheet.focus();

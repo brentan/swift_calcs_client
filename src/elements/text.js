@@ -27,6 +27,7 @@ var text = P(EditableBlock, function(_, super_) {
     return this;
   }
   _.focus = function(dir) {
+    if(!this.inTree) return;
     if(this.worksheet.activeElement && (this.worksheet.activeElement !== this)) {
       this.worksheet.activeElement.blurred = false;
       this.worksheet.activeElement.blur();

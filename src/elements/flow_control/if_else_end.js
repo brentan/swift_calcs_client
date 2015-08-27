@@ -100,6 +100,9 @@ var else_block = P(LogicCommand, function(_, super_) {
 	_.init = function() {
 		super_.init.call(this);
 	}
+	_.validateParent = function(parent) {
+		return (parent instanceof if_block);
+	}
 	_.command = function() {
 		return 'true';
 	}
@@ -142,6 +145,7 @@ var else_block = P(LogicCommand, function(_, super_) {
 		return true;
 	}
 	_.focus = function(dir) {
+		if(!this.inTree) return this;
 		super_.focus.call(this);
 		this.rightParent();
 		if(dir === 0) {
@@ -211,6 +215,7 @@ var else_if_block = P(else_block, function(_, super_) {
 			this.parent.needsEvaluation = true;
 	}
 	_.focus = function(dir) {
+		if(!this.inTree) return this;
 		super_.focus.call(this);
 		this.rightParent();
 		return this;

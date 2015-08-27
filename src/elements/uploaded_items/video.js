@@ -20,6 +20,7 @@ var video = P(Element, function(_, super_) {
 		return this;
 	}
 	_.focus = function(dir) {
+		if(!this.inTree) return this;
 		super_.focus.call(this);
 		if(dir == L)
 			this.focusableItems[0][0].focus(dir);

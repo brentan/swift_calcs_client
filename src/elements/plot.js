@@ -72,6 +72,7 @@ var plot = P(Element, function(_, super_) {
 			this.evaluateNext(evaluation_id, move_to_next);
 	}
 	_.focus = function(dir) {
+		if(!this.inTree) return this;
 		super_.focus.call(this);
 		if(this.subplots.length == 0)
 			this.appendPlotOption(400,true);

@@ -779,8 +779,8 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			{
 				id: 'Temperature',
 				sub: [
-					{name: 'Degree Celsius', unit: 'C'},
-					{name: 'Degree Fehrenheit', unit: 'F'},
+					//{name: 'Degree Celsius', unit: 'C'},
+					//{name: 'Degree Fehrenheit', unit: 'F'},
 					{name: 'Kelvin', unit: 'K'},
 					{name: 'Rankine', unit: 'Rankine'},
 				]

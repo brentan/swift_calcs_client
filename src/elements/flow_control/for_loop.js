@@ -231,6 +231,7 @@ var continue_block = P(Element, function(_, super_) {
 		}
 	}
 	_.focus = function(dir) {
+		if(!this.inTree) return this;
 		super_.focus.call(this);
 		this.parentLoop(true);
 		if(dir === 0) {

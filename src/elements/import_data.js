@@ -49,6 +49,7 @@ var importData = P(Element, function(_, super_) {
 		this.uploadBox.show();
 	}
 	_.focus = function(dir) {
+		if(!this.inTree) return this;
 		super_.focus.call(this);
 		if(dir)
 			this.focusableItems[0][0].focus(dir);

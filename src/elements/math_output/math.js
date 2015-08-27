@@ -143,6 +143,7 @@ var math = P(MathOutput, function(_, super_) {
     this.mathField.keystroke('Left', { preventDefault: function() { } }).keystroke('Shift-Home', { preventDefault: function() { } });
 	}
 	_.focus = function(dir) {
+		if(!this.inTree) return this;
 		super_.focus.call(this, dir);
 		if(dir)
 			this.mathField.focus(dir);
