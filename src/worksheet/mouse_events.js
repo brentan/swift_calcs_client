@@ -382,7 +382,8 @@ Worksheet.open(function(_) {
             else if((target !== _this.ends[R]) || (_this.ends[R] instanceof math))
               new_target = _this.ends[R];
             else {
-              new_target = math().setImplicit().insertAfter(_this.ends[R]).show();
+              var to_insert = (_this.implicitType) ? _this.implicitType() : math().setImplicit();
+              new_target = to_insert.insertAfter(_this.ends[R]).show();
               new_target.start_target = -1; // Fake a 'mousedown' event on the element
               target = new_target;
             }

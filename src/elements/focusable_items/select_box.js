@@ -13,7 +13,7 @@ var SelectBox = P(aFocusableItem, function(_, super_) {
 		super_.init.call(this, span, klass, el, options);
 		this.closedJQ = $('<div/>').addClass(css_prefix + 'select_closed');
 		this.openedJQ = $('<div/>').addClass(css_prefix + 'select_opened');
-		this.jQ.append(this.closedJQ).append(this.openedJQ);
+		this.jQ.html('').append(this.closedJQ).append(this.openedJQ);
 		this.handlers = options.handlers;
 		if(options.blank_message) {
 			this.allow_blank = true;

@@ -109,8 +109,12 @@ var Element = P(function(_) {
 			this.parse(this.toParse);
 			this.toParse = false;
 		}
-		if(this.hasChildren && (this.children().length == 0)) // Add default item
-			math().appendTo(this).show(0);
+		if(this.hasChildren && (this.children().length == 0)) { // Add default item 
+			if(this.implicitType)
+				this.implicitType().appendTo(this).show(0);
+			else
+				math().appendTo(this).show(0);
+		}
 		if(this.collapsed) { // If parse shows this to be collapsed, we need to immediately collapse it
 			this.collapsed = false;
 			this.collapse(true);
@@ -139,10 +143,12 @@ var Element = P(function(_) {
 	/*
 		Protection methods for insert.  If these methods are set, they are called when an item is inserted as a child
 		or when this element is inserted into another.  If they return false, the insertion is not allowed.  These can 
-		be used to ensure elements have a specific element type as a parent or child
+		be used to ensure elements have a specific element type as a parent or child.  ImplicitType should return an 
+		object to be used to insert into an empty block.  If not set, math element is used.
 	*/
 	_.validateParent = false;
 	_.validateChild = false;
+	_.implicitType = false;
 	/* 
 	Insert methods
 
@@ -298,6 +304,12 @@ var Element = P(function(_) {
 			this[R][L] = this[L];
 		else
 			this.parent.ends[R] = this[L];
+		if((this.parent.ends[L] === 0) && (this.parent.ends[R] === 0)) {
+			if(this.parent.implicitType)
+				this.parent.implicitType().appendTo(this.parent).show(0);
+			else
+				math().appendTo(this.parent).show(0);
+		}
 		this[R] = 0;
 		this[L] = 0;
 		// Next, insert me into/next to my target
@@ -384,8 +396,12 @@ var Element = P(function(_) {
 			this[R][L] = this[L];
 		else
 			this.parent.ends[R] = this[L];
-		if((this.parent.ends[L] === 0) && (this.parent.ends[R] === 0)) 
-			math().appendTo(this.parent).show(0).focus(L);
+		if((this.parent.ends[L] === 0) && (this.parent.ends[R] === 0)) {
+			if(this.parent.implicitType)
+				this.parent.implicitType().appendTo(this.parent).show(0).focus(L);
+			else
+				math().appendTo(this.parent).show(0).focus(L);
+		}
 		if(this.jQ !== 0) {
 			if(this.hidden || (duration == 0)) {
 				this.jQ.detach();
@@ -708,8 +724,9 @@ var Element = P(function(_) {
 	// Call all post insert handlers
 	_.postInsert = function() {
 		if(this.worksheet && this.worksheet.activeUndo) return this.preReinsertHandler();
+		var current_children = this.children();
 		this.postInsertHandler();
-		$.each(this.children(), function(i, child) {
+		$.each(current_children, function(i, child) {
 			child.postInsert();
 		});
 		return this;
@@ -849,6 +866,7 @@ var Element = P(function(_) {
 			this.insertJQ.slideDown({duration: 500});
 			this.insertJQ.next('.' + css_prefix + 'expand').slideUp({duration: 500, always: function() { $(this).remove(); } });
 		}
+		this.reflow();
 		if(!immediately) this.worksheet.save();
 		return this;
 	}
@@ -883,7 +901,8 @@ var Element = P(function(_) {
 			if(this.depth === 0) {
 				// No parent.  
 				if((dir === R) && (!(this instanceof EditableBlock) || !this.empty())) {
-					math().setImplicit().insertAfter(this).show(0).focus(L);
+					var to_insert = (this.parent.implicitType) ? this.parent.implicitType() : math().setImplicit();
+					to_insert.insertAfter(this).show(0).focus(L);
 					return true;
 				} else
 					return false;
@@ -897,12 +916,13 @@ var Element = P(function(_) {
 			next.focus(x_location);
 			return true;
 		} else {
-			//We reached the children, we need to jump in.  If there are no children, we add an implicit block //BRENTAN: Check at some point to override what is the 'implicit' block for each type?
+			//We reached the children, we need to jump in.  If there are no children, we add an implicit block
 			this.expand();
 			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir, x_location)) 
 				return true;
 			else if(this.ends[-dir] === 0) {
-				math().setImplicit().appendTo(this).show().focus();
+				var to_insert = (this.implicitType) ? this.implicitType() : math().setImplicit();
+				to_insert.appendTo(this).show().focus();
 				return true;
 			}
 		}
@@ -926,7 +946,8 @@ var Element = P(function(_) {
 			if(this.depth === 0) {
 				// No parent.  
 				if((dir === R) && (!(this instanceof EditableBlock) || !this.empty())) {
-					math().setImplicit().insertAfter(this).show(0).focus(L);
+					var to_insert = (this.parent.implicitType) ? this.parent.implicitType() : math().setImplicit();
+					to_insert.insertAfter(this).show(0).focus(L);
 					return true;
 				} else
 					return false;
@@ -948,7 +969,8 @@ var Element = P(function(_) {
 			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir)) 
 				return true;
 			else if(this.ends[-dir] === 0) {
-				math().setImplicit().appendTo(this).show().focus();
+				var to_insert = (this.implicitType) ? this.implicitType() : math().setImplicit();
+				to_insert.appendTo(this).show().focus();
 				return true;
 			}
 		}
@@ -971,9 +993,11 @@ var Element = P(function(_) {
 			var next = this.focusableItems[this.focusableItems.length - 1][this.focusableItems[this.focusableItems.length - 1].length - 1];
 		}
 		if(next === -1) {
+			this.expand();
 			if(this.ends[dir] && this.ends[dir].moveInFrom(dir, x_location)) return true;
 			else if(this.ends[dir] === 0) {
-				math().setImplicit().appendTo(this).show().focus();
+				var to_insert = (this.implicitType) ? this.implicitType() : math().setImplicit();
+				to_insert.appendTo(this).show().focus();
 				return true;
 			}
 			return false;
@@ -1021,27 +1045,35 @@ var Element = P(function(_) {
 		this.worksheet.focus();
 		this.worksheet.blurToolbar(this);
 		if(this.worksheet.activeElement)
-			this.worksheet.activeElement.blur();
+			this.worksheet.activeElement.blur(this);
 		this.blurred = false;
 		this.worksheet.activeElement = this;
 		if(this.leftJQ) this.leftJQ.addClass(css_prefix + 'focused');
 		if(this.jQ) this.jQ.addClass(css_prefix + 'focused');
 		if(dir === 0) { // default '0' focus is to look for first mathquill item in first row.  
 			for(var i = 0; i < this.focusableItems[0].length; i++) {
-				if(this.focusableItems[0][i].mathquill) {
+				if((this.focusableItems[0][i] != -1) && this.focusableItems[0][i].mathquill) {
 					this.focusableItems[0][i].focus(L);
 					break;
 				}
 			}
 		} else if(dir === L) {
-			this.focusableItems[0][0].focus(L);
+			var to_focus = this.focusableItems[0][0];
+			if(to_focus == -1) 
+				if(this.ends[L]) this.ends[L].focus(L);
+			else
+				to_focus.focus(L);
 		} else if(dir === R) {
-			this.focusableItems[this.focusableItems.length-1][this.focusableItems[this.focusableItems.length - 1].length - 1].focus(R);
+			var to_focus = this.focusableItems[this.focusableItems.length-1][this.focusableItems[this.focusableItems.length - 1].length - 1];
+			if(to_focus == -1)
+				if(this.ends[R]) this.ends[R].focus(R);
+			else
+				to_focus.focus(R);
 		} else if(!dir && this.focusedItem)
 			this.focusedItem.focus();
 		return this;
 	}
-	_.blur = function() {
+	_.blur = function(to_focus) {
     this.worksheet.blurToolbar(this);
 		if(this.worksheet.activeElement == this) { this.worksheet.lastActive = this; this.worksheet.activeElement = 0; }
 		if(this.blurred) return this;

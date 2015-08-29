@@ -10,6 +10,8 @@
 		'continue': continue_block,
 		'break': break_block,
 		'plot': plot,
+		'plot_func': plot_func,
+		'plot_line': plot_line,
 		'bookmark': bookmark,
 		'solve': solve,
 		'desolve': desolve,

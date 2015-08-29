@@ -220,9 +220,9 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		this.needsEvaluation = true;
 		this.submissionHandler(this)();
 	}
-	_.blur = function() {
+	_.blur = function(to_focus) {
 		if(this.unitMode) this.unitMode.blur();
-		super_.blur.call(this);
+		super_.blur.call(this, to_focus);
 		return this;
 	}
 

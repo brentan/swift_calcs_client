@@ -151,8 +151,8 @@ var math = P(MathOutput, function(_, super_) {
 			this.mathField.focus(L);
 		return this;
 	}
-	_.blur = function() {
-		super_.blur.call(this);
+	_.blur = function(to_focus) {
+		super_.blur.call(this, to_focus);
 		if(this.implicit && this.empty() && this.inTree && !((this.parent.ends[L] === this) && (this.parent.ends[R] === this))) 
 			this.remove();
 		return this;

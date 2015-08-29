@@ -1,3 +1,13 @@
+/*
+C3: NOTE THAT THERE IS A SWIFTCALCS ALTERATION:
+c3_chart_internal_fn.opacityForCircle rewritten as:
+    c3_chart_internal_fn.opacityForCircle = function (d) {
+        var opacity = isFunction(this.config.point_show) ? this.config.point_show(d) : (this.config.point_show ? 1 : 0);
+        return isValue(d.value) ? (this.isScatterType(d) ? 0.5 : opacity) : 0;
+    };
+to allow for different point show settings on different datasets
+*/
+
 (function (window) {
     'use strict';
 
@@ -788,7 +798,7 @@
         return d.value !== null && this.withoutFadeIn[d.id] ? this.opacityForCircle(d) : 0;
     };
     c3_chart_internal_fn.opacityForCircle = function (d) {
-        var opacity = this.config.point_show ? 1 : 0;
+        var opacity = isFunction(this.config.point_show) ? this.config.point_show(d) : (this.config.point_show ? 1 : 0);
         return isValue(d.value) ? (this.isScatterType(d) ? 0.5 : opacity) : 0;
     };
     c3_chart_internal_fn.opacityForText = function () {

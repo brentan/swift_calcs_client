@@ -19,17 +19,6 @@ var video = P(Element, function(_, super_) {
 		this.leftJQ.append('<span class="fa fa-upload"></span>');
 		return this;
 	}
-	_.focus = function(dir) {
-		if(!this.inTree) return this;
-		super_.focus.call(this);
-		if(dir == L)
-			this.focusableItems[0][0].focus(dir);
-		else if(dir == R)
-			this.focusableItems[0][1].focus(dir);
-		else if(dir == 0)
-			this.focusableItems[0][1].focus(dir);
-		return this;
-	}
 	_.processUrl = function(text) {
 		if(text.trim() == '') return this.outputBox.clearState().collapse();
     var vimeo_pattern = /(?:http?s?:\/\/)?(?:www\.)?(?:vimeo\.com)\/?(.+)/g;

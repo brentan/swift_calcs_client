@@ -1,449 +1,308 @@
 /*
-Box to create a plot
-CURRENTLY LIMITED TO LINE PLOTS, CREATED WITH C3 (in the Swift Calcs repo).  Should be updated
+Box to create a plot.  The 'plot' element draws the plot, but its the children of the plot element that are used to set options for each dataset
 */
 var plot = P(Element, function(_, super_) {
 	_.lineNumber = true;
 	_.klass = ['plot'];
 	_.evaluatable = true;
-	_.plot = false;
-	_.savedProperties = ['x_min','x_max'];
-	_.x_min_val = -5;
-	_.x_max_val = 5;
+	_.hasChildren = true;
+	_.savedProperties = ['x_min','x_max','xlabel','ylabel'];
 	_.x_min = '-5';
 	_.x_max = '5';
-	_.xminField = 0;
-	_.xmaxField = 0;
-	_.attached = false;
-	_.helpText = "<<plot>>\nCreate a line plot from a function.  Example: Plot x^2 as a function of x";
+	_.xlabel = false;
+	_.ylabel = false;
+	_.height = 300;
+	_.plotBox = false;
+	_.helpText = "<<plot>>\nCreate a plot of data and functions.  Insert new data to plot with the 'add another item' link, and adjust the properties of each data-set, such as color or line thickness, by clicking on the item in the plot.";
 
-	_.init = function() {
-		super_.init.call(this);
-		this.to_attach = [];
-		this.subplots = [];
-	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'plot') + 'x<sub>min</sub>:&nbsp;'
-			+ focusableHTML('MathQuill',  'x_min')
-			+ '&nbsp;x<sub>max</sub>:&nbsp;'
-			+ focusableHTML('MathQuill',  'x_max')  + helpBlock() + '<BR>'  + answerSpan()
-			+ '</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div><div class="' + css_prefix + 'plot_box"></div>';
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'plot') + helpBlock()
+		   + '</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div><div class="another_link explain ' + css_prefix + 'hide_print" style="margin-left: 60px;"><a href="#">Add another item</a></div><div class="' + css_prefix + 'plot_box"></div>';
 	}
 	_.postInsertHandler = function() {
-		this.xminField = registerFocusable(MathQuill, this, 'x_min', { handlers: {
-			enter: this.enterPressed(this),
-			blur: this.submissionHandler(this)
-		}});
-		this.xmaxField = registerFocusable(MathQuill, this, 'x_max', { handlers: {
-			enter: this.enterPressed(this),
-			blur: this.submissionHandler(this)
-		}});
-		this.plotBox = this.jQ.find('.' + css_prefix + 'plot_box');
+		this.focusableItems = [[registerFocusable(CodeBlock,this, 'plot', { })],[-1]];
 		super_.postInsertHandler.call(this);
-		this.xminField.latex(this.x_min);
-		this.xmaxField.latex(this.x_max);
-		this.focusableItems = [[registerFocusable(CodeBlock,this, 'plot', { }), this.xminField, this.xmaxField]];
-		this.attached = true;
 		var _this = this;
-		// Add the 'another plot' link
-		$('<div>Add Another Plot</div>').addClass(css_prefix + 'plot_item').addClass(css_prefix + 'plot_add').on('click', function(e) {
-			_this.appendPlotOption(400, true);
+		if(this.jQ) this.jQ.find('.another_link a').on('click', function(e) {
+			plot_func().appendTo(_this).show(250).focus(L);
 			e.preventDefault();
 			e.stopPropagation();
-		}).appendTo(this.insertJQ);
-		// If we need to attach any subplots, we do that here
-		for(var i = 0; i < this.to_attach.length; i++)
-			this.to_attach[i].attach();
-		// If this is a blank plot box, add a first item
-		if(this.subplots.length == 0)
-			this.appendPlotOption(0, true);
-		else
-			this.redraw();
+		});
 		return this;
-	}
-	_.appendPlotOption = function(duration, focus) {
-		line_plot(this).attach(duration, focus);
-	}
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
-		var parentLoop = this.parentLoop();
-		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) 
-			parentLoop.childrenEvaluated(evaluation_id);
-		else
-			this.evaluateNext(evaluation_id, move_to_next);
-	}
-	_.focus = function(dir) {
-		if(!this.inTree) return this;
-		super_.focus.call(this);
-		if(this.subplots.length == 0)
-			this.appendPlotOption(400,true);
-		else if(dir == R)
-			this.focusableItems[this.focusableItems.length - 1][this.focusableItems[this.focusableItems.length - 1].length - 1].focus(R);
-		else if(dir == L)
-			this.focusableItems[1][0].focus(L);
-		else if(dir === 0)
-			this.focusableItems[1][0].focus(L);
-		else if(!dir && this.focusedItem)
-			this.focusedItem.focus();
-		this.showOptions();
-		return this;
-	}
-	_.mouseClick = function(e) {
-    if(super_.mouseClick.call(this,e)) return true;
-		var target = $(e.target).closest('div.' + css_prefix + 'plot_item');
-		if(target.length == 0) {
-			this.focus(L);
-			return false;
-		}
-		if(target.hasClass(css_prefix + 'plot_add')) return false;
-		subplot.byId[target.attr('data-plot-id')*1].focus();
-		return false;
-	}
-	_.enterPressed = function(_this) {
-		return function(mathField) {
-			_this.submissionHandler(_this)(mathField);
-		};
-	}
-	_.submissionHandler = function(_this) {
-		return function(mathField) {
-			_this.x_min = _this.xminField.latex();
-			_this.x_max = _this.xmaxField.latex();
-			if(_this.xmaxField.text().trim() == '') return;
-			if(_this.xminField.text().trim() == '') return;
-			_this.redraw();
-		};
-	}
-	_.blur = function() {
-		super_.blur.call(this);
-		this.hideOptions();
-	}
-	_.showOptions = function() {
-		this.jQ.find('div.' + css_prefix + 'insert').slideDown({duration: 300});
-	}
-	_.hideOptions = function() {
-		this.jQ.find('div.' + css_prefix + 'insert').slideUp({duration: 300});
 	}
   _.toString = function() {
   	return '{plot}{{' + this.argumentList().join('}{') + '}}';
   }
-  _.argumentList = function() {
-  	var output = [];
-  	var arg_list = [];
-  	for(var k = 0; k < this.savedProperties.length; k++) 
-  		arg_list.push(this.savedProperties[k] + ": " + this[this.savedProperties[k]]);
-  	output.push(arg_list.join(', '));
-  	for(var i = 0; i < this.subplots.length; i++) 
-  		output.push(this.subplots[i].toString());
-  	return output;
-  }
-  _.parse = function(args) {
-  	if(this.jQ === 0) {
-  		// Not attached yet.  delay the parse until we are attached
-  		this.toParse = args;
-  		return this;
-  	}
-		var arg_list = args[0].split(',');
-  	for(var j = 0; j < arg_list.length; j++) {
-  		var name = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$1");
-  		var val = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$2").trim();
-  		if(val === "false") val = false;
-  		if(val === "true") val = true;
-  		this[name] = val;
-  	}
-  	var k = 1;
-  	for(var i = k; i < args.length; i++) {
-  		var el = args[i].split('___');
-  		if(plot_types[el[0]]) 
-  			plot_types[el[0]](this).parse(el).attach();
-  	}
-  	this.needsEvaluation = true;
-  	this.redraw();
-  	return this;
-  }
-  _.redraw = function() {
-  	if(this.needsEvaluation) {
-  		this.evaluate();
-  		this.needsEvaluation = false;
-  	}
-  }
-  // Evaluation functions:
-	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
-		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.addSpinner(evaluation_id);
-			this.move_to_next = move_to_next;
-			if(this.subplots.length) {
-				var commands = [{command: this.xminField.text(), nomarkup: true},{command: this.xmaxField.text(), nomarkup: true}];
-				giac.execute(evaluation_id, true, commands, this, 'startSubplot');
-			} else
-				this.childrenEvaluated(evaluation_id);
-		} else 
-			this.evaluateNext(evaluation_id, move_to_next)
+	_.validateChild = function(child) {
+		return (child instanceof subplot);
 	}
-	_.startSubplot = function(result, evaluation_id) {
-		//HANDLE XMIN, XMAX
-		var errors = [];
-		if(result[0].success) {
-			if(result[0].returned.match(/^[\-\+0-9\.]+$/)) {
-				this.x_min_val = result[0].returned * 1;
-			} else {
-				errors.push('X<sub>min</sub> is non-numeric.');// Report x_min error
-			}
-		} else errors.push('X<sub>min</sub>: ' + result[0].returned);
-		if(result[1].success) {
-			if(result[1].returned.match(/^[\-\+0-9\.]+$/)) {
-				this.x_max_val = result[1].returned * 1;
-			} else {
-				errors.push('X<sub>max</sub> is non-numeric.');// Report x_max error
-			}
-		} else errors.push('X<sub>max</sub>: ' + result[0].returned);
-		if(errors.length) {
-			this.outputBox.expand();
-			this.outputBox.setError(errors.join('<BR>'));
-		} else
-			this.outputBox.collapse();
-
-		// Start handling the subplots
-		if(this.shouldBeEvaluated(evaluation_id)) {
-			if(this.subplots.length > 0)
-				this.subplots[0].continueEvaluation(evaluation_id, true);
-			else
-				this.childrenEvaluated(evaluation_id);
-		} else
-			this.childrenEvaluated(evaluation_id);
+	_.implicitType = function() { 
+		return plot_func();
 	}
-	_.nextSubplot = function(result, evaluation_id) {
-		var current_subplot = subplot.byId[result[0].returned * 1];
-		result.splice(0,1);
-		if(this.shouldBeEvaluated(evaluation_id)) // Should we try to handle the response?
-			current_subplot.handle(result);
-		if(this.plot) {
-			this.plot.destroy();
-			this.plot = false;
-		}
-		if(this.shouldBeEvaluated(evaluation_id)) { //Should we continue (last response produced no error that stops us?)
-			for(var i = 0; i < this.subplots.length; i++)
-				if(this.subplots[i] === current_subplot) break;
-			i++;
-			if(i >= this.subplots.length) {
-				// BRENTAN: Change away from C3 (?) and add other plot types etc
-				var xs = {};
-				var columns = [];
-				for(var i = 0; i < this.subplots.length; i++) {
-					if(this.subplots[i].plotData.type == 'line') {
-						xs['y' + i + ': ' + this.subplots[i].plotData.legend] = 'x' + i;
-						var x = this.subplots[i].plotData.data.x;
-						x.unshift('x'+i);
-						var y = this.subplots[i].plotData.data.y;
-						y.unshift('y' + i + ': ' + this.subplots[i].plotData.legend);
-						columns.push(x);
-						columns.push(y);
-					}
-				}
-				var x_vals = [this.x_min_val];
-				var step = (this.x_max_val - this.x_min_val)/10;
-				for(var i = 1; i < 11; i++)
-					x_vals[i] = x_vals[i-1] + step;
-				this.plot = c3.generate({
-	    		bindto: this.plotBox[0],
-	    		height: 350,
-	    		padding: { right: 20 },
-	    		point: {
-					  show: false
-					},
-			    axis: {
-		        x: {
-	            tick: {
-                values: x_vals
-	            }
-		        }
-			    },
-			    data: {
-			      xs: xs,
-			      columns: columns
-			    },
-			    line: {
-					  connectNull: true
-					}
-				});
-				this.childrenEvaluated(evaluation_id);
-			}
-			else
-				this.subplots[i].continueEvaluation(evaluation_id, true);
-		} else
-			this.childrenEvaluated(evaluation_id);
-		return false;
+	_.collapse = function(immediately) {
+		this.jQ.find('.another_link').hide();
+		return super_.collapse.call(this, immediately);
 	}
-	_.changed = function(el) {
-		this.needsEvaluation = true;
+	_.expand = function(immediately) {
+		this.jQ.find('.another_link').show();
+		return super_.expand.call(this, immediately);
 	}
-});
-var handlePlotOutput = function(input) {
-	// Will transform the plot output from giac.  This is a bit ugly/hacky right now, and in the future would be nicer to clean up emgiac output directly,
-	// or to parse with a better understanding of the syntax
-	input = input.replace(/group\[pnt/g,'[').split('group[');
-	input.splice(0,1); // First match i dont want
-	for(var i = 0; i < input.length; i++) {
-		input[i] = input[i].replace(/^([^\]]*)\].*$/,'$1');
+	_.blur = function(to_focus) {
+		this.try_collapse(to_focus);
+		return super_.blur.call(this, to_focus);
 	}
-	input = input.join(',');
-	// Now we have a list of pairs as re + im * i
-	input = input.split(',');
-	var data = {x: [], y: [] };
-	for(var i = 0; i < input.length; i++) {
-		data.x.push(input[i].replace(/^([\-+]?[\.0-9]+)[\-+\.0-9]+\*i$/,'$1')*1);
-		data.y.push(input[i].replace(/^[\-\+]?[\.0-9]+([\-\+\.0-9]+)\*i$/,'$1')*1);
-	}
-	return data;
-}
-/* object that is like a child element of 'plot', allows multiple subplots on a single plot */
-var subplot = P(function(_) {
-	_.parent = 0;
-	_.jQ = 0;
-  _.outputBox = 0;
-
-  var id = 0;
-  this.byId = {};
-  function uniqueNodeId() { return id += 1; }
-	_.init = function(parent) {
-    this.id = uniqueNodeId();
-    subplot.byId[this.id] = this;
-		this.parent = parent;
-		this.mathField = [];
-		this.plotData = {};
-		this.to_parse = [];
-	}
-	_.attach = function(duration, focus) {
-		if(this.parent.attached) {
-			this.jQ = $('<div></div>').addClass(css_prefix + 'plot_item');
-			this.jQ.html('<table><tbody><tr><td class="left"></td><td class="right"></td></tr></tbody></table>');
-			this.jQ.find('.right').html(this.innerHtml() + '<BR>' + answerSpan());
-			this.jQ.find('.left').html('<i class="fa fa-remove"></i>');
-			var _this = this;
-			this.jQ.find('.left i').on('click', function(e) {
-				_this.remove();
-			})
-			this.jQ.attr('data-plot-id', this.id);
-			if(duration) this.jQ.css('display','none');
-			this.jQ.insertBefore(this.parent.insertJQ.find('.' + css_prefix + 'plot_add'));
-			this.parent.subplots.push(this);
-			this.postInsertHandler();
-			if(duration) this.jQ.slideDown({duration: duration});
-			if(focus) this.focus();
-		} else
-			this.parent.to_attach.push(this);
+	_.focus = function(dir) {
+		super_.focus.call(this, dir);
+		if(dir == 0)
+			this.ends[L].focus(L);
 		return this;
 	}
+	_.try_collapse = function(el) {
+		// See if the el that is being focused is me or a child of me.  If so, we do not collapse
+		if(this === el) return;
+		if(this.jQ.hasClass(css_prefix + 'selected')) return;
+		var children = this.children();
+		for(var i = 0; i < children.length; i++) {
+			if(children[i] === el) return;
+			if(children[i].jQ.hasClass(css_prefix + 'selected')) return;
+			if(children[i].jQ.hasClass('error')) return;
+		}
+		this.collapse();
+	}
+	_.addSpinner = function(eval_id) {
+		super_.addSpinner.call(this, eval_id);
+		if(this.plotBox)
+			this.plotBox = this.plotBox.destroy();
+		this.jQ.find('.' + css_prefix + 'plot_box').html('<div class="explain" style="text-align:center;margin:3px 20px;padding:10px;border:1px solid #dddddd;border-radius:6px;">Generating Plot...</div>');
+	}
+	_.childrenEvaluated = function(evaluation_id) {
+		// Draw the plot, if there is anything to plot
+		if(this.plotBox)
+			this.plotBox = this.plotBox.destroy();
+		var columns = [];
+		var xs = {};
+		var types = {};
+		var groups = []; 
+		var show_points = {};
+		var marker_size = {};
+		var names = {};
+		var colors = {};
+		var els = {};
+		var children = this.children();
+		var x_ticks = [];
+		var x_tick_order = eval('1e' + (this.x_max - this.x_min).toExponential().replace(/^.*e/,'')*1+1);
+		for(var i = 0; i <= 20; i++) 
+			x_ticks.push(i*(this.x_max - this.x_min)/20 + this.x_min);
+		for(var i = 0; i < children.length; i++) {
+			if(!children[i].plot_me) continue;
+			columns.push(children[i].xs);
+			columns.push(children[i].ys);
+			els['data_' + children[i].id] = children[i];
+			xs['data_' + children[i].id] = 'x_' + children[i].id;
+			types['data_' + children[i].id] = children[i].c3_type;
+			show_points['data_' + children[i].id] = children[i].show_points;
+			names['data_' + children[i].id] = children[i].name();
+			marker_size['data_' + children[i].id] = children[i].marker_size;
+			if(children[i].color) colors['data_' + children[i].id] = children[i].color;
+			if(children[i].stack) groups.push('data_' + children[i].id);
+		}
+		if(columns.length) {
+			this.jQ.find('.' + css_prefix + 'plot_box').html('');
+			var _this = this;
+			this.plotBox = c3.generate({
+				bindto: this.jQ.find('.' + css_prefix + 'plot_box')[0],
+				size: { height: this.height },
+				axis: {
+					x: { 
+						tick: { values: x_ticks, format: function (d) { return Math.ceil(d * x_tick_order) /x_tick_order } },
+						label: { text: (this.xlabel ? this.xlabel : 'Add a label'), position: 'outer-center'} 
+					},
+					y: { 
+						label: { text: (this.ylabel ? this.ylabel : 'Add a label'), position: 'outer-middle'} 
+					}
+				},
+				data: {
+					xs: xs,
+					columns: columns,
+					types: types,
+					groups: [groups],
+					names: names,
+					colors: colors,
+					onclick: function(d, el) { els[d.id].select(); }
+				},
+				legend: {
+				  item: {
+				    onclick: function (id) { els[id].select(); }
+				  }
+				},
+				point: {
+					show: function(d) { if(show_points[d.id]) { return 1; } else { return 0; } },
+					r: function(d) { return marker_size[d.id]; }
+				},
+		    grid: {
+		        x: { lines: [{value: 0}] },
+		        y: { lines: [{value: 0}] },
+		        lines: { front: false }
+		    }
+			});
+			var el = $(this.plotBox.element);
+			el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').find('.tick text').hover(function() {
+				$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'underline');
+			}, function() {
+				$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'none');
+			});
+			// Setup axes styling
+			if(this.xlabel === false) el.find('.c3-axis-x-label').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+			else el.find('.c3-axis-x-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+			if(this.ylabel === false) el.find('.c3-axis-y-label').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+			else el.find('.c3-axis-y-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+			//if(this.y2label === false) el.find('.c3-axis-y2-label').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+			//else el.find('.c3-axis-y2-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+			el.find('.c3-legend-item').hover(function() { $(this).find('text').css('text-decoration', 'underline'); }, function() { $(this).find('text').css('text-decoration', 'none'); });
+			$.each(this.children(), function(i, child) {
+				el.find('.c3-line-data-' + child.id).css('stroke-width',child.line_weight).css('stroke-dasharray', child.line_style);
+				if(child.selected)
+					child.addSelectLine();
+			});
+		} 
+		if(evaluation_id)
+			this.evaluateNext(evaluation_id, this.move_to_next);
+	}
+});
+
+/* object that is a child element of 'plot', allows multiple subplots on a single plot */
+/* subplot is a generic class used to generate the subplot types.  It should never be called by iteself */
+var subplot = P(EditableBlock, function(_, super_) {
+	_.evaluatable = true;
+	_.plot_me = false;
+	_.stack = false;
+	_.show_points = true;
+	_.line_weight = 1;
+	_.color = false;
+	_.line_style = 'none';
+	_.marker_size = 2.5;
+	_.savedProperties = ['stack','show_points','line_weight','marker_size','line_style','color'];
+	_.validateParent = function(parent) {
+		return (parent instanceof plot);
+	}
 	_.innerHtml = function() {
-		return '';
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">Plot Type: ' + focusableHTML('SelectBox',  'plot_type') + helpBlock() + '</div>'
+		  + '<div class="' + css_prefix + 'focusableItems" data-id="1">Data Label: <div class="' + css_prefix + 'command_border">' + focusableHTML('CommandBlock',  'plot_label') + '&nbsp;</div></div>YIELD' + answerSpan();
 	}
 	_.postInsertHandler = function() {
-		this.outputBox = outputBox(this);
-		this.parent.focusableItems.push(this.mathField);
-		for(var i = 1; i < this.to_parse.length; i++)
-			this.mathField[i-1].clear().latex(this.to_parse[i]);
-	}
-	_.remove = function() {
-		for(var i = 0; i < this.parent.focusableItems.length; i++) {
-			if(this.mathField[0] == this.parent.focusableItems[i][0]) break;
-		}
-		this.parent.focusableItems.splice(i,1);
-		for(var i = 0; i < this.parent.subplots.length; i++) {
-			if(this.parent.subplots[i] == this) {
-				this.parent.subplots.splice(i,1);
-				break;
+		this.selectBox = registerFocusable(SelectBox, this, 'plot_type', { options: 
+			{ 
+				plot_func: 'Function',
+			 	plot_line: 'Line Plot'
 			}
-		}
-		if(this.jQ) 
-			this.jQ.slideUp({duration: 400});
-		if(this.parent.subplots.length == 0)
-			this.parent.appendPlotOption(400,true);
-		this.parent.needsEvaluation = true;
-		this.parent.redraw();
+		});
+		var _this = this;
+		this.label = registerFocusable(CommandBlock, this, 'plot_label', { editable: true, handlers: {blur: function(el) { _this.parent.childrenEvaluated(); } } })
+		this.focusableItems.unshift([this.label]);
+		this.focusableItems.unshift([this.selectBox]);
+		super_.postInsertHandler.call(this);
+	}
+	_.name = function() {
+		var name = this.label.toString().trim();
+		if(name == '') return 'data_' + this.id;
+		return name;
 	}
 	_.enterPressed = function(_this) {
-		return function(mathField) {
-			_this.submissionHandler(_this)(mathField);
+		return function(item) {
+			_this.submissionHandler(_this)();
+			var next_time = false;
+			var selected = false;
+			for(var i = 0; i < _this.focusableItems.length; i++) {
+				for(var j = 0; j < _this.focusableItems[i].length; j++) {
+					if(next_time) {
+						_this.focusableItems[i][j].focus(-1);
+						selected = true;
+						break;
+					}
+					if(_this.focusableItems[i][j] === item) next_time = true;
+				}
+				if(selected) break;
+			}
+			if(!selected) {
+				if(_this[R])
+					_this[R].focus(L);
+			}	
 		};
 	}
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
-			for(var i = 0; i < _this.mathField.length; i++)
-				if(_this.mathField[i].text().trim() == '') return;
-			_this.parent.redraw();
+			if(_this.needsEvaluation) {
+				_this.commands = _this.createCommands();
+				_this.parent.evaluate(true);
+				_this.needsEvaluation = false;
+			}
 		};
 	}
-	_.focus = function() {
-		this.mathField[0].focus();
+	_.preRemoveHandler = function() {
+		super_.preRemoveHandler.call(this);
+		window.setTimeout(function(el) { return function() { el.childrenEvaluated(); }; }(this.parent));
 	}
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
-		var commands = [{command: '' + this.id, nomarkup: true}];  // First command should simply return the id of this plot element.  This is a hack-job way to pass it around...
-		if(this.parent.shouldBeEvaluated(evaluation_id)) {
-			commands = this.buildCommand(commands);
-			giac.execute(evaluation_id, move_to_next, commands, this.parent, 'nextSubplot');
-		} else 
-			this.parent.childrenEvaluated(evaluation_id);
+	_.preReinsertHandler = function() {
+		super_.preReinsertHandler.call(this);
+		window.setTimeout(function(el) { return function() { el.childrenEvaluated(); }; }(this.parent));
 	}
-	_.buildCommand = function(commands) {
-		return commands;
+  _.toString = function() {
+  	return '{' + this.plot_type + '}{{' + this.argumentList().join('}{') + '}}';
+  }
+	_.blur = function(to_focus) {
+		this.parent.try_collapse(to_focus);
+		return super_.blur.call(this, to_focus);
 	}
-	_.toString = function() {
-		var out = []
-		for(var i = 0; i < this.mathField.length; i++)
-			out.push(this.mathField[i].latex());
-		return out.join('___');
-	}
-	_.parse = function(to_parse) {
-		this.to_parse = to_parse;
-		return this;
-	}
-});
-var line_plot = P(subplot, function(_, super_) {
-	_.innerHtml = function() {
-		return '<b>line-plot</b>: plot the function ' + focusableHTML('MathQuill',  'plot' + this.id) + ' as a function of ' + focusableHTML('MathQuill',  'var' + this.id);
-	}
-	_.postInsertHandler = function() {
-		this.mathField[1] = registerFocusable(MathQuill, this.parent, 'var' + this.id, { handlers: {
-			enter: this.enterPressed(this),
-			blur: this.submissionHandler(this)
-		}});
-		this.mathField[0] = registerFocusable(MathQuill, this.parent, 'plot' + this.id, { handlers: {
-			enter: this.enterPressed(this),
-			blur: this.submissionHandler(this)
-		}});
-		super_.postInsertHandler.call(this);
-		return this;
-	}
-	_.buildCommand = function(commands) {
-		commands.push({command: 'plot(' + this.mathField[0].text() + ',' + this.mathField[1].text() + '='  + this.parent.x_min_val + '..' + this.parent.x_max_val + ')', nomarkup: true});
-		return commands;
-	}
-	_.handle = function(result) {
-		if((this.mathField[0].text() == '') || (this.mathField[1].text() == '')) {
-			this.plotData = {};
+	_.changed = function(el) {
+		var all_touched = true;
+		if(el === this.selectBox) {
+			console.log('CHANGE ELEMENT'); //BRENTAN: WRITE ME
 			return;
 		}
-		if(result[0].success) {
-			if(result[0].returned == '[]') {
-				this.plotData = {};
-				this.parent.showOptions();
-				this.outputBox.expand();
-				this.outputBox.setWarning('Nothing to plot.  If you are trying to plot a function, such as f(x), be sure to include the "(x)" portion in the input');
-			} else {
-				this.outputBox.collapse();
-				this.plotData = {type: 'line', data: handlePlotOutput(result[0].returned), legend: this.mathField[0].text()};
+		for(var i = 1; i < this.focusableItems.length; i++) {
+			for(var j = 0; j < this.focusableItems[i].length; j++) {
+				if(el === this.focusableItems[i][j]) this.focusableItems[i][j].touched = true;
+				if(this.focusableItems[i][j].needs_touch) all_touched = all_touched && this.focusableItems[i][j].touched;
 			}
-		} else {
-			this.plotData = {};
-			this.parent.showOptions();
-			this.outputBox.expand();
-			this.outputBox.setError(result[0].returned);
-			this.parent.jQ.addClass('error');
 		}
+		if(all_touched)
+			this.needsEvaluation = true;
 	}
-	_.toString = function() {
-		return 'line___' + super_.toString.call(this);
+	_.addSelectLine = function() {
+		var old_el = $(this.parent.plotBox.element).find('.c3-line-data-' + this.id).first();
+		var new_el = old_el.clone();
+		new_el.insertBefore(old_el).css('opacity',0.5).css('stroke','#aaaaaa').css('stroke-width',this.line_weight + 5).css('stroke-dasharray','none');
+	}
+	_.select = function() {
+		this.selected = true;
+		this.worksheet.attachToolbar(this, this.worksheet.toolbar.plotToolbar());
+		this.addSelectLine();
+		var _this = this;
+		var window_click = function(e) {
+			if($(e.target).closest('.toolbar').length) return; // If we click on the toolbar, we shouldn't lose the selection.
+			_this.selected = false;
+			_this.worksheet.blurToolbar(_this);
+			$(_this.parent.plotBox.element).find('.c3-line-data-' + _this.id).first().remove();
+			$(document).off('click', window_click);
+		}
+		window.setTimeout(function() { $(document).on('click', window_click); });
+	}
+	_.command = function(command, value) {
+		switch(command) {
+			case 'marker_size':
+				if(value == 0) this.show_points = false;
+				else this.show_points = true;
+			default:
+				this[command]=value;
+		}
+		this.worksheet.save();
+		this.parent.childrenEvaluated();
+	}
+	// Methods to overwrite (in addition to innerHtml and postInsertHandler)
+	_.createCommands = function() {
+		throw('This should not happen.  Method should be overwritten by subplot type.');
+	}
+	_.evaluationFinished = function(result) {
+		return true;
 	}
 });
-var plot_types = {
-	'line': line_plot
-}

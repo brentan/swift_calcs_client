@@ -163,7 +163,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 			e.stopPropagation();
 		});
 		this.insertJQ.append($div);
-		this.insertJQ.append('<div class="explain">Preview shows first 30 rows.  Blank or non-numeric cells will be replaced with 0</div>');
+		this.insertJQ.append('<div class="explain" style="text-align:center;">Preview shows first 30 rows.  Blank or non-numeric cells will be replaced with 0</div>');
 		var $sub_link = $('<a class="button" href="#" style="display:inline-block;">Import Data</a>');
 		$sub_link.click(function(e) { 
 			var c = 0;
@@ -202,7 +202,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 		this.fullEvaluation = true;  
 		this.evaluatable = true;
 		this.insertJQ.html('');
-		var $div = $('<div/>').addClass('explain').css('text-align','left').append('<a href="#">Update Import Settings</a>');
+		var $div = $('<div/>').addClass('explain').append('<a href="#">Update Import Settings</a>');
 		var _this = this;
 		$div.find('a').click(function(e) {
 			_this.selectData();

@@ -132,7 +132,8 @@ Worksheet.open(function(_) {
   	if(focus) {
   		// Determine if we need to add an implicit element
   		if(!(this.selection[0][L] instanceof EditableBlock) && !(this.selection[this.selection.length - 1][R] instanceof EditableBlock)) {
-  			var item = this.replaceSelection(math().setImplicit(), true);
+  			var to_insert = (this.selection[0] && this.selection[0].parent.implicitType) ? this.selection[0].parent.implicitType() : math().setImplicit();
+  			var item = this.replaceSelection(to_insert, true);
   			if(stream) this.endUndoStream();
   			return item;
   		}

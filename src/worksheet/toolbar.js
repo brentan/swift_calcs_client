@@ -335,6 +335,71 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		}
 		return toolbar;
 	}
+	// Return the default plot toolbar
+	_.plotToolbar = function(to_add, to_remove) {
+		var toolbar = [
+			{
+				id: 'marker_size',
+				icon: 'circle',
+				html: '<div style="display:inline-block;position: relative;top:-2px;padding:0px 3px;font-family: serif;">Marker Size</div>',
+				title: 'Marker Size',
+				sub: [
+					{ html: 'No Marker', method: function(el) { el.command('marker_size',0); } },
+					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2); } },
+					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2.5" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2.5); } },
+					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="3" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',3); } },
+					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="4" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',4); } },
+					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="6" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',6); } },
+				]
+			},
+			{ id: '|' },
+			{
+				id: 'line_weight',
+				html: '<svg width="20" height="12" viewPort="0 0 20 12" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="20" y2="0" style="stroke-width:1"/><line x1="0" y1="4" x2="20" y2="4" style="stroke-width:2"/><line x1="0" y1="10" x2="20" y2="10" style="stroke-width:3"/></svg><div style="display:inline-block;position: relative;top:-2px;padding:0px 3px;font-family: serif;">Line Thickness</div>',
+				title: 'Line Thickness',
+				sub: [
+					{ html: 'No Line', method: function(el) { el.command('line_weight',0); } },
+					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:1"/></svg>', method: function(el) { el.command('line_weight',1); } },
+					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_weight',2); } },
+					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:3"/></svg>', method: function(el) { el.command('line_weight',3); } },
+					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:4"/></svg>', method: function(el) { el.command('line_weight',4); } },
+					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="50" y2="3" style="stroke-width:5"/></svg>', method: function(el) { el.command('line_weight',5); } },
+				]
+			},
+			{ id: '|' },
+			{
+				id: 'line_style',
+				html: '<svg width="20" height="12" viewPort="0 0 20 12" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="20" y2="3" style="stroke-width:2"/><line stroke-dasharray="4,4" x1="0" y1="9" x2="20" y2="9" style="stroke-width:2"/></svg><div style="display:inline-block;position: relative;top:-2px;padding:0px 3px;font-family: serif;">Line Style</div>',
+				title: 'Line Style',
+				sub: [
+					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',false); } },
+					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="5, 5" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"5,5"); } },
+					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="10, 10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"10,10"); } },
+					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20, 10, 5, 10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20,10,5,10"); } },
+					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20,10,5,5,5,10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20,10,5,5,5,10"); } },
+				]
+			},
+			{ id: '|' },
+			{ 
+				id: 'color',
+				title: 'Color',
+				icon: 'paint-brush',
+				html: '<div style="display:inline-block;position: relative;top:-2px;padding:0px 3px;font-family: serif;">Color</div>',
+				colorPicker: function(el, color) { el.command('color', color); }
+			}
+		];
+		if(to_add) {
+			for(var i=0; i < to_add.length; i++)
+				toolbar.push(to_add[i]);
+		}
+		if(to_remove) {
+			for(var i=0; i > toolbar.length; i++) {
+				if(to_remove[cur_item.id])
+					cur_item.skip = true;
+			}
+		}
+		return toolbar;
+	}
 	// Return the default mathToolbar with extra options.  To_add is appended to the menu, and to_remove will remove any items with matching id
 	_.mathToolbar = function(to_add, to_remove) {
 		var toolbar = [
