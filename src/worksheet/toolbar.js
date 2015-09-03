@@ -55,7 +55,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			for(var i = 0; i < toolbar.length; i++) {
 				var cur_item = toolbar[i];
 				if(cur_item.skip) continue;
-				if(cur_item.id === '|') {
+				if(cur_item.title === '|') {
 					$('<li class="separator"></li>').appendTo($ul);
 					continue;
 				}
@@ -150,7 +150,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{ html: 'Normal', method: function(el) { el.command('normalFormat'); } }
 			]
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'font-family',
 			icon: 'font',
@@ -165,7 +165,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{ html: '<span style="font-family: serif;">Times</span>', method: function(el) { el.command('fontName', 'Times, serif'); } }
 			]
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'text-height',
 			icon: 'text-height',
@@ -181,7 +181,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{ html: '<span style="font-size:10px;">Font Size 1</span>', method: function(el) { el.command('fontSize', 1); } }
 			]
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{ 
 			id: 'foreColor',
 			title: 'Font Color',
@@ -194,7 +194,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			html: '<span class="fa-stack" style="line-height: inherit;"><span class="fa fa-square fa-stack-2x" style="position:relative;top:-2px;font-size:1.35em;" ></span><span style="color: #ecf0f1;font-size:1.35em;border-bottom:4px solid white;" class="fa fa-font fa-inverse fa-stack-2x backColor"></span></span>',
 			colorPicker: function(el, color) { el.command('backColor', color); }
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'bold',
 			icon: 'bold',
@@ -223,7 +223,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			title: 'Srike-through',
 			method: function(el) { el.command('strikeThrough'); } 
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'link',
 			icon: 'link',
@@ -248,7 +248,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			title: 'Superscript',
 			method: function(el) { el.command('superscript'); } 
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'justifyLeft',
 			icon: 'align-left',
@@ -277,7 +277,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			title: 'Justify',
 			method: function(el) { el.command('justifyFull'); } 
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'unorderedList',
 			icon: 'list-ul',
@@ -302,7 +302,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			title: 'Remove Indent',
 			method: function(el) { el.command('outdent'); } 
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'eraser',
 			icon: 'eraser',
@@ -328,64 +328,142 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				toolbar.push(to_add[i]);
 		}
 		if(to_remove) {
-			for(var i=0; i > toolbar.length; i++) {
-				if(to_remove[cur_item.id])
-					cur_item.skip = true;
+			for(var i=0; i < toolbar.length; i++) {
+				if(to_remove[toolbar[i].id])
+					toolbar[i].skip = true;
 			}
 		}
 		return toolbar;
 	}
 	// Return the default plot toolbar
-	_.plotToolbar = function(to_add, to_remove) {
+	_.plotToolbar = function(el, to_add, to_remove) {
+		var data_sets = [];
+		var parent_el = (el instanceof subplot) ? el.parent : el;
+		var subplots = parent_el.children();
+		for(var i = 0; i < subplots.length; i++)
+			data_sets.push({ html: (el.id === subplots[i].id ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;' + subplots[i].name(), method: function(id) { return function(el) { el.choose(id); }; }(subplots[i].id) });
+		data_sets.push({html: '<span class="fa fa-fw"></span>&nbsp;Add Another Data Set', method: function(el) { el.choose(-1); } });
 		var toolbar = [
+			{
+				id: 'data_series',
+				icon: 'line-chart',
+				html: '&nbsp;' + ((el instanceof subplot) ? el.name() : 'Data Series') + '&nbsp;',
+				title: 'Data Series',
+				sub: data_sets
+			},
+			{ title: '|' },
+			{
+				id: 'labels',
+				html: 'Chart Labels&nbsp;',
+				title: 'Chart Labels',
+				sub: [
+					{ html: 'Chart Title', method: function() { $('.plot_title').find('span.title_span').click(); } },
+					{ html: 'X Axis Label', method: function() { parent_el.setAxis(0); } },
+					{ html: 'Y Axis Label', method: function() { parent_el.setAxis(1); } },
+					{ html: 'Secondary Y Axis Label', method: function() { parent_el.setAxis(2); } },
+				]
+			},
+			{
+				id: 'limits',
+				html: 'Limits&nbsp;',
+				title: 'Axis Limits',
+				sub: [
+					{ html: 'X Axis Limits', method: function() { parent_el.setAxis(0); } },
+					{ html: 'Y Axis Limits', method: function() { parent_el.setAxis(1); } },
+					{ html: 'Secondary Y Axis Limits', method: function() { parent_el.setAxis(2); } },
+				]
+			},
+			(el.chart_type ? { title: '|' } : {skip: true}),
+			(el.chart_type ? el.chart_type() : {skip: true}),
+			(el.c3_type && el.c3_type.match(/^(area|line)$/) ? {
+				id: 'spline',
+				html: 'Splines&nbsp;',
+				title: 'splines',
+				sub: [
+					{ html: (el.spline ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Enable', method: function(el) { el.command('spline',true); } },
+					{ html: (!el.spline ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Disable', method: function(el) { el.command('spline',false); } },
+				]
+			} : {skip: true}),
+			{ title: '|' },
 			{
 				id: 'marker_size',
 				icon: 'circle',
-				html: '<div style="display:inline-block;position: relative;top:-2px;padding:0px 3px;font-family: serif;">Marker Size</div>',
 				title: 'Marker Size',
 				sub: [
-					{ html: 'No Marker', method: function(el) { el.command('marker_size',0); } },
-					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2); } },
-					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2.5" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2.5); } },
-					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="3" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',3); } },
-					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="4" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',4); } },
-					{ html: '<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="6" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',6); } },
-				]
+					{ html: (el.marker_size === 0 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;No Marker', method: function(el) { el.command('marker_size',0); } },
+					{ html: (el.marker_size === 2 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2); } },
+					{ html: (el.marker_size === 2.5 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2.5" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2.5); } },
+					{ html: (el.marker_size === 3 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="3" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',3); } },
+					{ html: (el.marker_size === 4 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="4" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',4); } },
+					{ html: (el.marker_size === 6 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="6" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',6); } },
+				],
+				skip: !((el instanceof plot_line) || (el instanceof plot_func))
 			},
-			{ id: '|' },
 			{
 				id: 'line_weight',
-				html: '<svg width="20" height="12" viewPort="0 0 20 12" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="20" y2="0" style="stroke-width:1"/><line x1="0" y1="4" x2="20" y2="4" style="stroke-width:2"/><line x1="0" y1="10" x2="20" y2="10" style="stroke-width:3"/></svg><div style="display:inline-block;position: relative;top:-2px;padding:0px 3px;font-family: serif;">Line Thickness</div>',
+				html: '<svg width="20" height="12" viewPort="0 0 20 12" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="20" y2="0" style="stroke-width:1"/><line x1="0" y1="4" x2="20" y2="4" style="stroke-width:2"/><line x1="0" y1="10" x2="20" y2="10" style="stroke-width:3"/></svg>',
 				title: 'Line Thickness',
 				sub: [
-					{ html: 'No Line', method: function(el) { el.command('line_weight',0); } },
-					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:1"/></svg>', method: function(el) { el.command('line_weight',1); } },
-					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_weight',2); } },
-					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:3"/></svg>', method: function(el) { el.command('line_weight',3); } },
-					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:4"/></svg>', method: function(el) { el.command('line_weight',4); } },
-					{ html: '<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="50" y2="3" style="stroke-width:5"/></svg>', method: function(el) { el.command('line_weight',5); } },
-				]
+					{ html: (el.line_weight === 0 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;No Line', method: function(el) { el.command('line_weight',0); } },
+					{ html: (el.line_weight === 1 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:1"/></svg>', method: function(el) { el.command('line_weight',1); } },
+					{ html: (el.line_weight === 2 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_weight',2); } },
+					{ html: (el.line_weight === 3 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:3"/></svg>', method: function(el) { el.command('line_weight',3); } },
+					{ html: (el.line_weight === 4 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:4"/></svg>', method: function(el) { el.command('line_weight',4); } },
+					{ html: (el.line_weight === 5 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="50" y2="3" style="stroke-width:5"/></svg>', method: function(el) { el.command('line_weight',5); } },
+				],
+				skip: !((el instanceof plot_line) || (el instanceof plot_func))
 			},
-			{ id: '|' },
 			{
 				id: 'line_style',
-				html: '<svg width="20" height="12" viewPort="0 0 20 12" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="20" y2="3" style="stroke-width:2"/><line stroke-dasharray="4,4" x1="0" y1="9" x2="20" y2="9" style="stroke-width:2"/></svg><div style="display:inline-block;position: relative;top:-2px;padding:0px 3px;font-family: serif;">Line Style</div>',
+				html: '<svg width="20" height="12" viewPort="0 0 20 12" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="20" y2="3" style="stroke-width:2"/><line stroke-dasharray="4,4" x1="0" y1="9" x2="20" y2="9" style="stroke-width:2"/></svg>',
 				title: 'Line Style',
 				sub: [
-					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',false); } },
-					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="5, 5" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"5,5"); } },
-					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="10, 10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"10,10"); } },
-					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20, 10, 5, 10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20,10,5,10"); } },
-					{ html: '<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20,10,5,5,5,10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20,10,5,5,5,10"); } },
-				]
+					{ html: (el.line_style === 'none' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style','none'); } },
+					{ html: (el.line_style === '5_5' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="5, 5" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"5_5"); } },
+					{ html: (el.line_style === '10_10' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="10, 10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"10_10"); } },
+					{ html: (el.line_style === '20_10_5_10' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20, 10, 5, 10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20_10_5_10"); } },
+					{ html: (el.line_style === '20_10_5_5_5_10' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20,10,5,5,5,10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20_10_5_5_5_10"); } },
+				],
+				skip: !((el instanceof plot_line) || (el instanceof plot_func))
 			},
-			{ id: '|' },
 			{ 
 				id: 'color',
 				title: 'Color',
-				icon: 'paint-brush',
-				html: '<div style="display:inline-block;position: relative;top:-2px;padding:0px 3px;font-family: serif;">Color</div>',
+				html: '<span class="fa-stack" style="line-height: inherit;"><span style="font-size:1.25em;border-bottom:4px solid ' + (el.color ? el.color : '#ecf0f1') + ';" class="fa fa-paint-brush fa-stack-2x"></span></span>',
 				colorPicker: function(el, color) { el.command('color', color); }
+			},
+			{ title: '|', id: 'hide_on_plot_only' },
+			{
+				id: 'label',
+				icon: 'tag',
+				title: 'Change Label',
+				method: function() { 
+					el.parent.expand();
+					el.focus(L);
+					el.label.focus(R).select();
+				}
+			},
+			{
+				id: 'y_axis',
+				html: '<span class="fa-stack" style="line-height: inherit;"><span style="font-size:1.35em;color:#bbbbbb;" class="fa fa-exchange fa-stack-2x"></span><span class="fa fa-stack-1x" style="font-size:1.35em;font-weight:bold;position:relative;top:-5px;">y</span></span>',
+				title: 'Y Axis',
+				sub: [
+					{ html: (el.y_axis === 'y' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Primary Y Axis', method: function(el) { el.command('y_axis','y'); } },
+					{ html: (el.y_axis === 'y2' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Secondary Y Axis', method: function(el) { el.command('y_axis',"y2"); } },
+				]
+			},
+			{
+				id: 'mode',
+				html: 'Plot Mode',
+				klass: 'plot_mode',
+				right: true,
+				sub: [
+					{ html: '<span class="fa fa-calculator fa-fw"></span> Change to Math Mode', method: function(el) { (el instanceof subplot) ? el.parent.command('mathMode') : el.command('mathMode'); } },
+					{ html: '<span class="fa fa-font fa-fw"></span> Change to Text Mode', method: function(el) { (el instanceof subplot) ? el.parent.command('textMode') : el.command('textMode'); } },
+					{klass: 'vaporware', html: '<span class="fa fa-code fa-fw"></span> Change to Code Mode', method: function(el) { showNotice('Feature not yet available'); } },
+					{klass: 'vaporware', html: '<span class="fa fa-table fa-fw"></span> Change to Spreadsheet Mode', method: function(el) { showNotice('Feature not yet available'); } },
+					{klass: 'vaporware', html: '<span class="fa fa-image fa-fw"></span> Change to Drawing Mode', method: function(el) { showNotice('Feature not yet available'); } }
+				]
 			}
 		];
 		if(to_add) {
@@ -393,9 +471,9 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				toolbar.push(to_add[i]);
 		}
 		if(to_remove) {
-			for(var i=0; i > toolbar.length; i++) {
-				if(to_remove[cur_item.id])
-					cur_item.skip = true;
+			for(var i=0; i < toolbar.length; i++) {
+				if(to_remove[toolbar[i].id])
+					toolbar[i].skip = true;
 			}
 		}
 		return toolbar;
@@ -447,7 +525,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{html: '&nbsp;&nbsp;&#8804;&nbsp;&nbsp;', method: function(el) { el.command('\\le'); }, title: 'Less Than or Equal To' },
 			]
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'symbols',
 			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">&#8734;</div>',
@@ -514,7 +592,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				]
 			}
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'Units',
 			html: '<div style="position: relative;top:-2px;padding:0px 5px;"><div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:9px;font-size:9px;">m</div><div style="padding-top: 1px;line-height:9px;font-size:9px;">s</div></div>',
@@ -522,7 +600,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			method: function(el) { el.command('\\Unit'); },
 			units: function(el, cmd, unit) { el.command(cmd, unit); }
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'roots',
 			html: '&#8730;<div style="display:inline-block;border-top:1px solid #444444;padding:0px 3px;position:relative; top:1px;"><span style="color: #888888;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span></div>',
@@ -580,7 +658,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			title: 'Scientific Notation',
 			method: function(el) { el.command('\\scientificNotationToolbar'); },
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'matrix',
 			html: '<span style="position: relative; top: -7px;padding-right:4px;"><span style="font-size:18px;">[</span><span style="font-size: 13px;color: #888888;"><span class="fa fa-th"></span></span><span style="font-size: 18px;">]</span></span>',
@@ -597,7 +675,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{html: '<kbd>:</kbd>Remove Row', title: 'Remove Row', method: function(el) { el.command('matrix_remove_row'); } },
 			]
 		},
-		{ id: '|' },
+		{ title: '|' },
 		{
 			id: 'commands',
 			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">Command Library</div>',

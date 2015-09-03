@@ -3,6 +3,26 @@ div.sc_element_container {
     .sc_element .sc_element_insert_td {
       padding: 3px;
     }
+    div.plot_title {
+      text-align: center;
+      padding: 3px;
+      margin-left: 35px;
+      font-size: 1.2em;
+      cursor: pointer;
+      .title_span {
+        display: inline-block;
+      }
+      &:hover {
+        text-decoration: underline;
+      }
+      &.no_title {
+        font-size: 0.8em;
+        color: #bbbbbb;
+        &:hover {
+          color: #454545;
+        }
+      }
+    }
   }
 }
 .c3-axis-x, .c3-axis-y, .c3-axis-y2 {

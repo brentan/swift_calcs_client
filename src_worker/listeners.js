@@ -202,7 +202,7 @@ var testError = function(output, ii) {
   // Also check for an undefined result, which returns a bit of a complex result from giac
   if(errors[ii]) 
     output = {success: false, returned: errors[ii] };
-  else if(output.returned.indexOf("Incompatible units Error") > -1)
+  else if(output.returned.indexOf("Incompatible units") > -1)
     output = {success: false, returned: fix_message("Incompatible units Error: Please check your equation to ensure units balance")};
   else if(output.returned.indexOf("GIAC_ERROR") > -1)
     output = {success: false, returned: fix_message(output.returned.replace('GIAC_ERROR:',''))};

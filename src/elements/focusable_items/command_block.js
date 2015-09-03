@@ -248,6 +248,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     	this.element.storeAsVariable();
   	else
     	this.flash();
+    return this;
 	}
 	_.paste = function(text) {
 		var clear = this.cursorPlaced;
@@ -301,6 +302,13 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     else 
     	this.updateHighlight();
     this.scrollToMe(dir);
+    return this;
+	}
+	_.select = function() {
+		this.anchor = 0;
+		this.location = this.children().length;
+		this.updateHighlight();
+		return this;
 	}
 	_.findTarget = function(e) {
 		var x_loc = e.originalEvent.pageX;

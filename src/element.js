@@ -246,11 +246,11 @@ var Element = P(function(_) {
 		return this.insertInto(parent, R);
 	}
 	_.replace = function(replaced) {
-		var stream = !this.trackingStream;
-		if(stream) this.startUndoStream();
+		var stream = !replaced.worksheet.trackingStream;
+		if(stream) replaced.worksheet.startUndoStream();
 		this.insertAfter(replaced);
 		replaced.remove();
-		if(stream) this.endUndoStream();
+		if(stream) this.worksheet.endUndoStream();
 		return this;
 	}
 	// Update the worksheet of this block and all children

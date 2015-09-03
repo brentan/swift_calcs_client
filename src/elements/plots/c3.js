@@ -5,6 +5,11 @@ c3_chart_internal_fn.opacityForCircle rewritten as:
         var opacity = isFunction(this.config.point_show) ? this.config.point_show(d) : (this.config.point_show ? 1 : 0);
         return isValue(d.value) ? (this.isScatterType(d) ? 0.5 : opacity) : 0;
     };
+is_within_shape should have the following:
+        else if (that.nodeName === 'circle') {
+            if($$.pointSelectR(d) == 0) return true;
+            isWithin = $$.isStepType(d) ? $$.isWithinStep(that, $$.getYScale(d.id)(d.value)) : $$.isWithinCircle(that, $$.pointSelectR(d) * 1.5);
+        }
 to allow for different point show settings on different datasets
 */
 
@@ -2831,6 +2836,7 @@ to allow for different point show settings on different datasets
             isWithin = false;
         }
         else if (that.nodeName === 'circle') {
+            if($$.pointSelectR(d) == 0) return true;
             isWithin = $$.isStepType(d) ? $$.isWithinStep(that, $$.getYScale(d.id)(d.value)) : $$.isWithinCircle(that, $$.pointSelectR(d) * 1.5);
         }
         else if (that.nodeName === 'path') {

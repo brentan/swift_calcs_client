@@ -21,6 +21,7 @@ var aFocusableItem = P(function(_) {
   _.flash = function() {
     var el = this.jQ.closest('.sc_element');
     el.stop().css("background-color", "#ffe0e0").animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')} , duration: 400 });
+    return this;
   }
 	_.scrollToMe = function(dir) {
 		if(this.jQ) {
