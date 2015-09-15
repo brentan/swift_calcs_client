@@ -7,7 +7,7 @@ var uploadedItem = P(Element, function(_, super_) {
 	_.upload_id = false;
 	_.upload_name = '';
 	_.url = false;
-	_.savedProperties = ['url', 'upload_id', 'upload_name'];
+	_.savedProperties = ['url', 'upload_id', 'upload_name']; //NOTE: Server relies on something being after both url and upload_id, in order to replace them during a copy operation
 
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
