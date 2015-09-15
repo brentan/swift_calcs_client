@@ -78,8 +78,8 @@ app_ugly: css uglify uglify_worker
 	rm -rf ./$(APP_DIR)/public/libraries/giac_worker*.js.map
 	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).min.js ./$(APP_DIR)/public/libraries/swift_calcs$(VERSION).js
 	cp -f $(BUILD_DIR)/giac_worker$(VERSION).min.js ./$(APP_DIR)/public/libraries/giac_worker$(VERSION).js
-	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).js.map ./$(APP_DIR)/public/libraries/swift_calcs$(VERSION).js.map
-	cp -f $(BUILD_DIR)/giac_worker$(VERSION).js.map ./$(APP_DIR)/public/libraries/giac_worker$(VERSION).js.map
+	#cp -f $(BUILD_DIR)/swift_calcs$(VERSION).js.map ./$(APP_DIR)/public/libraries/swift_calcs$(VERSION).js.map
+	#cp -f $(BUILD_DIR)/giac_worker$(VERSION).js.map ./$(APP_DIR)/public/libraries/giac_worker$(VERSION).js.map
 	cp -f $(BUILD_DIR)/swift_calcs$(VERSION).css ./$(APP_DIR)/app/assets/stylesheets/swift_calcs.css
 
 js: $(BUILD_JS)
