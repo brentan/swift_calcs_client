@@ -214,6 +214,10 @@ Worksheet.open(function(_) {
       e.clipboardData.setData('text/plain', to_store);
   }
   _.cut = function(e) {
+    if(this.rights == 1) {
+      e.preventDefault();
+      return showNotice('Cut and Copy have been disabled for this Worksheet', 'red');
+    }
     var skip_copy = false;
     if(this.selection.length == 0) {
       skip_copy = this.activeElement.cut(e);
@@ -228,6 +232,10 @@ Worksheet.open(function(_) {
     }
   }
   _.copy = function(e) {
+    if(this.rights == 1) {
+      e.preventDefault();
+      return showNotice('Cut and Copy have been disabled for this Worksheet', 'red');
+    }
     var skip_copy = false;
     if(this.selection.length == 0) {
       skip_copy = this.activeElement.copy(e);

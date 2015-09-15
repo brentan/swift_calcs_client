@@ -550,6 +550,8 @@ var subplot = P(EditableBlock, function(_, super_) {
 		super_.focus.call(this, dir);
 		if(dir == -2)
 			this.selectBox.focus(L);
+		else if(dir == L) 
+			this.label.focus(L);
 		return this;
 	}
 });

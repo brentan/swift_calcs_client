@@ -81,6 +81,7 @@ var receiveMessage = function(command) {
 		var to_send = command.commands[ii].command.trim();
 		warnings.push([]);
     if(command.commands[ii].unit_convert && (ii > 0)) {
+      //BRENTAN: The is a bug if one of the items to convert is numerically 0.  If that happens, the u__s or u__m 'variable' is dropped and so we don't know what units '0' should be in...
       Module.caseval('mksareduce_mode(0);mksavariable_mode(0);'); // disable the special unit command modes
       // Unit convert is a special command.  It means the previous answer, if successful, had units removed and replaced with variable names with mksa_remove and mksa_var.  That answer
       // now needs to be converted back into unit space.  We do that here and insert into this command where the string [val] is placed.
