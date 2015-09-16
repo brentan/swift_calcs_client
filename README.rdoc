@@ -1,0 +1,34 @@
+== README
+
+The client-side component of the SwiftCalcs application.
+
+== COPYRIGHT
+
+This software is copyright Brentan Alexander Consulting LLC.  All rights reserved.
+
+== LICENSE
+
+This software contains other software components licensed under GPL3 and other open source licenses.  In order to abide by those licenses,
+the SwiftCalcs client component is licensed under Mozilla Public License, v.2.0.  You can obtain a copy of this license at http://mozilla.org/MPL/2.0/.
+
+== THANKS TO
+
+Thanks to the support of developers whose open source software is used in this application, including:
+
+* Giac: An open-source computer algebra system utilized by SwiftCalcs client.  The 'emgiac' project, which is giac compiled to JS with emscripten, is utilized. https://www-fourier.ujf-grenoble.fr/~parisse/giac.html
+
+* Mathquill: An open-source pretty-print generator and input system.  A heavily customized version of this library is utilized by SwiftCalcs Client (also available openly as a github fork of the main project). https://github.com/mathquill/mathquill
+
+* jQuery: Goes without saying. https://jquery.com/
+
+* D3 and C3 graphical libraries. http://c3js.org/ and http://d3js.org/
+
+* P.js: Classes for javascript that don't suck: https://github.com/jneen/pjs
+
+* Font Awesome by Dave Gandy - http://fontawesome.io
+
+* Rangy: The cross-browser range replacement.  https://github.com/timdown/rangy
+
+* Diff Match and Patch, Copyright 2006 Google Inc. - http://code.google.com/p/google-diff-match-patch/
+
+* Papa Parse - https://github.com/mholt/PapaParse
