@@ -32,7 +32,14 @@ var outputBox = P(function(_) {
 	_.setWarning = function(html, append) {
 		if(!append) this.clearState();
 		this.el.jQ.addClass('warn');
-		this.jQ.append('<div class="warning">' + html + '</div>');
+		var err = $('<div/>').addClass('warning').html(html);
+		$('<a href="#"><i class="fa fa-fw fa-question-circle"></i></a>').on('click', function(e) {
+			window.loadToPopup('/error_help', {message: html});
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		}).appendTo(err);
+		this.jQ.append(err);
 		this.jQ.addClass('warn');
 		return this;
 	}
@@ -44,7 +51,14 @@ var outputBox = P(function(_) {
 			$('<div class="' + css_prefix + 'calculation_stopped" style="display:none;">Computation halted.  Please correct error to resume.</div>').insertAfter(this.tableJQ).slideDown({duration: 400});
 		}
 		this.el.jQ.addClass('error');
-		this.jQ.append('<div class="error">' + html + '</div>');
+		var err = $('<div/>').addClass('error').html(html);
+		$('<a href="#"><i class="fa fa-fw fa-question-circle"></i></a>').on('click', function(e) {
+			window.loadToPopup('/error_help', {message: html});
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		}).appendTo(err);
+		this.jQ.append(err);
 		this.jQ.addClass('error');
 		for(var el = this.el.parent; el instanceof Element; el = el.parent)
 			el.expand();
