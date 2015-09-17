@@ -33,7 +33,10 @@ var SwiftCalcs = {};
   }
   $('body').on('click', 'a.' + css_prefix + 'help_circle', function(e) { 
     var el = SwiftCalcs.elementById($(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id')*1)
-    if(el && el.helpText) SwiftCalcs.createTooltip(el.helpText, $(this));
+    if(el && el.helpText) {
+      SwiftCalcs.createTooltip(el.helpText, $(this));
+      ahoy.track("Clicked Help Circle", {element_type: el.helpText.split('>>')[0].replace("<<","")})
+    }
     return false;
   });
 

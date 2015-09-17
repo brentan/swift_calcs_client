@@ -49,6 +49,7 @@ var GiacHandler = P(function(_) {
 			this.manual_evaluation[to_do[i]] = true; 
 	}
 	_.kill = function() {
+		ahoy.track("Kill Giac Worker");
 		// Will totally destroy the webworker and then give a link to restart it
 		this.worker.terminate();
 		this.worker = false;
@@ -62,17 +63,19 @@ var GiacHandler = P(function(_) {
 	_.restart = function() {
 		// Will reload the webworker if its been destroyed
 		if(this.worker) return;
+		ahoy.track("Restart Giac Worker");
 		loadWorker(this);
 		SwiftCalcs.active_worksheet.ends[L].evaluate(true, true);
 	}
 	_.aborting = false;
 	_.cancelEvaluations = function(el) { 
-		// User initiated abort.  Initiate the abort, let the user know the abort is happening, and if 10 seconds pass with no response, add option to force quit
+		// User initiated abort.  Initiate the abort, let the user know the abort is happening, and if 5 seconds pass with no response, add option to force quit
 		// If el is passed, set to 'aborting' and use that to allow for full worker kill if no response occurs
 		var to_cancel = this.current_evaluations();
 		for(var i = 0; i < to_cancel.length; i++)
 			this.cancelEvaluation(to_cancel[i]); 
 		if(el) {
+			ahoy.track("Abort Computation");
 			var el_new = $('<span>Aborting...</span>');
 			el.replaceWith(el_new);
 			this.aborting = window.setTimeout(function() { 
@@ -184,6 +187,7 @@ var GiacHandler = P(function(_) {
 	}
 	_.manual_mode = function(mode) {
 		if(!mode) {
+			ahoy.track("Enable Automatic Evaluation");
 			// Auto mode
 			$('.worksheet_holder').removeClass(css_prefix + 'manual_evaluation');
 			this.auto_evaluation = true;
@@ -191,6 +195,7 @@ var GiacHandler = P(function(_) {
       $('a.calc_now').closest('li').hide();
       $('a.auto_on').closest('li').hide();
 		} else {
+			ahoy.track("Disable Automatic Evaluation");
 			$('.worksheet_holder').addClass(css_prefix + 'manual_evaluation');
 			this.auto_evaluation = false;
       $('a.auto_off').closest('li').hide(); 
