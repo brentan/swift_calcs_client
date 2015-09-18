@@ -114,7 +114,7 @@ var math = P(MathOutput, function(_, super_) {
 					if(!stream) _this.worksheet.endUndoStream();
 					return;
 				}
-				if(to_compute.indexOf(':=') > -1) {
+				if(to_compute.match(/(:=|\+\+|--)/)) {
 					_this.scoped = true;
 					_this.was_scoped = true;
 					_this.fullEvaluation = true;
