@@ -53,25 +53,33 @@ var plot_func = P(subplot, function(_, super_) {
 			this.unit_box.focus(L);
 		}
 	}
+	_.continueEvaluation = function(evaluation_id, move_to_next) {
+		if(this.shouldBeEvaluated(evaluation_id))
+			this.commands = this.createCommands();
+		return super_.continueEvaluation.call(this, evaluation_id, move_to_next);
+	}
 	_.createCommands = function() {
 		this.plot_me = false;
 		if(this.eq0.text().trim() == '') return [];
 		this.xs = [];
 		var resolution = 300;
-		var min_val = this.parent.x_min === false ? -5 : this.parent.x_min;
-		var max_val = this.parent.x_max === false ? 5 : this.parent.x_max;
+		var min_val = this.parent.x_min === false ? (-5 * this.parent.x_unit_conversion) : (this.parent.x_min * this.parent.x_unit_conversion);
+		var max_val = this.parent.x_max === false ? (5 * this.parent.x_unit_conversion) : (this.parent.x_max * this.parent.x_unit_conversion);
 		for(var i = 0; i <= resolution; i++) 
 			this.xs.push(i*(max_val - min_val)/resolution + min_val);
 		var unit_command = this.show_unit && this.unit_box.text().length ? this.unit_box.text() : '1';
-		this.x_unit = this.show_unit && this.unit_box.text().length ? this.unit_box.latex() : '1';
 		var command1 = "latex(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[" + this.xs[0] + "*" + unit_command + "])[0])"; // Evaluate at the first x to find units
-		var command2 = "apply(" + this.eq1.text() + "->(evalf(mksa_remove(" + this.eq0.text() + "))),[" + this.xs.join(',') + "]" + "*" + unit_command + ")";
+		var command2 = "apply(" + this.eq1.text() + "->(evalf(mksa_remove(" + this.eq0.text() + "))),[" + this.xs.join(',') + "]" + "*mksa_base(" + unit_command + "))";
+		var command3 = "latex(evalf(mksa_base(" + unit_command + ")))";
 		this.xs.unshift('x_' + this.id);
-		return [{command: command1, nomarkup: true},{command: command2, nomarkup: true}]
+		return [{command: command1, nomarkup: true},{command: command2, nomarkup: true},{command: command3, nomarkup: true}]
 	}
 	_.evaluationFinished = function(result) {
+		this.needsEvaluation = false;
+		this.neverEvaluated = false;
 		if(result[0].success && result[1].success) {
 			this.y_unit = result[0].returned;
+			this.x_unit = result[2].returned;
 			try {
 				this.ys = '[' + result[1].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
 				this.ys = this.ys.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');

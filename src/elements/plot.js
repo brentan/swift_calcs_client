@@ -7,7 +7,7 @@ var plot = P(Element, function(_, super_) {
 	_.klass = ['plot'];
 	_.evaluatable = true;
 	_.hasChildren = true;
-	_.savedProperties = ['chart_title', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels'];
+	_.savedProperties = ['chart_title', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units'];
 	_.x_min = false;
 	_.x_max = false;
 	_.x_label = false;
@@ -18,6 +18,9 @@ var plot = P(Element, function(_, super_) {
 	_.y2_min = false;
 	_.y2_max = false;
 	_.y2_label = false;
+	_.x_units = false;
+	_.y_units = false;
+	_.y2_units = false;
 	_.chart_title = false;
 	_.height = 300;
 	_.plotBox = false;
@@ -88,6 +91,38 @@ var plot = P(Element, function(_, super_) {
 			this.plotBox = this.plotBox.destroy();
 		this.jQ.find('.' + css_prefix + 'plot_box').html('<div class="explain" style="text-align:center;margin:3px 20px;padding:10px;border:1px solid #dddddd;border-radius:6px;">Generating Plot...</div>');
 	}
+	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
+	_.continueEvaluation = function(evaluation_id, move_to_next) {
+		// Build command list
+		this.commands = [
+			{ command: 'evalf(mksa_remove(' + (this.x_units ? this.worksheet.latexToText(this.x_units) : '1') + '))', nomarkup: true },
+			{ command: 'latex(evalf(mksa_base(' + (this.x_units ? this.worksheet.latexToText(this.x_units) : '1') + ')))', nomarkup: true },
+			{ command: 'evalf(mksa_remove(' + (this.y_units ? this.worksheet.latexToText(this.y_units) : '1') + '))', nomarkup: true },
+			{ command: 'latex(evalf(mksa_base(' + (this.y_units ? this.worksheet.latexToText(this.y_units) : '1') + ')))', nomarkup: true },
+			{ command: 'evalf(mksa_remove(' + (this.y2_units ? this.worksheet.latexToText(this.y2_units) : '1') + '))', nomarkup: true },
+			{ command: 'latex(evalf(mksa_base(' + (this.y2_units ? this.worksheet.latexToText(this.y2_units) : '1') + ')))', nomarkup: true },
+		];
+		if(this.shouldBeEvaluated(evaluation_id)) {
+			this.addSpinner(evaluation_id);
+			this.move_to_next = move_to_next;
+			giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+		} else 
+			this.evaluateNext(evaluation_id, move_to_next);
+	}
+	_.evaluationFinished = function(result, evaluation_id) {
+		var any_yet = false;
+		this.x_unit_conversion = result[0].returned*1;
+		this.x_unit = result[1].returned;
+		this.y_unit_conversion = result[2].returned*1;
+		this.y_unit = result[3].returned;
+		this.y2_unit_conversion = result[4].returned*1;
+		this.y2_unit = result[5].returned;
+		if(this.ends[L])
+			this.ends[L].continueEvaluation(evaluation_id, true)
+		else
+			this.childrenEvaluated(evaluation_id);
+		return false;
+	}
 	_.childrenEvaluated = function(evaluation_id) {
 		// Draw the plot, if there is anything to plot
 		if(this.plotBox)
@@ -107,27 +142,76 @@ var plot = P(Element, function(_, super_) {
 		var axes = {};
 		var children = this.children();
 		var x_ticks = [];
-		var x_max = this.x_max === false ? 5 : this.x_max; // BRENTAN: Process non function items first to determine auto x scale
-		var x_min = this.x_min === false ? -5 : this.x_min;
-		var x_tick_order = eval('1e' + (x_max - x_min).toExponential().replace(/^.*e/,'')*1+1);
-		for(var i = 0; i <= 20; i++) 
-			x_ticks.push(i*(x_max - x_min)/20 + x_min);
+		var x_max = this.x_max === false ? false : (this.x_max * this.x_unit_conversion); // Convert to mksa from requested unit base
+		var x_min = this.x_min === false ? false : (this.x_min * this.x_unit_conversion);
+		var x_unit = this.x_units ? this.x_unit : false;
+		var y_unit = this.y_units ? this.y_unit : false;
+		var y2_unit = this.y2_units ? this.y2_unit : false;
 		var show_y2 = false;
 		for(var i = 0; i < children.length; i++) {
+			// Collapse error/warn boxes
+			children[i].outputBox.jQ.find('.parent_warning').remove();
+			if(children[i].outputBox.jQ.html() == '') children[i].outputBox.clearState().collapse(true);
 			if(!children[i].plot_me) continue;
 			if(children[i] instanceof plot_bar) {
 				this.has_bar = true;
 				ignore_custom_xs = true;
 			}
-			columns.push(children[i].ys);
+			if(children[i] instanceof plot_func) {
+				if(ignore_custom_xs) {
+					this.expand();
+					children[i].outputBox.setWarning('Function Plot Ignored.  Function is plotted with a bar chart, which assumes a monotonic x-axis.').expand();
+					continue;
+				}
+				if(x_min === false) x_min = -5 * this.x_unit_conversion;
+				if(x_max === false) x_max = 5 * this.x_unit_conversion;
+			}
+			var y_vals = children[i].ys.slice(0);
+			if(children[i].y_axis == 'y2') {
+				for(var j = 1; j < y_vals.length; j++)
+					y_vals[j] = y_vals[j] / this.y2_unit_conversion;  // Convert from mksa back to requested unit base
+			} else {
+				for(var j = 1; j < y_vals.length; j++)
+					y_vals[j] = y_vals[j] / this.y_unit_conversion;  // Convert from mksa back to requested unit base
+			}
+			columns.push(y_vals);
 			els['data_' + children[i].id] = children[i];
 			if(!ignore_custom_xs) {
 				xs['data_' + children[i].id] = 'x_' + children[i].id;
-				columns.push(children[i].xs);
+				if(!(children[i] instanceof plot_func)) {
+					x_min = x_min === false ? min(children[i].xs.slice(1)) : min(min(children[i].xs.slice(1)), x_min);
+					x_max = x_max === false ? max(children[i].xs.slice(1)) : max(max(children[i].xs.slice(1)), x_max);
+				}
+				if(x_unit && (x_unit != children[i].x_unit)) {
+					this.expand();
+					children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted, but its x-axis units are not the same as shown.', true).expand();
+					children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+				} else
+					x_unit = children[i].x_unit;
+				var x_vals = children[i].xs.slice(0);
+				for(var j = 1; j < x_vals.length; j++)
+					x_vals[j] = x_vals[j] / this.x_unit_conversion;  // Convert from mksa back to requested unit base
+				columns.push(x_vals);
+			}
+			if(children[i].y_axis != 'y2') {
+				if(y_unit && (y_unit != children[i].y_unit)) {
+					this.expand();
+					children[i].outputBox.setWarning('Incompatible y-axis units.  Data has been plotted, but its y-axis units are not the same as shown.', true).expand();
+					children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+				} else
+					y_unit = children[i].y_unit;
+			} else {
+				if(y2_unit && (y2_unit != children[i].y_unit)) {
+					this.expand();
+					children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data has been plotted, but its y-axis units are not the same as shown.', true).expand();
+					children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+				} else
+					y2_unit = children[i].y_unit;
 			}
 			if(ignore_custom_xs && children[i].x_provided) {
 				this.expand();
-				children[i].outputBox.setWarning('X-data ignored.  Data is plotted with a bar chart, which assumes a monotonic x-axis.').expand();
+				children[i].outputBox.setWarning('X-data ignored.  Data is plotted with a bar chart, which assumes a monotonic x-axis.', true).expand();
+				children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
 			}
 			if(children[i].spline) 
 				types['data_' + children[i].id] = (children[i].c3_type === 'area') ? 'area-spline' : 'spline';
@@ -146,6 +230,19 @@ var plot = P(Element, function(_, super_) {
 					groups_y2.push('data_' + children[i].id);
 			}
 		}
+		var x_label = this.x_label ? this.x_label : 'Add a label';
+		var y_label = this.y_label ? this.y_label : 'Add a label';
+		var y2_label = this.y2_label ? this.y2_label : 'Add a label';
+		if(!ignore_custom_xs && this.x_units) x_label += ' [' + this.worksheet.latexToUnit(this.x_units)[0].replace(/_/g,'') +']';
+		else if(!ignore_custom_xs && x_unit && (x_unit != '1')) x_label += ' [' + this.worksheet.latexToUnit(x_unit)[0].replace(/_/g,'') +']';
+		if(this.y_units) y_label += ' [' + this.worksheet.latexToUnit(this.y_units)[0].replace(/_/g,'') +']';
+		else if(y_unit && (y_unit != '1')) y_label += ' [' + this.worksheet.latexToUnit(y_unit)[0].replace(/_/g,'') +']';
+		if(this.y2_units) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_units)[0].replace(/_/g,'') +']';
+		else if(y2_unit && (y2_unit != '1')) y2_label += ' [' + this.worksheet.latexToUnit(y2_unit)[0].replace(/_/g,'') +']';
+		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
+		for(var i = 0; i <= 20; i++) 
+			x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
+		var x_tick_order = eval('1e' + (((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1+1));
 		if(columns.length) {
 			var _this = this;
 			this.jQ.find('.' + css_prefix + 'plot_box').prev('div.plot_title').remove();
@@ -175,19 +272,19 @@ var plot = P(Element, function(_, super_) {
 				axis: {
 					x: { 
 						tick: (ignore_custom_xs ? {} : { values: x_ticks, format: function (d) { return Math.ceil(d * x_tick_order) /x_tick_order } }),
-						label: { text: (this.x_label ? this.x_label : 'Add a label'), position: 'outer-center'}, 
+						label: { text: x_label, position: 'outer-center'}, 
 						min: ((this.x_min === false) || ignore_custom_xs ? undefined : this.x_min),
 						max: ((this.x_max === false) || ignore_custom_xs ? undefined : this.x_max),
 						categories: this.x_labels && this.has_bar ? this.x_labels.split('__s__') : [],
 						type: this.x_labels && this.has_bar ? 'category' : 'indexed'
 					},
 					y: { 
-						label: { text: (this.y_label ? this.y_label : 'Add a label'), position: 'outer-middle'},
+						label: { text: y_label, position: 'outer-middle'},
 						min: (this.y_min === false ? undefined : this.y_min),
 						max: (this.y_max === false ? undefined : this.y_max),
 					},
 					y2: { 
-						label: { text: (this.y2_label ? this.y2_label : 'Add a label'), position: 'outer-middle'}, 
+						label: { text: y2_label, position: 'outer-middle'}, 
 						min: (this.y2_min === false ? undefined : this.y2_min),
 						max: (this.y2_max === false ? undefined : this.y2_max),
 						show: show_y2
@@ -252,7 +349,7 @@ var plot = P(Element, function(_, super_) {
 				if(child.selected)
 					child.addSelectLine();
 			});
-			//BRENTAN: Check x_unit and y_unit of each subplot and add labels as needed.  Need ability to change unit scaling for the axis, and report for incompatible units!
+			// BRENTAN: Still need a way to change the unit of an axis out of mksa units
 		} else
 			this.jQ.find('.' + css_prefix + 'plot_box explain').html('No plot data to draw.  Please setup a data series to plot.');
 		if(evaluation_id)
@@ -295,22 +392,39 @@ var plot = P(Element, function(_, super_) {
 		window.showPopupOnTop();
 		var axis_name = ['X', 'Y', 'Secondary Y'];
 		var _this = this;
-		$('.popup_dialog .full').html('<div class="title">' + axis_name[axis] + ' axis</div><div><strong>' + axis_name[axis] + ' Label</strong><br><input type="text" class="label"></div><BR><div><strong>' + axis_name[axis] + ' Minimum</strong><br><input type="text" class="min"><BR><span class="explain">Leave blank for auto axis</span></div><div><strong>' + axis_name[axis] + ' Maximum</strong><br><input type="text" class="max"><BR><span class="explain">Leave blank for auto axis</span></div>');
+		$('.popup_dialog .full').html('<div class="title">' + axis_name[axis] + ' axis</div><div><strong>' + axis_name[axis] + ' Label</strong><br><input type="text" class="label"></div><BR>');
 		if(this.has_bar && (axis == X_AXIS)) 
 			$('.popup_dialog .full').append('<div><strong>' + axis_name[axis] + ' Data Labels</strong><br><input type="text" class="labels"><BR><span class="explain">Comma seperated list of labels for each data bar.</span></div>');
+		else
+			$('.popup_dialog .full').append('<div><strong>' + axis_name[axis] + ' Minimum</strong><br><input type="text" class="min"><BR><span class="explain">Leave blank for auto axis, add units to change default units</span></div><div><strong>' + axis_name[axis] + ' Maximum</strong><br><input type="text" class="max"><BR><span class="explain">Leave blank for auto axis</span></div><div><strong>' + axis_name[axis] + ' Units</strong><div class="white"><span class="units"></span></div><span class="explain">Leave blank for no or auto units</span></div>');
 		min_vals = [this.x_min, this.y_min, this.y2_min];
 		max_vals = [this.x_max, this.y_max, this.y2_max];
+		units = [this.x_units, this.y_units, this.y2_units];
 		labels = [this.x_label, this.y_label, this.y2_label];
 		if(labels[axis] !== false) $('.popup_dialog').find('input.label').val(labels[axis]);
-		if(min_vals[axis] !== false) $('.popup_dialog').find('input.min').val(min_vals[axis]);
-		if(max_vals[axis] !== false) $('.popup_dialog').find('input.max').val(max_vals[axis]);
-		if(this.has_bar && (axis == X_AXIS) && this.x_labels) 
-			$('.popup_dialog').find('input.labels').val(this.x_labels.replace(/__s__/g,', '));
-    var links = $('.popup_dialog .bottom_links').html('<button class="close grey">Close</button>');
+		if(this.has_bar && (axis == X_AXIS)) { 
+			if(this.x_labels) $('.popup_dialog').find('input.labels').val(this.x_labels.replace(/__s__/g,', '));
+		} else {
+			if(min_vals[axis] !== false) $('.popup_dialog').find('input.min').val(min_vals[axis]);
+			if(max_vals[axis] !== false) $('.popup_dialog').find('input.max').val(max_vals[axis]);
+			var units_field = window.standaloneMathquill($('.popup_dialog').find('span.units').eq(0));
+			units_field.setUnitsOnly(true);
+			if(units[axis])
+				units_field.paste(units[axis]);
+			else
+				units_field.cmd('\\Unit');
+		}
+    var links = $('.popup_dialog .bottom_links').html('');
+    $('<button class="grey">Close</button>').on('click', function(e) {
+			$('.standalone_textarea').remove();
+			window.hidePopupOnTop();
+    }).prependTo(links);
 		$('<button class="ok">Ok</button>').on('click', function(e) {
 			var label = $('.popup_dialog').find('input.label').val().trim();
-			var min_val = $('.popup_dialog').find('input.min').val().trim();
-			var max_val = $('.popup_dialog').find('input.max').val().trim();
+			if(!this.has_bar || (axis != X_AXIS)) {
+				var min_val = $('.popup_dialog').find('input.min').val().trim();
+				var max_val = $('.popup_dialog').find('input.max').val().trim();
+			}
 			if(label == '') label = false;
 			if(min_val == '') min_val = false; 
 			else min_val = min_val * 1;
@@ -319,28 +433,40 @@ var plot = P(Element, function(_, super_) {
 			switch(axis) {
 				case X_AXIS:
 					_this.x_label = label;
-					_this.x_min = min_val;
-					_this.x_max = max_val;
 					if(_this.has_bar) {
 						_this.x_labels = $('.popup_dialog').find('input.labels').val().trim().replace(/,[ ]?/g,'__s__');
 						if(_this.x_labels == '') _this.x_labels = false;
-					} else
+					} else {
 						_this.x_labels = false;
+						_this.x_min = min_val;
+						_this.x_max = max_val;
+						_this.x_units = units_field.latex();
+						if(_this.x_units.match(/^\\Unit\{1\}\{[ ]*\}$/)) _this.x_units = false;
+						var children = _this.children();
+						for(var i = 0; i < children.length; i++) {
+							if(children[i].plot_me && (children[i] instanceof plot_func)) children[i].needsEvaluation = true;
+						}
+					}
 					break;
 				case Y_AXIS:
 					_this.y_label = label;
 					_this.y_min = min_val;
 					_this.y_max = max_val;
+					_this.y_units = units_field.latex();
+					if(_this.y_units.match(/^\\Unit\{1\}\{[ ]*\}$/)) _this.y_units = false;
 					break;
 				case Y2_AXIS:
 					_this.y2_label = label;
 					_this.y2_min = min_val;
 					_this.y2_max = max_val;
+					_this.y2_units = units_field.latex();
+					if(_this.y2_units.match(/^\\Unit\{1\}\{[ ]*\}$/)) _this.y2_units = false;
 					break;
 			}
+			$('.standalone_textarea').remove();
 			window.hidePopupOnTop();
 			_this.worksheet.save();
-			_this.childrenEvaluated();
+			_this.evaluate(true);
 		}).prependTo(links);
 	}
 	_.choose = function(id) {
@@ -372,9 +498,12 @@ var subplot = P(EditableBlock, function(_, super_) {
 	_.line_weight = 1;
 	_.x_provided = false;
 	_.color = false;
+	_.x_unit = '1';
+	_.y_unit = '1';
 	_.y_axis = 'y';
 	_.line_style = 'none';
 	_.marker_size = 2.5;
+	_.neverEvaluated = true;
 	_.savedProperties = subplotProperties;
 	_.validateParent = function(parent) {
 		return (parent instanceof plot);
@@ -441,9 +570,14 @@ var subplot = P(EditableBlock, function(_, super_) {
 			if(_this.needsEvaluation) {
 				_this.commands = _this.createCommands();
 				_this.parent.evaluate(true);
-				_this.needsEvaluation = false;
 			}
 		};
+	}
+	_.shouldBeEvaluated = function(evaluation_id) { // Override so that we don't evaluate subplots that don't need evaluation
+		if(!this.needsEvaluation && !this.neverEvaluated) 
+			return false;
+		var to_eval = super_.shouldBeEvaluated.call(this, evaluation_id);
+		return to_eval;
 	}
 	_.preRemoveHandler = function() {
 		super_.preRemoveHandler.call(this);

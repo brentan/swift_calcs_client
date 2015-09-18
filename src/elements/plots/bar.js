@@ -31,7 +31,7 @@ var plot_bar = P(subplot, function(_, super_) {
 	_.createCommands = function() {
 		this.plot_me = false;
 		return [
-			{command: "latex(mksa_base(" + this.eq1.text() + "[0]))", nomarkup: true},
+			{command: "latex(evalf(mksa_base(" + this.eq1.text() + "[0])))", nomarkup: true},
 			{command: "mksa_remove(evalf(" + this.eq1.text() + "))", nomarkup: true}
 		];
 	}
