@@ -973,9 +973,14 @@ var WYSIWYG = P(function(_) {
     sel.collapse(false);
     sel.insertNode(span[0]);
     sel = rangy.getSelection(this.$editor[0]).getRangeAt(0);
+    sel.collapse(true);
     var span2 = $("<span class='range_start'>&#8203;</span>"); //zero width space
     sel.insertNode(span2[0]);
     var html = this.$editor.html();
+    var range = rangy.createRange();
+    range.setStartAfter(span2[0]);
+    range.setEndBefore(span[0]);
+    range.select();
     span.remove();
     span2.remove();
     return { html: html };
