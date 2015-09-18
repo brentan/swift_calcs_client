@@ -977,26 +977,30 @@ var WYSIWYG = P(function(_) {
     var span2 = $("<span class='range_start'>&#8203;</span>"); //zero width space
     sel.insertNode(span2[0]);
     var html = this.$editor.html();
-    var range = rangy.createRange();
-    range.setStartAfter(span2[0]);
-    range.setEndBefore(span[0]);
-    range.select();
+    if(!this.blurred) {
+      var range = rangy.createRange();
+      range.setStartAfter(span2[0]);
+      range.setEndBefore(span[0]);
+      range.select();
+    }
     span.remove();
     span2.remove();
     return { html: html };
   }
   _.restoreState = function(data) {
     this.$editor.html(data.html);
-    var range = rangy.createRange();
-    var span = this.$editor.find('span.range_start');
-    var span2 = this.$editor.find('span.range_end');
-    range.setStartAfter(span[0]);
-    range.setEndBefore(span2[0]);
-    range.select();
-    span.remove();
-    span2.remove();
-    this.$e.val(this.$editor.html());
-    this.el.worksheet.save();
+    window.setTimeout(function(t) { return function() {
+      var range = rangy.createRange();
+      var span = t.$editor.find('span.range_start');
+      var span2 = t.$editor.find('span.range_end');
+      range.setStartAfter(span[0]);
+      range.setEndBefore(span2[0]);
+      range.select();
+      span.remove();
+      span2.remove();
+      t.$e.val(t.$editor.html());
+      t.el.worksheet.save();
+    }; }(this),50); // Ugh.  Some sort of focus/blur race condition here.  After this is called the text box is blurred/focused, which resets caret to start position.  So delay caret placement 50ms...
   }
   _.scheduleUndoPoint = function() {
     if(this.el && this.el.worksheet)
