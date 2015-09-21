@@ -240,10 +240,14 @@ var plot = P(Element, function(_, super_) {
 		if(this.y2_units) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_units)[0].replace(/_/g,'') +']';
 		else if(y2_unit && (y2_unit != '1')) y2_label += ' [' + this.worksheet.latexToUnit(y2_unit)[0].replace(/_/g,'') +']';
 		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
-		for(var i = 0; i <= 20; i++) 
-			x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
-		var x_tick_order = eval('1e' + (((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1+1));
 		if(columns.length) {
+			for(var i = 0; i <= 20; i++) 
+				x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
+			try {
+				var x_tick_order = eval('1e' + (((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1+1));
+			} catch(e) {
+				var x_tick_order = 1;
+			}
 			var _this = this;
 			this.jQ.find('.' + css_prefix + 'plot_box').prev('div.plot_title').remove();
 			var title_div = $('<div/>').addClass('plot_title');
