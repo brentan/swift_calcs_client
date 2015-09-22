@@ -15,8 +15,13 @@ Worksheet.open(function(_) {
 	}
 	_.reshapeToolbar = function() {
 		if(!this.toolbar) return;
-		var height = this.toolbar.toolbar_holder.height();
-		this.jQ.css('top', (100-35+height) + 'px');
+    var menu_height = max(30, $("#menu_bar").height());
+		var toolbar_height = this.toolbar.toolbar_holder.height();
+		var top = 63 - 30 + menu_height;
+		var bot = top + toolbar_height;
+		this.jQ.css('top', bot + 'px');
+		this.toolbar.toolbar_holder.css('top', top + 'px');
+		$('div.sidebar').css('top', top + 'px');
 	}
 	_.attachToolbar = function(el, options) {
 		if(!this.toolbar) return;
