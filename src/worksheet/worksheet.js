@@ -251,7 +251,7 @@ var Worksheet = P(function(_) {
 		return this;
 	}
 	_.setWidth = function() {
-		this.insertJQ.width(max(300, min(900, this.jQ.width()-50)) + 'px');
+		this.insertJQ.css('max-width',max(300, min(900, this.jQ.width()-50)) + 'px');
 		this.commandChildren(function(_this) { _this.setWidth(); });
 		return this;
 	}
