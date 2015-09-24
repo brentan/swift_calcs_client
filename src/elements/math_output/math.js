@@ -41,6 +41,9 @@ var math = P(MathOutput, function(_, super_) {
 			}
 		};
 	}
+	_.notifyChangeToText = function(el) {
+    SwiftCalcs.createTooltip("<<Looking for Text Mode?>>\nDouble tap the spacebar to change to text mode.  The math written thus far will be transformed into text", el.jQ);
+	}
 	_.changeToText = function(to_text) {
 		if(to_text.match(/^[^=]* := [a-z0-9\.-]+$/i)) {
 			// Case of var_name = command.  See if command accepts this type of format (has to allow scoped basically)
@@ -83,8 +86,7 @@ var math = P(MathOutput, function(_, super_) {
 				var el = this[L].append(line_break + to_text).focus(R);
 			} else 
 				var el = text(to_text).insertAfter(this).show().focus(R);
-			if ((to_text.length > 0) && !el.textField.magicCommands()) 
-				el.append('&nbsp;').focus(R);
+			if (to_text.length > 0) el.textField.magicCommands();
 		}
 		this.remove(0);
 		if(!stream) this.worksheet.endUndoStream();

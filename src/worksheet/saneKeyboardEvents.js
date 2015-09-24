@@ -188,7 +188,7 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       // If anything like #40 or #71 is reported in IE < 9, see
       // b1318e5349160b665003e36d4eedd64101ceacd8
       if (hasSelection()) return;
-
+      
       var text = textarea.val();
       if (text.length === 1) {
         textarea.val('');
