@@ -29,7 +29,7 @@ var toTable = function(data) {
 var latexUnit = function(input) {
 	var number = input.replace(/ .*$/,'');
 	var unit = input.replace(/^.* /,'').replace(/_/g,'');
-	return '\\Unit{' + number + '}{' + unit + '}';
+	return number + ' \\Unit{' + unit + '}';
 }
 // return the unique items in an array
 function uniq(a) {
