@@ -62,7 +62,9 @@ var KEY_VALUES = {
 
   46: 'Del',
 
-  144: 'NumLock'
+  144: 'NumLock',
+
+  187: '='
 };
 
 // To the extent possible, create a normalized string representation

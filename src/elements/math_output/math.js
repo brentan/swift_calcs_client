@@ -44,6 +44,13 @@ var math = P(MathOutput, function(_, super_) {
 	_.notifyChangeToText = function(el) {
     SwiftCalcs.createTooltip("<<Looking for Text Mode?>>\nDouble tap the spacebar to change to text mode.  The math written thus far will be transformed into text", el.jQ);
 	}
+	_.notifyEqualSign = function(el) {
+		if(window.show_equal_explanation && (el.ctrlSeq == '=')) {
+			window.silentRequest('/users/equal_popup');
+			window.show_equal_explanation = false;
+    	SwiftCalcs.createTooltip("<<What's the deal with equal?>>\n<span style='font-size:1.5em;font-family:Symbola, Times, serif;position:relative;top:2px;' class='code'>&#8801;</span> is assignment.  Example: <i>x <span style='font-family:Symbola, Times, serif;'>&#8801;</span> 4</i> stores 4 in <i>x</i>\n<span style='font-size:1.5em;font-family:Symbola, Times, serif;position:relative;top:1px;' class='code'>=</span> is logical test.  Use it to test if two values are equal.\n<i>Wrong Equal?</i> Press <[=]> again to toggle between the two.<BR>", el.jQ);
+		}
+	}
 	_.changeToText = function(to_text) {
 		if(to_text.match(/^[^=]* := [a-z0-9\.-]+$/i)) {
 			// Case of var_name = command.  See if command accepts this type of format (has to allow scoped basically)
