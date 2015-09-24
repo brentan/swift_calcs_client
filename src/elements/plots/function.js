@@ -53,11 +53,6 @@ var plot_func = P(subplot, function(_, super_) {
 			this.unit_box.focus(L);
 		}
 	}
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
-		if(this.shouldBeEvaluated(evaluation_id))
-			this.commands = this.createCommands();
-		return super_.continueEvaluation.call(this, evaluation_id, move_to_next);
-	}
 	_.createCommands = function() {
 		this.plot_me = false;
 		if(this.eq0.text().trim() == '') return [];
@@ -75,8 +70,6 @@ var plot_func = P(subplot, function(_, super_) {
 		return [{command: command1, nomarkup: true},{command: command2, nomarkup: true},{command: command3, nomarkup: true}]
 	}
 	_.evaluationFinished = function(result) {
-		this.needsEvaluation = false;
-		this.neverEvaluated = false;
 		if(result[0].success && result[1].success) {
 			this.y_unit = result[0].returned;
 			this.x_unit = result[2].returned;

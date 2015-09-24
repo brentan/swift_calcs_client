@@ -583,6 +583,19 @@ var subplot = P(EditableBlock, function(_, super_) {
 		var to_eval = super_.shouldBeEvaluated.call(this, evaluation_id);
 		return to_eval;
 	}
+	_.continueEvaluation = function(evaluation_id, move_to_next) {
+		var set_false = false;
+		if(this.shouldBeEvaluated(evaluation_id)) {
+			this.commands = this.createCommands();
+		  set_false = true;
+		}
+		var to_return = super_.continueEvaluation.call(this, evaluation_id, move_to_next);
+		if(set_false) {
+			this.needsEvaluation = false;
+			this.neverEvaluated = false;
+		}
+		return to_return;
+	}
 	_.preRemoveHandler = function() {
 		super_.preRemoveHandler.call(this);
 		window.setTimeout(function(el) { return function() { el.childrenEvaluated(); }; }(this.parent));
