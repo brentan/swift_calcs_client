@@ -7087,7 +7087,6 @@ to allow for different point show settings on different datasets
                         }
                         return splitted.concat(text);
                     }
-
                     return split(splitted, tickText + "");
                 }
 

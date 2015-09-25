@@ -1,7 +1,6 @@
-var plot_bar = P(subplot, function(_, super_) {
+var plot_bar = P(barplot, function(_, super_) {
 	_.plot_type = 'plot_bar';
 	_.c3_type = 'bar';
-	_.x_unit = '1';
 	_.helpText = "<<bar plot>>\nPlot a Bar Graph based on data.  To assign labels to the data, click on the x-axis.";
 
 	_.innerHtml = function() {

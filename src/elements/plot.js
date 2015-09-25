@@ -7,7 +7,7 @@ var plot = P(Element, function(_, super_) {
 	_.klass = ['plot'];
 	_.evaluatable = true;
 	_.hasChildren = true;
-	_.savedProperties = ['chart_title', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units'];
+	_.savedProperties = ['chart_title', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units', 'rotated'];
 	_.x_min = false;
 	_.x_max = false;
 	_.x_label = false;
@@ -22,6 +22,7 @@ var plot = P(Element, function(_, super_) {
 	_.y_units = false;
 	_.y2_units = false;
 	_.chart_title = false;
+	_.rotated = false;
 	_.height = 300;
 	_.plotBox = false;
 	_.helpText = "<<plot>>\nCreate a plot of data and functions.  Insert new data to plot with the 'add another item' link, and adjust the properties of each data-set, such as color or line thickness, by clicking on the item in the plot.";
@@ -148,14 +149,21 @@ var plot = P(Element, function(_, super_) {
 		var y_unit = this.y_units ? this.y_unit : false;
 		var y2_unit = this.y2_units ? this.y2_unit : false;
 		var show_y2 = false;
+		var hist_plot = false;
 		for(var i = 0; i < children.length; i++) {
 			// Collapse error/warn boxes
 			children[i].outputBox.jQ.find('.parent_warning').remove();
 			if(children[i].outputBox.jQ.html() == '') children[i].outputBox.clearState().collapse(true);
 			if(!children[i].plot_me) continue;
-			if(children[i] instanceof plot_bar) {
+			if(children[i] instanceof barplot) {
 				this.has_bar = true;
 				ignore_custom_xs = true;
+			}
+			if(children[i] instanceof plot_histogram) {
+				if(hist_plot)
+					children[i].outputBox.setWarning('Histogram Plot Bin Labels ignored.  Bars have been plotted on the axis of another histogram that may have different bin sizes').expand();
+				else
+					hist_plot = children[i].x_labels;
 			}
 			if(children[i] instanceof plot_func) {
 				if(ignore_custom_xs) {
@@ -270,17 +278,26 @@ var plot = P(Element, function(_, super_) {
 				e.stopPropagation();
 			});
 			this.jQ.find('.' + css_prefix + 'plot_box').html('');
+			if(hist_plot) {
+				var categories = [];
+				for(var i = 0; i < hist_plot.length; i++) 
+					categories.push((Math.ceil(hist_plot[i][0] * x_tick_order) /x_tick_order) + ' to ' + (Math.ceil(hist_plot[i][1] * x_tick_order) /x_tick_order));
+			}	else if(this.x_labels && this.has_bar)
+				var categories = this.x_labels.split('__s__');
+			else 
+				var categories = [];
 			this.plotBox = c3.generate({
 				bindto: this.jQ.find('.' + css_prefix + 'plot_box')[0],
 				size: { height: this.height },
 				axis: {
+					rotated: this.rotated,
 					x: { 
-						tick: (ignore_custom_xs ? {} : { values: x_ticks, format: function (d) { return Math.ceil(d * x_tick_order) /x_tick_order } }),
+						tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { values: x_ticks, format: function (d) { return Math.ceil(d * x_tick_order) /x_tick_order } }),
 						label: { text: x_label, position: 'outer-center'}, 
 						min: ((this.x_min === false) || ignore_custom_xs ? undefined : this.x_min),
 						max: ((this.x_max === false) || ignore_custom_xs ? undefined : this.x_max),
-						categories: this.x_labels && this.has_bar ? this.x_labels.split('__s__') : [],
-						type: this.x_labels && this.has_bar ? 'category' : 'indexed'
+						categories: categories,
+						type: categories.length ? 'category' : 'indexed'
 					},
 					y: { 
 						label: { text: y_label, position: 'outer-middle'},
@@ -367,14 +384,17 @@ var plot = P(Element, function(_, super_) {
 		var others = [];
 		for(var i = 0; i < kids.length; i++) {
 			if(kids[i] instanceof plot_func) functions.push(kids[i]); 
-			else if(kids[i] instanceof plot_bar) bars.push(kids[i]);
-			else if(kids[i] instanceof plot_bar) circles.push(kids[i]); // BRENTAN CHANGE TO PIE
+			else if(kids[i] instanceof barplot) bars.push(kids[i]);
 			else others.push(kids[i]);
 		}
 		return bars.concat(circles).concat(others).concat(functions);
 	}
 	_.command = function(command, value) {
 		switch(command) { 
+			case 'rotated_axes':
+				this.rotated = value;
+				this.childrenEvaluated();
+				break;
 			case 'mathMode':
         math().insertAfter(this).show(0).focus(-1);
         break;
@@ -445,7 +465,7 @@ var plot = P(Element, function(_, super_) {
 						_this.x_min = min_val;
 						_this.x_max = max_val;
 						_this.x_units = units_field.latex();
-						if(_this.x_units.match(/^\\Unit\{1\}\{[ ]*\}$/)) _this.x_units = false;
+						if(_this.x_units.match(/^\\Unit\{[ ]*\}$/)) _this.x_units = false;
 						var children = _this.children();
 						for(var i = 0; i < children.length; i++) {
 							if(children[i].plot_me && (children[i] instanceof plot_func)) children[i].needsEvaluation = true;
@@ -457,14 +477,14 @@ var plot = P(Element, function(_, super_) {
 					_this.y_min = min_val;
 					_this.y_max = max_val;
 					_this.y_units = units_field.latex();
-					if(_this.y_units.match(/^\\Unit\{1\}\{[ ]*\}$/)) _this.y_units = false;
+					if(_this.y_units.match(/^\\Unit\{[ ]*\}$/)) _this.y_units = false;
 					break;
 				case Y2_AXIS:
 					_this.y2_label = label;
 					_this.y2_min = min_val;
 					_this.y2_max = max_val;
 					_this.y2_units = units_field.latex();
-					if(_this.y2_units.match(/^\\Unit\{1\}\{[ ]*\}$/)) _this.y2_units = false;
+					if(_this.y2_units.match(/^\\Unit\{[ ]*\}$/)) _this.y2_units = false;
 					break;
 			}
 			$('.standalone_textarea').remove();
@@ -502,8 +522,9 @@ var subplot = P(EditableBlock, function(_, super_) {
 	_.line_weight = 1;
 	_.x_provided = false;
 	_.color = false;
-	_.x_unit = '1';
-	_.y_unit = '1';
+	_.x_unit = '1.0';
+	_.y_unit = '1.0';
+	_.x_labels = false;
 	_.y_axis = 'y';
 	_.line_style = 'none';
 	_.marker_size = 2.5;
@@ -533,6 +554,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 			 	plot_scatter: 'Scatter Plot',
 			 	plot_bar: 'Bar Chart',
 			 	plot_bar_stacked: 'Stacked Bar Chart',
+			 	plot_histogram: 'Histogram',
 			}
 		});
 		this.selectBox.paste(this.plot_type);
@@ -705,4 +727,6 @@ var subplot = P(EditableBlock, function(_, super_) {
 			this.label.focus(L);
 		return this;
 	}
+});
+var barplot = P(subplot, function(_, super_) {
 });

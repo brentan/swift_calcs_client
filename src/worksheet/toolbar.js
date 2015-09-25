@@ -458,6 +458,15 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				]
 			},
 			{
+				id: 'rotated',
+				icon: 'repeat',
+				title: 'Rotate Axes',
+				sub: [
+					{ html: (parent_el.rotated ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Rotated Axes', method: function(el) { (el instanceof subplot) ? el.parent.command('rotated_axes',true) : el.command('rotated_axes',true); } },
+					{ html: (!parent_el.rotated ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Normal Axes', method: function(el) { (el instanceof subplot) ? el.parent.command('rotated_axes',false) : el.command('rotated_axes',false); } },
+				]
+			},
+			{
 				id: 'mode',
 				html: 'Plot Mode',
 				klass: 'plot_mode',
@@ -1159,7 +1168,8 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	      [ 'Statistics',
 	        { text: 'Correlation', giac_func: 'correlation(' },
 	        { text: 'Covariance', giac_func: 'covariance(' },
-	        { text: 'Frequencies / Histogram', giac_func: 'frequencies(' },
+	        { text: 'Frequencies', giac_func: 'frequencies(' },
+	        { text: 'Histogram', giac_func: 'histogram(' },
 	        { text: 'List Variance', giac_func: 'variance(' },
 	        { text: 'Maximum', giac_func: 'max(' },
 	        { text: 'Mean / Average', giac_func: 'mean(' },
