@@ -139,6 +139,7 @@ var math = P(MathOutput, function(_, super_) {
 						_this.worksheet.save();
 					}
 				}
+				if(window.desired_tutorial_output && (to_compute == window.desired_tutorial_output)) window.swift_calcs_tutorial();
 				_this.commands = _this.genCommand(to_compute);
 				_this.evaluate();
 				_this.needsEvaluation = false;

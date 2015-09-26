@@ -18,7 +18,7 @@ $(function() {
   	if(typeof leftBlock === 'undefined') leftBlock = topBlock;
     var leftOffset = leftBlock.offset().left - 13;
     var topOffset = topBlock.offset().top  - container_offset.top + topBlock.height() + 18;
-
+    if($('.top_warning').length) topOffset += $('.top_warning').height()+8;
     var $arrow = $('<div/>').addClass(css_prefix + 'arrow');
     var $close = $('<div/>').addClass(css_prefix + 'close').html('Close').on('click', function() { SwiftCalcs.destroyTooltip(); });
     $el.html(markup(html)).append($arrow).append($close);

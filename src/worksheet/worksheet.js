@@ -127,12 +127,7 @@ var Worksheet = P(function(_) {
 				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
 				break;
 			case -1: //new worksheet for user who is not logged in...
-				var els = $('<div/>').html('<strong>Welcome to SwiftCalcs</strong>.  To save this masterpiece or share it with others, you must first <a href="#" class="create">login or create an account with Swift Calcs</a>.<BR><strong>Need some direction?</strong>  <a href="#" class="tutorial">Take a spin through our tutorial</a> for a quick primer, or <a href="#" class="examples_link">view example worksheets</a>.');
-				els.find('a.tutorial').on('click', function(e) {
-					window.loadTutorial();
-					e.preventDefault();
-					return false;
-				});
+				var els = $('<div/>').html('<strong>Welcome to SwiftCalcs</strong>.  To save this masterpiece or share it with others, you must first <a href="#" class="create">login or create an account with Swift Calcs</a>.');
 				els.find('a.create').on('click', function(e) {
 					window.loadSigninBox();
 					e.preventDefault();
