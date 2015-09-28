@@ -228,7 +228,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 
 	// Callback for math elements notifying that this element has been changed
 	_.changed = function(el) {
-		if(this.outputMode === 1) this.outputMode = 0;
+		if(this.worksheet.loaded && (this.outputMode === 1)) this.outputMode = 0;
 	}
   _.keystroke = function(description, evt) { 
   	if(this.unitMode) return this.unitMode.keystroke(description, evt);

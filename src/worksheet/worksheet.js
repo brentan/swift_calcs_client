@@ -27,6 +27,7 @@ var Worksheet = P(function(_) {
 	_.rights = 0;
 	_.uploads = "";
 	_.revision_id = 0;
+	_.loaded = false;
 
   var id = 0;
   function uniqueWorksheetId() { return id += 1; }
@@ -199,6 +200,7 @@ var Worksheet = P(function(_) {
 	  this.updateBookmarks();
 	  this.updateUploads();
 	  this.reset_server_base(to_parse);
+	  this.loaded = true;
 	  return this;
 	}
 	_.reset_server_base = function(base) {
