@@ -119,6 +119,10 @@ var receiveMessage = function(command) {
     // Is this an expression that is setting the value of a variable?  If not, we add some simplification, unit converstion, and set output to latex
     if(to_send.match(/^[\s]*[a-z][a-z0-9_]*(\([a-z0-9_,]+\))?[\s]*:=/i)) {
       // Assignment.  Do the assignment first, then return the value
+      if(to_send.match(/^[\s]*([a-z][a-z0-9_]*)[\s]*:=(.*[^a-z0-9]|[\s]*)\1([^a-z0-9_].*|[\s]*)$/i)) {
+        // Self-referencing definition (a = a + 1).  Add evalf in order to make sure giac doesn't attempt to do this recursively and symbolically
+        to_send = to_send.replace(':=', ':=evalf(') + ')';
+      }
       // Test for setting protected variable names
       if(to_send.match(/^[\s]*(i|e|pi)[\s]*:=.*$/)) {
         if(to_send.match(/^[\s]*i[\s]*:=.*$/))
