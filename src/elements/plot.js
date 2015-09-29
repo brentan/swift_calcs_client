@@ -187,8 +187,8 @@ var plot = P(Element, function(_, super_) {
 			if(!ignore_custom_xs) {
 				xs['data_' + children[i].id] = 'x_' + children[i].id;
 				if(!(children[i] instanceof plot_func)) {
-					x_min = x_min === false ? min(children[i].xs.slice(1)) : min(min(children[i].xs.slice(1)), x_min);
-					x_max = x_max === false ? max(children[i].xs.slice(1)) : max(max(children[i].xs.slice(1)), x_max);
+					x_min = x_min === false ? Math.min.apply(Math, children[i].xs.slice(1)) : Math.min(Math.min.apply(Math, children[i].xs.slice(1)), x_min);
+					x_max = x_max === false ? Math.max.apply(Math, children[i].xs.slice(1)) : Math.max(Math.max.apply(Math, children[i].xs.slice(1)), x_max);
 				}
 				if(x_unit && (x_unit != children[i].x_unit)) {
 					this.expand();
