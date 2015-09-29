@@ -3,7 +3,7 @@
 #
 
 # inputs
-VERSION = 02_10
+VERSION = 02_11
 SRC_DIR = ./src
 INTRO = $(SRC_DIR)/wrapper/intro.js
 OUTRO = $(SRC_DIR)/wrapper/outro.js
