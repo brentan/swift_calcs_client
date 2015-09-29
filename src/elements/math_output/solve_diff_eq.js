@@ -18,7 +18,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 		return '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
 	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span>' + focusableHTML('CodeBlock', 'solve differential equation') + '</td>'
 	 	+ '<td class="' + css_prefix + 'content"><div class="' + css_prefix + 'focusableItems" data-id="0"><span class="initial_guess" style="display:none;">' + focusableHTML('MathQuill',  'var0') + '<span class="eqnum"></span></span>' + focusableHTML('MathQuill',  'eq0') + '<span class="initial_guess" style="display:none;">,&nbsp;&nbsp;&nbsp;<span class="eqinit"></span>' + focusableHTML('MathQuill',  'start0') + '</span>' + helpBlock() + '</div><div class="' + css_prefix + 'hide_print"><div class="' + css_prefix + 'add_equation">Add another equation</div></div>'
-	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="1">for&nbsp;' + focusableHTML('MathQuill',  'var') + '<span class="initial_guess" style="display:none;">&nbsp;from&nbsp;' + focusableHTML('MathQuill',  'start') + '&nbsp;to&nbsp;' + focusableHTML('MathQuill',  'final') + '</span></div>'
+	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="1">for&nbsp;' + focusableHTML('MathQuill',  'var') + '<span class="initial_guess" style="display:none;">&nbsp;from&nbsp;' + focusableHTML('MathQuill',  'start') + '&nbsp;to&nbsp;' + focusableHTML('MathQuill',  'final') + '&nbsp;with&nbsp;max&nbsp;step&nbsp;of&nbsp;' + focusableHTML('MathQuill',  'step') + '</span></div>'
 	  + '<div class="' + css_prefix + 'focusableItems" data-id="2">using&nbsp;' + focusableHTML('SelectBox',  'solver') + '</div>'
 		+ answerSpan() + '</td></tr></tbody></table>';
 	}
@@ -45,6 +45,10 @@ var desolve = P(GiacGeneric, function(_, super_) {
 			blur: this.submissionHandler(this)
 		}});
 		this.endField = registerFocusable(MathQuill, this, 'final', { ghost: 'final', handlers: {
+			enter: this.enterPressed(this),
+			blur: this.submissionHandler(this)
+		}});
+		this.stepField = registerFocusable(MathQuill, this, 'step', { ghost: 'step size (optional)', default: '0', handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
@@ -145,7 +149,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 				this.focusableItems.push([this.eqFields[i]]);
 		}
 		if(this.numeric_mode)
-			this.focusableItems.push([this.varField, this.startField, this.endField]);
+			this.focusableItems.push([this.varField, this.startField, this.endField, this.stepField]);
 		else
 			this.focusableItems.push([this.varField]);
 		this.focusableItems.push([this.solver]);
@@ -205,10 +209,11 @@ var desolve = P(GiacGeneric, function(_, super_) {
 						eq_vars.push(to_add);
 					}
 					var var_command = _this.varField.text() + '=' + _this.startField.text() + '..' + _this.endField.text() + ',';
+					var step_command = _this.stepField.text() == '0' ? '' : (',tstep=' + _this.stepField.text());
 					if(eqs.length > 1)
-						var command = 'odesolve([' + eqs.join(', ') + '], ' + var_command + '[' + eq_vars.join(', ') + '],[' + init_conditions.join(', ') + '],curve)';
+						var command = 'odesolve([' + eqs.join(', ') + '], ' + var_command + '[' + eq_vars.join(', ') + '],[' + init_conditions.join(', ') + ']' + step_command + ',curve)';
 					else
-						var command = 'odesolve(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + eq_vars[0] + ',' + init_conditions[0] + ',curve)';
+						var command = 'odesolve(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + eq_vars[0] + ',' + init_conditions[0] + step_command + ',curve)';
 					// Convert answer back to input units.
 					_this.commands = _this.genCommand('concat(tran(at([val], [i__s..i__e, 0]) * mksa_base(' + _this.endField.text({}) + ')),at([val], [i__s..i__e, 1]) * BlockDiagonal([mksa_base(' + init_conditions.join('), mksa_base(') + ')]))');
 					_this.commands[0].unit_convert = true;
