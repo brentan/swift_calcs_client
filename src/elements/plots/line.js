@@ -81,6 +81,9 @@ var plot_line = P(subplot, function(_, super_) {
 					this.outputBox.setWarning('Provided x and y vectors are of unequal lengths').expand();
 					return true;
 				}
+				// Set parent x_min/x_max
+				this.parent.calc_x_min = this.parent.calc_x_min === false ? Math.min.apply(Math, this.xs) : Math.min(Math.min.apply(Math, this.xs), this.parent.calc_x_min);
+				this.parent.calc_x_max = this.parent.calc_x_max === false ? Math.max.apply(Math, this.xs) : Math.max(Math.max.apply(Math, this.xs), this.parent.calc_x_max);
 				this.ys.unshift('data_' + this.id);
 				this.xs.unshift('x_' + this.id);
 				this.plot_me = true;

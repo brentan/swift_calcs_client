@@ -21,6 +21,8 @@ var plot = P(Element, function(_, super_) {
 	_.x_units = false;
 	_.y_units = false;
 	_.y2_units = false;
+	_.calc_x_min = false;
+	_.calc_x_max = false;
 	_.chart_title = false;
 	_.rotated = false;
 	_.height = 300;
@@ -94,6 +96,8 @@ var plot = P(Element, function(_, super_) {
 	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
+		this.calc_x_max = false;
+		this.calc_x_min = false;
 		// Build command list
 		this.commands = [
 			{ command: 'evalf(mksa_remove(' + (this.x_units ? this.worksheet.latexToText(this.x_units) : '1') + '))', nomarkup: true },
@@ -143,8 +147,8 @@ var plot = P(Element, function(_, super_) {
 		var axes = {};
 		var children = this.children();
 		var x_ticks = [];
-		var x_max = this.x_max === false ? false : (this.x_max * this.x_unit_conversion); // Convert to mksa from requested unit base
-		var x_min = this.x_min === false ? false : (this.x_min * this.x_unit_conversion);
+		var x_max = this.x_max === false ? this.calc_x_max : (this.x_max * this.x_unit_conversion); // Convert to mksa from requested unit base
+		var x_min = this.x_min === false ? this.calc_x_min : (this.x_min * this.x_unit_conversion);
 		var x_unit = this.x_units ? this.x_unit : false;
 		var y_unit = this.y_units ? this.y_unit : false;
 		var y2_unit = this.y2_units ? this.y2_unit : false;
@@ -204,6 +208,8 @@ var plot = P(Element, function(_, super_) {
 			if(children[i].y_axis != 'y2') {
 				if(y_unit && (y_unit != children[i].y_unit)) {
 					this.expand();
+					console.log(y_unit)
+					console.log(children[i].y_unit)
 					children[i].outputBox.setWarning('Incompatible y-axis units.  Data has been plotted, but its y-axis units are not the same as shown.', true).expand();
 					children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
 				} else
@@ -563,6 +569,13 @@ var subplot = P(EditableBlock, function(_, super_) {
 		this.focusableItems.unshift([this.label]);
 		this.focusableItems.unshift([this.selectBox]);
 		super_.postInsertHandler.call(this);
+		// Since we play with ordering, when I am added there may be children 'lower' than me in the list.  We have to re-evaluate those.
+		var kids = this.parent.children();
+		var setEval = false;
+		for(var i = 0; i < kids.length; i++) {
+			if(setEval) kids[i].needsEvaluation = true;
+			if(kids[i] === this) setEval = true;
+		}
 	}
 	_.name = function() {
 		var name = this.label.toString().trim();
@@ -599,24 +612,10 @@ var subplot = P(EditableBlock, function(_, super_) {
 			}
 		};
 	}
-	_.shouldBeEvaluated = function(evaluation_id) { // Override so that we don't evaluate subplots that don't need evaluation
-		if(!this.needsEvaluation && !this.neverEvaluated) 
-			return false;
-		var to_eval = super_.shouldBeEvaluated.call(this, evaluation_id);
-		return to_eval;
-	}
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
-		var set_false = false;
-		if(this.shouldBeEvaluated(evaluation_id)) {
+		if(this.shouldBeEvaluated(evaluation_id)) 
 			this.commands = this.createCommands();
-		  set_false = true;
-		}
-		var to_return = super_.continueEvaluation.call(this, evaluation_id, move_to_next);
-		if(set_false) {
-			this.needsEvaluation = false;
-			this.neverEvaluated = false;
-		}
-		return to_return;
+		return super_.continueEvaluation.call(this, evaluation_id, move_to_next);
 	}
 	_.preRemoveHandler = function() {
 		super_.preRemoveHandler.call(this);
