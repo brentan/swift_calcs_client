@@ -256,9 +256,9 @@ var plot = P(Element, function(_, super_) {
 			for(var i = 0; i <= 20; i++) 
 				x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
 			try {
-				var x_tick_order = eval('1e' + (((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2));
+				var x_tick_order = ((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2;
 			} catch(e) {
-				var x_tick_order = 1;
+				var x_tick_order = 0;
 			}
 			var _this = this;
 			this.jQ.find('.' + css_prefix + 'plot_box').prev('div.plot_title').remove();
@@ -282,10 +282,20 @@ var plot = P(Element, function(_, super_) {
 				e.stopPropagation();
 			});
 			this.jQ.find('.' + css_prefix + 'plot_box').html('');
+			var ceil10 = function(val, exp) {
+				if (typeof exp === 'undefined' || +exp === 0) 
+      		return Math.ceil(val);
+      	val = +val;
+      	exp = +exp;
+      	val = val.toString().split('e');
+      	val = Math.ceil(+(val[0] + 'e' + (val[1] ? (+val[1] - exp) : -exp)));
+      	val = val.toString().split('e');
+      	return +(val[0] + 'e' + (val[1] ? (+val[1] + exp) : exp));
+			}
 			if(hist_plot) {
 				var categories = [];
 				for(var i = 0; i < hist_plot.length; i++) 
-					categories.push((Math.ceil(hist_plot[i][0] / x_tick_order) * x_tick_order) + ' to ' + (Math.ceil(hist_plot[i][1] / x_tick_order) * x_tick_order));
+					categories.push(ceil10(hist_plot[i][0], x_tick_order) + ' to ' + ceil10(hist_plot[i][1], x_tick_order));
 			}	else if(this.x_labels && this.has_bar)
 				var categories = this.x_labels.split('__s__');
 			else 
@@ -296,7 +306,7 @@ var plot = P(Element, function(_, super_) {
 				axis: {
 					rotated: this.rotated,
 					x: { 
-						tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { values: x_ticks, format: function (d) { return Math.ceil(d / x_tick_order) * x_tick_order } }),
+						tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { values: x_ticks, format: function (d) { return ceil10(d, x_tick_order); } }),
 						label: { text: x_label, position: 'outer-center'}, 
 						min: ((this.x_min === false) || ignore_custom_xs ? undefined : this.x_min),
 						max: ((this.x_max === false) || ignore_custom_xs ? undefined : this.x_max),
