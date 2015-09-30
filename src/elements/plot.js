@@ -287,7 +287,7 @@ var plot = P(Element, function(_, super_) {
 			if(hist_plot) {
 				var categories = [];
 				for(var i = 0; i < hist_plot.length; i++) 
-					categories.push((Math.ceil(hist_plot[i][0] * x_tick_order) /x_tick_order) + ' to ' + (Math.ceil(hist_plot[i][1] * x_tick_order) /x_tick_order));
+					categories.push((Math.ceil(hist_plot[i][0] / x_tick_order) * x_tick_order) + ' to ' + (Math.ceil(hist_plot[i][1] / x_tick_order) * x_tick_order));
 			}	else if(this.x_labels && this.has_bar)
 				var categories = this.x_labels.split('__s__');
 			else 
