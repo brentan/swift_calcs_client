@@ -208,8 +208,6 @@ var plot = P(Element, function(_, super_) {
 			if(children[i].y_axis != 'y2') {
 				if(y_unit && (y_unit != children[i].y_unit)) {
 					this.expand();
-					console.log(y_unit)
-					console.log(children[i].y_unit)
 					children[i].outputBox.setWarning('Incompatible y-axis units.  Data has been plotted, but its y-axis units are not the same as shown.', true).expand();
 					children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
 				} else
