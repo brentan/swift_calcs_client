@@ -258,7 +258,7 @@ var plot = P(Element, function(_, super_) {
 			for(var i = 0; i <= 20; i++) 
 				x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
 			try {
-				var x_tick_order = eval('1e' + (((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1+1));
+				var x_tick_order = eval('1e' + (((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2));
 			} catch(e) {
 				var x_tick_order = 1;
 			}
@@ -298,7 +298,7 @@ var plot = P(Element, function(_, super_) {
 				axis: {
 					rotated: this.rotated,
 					x: { 
-						tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { values: x_ticks, format: function (d) { return Math.ceil(d * x_tick_order) /x_tick_order } }),
+						tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { values: x_ticks, format: function (d) { return Math.ceil(d / x_tick_order) * x_tick_order } }),
 						label: { text: x_label, position: 'outer-center'}, 
 						min: ((this.x_min === false) || ignore_custom_xs ? undefined : this.x_min),
 						max: ((this.x_max === false) || ignore_custom_xs ? undefined : this.x_max),
