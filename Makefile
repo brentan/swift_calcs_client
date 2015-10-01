@@ -3,7 +3,7 @@
 #
 
 # inputs
-VERSION = 2_16
+VERSION = 2_17
 SRC_DIR = ./src
 INTRO = $(SRC_DIR)/wrapper/intro.js
 OUTRO = $(SRC_DIR)/wrapper/outro.js
@@ -21,6 +21,8 @@ SOURCES = \
   $(SRC_DIR)/utilities/*.js \
   $(SRC_DIR)/elements/*.js \
   $(SRC_DIR)/elements/*/*.js 
+PRE_SOURCES = \
+  $(SRC_DIR)/ui_support/*.js \
 
 SOURCES_WORKER = $(SRC_DIR_WORKER)/*.js
 
@@ -90,7 +92,7 @@ clean:
 
 $(PJS_SRC): $(NODE_MODULES_INSTALLED)
 
-$(BUILD_JS): $(INTRO) $(SOURCES) $(OUTRO) $(BUILD_DIR_EXISTS)
+$(BUILD_JS): $(PRE_SOURCES) $(INTRO) $(SOURCES) $(OUTRO) $(BUILD_DIR_EXISTS)
 	cat $^ | ./script/escape-non-ascii > $@
 
 $(UGLY_JS): $(BUILD_JS) $(NODE_MODULES_INSTALLED)
