@@ -238,10 +238,12 @@ Worksheet.open(function(_) {
     }
     var skip_copy = false;
     if(this.selection.length == 0) {
-      skip_copy = this.activeElement.copy(e);
-      if(skip_copy) {
-        toClipboard(this.clipboard, e);
-        e.preventDefault();
+      if(this.activeElement && this.activeElement.copy) {
+        skip_copy = this.activeElement.copy(e);
+        if(skip_copy) {
+          toClipboard(this.clipboard, e);
+          e.preventDefault();
+        }
       }
     } else {
       toClipboard('SWIFTCALCS:'+this.clipboard, e);

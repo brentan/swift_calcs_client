@@ -124,6 +124,7 @@ var getDefaultOptions = function(_this) {
         // leftward or rightward delete out of element
         if((dir === L) && _this.scoped && _this.clearVariableStore) return _this.clearVariableStore(true);
         else if((_this instanceof EditableBlock) && _this.empty() && _this.moveOutLeftRight(field, dir)) _this.remove(0);
+        else if((dir === R) && ((_this instanceof uploadedItem) || (_this instanceof videoBlock))) _this.worksheet.selectDir(_this, dir);
         else if(_this[dir] && (_this[dir] instanceof EditableBlock) && _this[dir].empty()) _this[dir].remove(0);
         else if(_this[dir]) _this.worksheet.selectDir(_this[dir],dir);
         else if(_this.depth) _this.worksheet.selectDir(_this.parent,dir);
