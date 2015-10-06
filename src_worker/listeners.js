@@ -211,10 +211,11 @@ var testError = function(output, ii) {
     output = {success: false, returned: fix_message("Incompatible units Error: Please check your equation to ensure units balance")};
   else if(output.returned.indexOf("GIAC_ERROR") > -1)
     output = {success: false, returned: fix_message(output.returned.replace('GIAC_ERROR:',''))};
-  else if(output.returned == '"\\,\\mathrm{undef}\\,"') {
+  else if((output.returned == '"\\,\\mathrm{undef}\\,"') || (output.returned == '"\\begin{bmatrix0}\\,\\mathrm{undef}\\,\\end{bmatrix0} "')) {
     output = {success: true, returned: ''}
     warnings[ii].push('Undefined result');
-  } 
+  } else if(output.returned.match(/,\\mathrm{undef}\\,/))
+    warnings[ii].push('Result contains undefined values');
   return output;
 }
 var Module = {

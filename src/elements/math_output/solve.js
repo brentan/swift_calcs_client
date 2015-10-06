@@ -206,6 +206,8 @@ var solve = P(GiacGeneric, function(_, super_) {
 				result[1].returned = to_add + " \\whitespace\\Longrightarrow \\whitespace " + result[1].returned;
 			}
 		}
+		if(result[1].success && result[1].warnings.join(",").match(/undefined/i) && (this.number_of_equations != this.varField.text().split(',').length))
+			result[1].warnings.push('The number of equations does not match the number of variables in the variable list.  If there are other independant variables in your equations, please include them in the variable list');
 		var to_return = super_.evaluationFinished.call(this, [result[1]]); // Transform to array with result 1 in spot 0, as that is what is expected in evaluationFinished
 		this.last_result = result;
 		return to_return;
