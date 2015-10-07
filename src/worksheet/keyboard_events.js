@@ -117,9 +117,9 @@ Worksheet.open(function(_) {
         evt.preventDefault();
         return;
     }
-    if(this.selection.length == 0)
+    if(this.selection.length == 0) {
       if(this.activeElement) this.activeElement.keystroke(description, evt);
-    else {
+    } else {
       switch (description) {
         case 'Ctrl-Shift-Backspace':
         case 'Ctrl-Backspace':
@@ -202,9 +202,9 @@ Worksheet.open(function(_) {
     }
   }
   _.typedText = function(text) {
-    if(this.selection.length == 0)
+    if(this.selection.length == 0) {
       if(this.activeElement) this.activeElement.typedText(text);
-    else 
+    } else 
       this.replaceSelection(math(text), true);
   }
   var toClipboard = function(to_store, e) {
