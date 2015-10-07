@@ -141,14 +141,18 @@ var math = P(MathOutput, function(_, super_) {
 				}
 				if(window.desired_tutorial_output && (to_compute == window.desired_tutorial_output)) window.swift_calcs_tutorial();
 				else if(!_this.mark_for_deletion && !window.user_logged_in && (_this.worksheet.rights != 1) && !window.shown_signin) {
-					window.shown_signin = true;
-					window.setTimeout(function() { signIn().insertAfter(_this).show(450); },100);
+					expression_count++;
+					_this.registerSignInPopup();
 				}
 				_this.commands = _this.genCommand(to_compute);
 				_this.evaluate();
 				_this.needsEvaluation = false;
 			}
 		};
+	}
+	_.registerSignInPopup = function() { 
+		if(signin_timeout) window.clearTimeout(signin_timeout);
+		signin_timeout = window.setTimeout(function(_this) { return function() { if(!window.shown_signin) { signin_timeout = false; window.shown_signin = true; signIn().insertAfter(_this).show(450); } }; }(this), (expression_count >= 3) ? 100 : 3000);
 	}
 	_.storeAsVariable = function() {
     this.focus(-1);
@@ -180,6 +184,7 @@ var math = P(MathOutput, function(_, super_) {
 	}
 	_.changed = function(el) {
 		super_.changed.call(this, el);
+		if(signin_timeout) this.registerSignInPopup();
 		this.implicit = false;
 		this.needsEvaluation = true;
 	}
@@ -189,3 +194,5 @@ var math = P(MathOutput, function(_, super_) {
 	}
 });
 window.shown_signin = false;
+var signin_timeout = false;
+var expression_count = 0;

@@ -196,7 +196,7 @@ div.sc_element_container {
         font-size: 1.3em;
       }
       .social_login {
-        width: 200px;
+        min-width: 100px;
         display: inline-block;
         border-radius: 4px;
         font-size: 1.1em;
@@ -204,6 +204,7 @@ div.sc_element_container {
         padding: 4px;
         margin: 5px 10px;
         cursor: pointer;
+        white-space: nowrap;
         i.fa {
           font-size: 1.3em;
           margin: 2px 8px 2px 4px;
@@ -229,6 +230,18 @@ div.sc_element_container {
           background-color: #007bb6;
           &:hover {
             background-color: #005b96
+          }
+        }
+        &.swift_calcs {
+          background-color: #34db98;
+          padding-right: 12px;
+          margin-left: 20px;
+          img {
+            height: 24px;
+            margin-right: 10px;
+          }
+          &:hover {
+            background-color: #14bb78;
           }
         }
       }
