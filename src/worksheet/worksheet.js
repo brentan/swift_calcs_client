@@ -127,7 +127,7 @@ var Worksheet = P(function(_) {
 				this.jQ.prepend(createWarningBox(els));
 				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
 				break;
-			case -1: //new worksheet for user who is not logged in...
+			/*case -1: //new worksheet for user who is not logged in...
 				var els = $('<div/>').html('<strong>Welcome to SwiftCalcs</strong>.  To save this masterpiece or share it with others, you must first <a href="#" class="create">login or create an account with Swift Calcs</a>.');
 				els.find('a.create').on('click', function(e) {
 					window.loadSigninBox();
@@ -136,28 +136,24 @@ var Worksheet = P(function(_) {
 				});
 				this.jQ.prepend(createWarningBox(els));
 				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
-				break;
+				break;*/
 			case 1: //view-only
 				var els = $('<div/>').html('<strong>File is View Only</strong>.  Any changes you make will not be saved.');
 				this.jQ.prepend(createWarningBox(els));
 				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
 				break;
 			case 2: //view-only but can duplicate
-				if(window.user_logged_in) {
-					var els = $('<div/>').html('<strong>File is View Only</strong>.  To save any changes you have made to this worksheet, <a href="#" class="copy">create a copy of the worksheet</a> in your own folder.');
-					els.find('a.copy').on('click', function(e) {
+				var els = $('<div/>').html('<strong>Make a Copy to Save</strong>.  To save any changes you have made to this worksheet, <a href="#" class="copy">create a copy of the worksheet</a> in your own folder.');
+				els.find('a.copy').on('click', function(e) {
+					if(window.user_logged_in)
 						window.newWorksheet(true); 
-						e.preventDefault();
-						return false;
-					});
-				} else {
-					var els = $('<div/>').html('<strong>File is View Only</strong>.  You must <a href="#" class="create">login or create an account with Swift Calcs</a> to be able to make an editable copy of this document in order to save changes.');
-					els.find('a.create').on('click', function(e) {
+					else {
+						showNotice("Login or create an account to make a copy of this document");
 						window.loadSigninBox();
-						e.preventDefault();
-						return false;
-					});
-				}
+					}
+					e.preventDefault();
+					return false;
+				});
 				this.jQ.prepend(createWarningBox(els));
 				this.save(); // Won't actually save, but will set the ajaxQueue.jQ to an appropriate message.
 				break;

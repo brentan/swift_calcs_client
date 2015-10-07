@@ -66,7 +66,7 @@ var Element = P(function(_) {
 		 * array is reached, we jump to the next neighbor focusable item, or traverse up the tree.  This should be an array of 
 		 * arrays, where each row is a new actual row in the HTML representation
 		 */
-		this.focusableItems = [];
+		this.focusableItems = [[]];
 	}
 
 	/* 
