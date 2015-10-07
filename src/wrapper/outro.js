@@ -21,6 +21,7 @@
 		'plot_histogram': plot_histogram,
 		'bookmark': bookmark,
 		'solve': solve,
+		'signin_block': signIn,
 		'desolve': desolve,
 		'regression': regression,
 		'import': importData,

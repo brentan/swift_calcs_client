@@ -140,8 +140,8 @@ var math = P(MathOutput, function(_, super_) {
 					}
 				}
 				if(window.desired_tutorial_output && (to_compute == window.desired_tutorial_output)) window.swift_calcs_tutorial();
-				else if(!_this.mark_for_deletion && !window.user_logged_in && (_this.worksheet.rights != 1) && !shown_signin) {
-					shown_signin = true;
+				else if(!_this.mark_for_deletion && !window.user_logged_in && (_this.worksheet.rights != 1) && !window.shown_signin) {
+					window.shown_signin = true;
 					window.setTimeout(function() { signIn().insertAfter(_this).show(450); },100);
 				}
 				_this.commands = _this.genCommand(to_compute);
@@ -188,4 +188,4 @@ var math = P(MathOutput, function(_, super_) {
 		return this;
 	}
 });
-var shown_signin = false;
+window.shown_signin = false;

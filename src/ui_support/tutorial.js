@@ -161,6 +161,10 @@ $(function() {
 				window.desired_tutorial_output = ' sqrt(a^(2)+b^(2))';
 				break;
 			case 5:
+				if(($('.sc_sign_in').length == 0) && !window.shown_signin) {
+					window.shown_signin = true;
+					window.setTimeout(function() { SwiftCalcs.elements['signin_block']().insertAfter(SwiftCalcs.active_worksheet.ends[1]).show(450); }, 1000);
+				}
 				blackout("[You're Just Scratching the Surface]We've got you started, and there is much more under the hood.  Check out our example worksheets and learn about defining functions, adding text, creating plots, importing data, and more.  Or head out on your own and explore all there is on offer. <div class='button_fixed_width'><a tut>View example worksheets</a>\n<a grey next>Close the tutorial</a></div>");
 				$(".tutorial .content").find('a.tut').on('click', function() { window.loadToPopup('/examples/list',{}); closeTutorial(); return false; });
 				SwiftCalcs.active_worksheet.ends[1].focus(1);
