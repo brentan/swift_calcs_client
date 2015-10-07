@@ -993,11 +993,13 @@ var WYSIWYG = P(function(_) {
       var range = rangy.createRange();
       var span = t.$editor.find('span.range_start');
       var span2 = t.$editor.find('span.range_end');
-      range.setStartAfter(span[0]);
-      range.setEndBefore(span2[0]);
-      range.select();
-      span.remove();
-      span2.remove();
+      if(span.length && span2.length) {
+        range.setStartAfter(span[0]);
+        range.setEndBefore(span2[0]);
+        range.select();
+        span.remove();
+        span2.remove();
+      } 
       t.$e.val(t.$editor.html());
       t.el.worksheet.save();
     }; }(this),50); // Ugh.  Some sort of focus/blur race condition here.  After this is called the text box is blurred/focused, which resets caret to start position.  So delay caret placement 50ms...

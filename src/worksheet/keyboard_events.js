@@ -118,7 +118,7 @@ Worksheet.open(function(_) {
         return;
     }
     if(this.selection.length == 0)
-      this.activeElement.keystroke(description, evt);
+      if(this.activeElement) this.activeElement.keystroke(description, evt);
     else {
       switch (description) {
         case 'Ctrl-Shift-Backspace':
@@ -203,7 +203,7 @@ Worksheet.open(function(_) {
   }
   _.typedText = function(text) {
     if(this.selection.length == 0)
-      this.activeElement.typedText(text);
+      if(this.activeElement) this.activeElement.typedText(text);
     else 
       this.replaceSelection(math(text), true);
   }
