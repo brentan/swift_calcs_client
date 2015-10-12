@@ -80,6 +80,7 @@ window.MathquillSetup = function() {
 			{ name: 'kip', symbol: 'kip', prefix: false, mksa: [1,1,1,-2,0,0,0,0,0]},
 			{ name: 'knot', symbol: 'knot', prefix: false, mksa: [1,1,0,-1,0,0,0,0,0]},
 			{ name: 'kilometers per hour', symbol: 'kph', prefix: false, mksa: [1,1,0,-1,0,0,0,0,0]},
+			{ name: 'ksi', symbol: 'ksi', prefix: false, mksa: [1,-1,1,-2,0,0,0,0,0]},
 			{ name: 'pound', symbol: 'lb', prefix: false, mksa: [1,0,1,0,0,0,0,0,0]},
 			{ name: 'poundForce', symbol: 'lbf', prefix: false, mksa: [1,1,1,-2,0,0,0,0,0]},
 			{ name: 'poundMole', symbol: 'lbm', prefix: false, mksa: [1,0,0,0,0,0,1,0,0]},

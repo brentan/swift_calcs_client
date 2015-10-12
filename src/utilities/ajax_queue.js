@@ -51,7 +51,6 @@ var ajaxQueueClass = P(function(_) {
 			uploads: this.holding_pen[id].worksheet.uploads,
 			known_server_version: this.known_server_version[id]
 		}
-
 		if(full) {
 			// For force saves, we push up the whole document...we do this in case something is corrupted, which shouldnt happen...so eventually we may just remove this
 			post_data.full_resave = this.should_be_server_version[id];
