@@ -245,12 +245,12 @@ var plot = P(Element, function(_, super_) {
 		var x_label = this.x_label ? this.x_label : 'Add a label';
 		var y_label = this.y_label ? this.y_label : 'Add a label';
 		var y2_label = this.y2_label ? this.y2_label : 'Add a label';
-		if(!ignore_custom_xs && this.x_units) x_label += ' [' + this.worksheet.latexToUnit(this.x_units)[0].replace(/_/g,'') +']';
-		else if(!ignore_custom_xs && x_unit && (x_unit != '1.0')) x_label += ' [' + this.worksheet.latexToUnit(x_unit)[0].replace(/_/g,'') +']';
-		if(this.y_units) y_label += ' [' + this.worksheet.latexToUnit(this.y_units)[0].replace(/_/g,'') +']';
-		else if(y_unit && (y_unit != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(y_unit)[0].replace(/_/g,'') +']';
-		if(this.y2_units) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_units)[0].replace(/_/g,'') +']';
-		else if(y2_unit && (y2_unit != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(y2_unit)[0].replace(/_/g,'') +']';
+		if(!ignore_custom_xs && this.x_units) x_label += ' [' + this.worksheet.latexToUnit(this.x_units)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		else if(!ignore_custom_xs && x_unit && (x_unit != '1.0')) x_label += ' [' + this.worksheet.latexToUnit(x_unit)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		if(this.y_units) y_label += ' [' + this.worksheet.latexToUnit(this.y_units)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		else if(y_unit && (y_unit != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(y_unit)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		if(this.y2_units) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_units)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		else if(y2_unit && (y2_unit != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(y2_unit)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
 		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
 		if(columns.length) {
 			for(var i = 0; i <= 20; i++) 

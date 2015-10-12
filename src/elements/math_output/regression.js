@@ -100,11 +100,13 @@ var regression = P(GiacGeneric, function(_, super_) {
 				var errors = [];
 				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
+				var xdata_text = _this.xdata.text({});
+				var ydata_text = _this.ydata.text({});
 		  	switch(_this.mode) {
 		  		case 'logistic':
 						if(_this.xdata.empty())
 							errors.push('No data for y\' provided.');
-						var command = "evalf(" + _this.xdata.text({}) + "), " + _this.xo.text({}) + ", " + _this.yo.text({});
+						var command = "evalf(" + _this.xdata.text({check_for_array: true}) + "), " + _this.xo.text({}) + ", " + _this.yo.text({});
 		  			break;
 		  		default:
 						if(_this.xdata.empty())
@@ -113,15 +115,15 @@ var regression = P(GiacGeneric, function(_, super_) {
 							errors.push('No y data provided.');
 						if((_this.mode == 'polynomial') && _this.order.empty())
 							errors.push('No polynomial order provided.');
-						var command = 'evalf(' + _this.xdata.text({}) + "), evalf(" + _this.ydata.text({}) + ")";
+						var command = 'evalf(' + _this.xdata.text({check_for_array: true}) + "), evalf(" + _this.ydata.text({check_for_array: true}) + ")";
 						if(_this.mode == 'polynomial') 
 							command += ", " + _this.order.text({});
 		  	}
 				command = _this.mode  + '_regression(' + command + ')';
 				if((_this.mode != 'polynomial') && (_this.mode != 'logistic'))
 					command = '[' + command + ']';
-				var x_unit = 'mksa_base((' + _this.xdata.text({}) + ')[0])';
-				var y_unit = 'mksa_base((' + _this.ydata.text({}) + ')[0])';
+				var x_unit = 'mksa_base((' + _this.xdata.text({check_for_array: true}) + ')[0])';
+				var y_unit = 'mksa_base((' + _this.ydata.text({check_for_array: true}) + ')[0])';
 				var x = (_this.scoped && _this.varStoreField.text().match(/\(/)) ? "x" : "'x'";
 				var out_command;
 				switch(_this.mode) {

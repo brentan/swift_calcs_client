@@ -40,13 +40,13 @@ var plot_line = P(subplot, function(_, super_) {
 		this.plot_me = false;
 		var xs = this.eq0.text().trim();
 		var commands = [
-				{command: "latex(evalf(mksa_base(" + this.eq1.text() + "[0])))", nomarkup: true},
-				{command: "mksa_remove(evalf(" + this.eq1.text() + "))", nomarkup: true}
+				{command: "latex(evalf(mksa_base((" + this.eq1.text({check_for_array: true}) + ")[0])))", nomarkup: true},
+				{command: "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))", nomarkup: true}
 			];
 		if(xs.length) {
 			this.x_provided = true;
-			commands.push({command: "latex(evalf(mksa_base(" + this.eq0.text() + "[0])))", nomarkup: true});
-			commands.push({command: "mksa_remove(evalf(" + this.eq0.text() + "))", nomarkup: true});
+			commands.push({command: "latex(evalf(mksa_base((" + this.eq0.text({check_for_array: true}) + ")[0])))", nomarkup: true});
+			commands.push({command: "mksa_remove(evalf(" + this.eq0.text({check_for_array: true}) + "))", nomarkup: true});
 		} else
 			this.x_provided = false;
 		return commands;
@@ -54,7 +54,7 @@ var plot_line = P(subplot, function(_, super_) {
 	_.evaluationFinished = function(result) {
 		if(result[1].success && ((this.x_provided && result[3].success) || !this.x_provided)) {
 			this.y_unit = result[0].returned;
-			this.x_unit = this.x_provided ? result[2].returned : '1';
+			this.x_unit = this.x_provided ? result[2].returned : '1.0';
 			try {
 				this.ys = '[' + result[1].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
 				this.ys = this.ys.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');

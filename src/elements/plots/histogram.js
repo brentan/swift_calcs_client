@@ -23,8 +23,8 @@ var plot_histogram = P(barplot, function(_, super_) {
 	_.createCommands = function() {
 		this.plot_me = false;
 		return [
-			{command: "latex(evalf(mksa_base(" + this.eq1.text() + "[0])))", nomarkup: true},
-			{command: "histogram(mksa_remove(evalf(" + this.eq1.text() + ")),evalf(" + this.bins.text() + "))", nomarkup: true}
+			{command: "latex(evalf(mksa_base((" + this.eq1.text({check_for_array: true}) + ")[0])))", nomarkup: true},
+			{command: "histogram(mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + ")),evalf(" + this.bins.text() + "))", nomarkup: true}
 		];
 	}
 	_.evaluationFinished = function(result) {
