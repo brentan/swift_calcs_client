@@ -62,21 +62,6 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
-	$('body').on('click', '.forums_link', function(e) {
-		window.loadToPopup('/forums',{});
-		e.preventDefault();
-		return false;
-	});
-	$('body').on('click', '.topic_link', function(e) {
-		window.loadToPopup('/forums/topic',{ id: $(this).attr('data-id') });
-		e.preventDefault();
-		return false;
-	});
-	$('body').on('click', '.thread_link', function(e) {
-		window.loadToPopup('/forums/thread',{ id: $(this).attr('data-id') });
-		e.preventDefault();
-		return false;
-	});
 	$('body').on('click', 'a.edit_name', function(e) {
 		var el = $(this);
 		var h1 = el.prev('h1');
