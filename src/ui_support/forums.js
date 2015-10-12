@@ -162,18 +162,6 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
-	$('body').on('click', 'a.forum_approve', function(e) {
-		window.silentRequest("/forums/approve", {id: $(this).attr('data-id'), data_type: $(this).attr('data-type') } );
-		$(this).closest('tr').remove();
-		e.preventDefault();
-		return false;
-	});
-	$('body').on('click', 'a.forum_reject', function(e) {
-		window.silentRequest("/forums/reject", {id: $(this).attr('data-id'), data_type: $(this).attr('data-type') } );
-		$(this).closest('tr').remove();
-		e.preventDefault();
-		return false;
-	});
 	$('body').on('click', 'a.subscribe_toggle', function(e) {
 		var subscribe = $(this).html() == 'Subscribe';
 		$('a.subscribe_toggle').html(subscribe ? 'Unsubscribe' : 'Subscribe');
@@ -181,4 +169,4 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
-})
+});
