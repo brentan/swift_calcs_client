@@ -39,7 +39,8 @@ $(function() {
 			case 1:
 				load_whiteout();
 				load_blackout();
-				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">We know, you\'re eager to get started.  We\'re eager too!  Just give us a quick second to show you the place.<BR><BR>Click <i>continue</i> and we\'ll get you familiar with all things Swift Calcs in no time at all.</div>[next=2]',{top: '150px', left: '0px', right: '0px', 'text-align':'center'},true);
+				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">You\'re eager to get started.  We\'re eager too!  We just want to introduce ourselves and show you around.<BR><BR>Swift Calcs is a <i>Beta</i> product.  We\'re counting on <i>you</i> to tell us what comes next.  Let us know what features we should add, or if you encounter any bugs.</div><BR>[next=2]',{top: '150px', left: '0px', right: '0px', 'text-align':'center'},true);
+				$('.screen_explanation.content a.next.button').html('Let\'s Show You the Ropes!');
 				break;
 			/*case 5:
 				setContent('<table border=0><tbody><tr><td>[It\'s Alive!]Swift Calcs computes your document as your type.  Check the status bar for information about the current computation, including computation progress or errors.</td><td valign=bottom>[next=' + (step+1) + ']</td></tr></tbody></table>',{left: '145px', bottom: '35px', 'text-align':'left', 'max-width':'750px'}, true);
