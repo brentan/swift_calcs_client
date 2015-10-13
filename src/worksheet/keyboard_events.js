@@ -53,12 +53,14 @@ Worksheet.open(function(_) {
       if(_this.activeElement && !(_this.activeElement instanceof text)) _this.activeElement.focus();
       _this.insertJQ.find('.' + css_prefix + 'blur').removeClass(css_prefix + 'blur');
       clearTimeout(blurTimeout);
+      console.log('focus');
     }).blur(function() {
       if(_this.pasting) return;
       _this.blurred = true;
       blurTimeout = setTimeout(function() { // wait for blur on window.  If its not, then run this function (in-window blur)
         if(_this.activeElement && !(_this.activeElement instanceof text)) _this.activeElement.blur();
         if(!_this.dragging && !_this.mousedown) _this.clearSelection();
+        console.log('total blur');
         blur();
       });
       $(window).on('blur', windowBlur);
@@ -68,6 +70,7 @@ Worksheet.open(function(_) {
       _this.insertJQ.find('.' + css_prefix + 'selected').addClass(css_prefix + 'blur');
       if(_this.activeElement) _this.activeElement.windowBlur();
       blur();
+      console.log('windowblur');
     }
     function blur() {
       setTimeout(function() { _this.lastActive = 0; },100);

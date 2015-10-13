@@ -175,6 +175,10 @@ var math = P(MathOutput, function(_, super_) {
 			this.remove();
 		return this;
 	}
+	_.windowBlur = function() {
+		this.implicit = false;
+		return super_.windowBlur.call(this);;
+	}
   _.toString = function() {
   	return '{math}{{' + this.argumentList().join('}{') + '}}';
   }
