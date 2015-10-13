@@ -42,7 +42,9 @@ var math = P(MathOutput, function(_, super_) {
 		};
 	}
 	_.notifyChangeToText = function(el) {
-    SwiftCalcs.createTooltip("<<Looking for Text Mode?>>\nDouble tap the spacebar to change to text mode.  The math written thus far will be transformed into text", el.jQ);
+		if(show_text_mode_popup)
+    	SwiftCalcs.createTooltip("<<Looking for Text Mode?>>\nDouble tap the spacebar to change to text mode.  The math written thus far will be transformed into text", el.jQ);
+    show_text_mode_popup = false;
 	}
 	_.notifyEqualSign = function(el) {
 		if(window.show_equal_explanation && (el.ctrlSeq == '=')) {
@@ -200,3 +202,4 @@ var math = P(MathOutput, function(_, super_) {
 window.shown_signin = false;
 var signin_timeout = false;
 var expression_count = 0;
+var show_text_mode_popup = true;
