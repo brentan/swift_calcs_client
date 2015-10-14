@@ -23,7 +23,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 		+ answerSpan() + '</td></tr></tbody></table>';
 	}
 	_.postInsertHandler = function() {
-		this.eqFields[0] = registerFocusable(MathQuill, this, 'eq0', { ghost: 'expression', handlers: {
+		this.eqFields[0] = registerFocusable(MathQuill, this, 'eq0', { ghost: 'equation', handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
@@ -78,7 +78,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
   	// Add a new equation line to the solver list
 		var html = '<div class="' + css_prefix + 'focusableItems"><span class="initial_guess" style="display:none;">' + focusableHTML('MathQuill',  'var' + this.eq_id) + '<span class="eqnum"></span></span>' + focusableHTML('MathQuill',  'eq' + this.eq_id) + '<span class="initial_guess" style="display:none;">,&nbsp;&nbsp;&nbsp;<span class="eqinit"></span>' + focusableHTML('MathQuill',  'start' + this.eq_id) + '</span>&nbsp;<i class="fa fa-remove ' + css_prefix + 'hide_print"></i></div>';
 		this.jQ.find('.' + css_prefix + 'add_equation').before(html);
-		this.eqFields.push(registerFocusable(MathQuill, this, 'eq' + this.eq_id, { ghost: 'expression', handlers: {
+		this.eqFields.push(registerFocusable(MathQuill, this, 'eq' + this.eq_id, { ghost: 'equation', handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}}));

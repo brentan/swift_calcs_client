@@ -11,7 +11,7 @@ var plot_histogram = P(barplot, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.bins = registerFocusable(MathQuill, this, 'bins', { ghost: 'default', default: '10', handlers: {
+		this.bins = registerFocusable(MathQuill, this, 'bins', { ghost: '10', default: '10', handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
