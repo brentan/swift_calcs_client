@@ -106,7 +106,7 @@ createGiacElement({
 		"around <<MathQuill {ghost: '0', default: '0' }>>",
 		"of order <<MathQuill {ghost: '5', default: '5'}>> <<SelectBox {options: { 0: 'Bidirectional', 1: 'Unidirectional positive', -1: 'Unidirectional negative'}}>>"
 	],
-	command: "series($1, $2, $4, $3, $5)" 
+	command: "taylor($1, $2, $3, $4, $5)" 
 });
 createGiacElement({
 	name: 'ztrans',
