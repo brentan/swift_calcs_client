@@ -113,7 +113,8 @@ window.MathquillSetup = function() {
 			{ name: 'rankine', symbol: 'Rankine', prefix: false, mksa: [1,0,0,0,0,1,0,0,0]},
 			{ name: 'lightyear', symbol: 'lyr', prefix: false, mksa: [1,1,0,0,0,0,0,0,0]},
 			{ name: 'watthour', symbol: 'Wh', prefix: true, mksa: [1,2,1,-2,0,0,0,0,0]},
-			{ name: 'barrel of oil equivalent', symbol: 'boe', prefix: false, mksa: [1,2,1,-2,0,0,0,0,0]}
+			{ name: 'barrel of oil equivalent', symbol: 'boe', prefix: false, mksa: [1,2,1,-2,0,0,0,0,0]},
+			{ name: 'Pounds per Cubic Foot', symbol: 'pcf', prefix: false, mksa: [1,-3,1,0,0,0,0,0,0]}
 		],
 		helpList: { // Helplist used to populate helpful popups for functions.  text in <> will be shown as code, text between || is added to the explanation class.  
 			Ci:"<<Ci(1.0)>>\nCosine integral int(cos(t)/t,t=-inf..x)\n|Also See: Ei,Si|",
