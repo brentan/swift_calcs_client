@@ -105,4 +105,8 @@ var imageBlock = P(uploadedItem, function(_, super_) {
   	this.codeBlock.focus(L);
   	return false;
   }
+	_.setWidth = function() {
+		this.jQ.find('.' + css_prefix + 'top').find('img').css('max-width', max(150, this.jQ.closest('.' + css_prefix + 'element').width() - 150) + 'px');
+		return super_.setWidth.call(this);
+	}
 });
