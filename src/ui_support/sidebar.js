@@ -137,8 +137,11 @@ $(function() {
       }
       // Handle full click events as mousedown and then mouseup
       var el = SwiftCalcs.active_worksheet.lastActive;
-      if(el === 0) 
+      var check_for_storeAsVariable = true;
+      if(el === 0) {
         el = SwiftCalcs.active_worksheet.ends[1];
+        check_for_storeAsVariable = false;
+      }
       else if((_this.attr('data-prepend') || _this.attr('data-append')) && (el.lastFocusedItem.mathquill) && !el.implicit) {
         // Prepend the option to a mathquill item, instead of creating a new block
         SwiftCalcs.active_worksheet.startUndoStream();
@@ -172,11 +175,20 @@ $(function() {
         to_create = to_create(_this.attr('data-option'));
       else
         to_create = to_create();
-      to_create.insertAfter(el).show(150).focus(_this.attr('data-option') ? 1 : 0);
-      if(replace) 
-        el.remove();
-      if(_this.attr('data-el') == 'text')
-        to_create.textField.magicCommands();
+      if(!replace && check_for_storeAsVariable && to_create.storeAsVariable && (el instanceof SwiftCalcs.elements.math) && el.mathField.text().match(/^[^=]* := *$/i)) {
+        el.mark_for_deletion = true;
+        var var_name = el.mathField.text().replace(/^([^=]*) :=.*$/i,"$1");
+        el.needsEvaluation = false;
+        to_create.insertAfter(el).show().focus(_this.attr('data-option') ? 1 : 0);
+        to_create.storeAsVariable(var_name);
+        el.remove(0);
+      } else {
+        to_create.insertAfter(el).show(150).focus(_this.attr('data-option') ? 1 : 0);
+        if(replace) 
+          el.remove();
+        if(_this.attr('data-el') == 'text')
+          to_create.textField.magicCommands();
+      }
       SwiftCalcs.active_worksheet.endUndoStream();
     }
   }

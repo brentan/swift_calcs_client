@@ -70,7 +70,7 @@ Worksheet.open(function(_) {
       blur();
     }
     function blur() {
-      setTimeout(function() { _this.lastActive = 0; },100);
+      //setTimeout(function() { _this.lastActive = 0; },100);
       $(window).off('blur', windowBlur);
     }
     this.blurred = true;
