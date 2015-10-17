@@ -1,6 +1,6 @@
 $(function() { 
   var $el = $('<div/>').addClass(css_prefix + 'tooltip');
-  var $help = $('<div/>').addClass(css_prefix + 'help_popup').appendTo('div.sidebar');
+  var $help = $('<div/>').addClass(css_prefix + 'help_popup').insertAfter('div.sidebar');
   var exposed = false;
   var help_shown = false;
 
