@@ -263,6 +263,13 @@ var Element = P(function(_) {
 	}
 	// Update the line numbers on this block and all children
 	_.numberBlock = function(start) {
+		if(this.worksheet && (this.worksheet.rights == -1) && (start >= 10)) {
+			window.setTimeout(function(_this) { return function() { _this.remove(0); }; }(this),50);
+			if(start == 10) {
+				showNotice('Login or Create an Account to add more than 10 lines');
+				window.newAccountBox();
+			}
+		}
 		if(this.lineNumber) {
 			this.leftJQ.children('span').html(start);
 			start++;
