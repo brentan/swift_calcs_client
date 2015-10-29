@@ -1,10 +1,13 @@
 $(function() {
-	var standaloneMathquill = window.standaloneMathquill = function(math_jQ, reset, focus) {
+	var standaloneMathquill = window.standaloneMathquill = function(math_jQ, reset, focus, handlers) {
 		// Common function to create a standalone mathquill block, with associated key/mouse listeners.
 		// Note that the standalone_textarea span should be removed from the DOM when we are done with this.
 		// Returns the mathquill element
 		math_jQ.wrap('<div class="math_wrapper"></div>');
-		var math_div = MathQuill.MathField(math_jQ[0], {});
+    if(handlers)
+      var math_div = MathQuill.MathField(math_jQ[0], { handlers: handlers});
+    else
+      var math_div = MathQuill.MathField(math_jQ[0], {});
 		math_jQ = math_jQ.parent();
 		math_div.showPopups();
 		//math_div.latex('\\frac{\\pi^{2}}{2}+3');

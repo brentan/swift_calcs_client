@@ -215,7 +215,7 @@ $(function() {
 					} else {
       			window.hideDialogs();
 						if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-						var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.worksheet_id, 1, 4);
+						var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.worksheet_id, 1, 4, response.settings);
 						worksheet.reset_server_base(worksheet.toString());
 						worksheet.bind($('.worksheet_holder'));
 						SwiftCalcs.elements.math().appendTo(worksheet).show().focus(-1);

@@ -56,7 +56,7 @@ var PushState = P(function(_) {
           if(response.success) {
             window.hideDialogs();
             if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level);
+            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level, response.settings);
             worksheet.bind($('.worksheet_holder'));
             worksheet.load(response.data);
             window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
@@ -88,7 +88,7 @@ var PushState = P(function(_) {
           if(response.success) {
             window.hideDialogs();
             if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, -2);
+            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, -2, response.settings);
             worksheet.revision_id = response.revision_id;
             worksheet.revision_rights_level = response.rights_level;
             worksheet.bind($('.worksheet_holder'));

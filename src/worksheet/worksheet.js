@@ -33,7 +33,7 @@ var Worksheet = P(function(_) {
   function uniqueWorksheetId() { return id += 1; }
 
   // Create the worksheet, pass in an optional name
-	_.init = function(name, hash_string, server_id, server_version, rights) { 
+	_.init = function(name, hash_string, server_id, server_version, rights, settings) { 
 		if((typeof name === 'undefined') || (typeof name === 'undefined')) 
 			throw "Worksheet initialized with no name or hash_string";
 		if(server_id) this.server_id = server_id;
@@ -42,6 +42,7 @@ var Worksheet = P(function(_) {
 		this.bookmarks = [];
 		this.hash_string = hash_string;
 		this.rights = rights;
+		this.settings = settings;
 		this.ends = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
@@ -78,6 +79,7 @@ var Worksheet = P(function(_) {
 		this.bindMouse();
 		this.bindKeyboard();
 		this.bindUploads();
+		this.bindSettings();
 		SwiftCalcs.active_worksheet = this;
 		this.setWidth();
     $('.fatal_div').hide();
@@ -208,6 +210,7 @@ var Worksheet = P(function(_) {
 		this.unbindUploads();
 		this.unbindMouse();
 		this.unbindKeyboard();
+		this.unbindSettings();
 		var children = this.children();
 		for(var i = 0; i < children.length; i++)
 			children[i].destroy();

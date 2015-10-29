@@ -219,15 +219,18 @@ $(function() {
 	};
   $('body').on('mousedown', 'div.sidebar .tool', mouseDown);
   $('body').on('click', '.menu .insert_menu a.tool', function(e) { var _this = $(this); click_handler(_this)(e); _this.closest('ul.insert_menu').hide(); window.setTimeout(function() { _this.closest('ul.insert_menu').css('display',''); },500); return false; });
-  $('body').on('click', 'div.sidebar i.fa-times', function(e) {
+  $('body').on('click', 'div.sidetabs i.fa-times', function(e) {
     $('.base_layout').addClass('closed_sidebar');
+    $('ul.sidetab_bar li.item.selected').removeClass('selected');
     if(SwiftCalcs.active_worksheet) {
       SwiftCalcs.active_worksheet.reshapeToolbar();
       SwiftCalcs.active_worksheet.setWidth();
     }
   });
   $('body').on('click', 'ul.sidetab_bar li.item', function(e) {
+    $('ul.sidetab_bar li.item.selected').removeClass('selected');
     $('.base_layout').removeClass('closed_sidebar');
+    $(this).addClass('selected');
     $('div.sidebar div.content.selected').removeClass('selected');
     $('div.sidebar div.content.' + $(this).attr('data-select')).addClass('selected');
     if(SwiftCalcs.active_worksheet) {
@@ -252,5 +255,14 @@ $(function() {
       $(this).next('.box').addClass('show').slideDown(250);
       arrow.addClass('fa-caret-down').removeClass('fa-caret-right');
     }
+  });
+  // Settings
+  $('body').on('click', 'a.custom_units', function(e) {
+    $('div.custom_units').addClass('shown');
+    $(this).hide();
+    SwiftCalcs.active_worksheet.settings.custom_units = true;
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
   });
 });

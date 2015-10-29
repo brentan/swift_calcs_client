@@ -45,6 +45,15 @@ var receiveMessage = function(command) {
     timeout_length += 10;
     return Module.caseval('timeout ' + timeout_length);
   }
+  if(command.restart_string) {
+    restart_string = command.restart_string;
+  }
+  if(command.set_units) {
+    Module.caseval('clear_usual_units()');
+    for(var i = 0; i < command.set_units.length; i++)
+      Module.caseval('set_units(_' + command.set_units[i] + ')');
+    return;
+  }
   if(command.varList) {
     // If we are asking for the variable list, we simply get that list and return it immediately
     var vars = Module.caseval('VARS').slice(1,-1).split(',');
@@ -65,7 +74,7 @@ var receiveMessage = function(command) {
   }
   // If we are starting a new evaluation, restart giac to reset everything
 	if(command.restart)
-		Module.caseval('restart;srand;complex_mode:=1;');
+		Module.caseval('restart;srand;' + restart_string);
 	var output = [];
   // Errors and warnings are sometimes (but not always!) caught with Module.printErr (they are sometimes also just returned by caseval directly)
   // to deal with that we define these in the global scope and set them with printErr as things happen
