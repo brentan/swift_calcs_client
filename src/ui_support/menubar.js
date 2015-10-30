@@ -140,6 +140,11 @@ $(function() {
     	SwiftCalcs.active_worksheet.reshapeToolbar();
 			SwiftCalcs.active_worksheet.setWidth();
 		}
+		var sel = $(this).attr('data-select');
+		$('div.sidetabs li.item.selected').removeClass('selected');
+		$('div.sidetabs li.item').each(function() {
+			if($(this).attr('data-select') == sel) $(this).addClass('selected');
+		});
     return false;
   });
 
