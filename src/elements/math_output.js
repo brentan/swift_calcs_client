@@ -93,8 +93,12 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 			if(result[0].warnings.length > 0) {
 				this.outputBox.jQ.removeClass('calculating');
 				if(this.outputMode != 1) {
-					for(var i = 0; i < result[0].warnings.length; i++) 
+					var already_issued = [];
+					for(var i = 0; i < result[0].warnings.length; i++) {
+						if(already_issued.indexOf(result[0].warnings[i]) >= 0) continue;
 						this.outputBox.setWarning(result[0].warnings[i],true);
+						already_issued.push(result[0].warnings[i]);
+					}
 					this.outputBox.expand();
 					this.collapseArrow();
 				}
