@@ -154,7 +154,7 @@ var math = P(MathOutput, function(_, super_) {
 	}
 	_.registerSignInPopup = function() { 
 		if(signin_timeout) window.clearTimeout(signin_timeout);
-		signin_timeout = window.setTimeout(function(_this) { return function() { if(!window.shown_signin) { signin_timeout = false; window.shown_signin = true; signIn().insertAfter(_this).show(450); } }; }(this), (expression_count >= 3) ? 100 : 3000);
+		signin_timeout = window.setTimeout(function(_this) { return function() { if(!window.shown_signin) { signin_timeout = false; window.shown_signin = true; signIn().insertAfter(_this).show(450); } }; }(this), (expression_count >= 5) ? 100 : 6000);
 	}
 	_.storeAsVariable = function() {
     this.focus(-1);

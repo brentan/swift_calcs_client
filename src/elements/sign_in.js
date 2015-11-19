@@ -19,7 +19,7 @@ var signIn = P(Element, function(_, super_) {
 	_.innerHtml = function() {
 		return '<table border=0><tbody><tr><td><div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', '') + '</div></td>'
 		+ '<td><div class="' + css_prefix + 'sign_in_box">'
-		+ '<div><strong>Join Us as an Early Adopter!</strong></div><table><tbody><tr><td style="text-align:left;padding-top: 6px;"><img src="' + window.logo_words_url + '" style="width:250px;margin-bottom:5px;">'
+		+ '<div><span class="close_span" style="float:right;color:#999999;cursor:pointer;text-decoration:underline">Not now <i class="fa fa-times"></i></span><strong>Join Us as an Early Adopter!</strong></div><table><tbody><tr><td style="text-align:left;padding-top: 6px;"><img src="' + window.logo_words_url + '" style="width:250px;margin-bottom:5px;">'
 		+ '<div class="small">We\'re looking to transform the way engineers get work done through better, faster, and smarter computational tools.  When you join us as an early adopter, you\'ll be able to:</div>'
 		+ '<ul><li><b>Save and create</b> worksheets that you can access anywhere</li>'
 		+ '<li><b>Share worksheets instantly</b> with anyone, anywhere</li>'
@@ -54,6 +54,10 @@ var signIn = P(Element, function(_, super_) {
   _.mouseClick = function(e) {
   	if($(e.target).is('input')) {
   		window.setTimeout(function() { $(e.target).focus(); }); 
+  		return false;
+  	} else if($(e.target).hasClass('close_span')) {
+  		window.setTimeout(function(_this) { return function() { var n = _this[-1]; _this.remove(); if(n) { n.focus(1); } } }(this));
+  		showNotice('No Problem, you can create an account later from the \'Account\' menu at the top left of the screen', 'green');
   		return false;
   	}
   	this.codeBlock.focus(L);
