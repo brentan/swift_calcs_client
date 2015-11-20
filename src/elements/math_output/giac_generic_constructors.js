@@ -5,7 +5,7 @@
 createGiacElement({
 	name: 'fft',
 	code: 'fourier transform',
-	helpText: '<<fourier transform <[DATA]>>>\nComputer the discrete fourier transform of the array provided.  If the number of elements in DATA is a power of 2, a fast fourier transform routine is used to increase computation speed.',
+	helpText: '<<fourier transform <[DATA]>>>\nCompute the discrete fourier transform of the array provided.  If the number of elements in DATA is a power of 2, a fast fourier transform routine is used to increase computation speed.',
 	content: [ 
 		"<<MathQuill {ghost: 'array'}>>",
 	],
@@ -14,7 +14,7 @@ createGiacElement({
 createGiacElement({
 	name: 'ifft',
 	code: 'inverse fourier transform',
-	helpText: '<<inverse fourier transform <[DATA]>>>\nComputer the inverse fourier transform of the array provided.',
+	helpText: '<<inverse fourier transform <[DATA]>>>\nCompute the inverse fourier transform of the array provided.',
 	content: [ 
 		"<<MathQuill {ghost: 'array'}>>",
 	],

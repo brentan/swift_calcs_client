@@ -57,7 +57,7 @@ var signIn = P(Element, function(_, super_) {
   		return false;
   	} else if($(e.target).hasClass('close_span')) {
   		window.setTimeout(function(_this) { return function() { var n = _this[-1]; _this.remove(); if(n) { n.focus(1); } } }(this));
-  		showNotice('No Problem, you can create an account later from the \'Account\' menu at the top left of the screen', 'green');
+  		showNotice('No Problem, you can create an account later from the \'Account\' menu at the top right of the screen', 'green');
   		return false;
   	}
   	this.codeBlock.focus(L);
