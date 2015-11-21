@@ -113,10 +113,12 @@ Worksheet.open(function(_) {
 	_.bindSettings = function() {
 		if(!(this.settings.saved == "true") && !(this.settings.saved ===true)) 
 			this.settings = default_settings;
-		$('select#angle_mode').val(this.settings.angle ? this.settings.angle : default_settings.angle).on('change', handleSelectChange);
-		$('select#complex_mode').val(this.settings.complex ? this.settings.complex : default_settings.complex).on('change', handleSelectChange);
-		$('select#unit_mode').val(this.settings.units ? this.settings.units : default_settings.units).on('change', handleSelectChange);
-		$('select#digits_select').val(this.settings.digits ? this.settings.digits : default_settings.digits).on('change', handleSelectChange);
+		// Add new settings that aren't in all files
+		if(typeof this.settings.digits === 'undefined') this.settings.digits = default_settings.digits;
+		$('select#angle_mode').val(this.settings.angle).on('change', handleSelectChange);
+		$('select#complex_mode').val(this.settings.complex).on('change', handleSelectChange);
+		$('select#unit_mode').val(this.settings.units).on('change', handleSelectChange);
+		$('select#digits_select').val(this.settings.digits).on('change', handleSelectChange);
 		$('.apply_now').on('click', function(_this) { return function(e) { _this.settingsToGiac(true); }; }(this));
 		setUnitSidebar(this);
 		var _this = this;
