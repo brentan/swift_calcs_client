@@ -174,7 +174,7 @@ var receiveMessage = function(command) {
       else
         simplify_command = '(' + simplify_command;
       if(command.commands[ii].unit) { // If provided, this is a 2 element array.  The first is the unit in evaluatable text, the second is an HTML representation
-        output.push({ success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(convert(' + to_send + ',' + command.commands[ii].unit[0] + '))))') });
+        output.push({ success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(ufactor(' + to_send + ',' + command.commands[ii].unit[0] + '))))') });
         if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
           // Perhaps the auto-unit conversion messed this up...remove it
           // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...

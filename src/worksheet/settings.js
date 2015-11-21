@@ -3,7 +3,7 @@
  ************************************************************************/
 
 Worksheet.open(function(_) {
-	var default_settings = { angle: 'rad', complex: 'on', units: 'mks', custom_units: false, base_units: ['m','kg','s','K'], derived_units: ['A','mol','cd','E','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'] };
+	var default_settings = { angle: 'rad', complex: 'on', units: 'mks', digits: '9', custom_units: false, base_units: ['m','kg','s','K'], derived_units: ['A','mol','cd','E','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'] };
 	var showApplyNow = function() {
 		if(!$('.apply_now').hasClass('shown')) {
 			$('.apply_now').hide().addClass('shown').slideDown({duration: 250});
@@ -84,6 +84,9 @@ Worksheet.open(function(_) {
 			case 'complex_mode':
 				SwiftCalcs.active_worksheet.settings.complex = $(this).val();
 				break;
+			case 'digits_select':
+				SwiftCalcs.active_worksheet.settings.digits = $(this).val();
+				break;
 			case 'unit_mode':
 				SwiftCalcs.active_worksheet.settings.units = $(this).val();
 				switch(SwiftCalcs.active_worksheet.settings.units) {
@@ -113,6 +116,7 @@ Worksheet.open(function(_) {
 		$('select#angle_mode').val(this.settings.angle).on('change', handleSelectChange);
 		$('select#complex_mode').val(this.settings.complex).on('change', handleSelectChange);
 		$('select#unit_mode').val(this.settings.units).on('change', handleSelectChange);
+		$('select#digits_select').val(this.settings.digits).on('change', handleSelectChange);
 		$('.apply_now').on('click', function(_this) { return function(e) { _this.settingsToGiac(true); }; }(this));
 		setUnitSidebar(this);
 		var _this = this;
@@ -132,13 +136,14 @@ Worksheet.open(function(_) {
 		$('select#angle_mode').off('change', handleSelectChange);
 		$('select#complex_mode').off('change', handleSelectChange);
 		$('select#unit_mode').off('change', handleSelectChange);
+		$('select#digits_select').off('change', handleSelectChange);
 		$('.apply_now').off('click');
 		$('div.custom_units .add_unit span').remove();
 		$('div.custom_units .remove_units a').remove();
 		return this;
 	}
 	_.settingsToGiac = function(recalculate) {
-		giac.sendCommand({restart_string: "complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";", set_units: this.settings.base_units.concat(this.settings.derived_units)});
+		giac.sendCommand({restart_string: "DIGITS:=" + (this.settings.digits) + ";complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";", set_units: this.settings.base_units.concat(this.settings.derived_units)});
 		if(recalculate !== false) {
 			this.settings.saved = true;
 			if(this.rights >= 3) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {id: this.server_id, settings: this.settings } });
