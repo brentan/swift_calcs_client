@@ -31,7 +31,7 @@ var solve = P(GiacGeneric, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.solver = registerFocusable(SelectBox, this, 'solver', { options: { symbolic: 'Symobolic Solver', newton_solver: 'Newton-Raphson Numeric Solver'}});
+		this.solver = registerFocusable(SelectBox, this, 'solver', { options: { symbolic: 'Symbolic Solver', newton_solver: 'Newton-Raphson Numeric Solver'}});
 		this.eqFields[0].setExpressionMode(true);
 		this.command = registerFocusable(CodeBlock, this, 'solve', { });
 		this.focusableItems = [[this.command, this.eqFields[0]] , [this.varField], [this.solver]];

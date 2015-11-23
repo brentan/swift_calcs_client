@@ -52,7 +52,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.solver = registerFocusable(SelectBox, this, 'solver', { options: { symbolic: 'Symobolic (Exact) Solver', newton_solver: 'Numeric (Approximate) Solver'}});
+		this.solver = registerFocusable(SelectBox, this, 'solver', { options: { symbolic: 'Symbolic (Exact) Solver', newton_solver: 'Numeric (Approximate) Solver'}});
 		this.eqFields[0].setExpressionMode(true);
 		this.command = registerFocusable(CodeBlock, this, 'solve differential equation', { });
 		this.focusableItems = [[this.command, this.eqFields[0]] , [this.varField], [this.solver]];
