@@ -72,10 +72,10 @@ var videoBlock = P(Element, function(_, super_) {
 		var html = '';
 		switch(this.provider) {
 			case 'vimeo':
-      	html = '<iframe width="520" height="345" src="//player.vimeo.com/video/' + this.video_id + '" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>';
+      	html = '<iframe width="520" height="345" src="https://player.vimeo.com/video/' + this.video_id + '" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>';
 				break;
 			case 'youtube':
-      	html = '<iframe width="520" height="345" src="http://www.youtube.com/embed/' + this.video_id + '" frameborder="0" allowfullscreen></iframe>';
+      	html = '<iframe width="520" height="345" src="https://www.youtube.com/embed/' + this.video_id + '" frameborder="0" allowfullscreen></iframe>';
 				break;
 			default:
 				html = '<strong>This block is corrupted.  Delete and re-create.</strong>';
