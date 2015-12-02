@@ -201,7 +201,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     if(!this.allowDelete && !this.editable)
     	showNotice('Cut operation changed to Copy operation');
     else if(this.children().hasClass('highlighted')) {
-    	this.keystroke('Del', { });
+    	this.keystroke('Del', { preventDefault: function() { } });
     	if(this.editable) {
     		this.element.worksheet.save();
 		    if(this.handlers.onSave) this.handlers.onSave();
