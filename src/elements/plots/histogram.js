@@ -4,6 +4,7 @@ var plot_histogram = P(barplot, function(_, super_) {
 	_.helpText = "<<histogram plot>>\nPlot a Histogram based on data.  To alter the default binning, enter the number of requested bins.";
 
 	_.innerHtml = function() {
+		bob=err;
 		return super_.innerHtml.call(this).replace('YIELD','<div class="' + css_prefix + 'focusableItems" data-id="2">data:&nbsp;' + focusableHTML('MathQuill',  'eq1') + '</div><div class="' + css_prefix + 'focusableItems" data-id="3">bins:&nbsp;' + focusableHTML('MathQuill',  'bins') + '</div>');
 	}
 	_.postInsertHandler = function() {
