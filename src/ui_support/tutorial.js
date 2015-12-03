@@ -179,5 +179,5 @@ $(function() {
 	window.loadTutorial = function() { 
 		window.swift_calcs_tutorial(1);
 	};
-	$('body').on('click', '.menu .load_tutorial', function(e) { window.loadScreenExplanation(); window.loadTutorialAfterScreen = true; return false; });
+	$('body').on('click', '#account_bar .load_tutorial', function(e) { window.loadScreenExplanation(); window.loadTutorialAfterScreen = true; return false; });
 });

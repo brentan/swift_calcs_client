@@ -23,7 +23,16 @@ var ajaxQueueClass = P(function(_) {
 		this.server_version = {};
 		this.known_server_version = {};
 		this.should_be_server_version = {};
-		this.jQ = $('.save_div');
+		this.save_div = $('.save_div');
+		this.jQ = {
+			html: function(text) {
+				if(text && text.length) {
+					ajaxQueue.save_div.show().html(text);
+				} else {
+					ajaxQueue.save_div.hide();
+				}
+			}
+		}
 		this.jQ_fatal = $('.fatal_div');
 		this.running = {};
 	}

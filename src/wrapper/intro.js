@@ -67,7 +67,6 @@ var SwiftCalcs = {};
       });
     return [text(output)];
   }
-
   var status_bar = $('.status_bar');
   // Status bar helper functions
   var clearBar = function() {
@@ -110,7 +109,7 @@ var SwiftCalcs = {};
   var setComplete = function() {
     clearBar();
     status_bar.addClass(css_prefix + 'complete');
-    status_bar.html('Ready');
+    status_bar.html('Ready to Calculate');
   }
   var setWarning = function(warn) {
     clearBar();

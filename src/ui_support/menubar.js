@@ -1,6 +1,6 @@
 $(function() {
 	
-	$('body').on('click', '.menu .open', function(e) { 
+	$('body').on('click', '#account_bar .open', function(e) { 
 		if(window.user_logged_in) {
 			window.loadFolder(); 
 			SwiftCalcs.giac.cancelEvaluations(); 
@@ -10,7 +10,7 @@ $(function() {
 		}
 		return false; 
 	});
-	$('body').on('click', '.menu .new', function(e) { 
+	$('body').on('click', '#account_bar .new', function(e) { 
 		if(window.user_logged_in)
 			window.newWorksheet(); 
 		else {
@@ -19,7 +19,7 @@ $(function() {
 		}
 		return false; 
 	});
-	$('body').on('click', '.menu .save', function(e) { 
+	$('body').on('click', '#account_bar .save', function(e) { 
 		if(SwiftCalcs.active_worksheet) { 
 			if(SwiftCalcs.active_worksheet.rights >= 3)
 				SwiftCalcs.active_worksheet.save(true); 
@@ -40,7 +40,7 @@ $(function() {
 		} 
 		return false; 
 	});
-	$('body').on('click', '.menu .rename', function(e) { 
+	$('body').on('click', '#account_bar .rename', function(e) { 
 		if(SwiftCalcs.active_worksheet) { 
 			if(SwiftCalcs.active_worksheet.rights >= 4)
 				SwiftCalcs.active_worksheet.rename(); 
@@ -52,7 +52,7 @@ $(function() {
 		} 
 		return false; 
 	});
-	$('body').on('click', '.menu .duplicate', function(e) { 
+	$('body').on('click', '#account_bar .duplicate', function(e) { 
 		if(SwiftCalcs.active_worksheet) { 
 			if((SwiftCalcs.active_worksheet.rights >= 2) || (SwiftCalcs.active_worksheet.rights <= -1)) {
 				if(window.user_logged_in)
@@ -66,8 +66,8 @@ $(function() {
 		} 
 		return false; 
 	});
-	$('body').on('click', '.menu .print', function(e) { window.print(); return false; });
-	$('body').on('click', '.menu .delete', function(e) { 
+	$('body').on('click', '#account_bar .print', function(e) { window.print(); return false; });
+	$('body').on('click', '#account_bar .delete', function(e) { 
 		var msg = 'Are you sure you want to delete this item (if you are not the owner, this item will be removed from your shared folder)?  This action cannot be undone.';
 		if(confirm(msg)) {
 			window.showLoadingOnTop();
@@ -96,16 +96,16 @@ $(function() {
 		return false;
 	});
 
-	$('body').on('click', '.menu .undoLink', function(e) { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.restoreUndoPoint(); } e.preventDefault(); e.stopPropagation(); return false; });
-	$('body').on('click', '.menu .redoLink', function(e) { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.restoreRedoPoint(); } e.preventDefault(); e.stopPropagation(); return false; });
-	$('body').on('click', '.menu .cut', function(e) { alert('Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-X.'); return false; });
-	$('body').on('click', '.menu .copy', function(e) { alert('Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-C.'); return false; });
-	$('body').on('click', '.menu .paste', function(e) { alert('Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-V.'); return false; });
+	$('body').on('click', '#account_bar .undoLink', function(e) { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.restoreUndoPoint(); } e.preventDefault(); e.stopPropagation(); return false; });
+	$('body').on('click', '#account_bar .redoLink', function(e) { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.restoreRedoPoint(); } e.preventDefault(); e.stopPropagation(); return false; });
+	$('body').on('click', '#account_bar .cut', function(e) { alert('Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-X.'); return false; });
+	$('body').on('click', '#account_bar .copy', function(e) { alert('Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-C.'); return false; });
+	$('body').on('click', '#account_bar .paste', function(e) { alert('Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-V.'); return false; });
 
-	$('body').on('click', '.menu .auto_off', function(e) { SwiftCalcs.giac.manual_mode(true); return false; });
-	$('body').on('click', '.menu .auto_on', function(e) { SwiftCalcs.giac.manual_mode(false); return false; });
-	$('body').on('click', '.menu .calc_now', function(e) { SwiftCalcs.giac.manualEvaluation(); return false; });
-	$('body').on('click', '.menu .full_calc', function(e) { if(SwiftCalcs.active_worksheet) { window.start_time = undefined; SwiftCalcs.active_worksheet.ends[-1].evaluate(true, true); if(!SwiftCalcs.giac.auto_evaluation) { SwiftCalcs.giac.manualEvaluation(); } } return false; });
+	$('body').on('click', '#account_bar .auto_off', function(e) { SwiftCalcs.giac.manual_mode(true); return false; });
+	$('body').on('click', '#account_bar .auto_on', function(e) { SwiftCalcs.giac.manual_mode(false); return false; });
+	$('body').on('click', '#account_bar .calc_now', function(e) { SwiftCalcs.giac.manualEvaluation(); return false; });
+	$('body').on('click', '#account_bar .full_calc', function(e) { if(SwiftCalcs.active_worksheet) { window.start_time = undefined; SwiftCalcs.active_worksheet.ends[-1].evaluate(true, true); if(!SwiftCalcs.giac.auto_evaluation) { SwiftCalcs.giac.manualEvaluation(); } } return false; });
 
 	var createBlock = function(el_type, options) {
   	var el = SwiftCalcs.active_worksheet.lastActive;
@@ -124,15 +124,15 @@ $(function() {
 		if(el_type == 'text')
 			to_create.textField.magicCommands();
 	}
-	$('body').on('click', '.menu .revision_history', function(e) { window.loadRevisions(); return false; });
+	$('body').on('click', '#account_bar .revision_history', function(e) { window.loadRevisions(); return false; });
 
-	$('body').on('click', '.menu .about', function(e) { window.loadToPopup('/about',{}); return false; });
+	$('body').on('click', '#account_bar .about', function(e) { window.loadToPopup('/about',{}); return false; });
 
-	$('body').on('click', '.menu .shortcuts', function(e) { window.loadToPopup('/shortcuts',{}); return false; });
-	$('body').on('click', '.menu .hide_vaporware', function(e) { $(this).parent().hide(); $(this).parent().next().show(); $('body').removeClass('show_vaporware'); return false; });
-	$('body').on('click', '.menu .show_vaporware', function(e) { $(this).parent().hide(); $(this).parent().prev().show(); $('body').addClass('show_vaporware'); return false; });
+	$('body').on('click', '#account_bar .shortcuts', function(e) { window.loadToPopup('/shortcuts',{}); return false; });
+	$('body').on('click', '#account_bar .hide_vaporware', function(e) { $(this).parent().hide(); $(this).parent().next().show(); $('body').removeClass('show_vaporware'); return false; });
+	$('body').on('click', '#account_bar .show_vaporware', function(e) { $(this).parent().hide(); $(this).parent().prev().show(); $('body').addClass('show_vaporware'); return false; });
 
-  $('body').on('click', '.menu .sidebar_item', function(e) {
+  $('body').on('click', '#account_bar .sidebar_item', function(e) {
     $('.base_layout').removeClass('closed_sidebar');
     $('div.sidebar div.content.selected').removeClass('selected');
     $('div.sidebar div.content.' + $(this).attr('data-select')).addClass('selected');

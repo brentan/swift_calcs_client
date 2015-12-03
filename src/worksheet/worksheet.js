@@ -127,7 +127,7 @@ var Worksheet = P(function(_) {
 				});
 
 				this.jQ.prepend(createWarningBox(els));
-				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
+				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
 				break;
 			/*case -1: //new worksheet for user who is not logged in...
 				var els = $('<div/>').html('<strong>Welcome to SwiftCalcs</strong>.  To save this masterpiece or share it with others, you must first <a href="#" class="create">login or create an account with Swift Calcs</a>.');
@@ -137,12 +137,12 @@ var Worksheet = P(function(_) {
 					return false;
 				});
 				this.jQ.prepend(createWarningBox(els));
-				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
+				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
 				break;*/
 			case 1: //view-only
 				var els = $('<div/>').html('<strong>File is View Only</strong>.  Any changes you make will not be saved.');
 				this.jQ.prepend(createWarningBox(els));
-				this.save(); // Wont actually save, but will set the ajaxQueue.jQ to an appropriate message.
+				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
 				break;
 			case 2: //view-only but can duplicate
 				var els = $('<div/>').html('<strong>Make a Copy to Save</strong>.  To save any changes you have made to this worksheet, <a href="#" class="copy">create a copy of the worksheet</a> in your own folder.');
@@ -157,7 +157,7 @@ var Worksheet = P(function(_) {
 					return false;
 				});
 				this.jQ.prepend(createWarningBox(els));
-				this.save(); // Won't actually save, but will set the ajaxQueue.jQ to an appropriate message.
+				this.save(); // Won't actually save, but will set the saving message to an appropriate message.
 				break;
 		}
 	}

@@ -7,7 +7,7 @@ $(function() {
       {left: 'fa-font', text: 'Text Mode', el: 'text' },
       {left: 'x&#8801;', text: 'Define a Variable', el: 'math', option: 'latex{x=}', prepend: true, highlight: "Shift-Right"},
       {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;', text: 'Define a Function', el: 'math', option: 'latex{\\operatorname{f}\\left({}\\right)=}', prepend: true, highlight: "Right Shift-Right"},
-      {left: 'fa-bookmark', text: 'Bookmark', el: 'bookmark'},
+      {left: 'fa-line-chart', text: 'Plot Function', el: 'plot'},
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
       {left: 'fa-table', text: 'Table', vaporware: true},
       {left: 'fa-paint-brush', text: 'Drawing', vaporware: true}
@@ -61,7 +61,7 @@ $(function() {
   };
   var first = true;
   var $box = $('div.content.tools');
-  var $menu = $('.menu .insert_menu');
+  var $menu = $('#account_bar .insert_menu');
   var options = ['el', 'option', 'prepend', 'highlight', 'append'];
   $.each(sidebar, function(k, v) {
     // Add to menubar
@@ -135,6 +135,7 @@ $(function() {
         showNotice('This feature is not yet available');
         return;
       }
+      closeSidebar();
       // Handle full click events as mousedown and then mouseup
       var el = SwiftCalcs.active_worksheet.lastActive;
       var check_for_storeAsVariable = true;
@@ -217,26 +218,21 @@ $(function() {
 		}
     SwiftCalcs.active_worksheet.bindDragging(e, $(this), click_handler(_this), drag_done_handler)
 	};
+  function closeSidebar() {
+    $('div.sidebar').animate({width: 25}, {duration: 250, easing: 'easeOutQuad', always: function() { $('div.sidebar div.toolbox_icon').addClass('closed') }});
+    $('div.sidebar_close').remove();
+  }
   $('body').on('mousedown', 'div.sidebar .tool', mouseDown);
-  $('body').on('click', '.menu .insert_menu a.tool', function(e) { var _this = $(this); click_handler(_this)(e); _this.closest('ul.insert_menu').hide(); window.setTimeout(function() { _this.closest('ul.insert_menu').css('display',''); },500); return false; });
-  $('body').on('click', 'div.sidetabs i.fa-times', function(e) {
-    $('.base_layout').addClass('closed_sidebar');
-    $('ul.sidetab_bar li.item.selected').removeClass('selected');
-    if(SwiftCalcs.active_worksheet) {
-      SwiftCalcs.active_worksheet.reshapeToolbar();
-      SwiftCalcs.active_worksheet.setWidth();
-    }
-  });
-  $('body').on('click', 'ul.sidetab_bar li.item', function(e) {
-    $('ul.sidetab_bar li.item.selected').removeClass('selected');
-    $('.base_layout').removeClass('closed_sidebar');
-    $(this).addClass('selected');
-    $('div.sidebar div.content.selected').removeClass('selected');
-    $('div.sidebar div.content.' + $(this).attr('data-select')).addClass('selected');
-    if(SwiftCalcs.active_worksheet) {
-      SwiftCalcs.active_worksheet.reshapeToolbar();
-      SwiftCalcs.active_worksheet.setWidth();
-    }
+  $('body').on('click', '#account_bar .insert_menu a.tool', function(e) { var _this = $(this); click_handler(_this)(e); _this.closest('ul.insert_menu').hide(); window.setTimeout(function() { _this.closest('ul.insert_menu').css('display',''); },500); return false; });
+  $('body').on('mouseover', 'div.sidebar div.toolbox_icon.closed', function(e) {
+    $(this).removeClass('closed');
+    $('div.sidebar').animate({width: 275}, {duration: 250, easing: 'easeOutQuad', always: function() {
+      $('<div/>').addClass('sidebar_close').appendTo('.base_layout').on('mouseover', function() {
+        closeSidebar();
+      }).on('dragover', function() {
+        closeSidebar();
+      });
+    }});
   });
   // Toolbox headers
   $('body').on('click', 'div.content.tools div.section', function(e) {
