@@ -36,4 +36,3 @@
 		elements[giac_elements_to_add[i].key] = SwiftCalcs.elements[giac_elements_to_add[i].key] = giac_elements_to_add[i].el;
 }());
 window.SwiftCalcs_js_ready = true;
-console.log('SWIFT: ' + window.SwiftCalcs_js_ready);
