@@ -23,7 +23,6 @@ Worksheet.open(function(_) {
 		this.jQ.css('padding-top', (bot + 20) + 'px');
 		this.toolbar.toolbar_holder.css('top', top + 'px');
 		$('div.sidebar').css('top', bot + 'px');
-		$('div.leftbar').css('top', bot + 'px');
 	}
 	_.attachToolbar = function(el, options) {
 		if(!this.toolbar) return;
