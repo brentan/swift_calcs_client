@@ -110,8 +110,8 @@ var PushState = P(function(_) {
         }
       });
       return true;
-    } else if(fragment.match(/folders\//i)) {
-      var hash_string = fragment.replace(/folders\/([a-z0-9\-]*).*$/i,"$1").split('-');
+    } else if(fragment.match(/projects\//i)) {
+      var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1").split('-');
       if(hash_string.length == 0)
         window.openFileDialog('0','all');
       else if(hash_string.length == 1)
@@ -119,11 +119,7 @@ var PushState = P(function(_) {
       else
         window.openFileDialog(hash_string[0], hash_string[1]);
       return true;
-    } else if(fragment.match(/bookmarks\//i)) {
-      var hash_string = fragment.replace(/bookmarks\/([^\/]*).*$/i,"$1")
-      window.openFileDialog(hash_string, 'bookmark');
-      return true;
-    }
+    } 
 		return false;
   }
   _.navigate = function(fragment, options) {

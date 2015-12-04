@@ -56,7 +56,6 @@ var ajaxQueueClass = P(function(_) {
 		var post_data = {
 			worksheet_id: id,
 			name: this.holding_pen[id].worksheet.name,
-			bookmarks: this.holding_pen[id].worksheet.bookmarks,
 			uploads: this.holding_pen[id].worksheet.uploads,
 			known_server_version: this.known_server_version[id]
 		}

@@ -153,14 +153,14 @@ $(function() {
   $('body').on('blur', 'input.search_bar', function() {
   	$(this).closest('div.search_box_holder').css('border-color', '#5888a9');
   });
-  $('body').on('click', '.leftbar .title', function(e) { 
+  $('body').on('click', '.leftbar .top_title', function(e) { 
   	$('.base_layout').addClass('leftbar_hidden');
     if(SwiftCalcs.active_worksheet) {
     	SwiftCalcs.active_worksheet.reshapeToolbar();
 			SwiftCalcs.active_worksheet.setWidth();
 		}
   });
-  $('body').on('click', '.leftbar_top .title', function(e) { 
+  $('body').on('click', '.leftbar_top .top_title', function(e) { 
   	$('.base_layout').removeClass('leftbar_hidden');
     if(SwiftCalcs.active_worksheet) {
     	SwiftCalcs.active_worksheet.reshapeToolbar();

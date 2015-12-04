@@ -77,7 +77,6 @@ var math = P(MathOutput, function(_, super_) {
       	return false;
 		}
 		this.mark_for_deletion = true;
-		if(to_text === '#') to_text = 'bookmark';
 		var stream = this.worksheet.trackingStream;
 		if(!stream) this.worksheet.startUndoStream();
 		if(elements[to_text.toLowerCase()]) {

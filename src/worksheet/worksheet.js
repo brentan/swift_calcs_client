@@ -39,7 +39,6 @@ var Worksheet = P(function(_) {
 		if(server_id) this.server_id = server_id;
 		if(server_version) ajaxQueue.known_server_version[this.server_id] = server_version;
 		this.name = name;
-		this.bookmarks = [];
 		this.hash_string = hash_string;
 		this.rights = rights;
 		this.settings = settings;
@@ -195,7 +194,6 @@ var Worksheet = P(function(_) {
 	  ajaxQueue.jQ.html(ajaxQueue.save_message);
 	  giac.auto_evaluation = auto_evaluation;
 	  this.ends[L].evaluate(true, true);
-	  this.updateBookmarks();
 	  this.updateUploads();
 	  this.reset_server_base(to_parse);
 	  this.loaded = true;
@@ -262,29 +260,6 @@ var Worksheet = P(function(_) {
 			start = child.numberBlock(start);
 		});
 	}
-	// Check for all bookmarks and update the bookmarks list
-  _.updateBookmarks = function() {
-    var bookmarks = this.insertJQ.find('.' + css_prefix + 'bookmark');
-    var $bookmark = $('#bookmarks');
-    $bookmark.html('');
-    var _this = this;
-    var marks = [];
-    bookmarks.each(function(i, hash_string) {
-    	hash_string = $(hash_string);
-    	var el = Element.byId[hash_string.attr(css_prefix + 'element_id')*1];
-    	var link = $('<a href="#">' + el.block.toString() + '</a>');
-    	marks.push(el.block.toString());
-    	$('<li/>').append(link).appendTo($bookmark);
-    	link.on('click', function(e) {
-    		var offset = hash_string.position().top + _this.jQ.scrollTop();
-    		_this.jQ.scrollTop(offset);
-    		hash_string.stop().css("background-color", "#ff9999").animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')}, duration: 600});
-    		return false;
-    	});
-    });
-    this.bookmarks = marks;
-  }
-	// Check for all bookmarks and update the bookmarks list
   _.updateUploads = function() {
     var uploads = this.insertJQ.find('.' + css_prefix + 'uploadedData');
     var ids = [];

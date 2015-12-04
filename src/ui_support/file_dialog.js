@@ -284,35 +284,7 @@ $(function() {
 		else
 			SwiftCalcs.pushState.navigate('/folders/', {trigger: true});
 	}
-	var loadBookmark = window.loadBookmark = function(encoded_name) {
-		SwiftCalcs.pushState.navigate('/bookmarks/' + encoded_name, {trigger: true});
-	}
 	var showInfo = function() {
-		// Load info based on the current selection, if any
-		if($('.file_dialog .list').find('.file_item.selected').length == 1)
-			loadInfo($('.file_dialog .list').find('.file_item.selected').attr('data-type'), $('.file_dialog .list').find('.file_item.selected').attr('data-id'));
-		else if($('.file_dialog .list').find('.file_item.selected').length == 0) {
-			$('.file_dialog .right .content').hide();
-			info_screen_id = false;
-			$('.file_dialog .right .default').show();
-		} else {
-			var items = []
-			$('.file_dialog .file_item.selected').each(function() {
-				if($(this).hasClass('bookmark')) return;
-				items.push([$(this).attr('data-type'), $(this).attr('data-id')]);
-			});
-			if(items.length) {
-				if(items[0][0] == 'Invite')
-					$('.file_dialog .right .content').html('<div class="title"><i class="fa fa-fw fa-files-o"></i> <span class="name">Multiple Invitations Selected</span></div><div class="actions"><div class="item batch" data-command="accept_invite"><i class="fa fa-fw fa-check-circle"></i>Accept Invitations</div><div class="item batch" data-command="reject_invite"><i class="fa fa-fw fa-times-circle"></i>Reject Invitations</div></div><div class="explain">Once accepted, files are moved from this folder to the <strong>Shared With You</strong> folder.</div>');
-				else {
-					$('.file_dialog .right .content').html('<div class="title"><i class="fa fa-fw fa-files-o"></i> <span class="name">Multiple Items Selected</span></div><div class="actions"><div class="item batch" data-command="move"><i class="fa fa-fw fa-share"></i>Move Items</div><div class="item batch" data-command="remove"><i class="fa fa-fw fa-trash"></i>Remove Items</div></div><div class="explain">Looking to change share settings on multiple files?  Move the files into a new directory and change sharing settings on the directory.</div>');
-					if(window.user_logged_in)
-						$('.file_dialog .right .actions').append('<div class="item batch" data-command="add_star"><i class="fa fa-fw fa-star"></i>Add to Starred Items</div><div class="item batch" data-command="remove_star"><i class="fa fa-fw fa-star-o"></i>Remove Form Starred Items</div>');
-				}
-			} else
-				$('.file_dialog .right .content').html('<div class="title"><i class="fa fa-fw fa-files-o"></i> <span class="name">Multiple Bookmarks Selected</span></div><div class="explain">Trying to manage bookmarks?  You can add, edit, or remove bookmarks by editing the worksheets in which they appear.</div>');
-			info_screen_id = false;
-		}
 	}
 	var loadind_worksheet = false;
 	var info_load = false;
@@ -355,8 +327,6 @@ $(function() {
 			loadWorksheet(hash_string, name);
 		} else if(data_type == 'Folder')
 			loadFolder(hash_string, name);
-		else
-			loadBookmark(hash_string);
 	}
 	var destroyItem = function(data_type, data_id, full_destroy) {
 		if(full_destroy)
@@ -504,15 +474,7 @@ $(function() {
 		$('.file_dialog .right .content').html('<div style="text-align:center;font-size:60px;margin-top:60px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
 		info_screen_id = false;
 		var items = [];
-		showBookmarkNotice = true;
 		$('.file_dialog .file_item.selected').each(function() {
-			if($(this).hasClass('bookmark')) {
-				if(showBookmarkNotice) {
-					showBookmarkNotice = false;
-					showNotice('Bookmarks have been removed from this request.')
-				}
-				return;
-			}
 			items.push([$(this).attr('data-type'), $(this).attr('data-id')]);
 		});
 		if(items.length == 0) return;
