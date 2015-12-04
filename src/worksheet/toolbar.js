@@ -201,7 +201,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		{ 
 			id: 'backColor',
 			title: 'Background Color',
-			html: '<span class="fa-stack" style="line-height: inherit;"><span class="fa fa-square fa-stack-2x" style="position:relative;top:-2px;font-size:1.35em;" ></span><span style="color: #050431;font-size:1.35em;border-bottom:4px solid white;" class="fa fa-font fa-inverse fa-stack-2x backColor"></span></span>',
+			html: '<span class="fa-stack" style="line-height: inherit;"><span class="fa fa-square fa-stack-2x" style="position:relative;top:-2px;font-size:1.35em;" ></span><span style="color: #ecf0f1;font-size:1.35em;border-bottom:4px solid white;" class="fa fa-font fa-inverse fa-stack-2x backColor"></span></span>',
 			colorPicker: function(el, color) { el.command('backColor', color); }
 		},
 		{ title: '|' },
@@ -502,25 +502,25 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		var toolbar = [
 		{
 			id: 'fraction',
-			html: '<div style="position: relative;top:-2px;padding:0px 5px;color: #ccc;"><div style="padding-bottom:0px;border-bottom: 1px solid #d2d2d2;line-height:9px;font-size:9px;"><span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:9px;"><span class="fa fa-square-o"></span></div></div>',
+			html: '<div style="position: relative;top:-2px;padding:0px 5px;color: #888888;"><div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:9px;font-size:9px;"><span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:9px;"><span class="fa fa-square-o"></span></div></div>',
 			title: 'Fraction',
 			method: function(el) { el.command('/'); }
 		},
 		{
 			id: 'exponent',
-			html: '<span style="color: #ccc;"><span class="fa fa-square-o"></span><sup><span style="position: relative; top: -3px; left: 1px;" class="fa fa-square-o"></span></sup></span>',
+			html: '<span style="color: #888888;"><span class="fa fa-square-o"></span><sup><span style="position: relative; top: -3px; left: 1px;" class="fa fa-square-o"></span></sup></span>',
 			title: 'Exponent',
 			method: function(el) { el.command('^'); }
 		},
 		{
 			id: 'sub',
-			html: '<span style="color: #ccc;"><span class="fa fa-square-o"></span><sub><span style="position: relative; top: 3px; left: 1px;" class="fa fa-square-o"></span></sub></span>',
+			html: '<span style="color: #888888;"><span class="fa fa-square-o"></span><sub><span style="position: relative; top: 3px; left: 1px;" class="fa fa-square-o"></span></sub></span>',
 			title: 'Subscript',
 			method: function(el) { el.command('_'); }
 		},
 		{
 			id: 'brackets',
-			html: '<div style="position: relative; top: -3px;">(<span style="color: #ccc;font-size:10px;"><span class="fa fa-square-o"></span></span>)</div>',
+			html: '<div style="position: relative; top: -3px;">(<span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>)</div>',
 			title: 'Parenthesis',
 			method: function(el) { el.command('('); },
 			sub: [
@@ -614,7 +614,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		{ title: '|' },
 		{
 			id: 'Units',
-			html: '<div style="position: relative;top:-2px;padding:0px 5px;"><div style="padding-bottom:0px;border-bottom: 1px solid #d2d2d2;line-height:9px;font-size:9px;">m</div><div style="padding-top: 1px;line-height:9px;font-size:9px;">s</div></div>',
+			html: '<div style="position: relative;top:-2px;padding:0px 5px;"><div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:9px;font-size:9px;">m</div><div style="padding-top: 1px;line-height:9px;font-size:9px;">s</div></div>',
 			title: 'Insert Unit',
 			method: function(el) { el.command('\\Unit'); },
 			units: function(el, cmd, unit) { el.command(cmd, unit); }
@@ -622,7 +622,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		{ title: '|' },
 		{
 			id: 'roots',
-			html: '&#8730;<div style="display:inline-block;border-top:1px solid #d2d2d2;padding:0px 3px;position:relative; top:1px;"><span style="color: #bfbfbf;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span></div>',
+			html: '&#8730;<div style="display:inline-block;border-top:1px solid #444444;padding:0px 3px;position:relative; top:1px;"><span style="color: #888888;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span></div>',
 			title: 'Square Root',
 			method: function(el) { el.command('\\sqrt'); },
 			sub: [
@@ -632,7 +632,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		},
 		{
 			id: 'summations',
-			html: '<span style="position:relative; top: -2px;">&#8721;</span><span style="color: #bfbfbf;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span>',
+			html: '<span style="position:relative; top: -2px;">&#8721;</span><span style="color: #888888;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span>',
 			title: 'Summation/Product',
 			sub: [
 				{html: '<span class="mq-math-mode" style="cursor: pointer;"><span class="mq-large-operator mq-non-leaf">&#8721;<span class="mq-from">n</span></span></span><span style="color: #888888;"><span class="fa fa-square-o"></span></span>', method: function(el) { el.command('\\sumn'); }, title: 'Infinite Sum' },
@@ -642,7 +642,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		},
 		{
 			id: 'integral',
-			html: '<div style="padding: 0px 3px;"><span style="position:relative; top: -2px;">&#8747;</span><span style="color: #bfbfbf;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span></div>',
+			html: '<div style="padding: 0px 3px;"><span style="position:relative; top: -2px;">&#8747;</span><span style="color: #888888;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span></div>',
 			title: 'Integral/AntiDerivative',
 			sub: [
 				{html: '<span class="mq-math-mode" style="cursor: pointer;"><span class="mq-large-operator mq-non-leaf">&#8747;</span></span><span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>&nbsp;d<span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>', method: function(el) { el.command('\\intn'); }, title: 'Indefinate Integral' },
@@ -651,7 +651,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		},
 		{
 			id: 'derivative',
-			html: '<div style="position: relative;top:-2px;padding:0px 2px;color: #ccc;"><div style="padding-bottom:0px;border-bottom: 1px solid #d2d2d2;line-height:9px;font-size:9px;">d&nbsp;<span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:9px;">dx</div></div>',
+			html: '<div style="position: relative;top:-2px;padding:0px 2px;color: #888888;"><div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:9px;font-size:9px;">d&nbsp;<span class="fa fa-square-o"></span></div><div style="padding-top: 1px;line-height:9px;font-size:9px;">dx</div></div>',
 			title: 'Derivative',
 			method: function(el) { el.command('\\derivative'); },
 			sub: [
@@ -663,7 +663,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		},
 		{
 			id: 'limits',
-			html: '<span style="position:relative; top: -2px;">lim</span><span style="padding-left:2px;color: #bfbfbf;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span>',
+			html: '<span style="position:relative; top: -2px;">lim</span><span style="padding-left:2px;color: #888888;font-size:12px;position: relative; top: -2px;"><span class="fa fa-square-o"></span></span>',
 			title: 'Limit',
 			sub: [
 				{html: '<span class="mq-math-mode" style="cursor: pointer;"><span class="mq-large-operator mq-non-leaf">lim<span class="mq-from" style="float: none;">n&#8594;<span style="color: #888888;font-size: 8px;"><span class="fa fa-square-o"></span></span></span></span></span><span style="color: #888888;position: relative; top: -12px;"><span class="fa fa-square-o"></span></span>', method: function(el) { el.command('\\limit'); }, title: 'Limit' },
@@ -673,14 +673,14 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		},
 		{
 			id: 'sciNotation',
-			html: '<span style="position:relative; top: -2px;">&#215;10<sup><span style="color: #ccc;font-size:8px;padding-left:1px;"><span class="fa fa-square-o"></span></span></sup></span>',
+			html: '<span style="position:relative; top: -2px;">&#215;10<sup><span style="color: #888888;font-size:8px;padding-left:1px;"><span class="fa fa-square-o"></span></span></sup></span>',
 			title: 'Scientific Notation',
 			method: function(el) { el.command('\\scientificNotationToolbar'); },
 		},
 		{ title: '|' },
 		{
 			id: 'matrix',
-			html: '<span style="position: relative; top: -7px;padding-right:4px;"><span style="font-size:18px;">[</span><span style="font-size: 13px;color: #bfbfbf;"><span class="fa fa-th"></span></span><span style="font-size: 18px;">]</span></span>',
+			html: '<span style="position: relative; top: -7px;padding-right:4px;"><span style="font-size:18px;">[</span><span style="font-size: 13px;color: #888888;"><span class="fa fa-th"></span></span><span style="font-size: 18px;">]</span></span>',
 			title: 'Matices',
 			sub_klass: 'commandPicker',
 			method: function(el) { el.command('\\bmatrix'); },
