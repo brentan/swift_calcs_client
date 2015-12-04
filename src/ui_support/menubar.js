@@ -147,5 +147,34 @@ $(function() {
 		});
     return false;
   });
+  $('body').on('focus', 'input.search_bar', function() {
+  	$(this).closest('div.search_box_holder').css('border-color', '#cccccc');
+  });
+  $('body').on('blur', 'input.search_bar', function() {
+  	$(this).closest('div.search_box_holder').css('border-color', '#5888a9');
+  });
+  $('body').on('click', '.leftbar .title', function(e) { 
+  	$('.base_layout').addClass('leftbar_hidden');
+    if(SwiftCalcs.active_worksheet) {
+    	SwiftCalcs.active_worksheet.reshapeToolbar();
+			SwiftCalcs.active_worksheet.setWidth();
+		}
+  });
+  $('body').on('click', '.leftbar_top .title', function(e) { 
+  	$('.base_layout').removeClass('leftbar_hidden');
+    if(SwiftCalcs.active_worksheet) {
+    	SwiftCalcs.active_worksheet.reshapeToolbar();
+			SwiftCalcs.active_worksheet.setWidth();
+		}
+  });
+  $('body').on('click', '#account_bar .star_select', function(e) {
+  	if($(this).hasClass('on')) {
+  		$(this).removeClass('on');
+  		// DO STUFF
+  	} else {
+  		$(this).addClass('on');
+  		// DO STUFF
+  	}
+  });
 
 });
