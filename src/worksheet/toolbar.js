@@ -24,7 +24,7 @@ Worksheet.open(function(_) {
 		this.toolbar.toolbar_holder.css('top', top + 'px');
 		$('div.sidebar').css('top', bot + 'px');
 		$('div.leftbar').css('top', top + 'px');
-		$('div.leftbar_top').css('height', (toolbar_height - 1) + 'px');
+		$('div.leftbar_top').css('height', toolbar_height + 'px');
 	}
 	_.attachToolbar = function(el, options) {
 		if(!this.toolbar) return;
