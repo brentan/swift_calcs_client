@@ -15,16 +15,7 @@ Worksheet.open(function(_) {
 	}
 	_.reshapeToolbar = function() {
 		if(!this.toolbar) return;
-    var menu_height = max(max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height());
-    $('#account_bar').height(menu_height);
-		var toolbar_height = this.toolbar.toolbar_holder.height();
-		var top = menu_height;
-		var bot = top + toolbar_height;
-		this.jQ.css('padding-top', (bot + 20) + 'px');
-		this.toolbar.toolbar_holder.css('top', top + 'px');
-		$('div.sidebar').css('top', bot + 'px');
-		$('div.leftbar').css('top', top + 'px');
-		$('div.leftbar_top').css('height', toolbar_height + 'px');
+		this.toolbar.reshapeToolbar();
 	}
 	_.attachToolbar = function(el, options) {
 		if(!this.toolbar) return;
@@ -51,6 +42,18 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	_.toolbar_holder = false;
 	_.init = function(toolbar_holder) {
 		this.toolbar_holder = toolbar_holder;
+	}
+	_.reshapeToolbar = function() {
+    var menu_height = max(max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height());
+    $('#account_bar').height(menu_height);
+		var toolbar_height = this.toolbar_holder.height();
+		var top = menu_height;
+		var bot = top + toolbar_height;
+		$('.worksheet_holder').css('padding-top', (bot + 20) + 'px');
+		this.toolbar_holder.css('top', top + 'px');
+		$('div.sidebar').css('top', bot + 'px');
+		$('div.leftbar').css('top', top + 'px');
+		$('div.leftbar_top').css('height', toolbar_height + 'px');
 	}
 	var current_toolbar_target = 0;
 	_.attachToolbar = function(el, options) {
@@ -125,7 +128,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		//build up the toolbar
 		this.toolbar = buildMenu(el, options);
 		this.toolbar.attr('id', 'toolbar').addClass('base');
-		this.toolbar_holder.append(this.toolbar);
+		this.toolbar_holder.html('').append(this.toolbar);
 		if(el.klass && el.klass.length) 
 			this.toolbar_holder.addClass(css_prefix + el.klass.join(' ' + css_prefix));
 	}
@@ -143,6 +146,44 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	}
 	_.unblurToolbar = function() {
 		if(this.toolbar) this.toolbar.removeClass('blurred');
+	}
+	// Batch toolbar used when selecting multiple worksheets
+	_.batchToolbar = function(tot) {
+		return [
+			{
+				id: 'title',
+				html: "<span style='font-weight:bold;font-size:1.2em;position:relative;top:-4px;'>" + tot + " item" + (tot > 1 ? 's' : '') + " selected</span>",
+				method: function(el) { el.batch('clear'); }
+			},
+			{
+				id: 'batch_archive',
+				title: 'Archive',
+				icon: 'archive', 
+				right: true,
+				method: function(el) { el.batch('archive'); }
+			},
+			{
+				id: 'batch_star',
+				title: 'Add Star',
+				icon: 'star', 
+				right: true,
+				method: function(el) { el.batch('add_star'); }
+			},
+			{
+				id: 'batch_unstar',
+				title: 'Remove Star',
+				icon: 'star-o', 
+				right: true,
+				method: function(el) { el.batch('remove_star'); }
+			},
+			{
+				id: 'batch_move',
+				icon: 'share', 
+				title: 'Move',
+				right: true,
+				method: function(el) { el.batch('move'); }
+			}
+		];
 	}
 
 	// Return the default textToolbar with extra options.  To_add is appended to the menu, and to_remove will remove any items with matching id

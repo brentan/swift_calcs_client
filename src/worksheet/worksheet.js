@@ -220,6 +220,7 @@ var Worksheet = P(function(_) {
 	}
 	// Focus the textarea and place a cursor
 	_.focus = function() {
+		window.clear_batch();
 		if(this.bound && this.blurred)
 			this.textarea.focus();
 		return this;

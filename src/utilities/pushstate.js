@@ -61,7 +61,7 @@ var PushState = P(function(_) {
             worksheet.load(response.data);
             window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
             if(response.folder_id) 
-              window.setCurrentFolder(response.folder_id, response.folder_url_end);
+              window.setCurrentProject(response.folder_id, response.folder_url_end);
           } else {
             window.showFileDialog();
             showNotice(response.message, 'red');
@@ -95,7 +95,7 @@ var PushState = P(function(_) {
             worksheet.load(response.data);
             window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
             if(response.folder_id) 
-              window.setCurrentFolder(response.folder_id, response.folder_url_end);
+              window.setCurrentProject(response.folder_id, response.folder_url_end);
           } else {
             window.showFileDialog();
             showNotice(response.message, 'red');
@@ -111,15 +111,16 @@ var PushState = P(function(_) {
       });
       return true;
     } else if(fragment.match(/projects\//i)) {
-      var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1").split('-');
+      var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1");
       if(hash_string.length == 0)
-        window.openFileDialog('0','all');
-      else if(hash_string.length == 1)
-        window.openFileDialog(hash_string[0], 'all');
+        window.openFileDialog('active');
       else
-        window.openFileDialog(hash_string[0], hash_string[1]);
+        window.openFileDialog(hash_string);
       return true;
-    } 
+    } else if(fragment.match(/active/i)) {
+      window.openFileDialog('active');
+      return true;
+    }
 		return false;
   }
   _.navigate = function(fragment, options) {

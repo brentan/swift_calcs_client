@@ -1,6 +1,6 @@
 $(function() {
-	var current_folder_id = false;
-	var current_folder_navigable_url = false;
+	var current_project_id = false;
+	var current_project_navigable_url = false;
 	
 	var showLoadingPopup = window.showLoadingPopup = function() {
 		$('.file_dialog').hide();
@@ -8,7 +8,6 @@ $(function() {
 		$('.loading_box').show();
 	  $('.popup_dialog').hide();
 		$('#account_bar .content, #account_bar .logo').show();
-		$(document).off('keydown', keyboardListener);
 	}
 	var showFileDialog = window.showFileDialog = function() {
 		$('.base_layout').addClass('file_dialog_open');
@@ -17,8 +16,6 @@ $(function() {
 		$('.file_dialog').show();
 	  $('.popup_dialog').hide();
 		$('#account_bar .content, #account_bar .logo').hide();
-		$(document).off('keydown', keyboardListener); // Prevent double listeners
-		$(document).on('keydown', keyboardListener);
 		$('.feedback_link').css('left', '0px');
 	}
 	var hideDialogs = window.hideDialogs = function() {
@@ -28,65 +25,445 @@ $(function() {
 	  $('.popup_dialog').hide();
 		$('.file_dialog').hide();
 		$('#account_bar .content, #account_bar .logo').show();
-		$(document).off('keydown', keyboardListener);
 		$('.feedback_link').css('left', '25px');
 	}
-  var keyboardListener = function(e) {
-  	if($('.popup_dialog_background').hasClass('shown')) return;
-    switch(e.which) {
-      case 10: // enter iOs
-      case 13: // enter
-      case 32: // space
-      	var selected = $('.file_dialog .file_item.selected');
-      	if(selected.length != 1) return;
-				if(selected.attr('data-type') == 'Invite') return;
-				loadItem(selected.attr('data-type'), selected.attr('data-hash_string'), selected.attr('data-name'));
-      break;
-      case 38: // up
-      	var selected = $('.file_dialog .file_item.selected');
-      	if(selected.length == 0) 
-					var to_select = $('.file_dialog .file_item').eq(0);
-      	else
-      		var to_select = selected.eq(0).prev('.file_item');
-      	if(!e.shiftKey)
-      		selected.closest('.list').find('.file_item').removeClass('selected');
-      	if(to_select.length == 0) 
-      		to_select = $('.file_dialog .file_item').eq(0);
-      	to_select.addClass('selected');
-				showInfo();
-      break;
-      case 40: // down
-      	var selected = $('.file_dialog .file_item.selected');
-      	if(selected.length == 0) 
-					var to_select = $('.file_dialog .file_item').eq(0);
-      	else
-      		var to_select = selected.last().next('.file_item');
-      	if(!e.shiftKey)
-      		selected.closest('.list').find('.file_item').removeClass('selected');
-      	if(to_select.length == 0) 
-      		to_select = $('.file_dialog .file_item').last();
-      	to_select.addClass('selected');
-				showInfo();
-      break;
-      case 65: // Ctrl-A is select all
-      	if(e.ctrlKey || e.metaKey) {
-      		$('.file_dialog .file_item').addClass('selected');
-					showInfo();
-      		break;
+	var openFileDialog = window.openFileDialog = function(hash_string) {
+    $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
+    data = { hash_string: hash_string };
+    if($('.star_select').hasClass('on')) data.star = true;
+		$.ajax({
+      type: "POST",
+      url: "/projects",
+      dataType: 'json',
+      cache: false,
+      data: data,
+      success: function(response) {
+      	if(response.success) {
+      		window.displayWorksheetList(response.worksheets)
+      		setCurrentProject(response.id, response.url_end);
+      	}	else {
+					$('.worksheet_holder').html('An error occurred');
+      		showNotice(response.message, 'red');
       	}
-      default: return; // exit this handler for other keys
-    }
-    e.preventDefault(); // prevent the default action (scroll / move caret)
-  }
-
-	var setCurrentFolder = window.setCurrentFolder = function(id, url) {
-		if(url && (url.trim() != '')) {
-			current_folder_id = id;
-			current_folder_navigable_url = url;
-		}
+      },
+      error: function(err) {
+				$('.worksheet_holder').html('An error occurred');
+      	console.log('Error: ' + err.responseText, 'red');
+				showNotice('Error: There was a server error.  We have been notified', 'red');
+      }
+    });
 	}
-	var newItemDialog = function(prompt, suggested_name, callbackFunction, parent_folder_id) {
-		if(typeof parent_folder_id === 'undefined') parent_folder_id = current_folder_id;
+	var setCurrentProject = window.setCurrentProject = function(id, url) {
+		current_project_id = id;
+		current_project_navigable_url = url;
+	}
+	var loadWorksheet = window.loadWorksheet = function(hash_string, name) {
+		window.hideDialogs();
+		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
+	}
+	var loadProject = window.loadProject = function(hash_string, name) {
+		if(hash_string && (hash_string == 'active'))
+			SwiftCalcs.pushState.navigate('/active/', {trigger: true});
+		else if(hash_string && (hash_string == 'archive'))
+			SwiftCalcs.pushState.navigate('/archive/', {trigger: true});
+		else if(hash_string)
+			SwiftCalcs.pushState.navigate('/projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
+		else if(current_project_navigable_url)
+			SwiftCalcs.pushState.navigate(current_project_navigable_url, {trigger: true});
+		else
+			SwiftCalcs.pushState.navigate('/active/', {trigger: true});
+	}
+	$('body').on('click', '.project_title.expandable, .title.expandable', function(e) {
+		var $container = $(this).closest('div.item');
+		if($container.hasClass('closed')) {
+			$container.removeClass('closed');
+			$container.children('.expand').slideDown(150);
+		} else {
+			$container.addClass('closed');
+			$container.children('.expand').slideUp(150);
+		}
+	});
+	$('body').on('click', '.project_title', function(e) {
+		var $container = $(this).closest('div.item');
+		window.loadProject($container.attr('data-hash'), $container.attr('data-name'));
+	});
+
+	var month_string = function(date) {
+		var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+		var today = new Date();
+		var string = monthNames[date.getMonth()];
+		if(today.getFullYear() != date.getFullYear()) string += ' ' + date.getFullYear();
+		return string;
+	}
+	var worksheet_html = function(w) {
+		return "<span class='select_box'><i class='fa fa-square-o'></i><i class='fa fa-check-square-o'></i></span>"
+			+ "<span class='name'>" + w.name + "</span>"
+			+ "<span class='icons'><i class='fa fa-external-link' title='Open in New Window'></i><i class='fa fa-print' title='Print'></i><i class='fa fa-files-o' title='Make a Copy'></i><i class='fa fa-archive' title='Archive'></i></span>"
+			+ "<span class='star'><i class='fa fa-star" + (w.star_id ? '' : '-o') + "' title='Add or Remove Star'></i></span>"
+			+ "<span class='menu'><i class='fa fa-ellipsis-v' title='Options Menu'></i></span>";
+	}
+	var displayWorksheetList = window.displayWorksheetList = function(worksheets) {
+		clear_batch();
+		// Assumes worksheets already sorted by date from latest to earliest
+		$('.worksheet_holder').html('');
+		var d = new Date();
+		d.setHours(0,0,0,0);
+		var in_box = false;
+		var box = false;
+		var index = 0;
+		var time_splits = [d, d-24*3600, d-7*24*3600];
+		var time_names = ['Today', 'Yesterday', 'Last Seven Days'];
+		var current_month_string = '';
+		for(var i = 0; i < worksheets.length; i++) {
+			worksheets[i].updated_at = new Date(worksheets[i].updated_at * 1000);
+			if(in_box) {
+			  if((index < time_splits.length) && (worksheets[i].updated_at < d)) in_box = false;
+				if((index >= time_splits.length) && (current_month_string != month_string(worksheets[i].updated_at))) in_box = false;
+				if(!in_box) box.appendTo('.worksheet_holder')
+			}
+			if(!in_box) {
+				if((index == 0) && (worksheets[i].updated_at >= time_splits[0])) {
+					d = time_splits[0];
+					index = 1;
+					current_month_string = 'Today';
+				} else if((index <= 1) && (worksheets[i].updated_at >= time_splits[1])) {
+					d = time_splits[1];
+					index = 2;
+					current_month_string = 'Yesterday';
+				} else if((index <= 2) && (worksheets[i].updated_at >= time_splits[2])) {
+					d = time_splits[2];
+					index = 3;
+					current_month_string = 'Last Seven Days';
+				} else {
+					index = time_splits.length;
+					current_month_string = month_string(worksheets[i].updated_at);
+				}
+				$('<div/>').addClass('date_box').html(current_month_string).appendTo('.worksheet_holder');
+				box = $('<div/>').addClass('worksheet_holder_box');
+				in_box = true;
+			}
+			$('<div/>').addClass('worksheet_item').attr('data-id', worksheets[i].id).html(worksheet_html(worksheets[i])).appendTo(box);
+		}
+		if(in_box) box.appendTo('.worksheet_holder')
+	}
+	var addStar = window.addStar = function(data_id) {
+		toggleStar(data_id, true);
+	}
+	var removeStar = window.removeStar = function(data_id) {
+		toggleStar(data_id, false);
+	}
+	var toggleStar = function(data_id, add) {
+		var flipStar = function(flip) {
+			$('.worksheet_item').each(function() {
+				if($(this).attr('data-id')*1 == data_id*1) {
+					if(flip) 
+						$(this).find('i.star').removeClass('fa-spinner').removeClass('fa-pulse').removeClass('star').addClass('fa-star');
+					else
+						$(this).find('i.star').removeClass('fa-spinner').removeClass('fa-pulse').removeClass('star').addClass('fa-star-o');
+				}
+			});
+		}
+		$.ajax({
+      type: "POST",
+      url: "/projects/star",
+      dataType: 'json',
+      cache: false,
+      data: { id: data_id, add: add }, 
+      success: function(response) {
+      	if(response.success) {
+					flipStar(add);
+      	}	else {
+					flipStar(!add);
+      		showNotice(response.message, 'red');
+      	}
+      },
+      error: function(err) {
+				flipStar(!add);
+      	console.log('Error: ' + err.responseText, 'red');
+				showNotice('Error: There was a server error.  We have been notified', 'red');
+      }
+    });
+	}
+	$('body').on('click', 'i.fa-star, i.fa-star-o', function(e) {
+		var w_id = $(this).closest('.worksheet_item').attr('data-id');
+		if($(this).hasClass('fa-star')) {
+			removeStar(w_id);
+		} else {
+			addStar(w_id);
+		}
+		$(this).removeClass('fa-star-o').removeClass('fa-star').addClass('fa-spinner').addClass('fa-pulse').addClass('star');
+		e.preventDefault();
+		e.stopPropagation();
+	});
+	// Batch (multiple select)
+	var batch_toolbar = function(tot) {
+		var tempBar = SwiftCalcs.toolbar($('#toolbar_holder'));
+		tempBar.attachToolbar({
+			klass: ['batchToolbar'],
+			batch: function(command) {
+				window.batchCommand(command);
+			}
+		}, tempBar.batchToolbar(tot));
+		tempBar.reshapeToolbar();
+	}
+	var clear_batch = window.clear_batch = function() {
+		$('.worksheet_item').removeClass('selection');
+		$('.worksheet_item.selected').removeClass('selected');
+		var tempBar = SwiftCalcs.toolbar($('#toolbar_holder'));
+		tempBar.attachToolbar($(this), tempBar.mathToolbar());
+		tempBar.blurToolbar();
+		tempBar.reshapeToolbar();
+	}
+	$('body').on('click', '.select_box .fa-square-o', function(e) {
+		$(this).closest('.worksheet_item').addClass('selected');
+		$('.worksheet_item').addClass('selection');
+		var tot = $('.worksheet_item.selected').length;
+		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.detachToolbar();
+		batch_toolbar(tot);
+		e.preventDefault();
+		e.stopPropagation();
+	});
+	$('body').on('click', '.select_box .fa-check-square-o', function(e) {
+		$(this).closest('.worksheet_item').removeClass('selected');
+		var tot = $('.worksheet_item.selected').length;
+		if(tot > 0) batch_toolbar(tot);
+		else clear_batch();
+		e.preventDefault();
+		e.stopPropagation();
+	});
+	var batchCommand = window.batchCommand = function(command) {
+		if(command == 'move')
+			moveDialog(function(project_id) { processBatchCommand(project_id, command); });
+		else if(command == 'clear')
+			clear_batch();
+		else 
+			processBatchCommand(0, command);
+	}
+	var processBatchCommand = function(project_id, command) {
+		var items = [];
+		$('.worksheet_item.selected').each(function() {
+			items.push($(this).attr('data-id'));
+		});
+		if(items.length == 0) return;
+		showLoadingOnTop();
+		if(command == 'Invite') {
+			var count = $('.leftbar .invite_count');
+			var new_count = count.html()*1 - items.length;
+			if(new_count > 0)
+				count.html(new_count);
+			else
+				count.hide();
+		}
+		$.ajax({
+      type: "POST",
+      url: "/projects/batch",
+      dataType: 'json',
+      cache: false,
+      data: { command: command, items: items, project_id: project_id, current_project_id: current_project_id }, 
+      success: function(response) {
+      	window.hidePopupOnTop();
+      	if(response.success) {
+      		$('.worksheet_item').each(function() {
+      			if(response.to_remove[$(this).attr('data-id')]) $(this).remove();
+      		});
+      		if(command == "add_star") {
+	      		$('.worksheet_item.selected').each(function() {
+	      			$(this).find('.fa-star-o').removeClass('fa-spinner fa-pulse fa-star-o').addClass('fa-star');
+	      		});
+      		}
+      		if(command == "remove_star") {
+	      		$('.worksheet_item.selected').each(function() {
+	      			$(this).find('.fa-star').removeClass('fa-spinner fa-pulse fa-star').addClass('fa-star-o');
+	      		});
+      		}
+      		if(response.failed_on_one)
+      			showNotice('Some items could not be changed: Insufficient access rights.', 'red');
+      	} else {
+      		showNotice(response.message, 'red');
+      	}
+      },
+      error: function(err) {
+      	window.hidePopupOnTop();
+      	console.log('Error: ' + err.responseText, 'red');
+				showNotice('Error: There was a server error.  We have been notified', 'red');
+      }
+    });		
+	}
+	var moveDialog = function(callbackFunction, parent_project_id) {
+		if(typeof parent_project_id === 'undefined') parent_project_id = current_project_id;
+		var expandCollapse = function(el) {
+			if(el.find('i.fa').hasClass('fa-caret-right')) {
+				// Expand
+				el.find('i.fa').addClass('fa-caret-down').removeClass('fa-caret-right');
+				el.next('div').show();
+			} else {
+				// Collapse
+				el.find('i.fa').removeClass('fa-caret-down').addClass('fa-caret-right');
+				el.next('div').hide();
+			}
+		}
+		window.showLoadingOnTop();
+		$.ajax({
+      type: "POST",
+      url: "/projects/tree",
+      dataType: 'json',
+      cache: false,
+      data: { }, 
+      success: function(response) {
+      	if(response.success) {
+      		window.showPopupOnTop();
+      		var el = $('.popup_dialog .full').html("<div class='title'>Move into which project?</div><div class='tree'></div><div class='explain'>Only projects for which you have write permissions are shown</div>");
+      		el.find('.tree').html(response.html);
+      		el.find('.expandable i.fa').on('click', function(e) {
+      			expandCollapse($(this).closest('.expandable'));
+      			e.preventDefault();
+      		});
+      		el.find('.project').on('click', function(e) {
+      			el.find('.project').removeClass('selected');
+      			$(this).addClass('selected');
+	      		e.preventDefault();
+      		});
+      		// Select current folder, if any
+      		var found_one = false;
+      		el.find('.project').each(function() {
+      			if($(this).attr('data-id') && ($(this).attr('data-id')*1 == parent_project_id*1)) {
+      				found_one = true;
+	      			el.find('.project').removeClass('selected');
+	      			$(this).addClass('selected');
+	      			var current = $(this);
+	      			while(true) {
+	      				if(current.parent().closest('.expandable_content').length == 0) break;
+	      				current = current.parent().closest('.expandable_content');
+	      				expandCollapse(current.prev());
+	      			}
+      			}
+      		});
+      		if(!found_one) 
+      			el.find('.project').eq(0).addClass('selected');
+          // Create the buttons at the bottom
+          buttons = $('.popup_dialog .bottom_links').html('');
+          buttons.append('<button class="submit">Move</button>');
+          buttons.append('<button class="close grey">Cancel</button>');
+          buttons.find('button.submit').on('click', function() {
+            var project_id = el.find('.selected').attr('data-id');
+            window.showLoadingOnTop();
+            callbackFunction(project_id);
+          });
+      	}	else {
+      		window.hideDialogs();
+      		showNotice(response.message, 'red');
+      	}
+      },
+      error: function(err) {
+      	window.hideDialogs();
+      	console.log('Error: ' + err.responseText, 'red');
+				showNotice('Error: There was a server error.  We have been notified', 'red');
+      }
+    });
+	}
+
+
+
+
+
+
+
+
+
+	var newWorksheet = window.newWorksheet = function(duplicate) {
+		if(duplicate)
+			newItemDialog('Please enter a name for your new worksheet', SwiftCalcs.active_worksheet.name + ' (copy)', function(name, folder_id) { processNewWorksheet(name, folder_id, true); });
+		else
+			newItemDialog('Please enter a name for your new worksheet', '', function(name, folder_id) { processNewWorksheet(name, folder_id, false); });
+	}
+	var processNewWorksheet = function(name, folder_id, duplicate) {
+		window.showLoadingPopup();
+		post_data = {name: name, duplicate: duplicate ? SwiftCalcs.active_worksheet.server_id : 0, revision: duplicate ? SwiftCalcs.active_worksheet.revision_id : 0 };
+		if(folder_id) post_data.folder_id = folder_id;
+		$.ajax({
+      type: "POST",
+      url: "/worksheet_commands",
+      dataType: 'json',
+      cache: false,
+      data: { command: duplicate ? 'copy_worksheet' : 'new_worksheet', data: post_data }, 
+      success: function(response) {
+      	if(response.success) {
+					if(duplicate) {
+						window.hidePopupOnTop();
+						SwiftCalcs.active_worksheet.rename(name, response.hash_string, response.worksheet_id);
+						SwiftCalcs.pushState.navigate('/worksheets/' + response.hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
+						if(SwiftCalcs.active_worksheet.rights == 2) {
+							SwiftCalcs.active_worksheet.rights = 4;
+							SwiftCalcs.active_worksheet.save(true);
+						} else
+							SwiftCalcs.active_worksheet.rights = 4;
+						SwiftCalcs.active_worksheet.generateTopWarning(); 
+						// Update all uploaded file references:
+				    var uploads = SwiftCalcs.active_worksheet.insertJQ.find('.sc_uploadedData');
+				    var ids = {};
+				    uploads.each(function(i, hash_string) {
+				    	hash_string = $(hash_string);
+				    	var el = SwiftCalcs.elementById(hash_string.attr('sc_element_id')*1);
+				    	if(el.upload_id) ids[el.upload_id] = el;
+				    });
+				    for(var i = 0; i < response.to_change.length; i++) {
+				    	to_change = ids[response.to_change[i].old_id*1];
+				    	if(to_change) {
+				    		to_change.upload_id = response.to_change[i].new_id*1;
+				    		to_change.url = response.to_change[i].url;
+				    	}
+				    }
+	  				SwiftCalcs.active_worksheet.updateUploads();
+				    // Set queue to reported server contents to ensure data validity moving forward
+				    SwiftCalcs.active_worksheet.reset_server_base(response.data);
+					} else {
+      			window.hideDialogs();
+						if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
+						var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.worksheet_id, 1, 4, response.settings);
+						worksheet.reset_server_base(worksheet.toString());
+						worksheet.bind($('.worksheet_holder'));
+						SwiftCalcs.elements.math().appendTo(worksheet).show().focus(-1);
+						window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus();SwiftCalcs.active_worksheet.ends[-1].focus(-1); },100);
+						SwiftCalcs.pushState.navigate('/worksheets/' + response.hash_string + '/' + encodeURIComponent(response.name.replace(/ /g,'_')));
+					}
+      	}	else {
+      		window.showFileDialog();
+      		showNotice(response.message, 'red');
+      	}
+      },
+      error: function(err) {
+      	window.showFileDialog();
+      	console.log('Error: ' + err.responseText, 'red');
+				showNotice('Error: There was a server error.  We have been notified', 'red');
+      }
+    });
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	var newItemDialog = function(prompt, suggested_name, callbackFunction, parent_project_id) {
+		if(typeof parent_project_id === 'undefined') parent_project_id = current_project_id;
 		var expandCollapse = function(el) {
 			if(el.find('i.fa').hasClass('fa-caret-right')) {
 				// Expand
@@ -127,7 +504,7 @@ $(function() {
       		// Select current folder, if any
       		var found_one = false;
       		el.find('.folder').each(function() {
-      			if($(this).attr('data-id') && ($(this).attr('data-id')*1 == parent_folder_id*1)) {
+      			if($(this).attr('data-id') && ($(this).attr('data-id')*1 == parent_project_id*1)) {
       				found_one = true;
 	      			el.find('.folder').removeClass('selected');
 	      			$(this).addClass('selected');
@@ -254,7 +631,7 @@ $(function() {
       	if(response.success) {
       		SwiftCalcs.pushState.navigate('/folders/' + response.hash_string + '/' + encodeURIComponent(response.name.replace(/ /g,'_')));
     			$('.file_dialog .center').html('<div style="text-align:center; margin-top:40px;"><i>This folder is empty</i></div>');
-    			setCurrentFolder(response.id, response.url_end);
+    			setCurrentProject(response.id, response.url_end);
 					$('.file_dialog .right .content').hide();
 					$('.file_dialog .right .default').show();
 					info_screen_id = false;
@@ -270,19 +647,6 @@ $(function() {
 				showNotice('Error: There was a server error.  We have been notified', 'red');
       }
     });
-	}
-	var loadWorksheet = window.loadWorksheet = function(hash_string, name) {
-		window.hideDialogs();
-		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
-	}
-	var loadFolder = window.loadFolder = function(hash_string, name) {
-		if(hash_string) {
-			current_mode = 'all'; // Once we open a folder from starred view, recent, etc, it defaults back to 'all'
-			SwiftCalcs.pushState.navigate('/folders/' + hash_string + '-' + current_mode + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
-		}	else if(current_folder_navigable_url)
-			SwiftCalcs.pushState.navigate(current_folder_navigable_url, {trigger: true});
-		else
-			SwiftCalcs.pushState.navigate('/folders/', {trigger: true});
 	}
 	var showInfo = function() {
 	}
@@ -341,7 +705,7 @@ $(function() {
 				if(($(this).attr('data-type') == data_type) && ($(this).attr('data-id') == data_id))
 					$(this).remove();
 			});
-			if((data_type == 'Folder') && (current_folder_id*1 == data_id*1)) 
+			if((data_type == 'Folder') && (current_project_id*1 == data_id*1)) 
 				openFileDialog('','all');
 			$.ajax({
 	      type: "POST",
@@ -402,7 +766,7 @@ $(function() {
 						if(($(this).attr('data-type') == data_type) && ($(this).attr('data-id')*1 == data_id*1))
 							$(this).remove();
 					});
-					if((data_type == 'Folder') && (current_folder_id*1 == data_id*1))
+					if((data_type == 'Folder') && (current_project_id*1 == data_id*1))
 						$('.file_dialog .top').html(response.path);
       	}
       	if(!response.success) {
@@ -436,7 +800,7 @@ $(function() {
       	window.hidePopupOnTop();
       	if(response.success) {
 					$('.file_dialog .file_item').removeClass('selected');
-      		if((folder_id*1) == (current_folder_id*1)) {
+      		if((folder_id*1) == (current_project_id*1)) {
 	      		loadInfo("Worksheet", response.id);
 	      		$('.file_dialog .title').after(response.html);
 						$('.file_dialog .file_item').eq(0).addClass('selected');
@@ -460,72 +824,8 @@ $(function() {
       }
     });
 	}
-	var batchCommand = function(command) {
-		if(command == 'move')
-			newItemDialog('', '', function(name, folder_id) { processBatchCommand(folder_id, command); });
-		else if(command == 'remove') {
-			if(confirm('Are you sure?  Items you own will be permanenty deleted, and items shared with you will be removed from your shared folders.  These actions cannot be undone.')) processBatchCommand(0, 'remove');
-		} else
-			processBatchCommand(0, command);
-	}
-	var processBatchCommand = function(folder_id, command) {
-		$('.file_dialog .right .content').show();
-		$('.file_dialog .right .default').hide();
-		$('.file_dialog .right .content').html('<div style="text-align:center;font-size:60px;margin-top:60px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
-		info_screen_id = false;
-		var items = [];
-		$('.file_dialog .file_item.selected').each(function() {
-			items.push([$(this).attr('data-type'), $(this).attr('data-id')]);
-		});
-		if(items.length == 0) return;
-		if(items[0][0] == 'Invite') {
-			var count = $('.file_dialog .invite_count');
-			var new_count = count.html()*1 - items.length;
-			if(new_count > 0)
-				count.html(new_count);
-			else
-				count.hide();
-		}
-		$.ajax({
-      type: "POST",
-      url: "/folders/batch",
-      dataType: 'json',
-      cache: false,
-      data: { command: command, items: items, folder_id: folder_id }, 
-      success: function(response) {
-      	window.hidePopupOnTop();
-      	if(response.success) {
-      		$('.file_dialog .file_item').each(function() {
-      			if(response.to_remove[$(this).attr('data-type') + "_" + $(this).attr('data-id')]) $(this).remove();
-      		});
-      		if(command == "add_star") {
-	      		$('.file_dialog .file_item.selected').each(function() {
-	      			$(this).find('.td.star i').removeClass('fa-spinner fa-pulse fa-star-o').addClass('fa-star');
-	      		});
-      		}
-      		if(command == "remove_star") {
-	      		$('.file_dialog .file_item.selected').each(function() {
-	      			$(this).find('.td.star i').removeClass('fa-spinner fa-pulse fa-star').addClass('fa-star-o');
-	      		});
-      		}
-      		if(response.failed_on_one)
-      			showNotice('Some items could not be changed: Insufficient access rights.', 'red');
-      		if(response.circular_folder)
-      			showNotice('Some folders could not be moved: Cannot move folder into itself or its subfolders', 'red');
-      		showInfo();
-      	} else {
-      		showInfo();
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-      	window.hidePopupOnTop();
-      	showInfo();
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });		
-	}
+
+
 	var addFileItemEvents = function(els) { 
 		els.on('click', function(e) {
 			if(e.shiftKey && $(this).closest('.list').find('.file_item.selected').length) {
@@ -635,95 +935,15 @@ $(function() {
 		}
 		els.on('dragstart', dragStart)
 	}
-	var addStar = window.addStar = function(data_type, data_id) {
-		toggleStar(data_type, data_id, true);
-	}
-	var removeStar = window.removeStar = function(data_type, data_id) {
-		toggleStar(data_type, data_id, false);
-	}
-	var toggleStar = function(data_type, data_id, add) {
-		var flipStar = function(flip) {
-			$('.file_dialog .file_item').each(function() {
-				if(($(this).attr('data-type') == data_type) && ($(this).attr('data-id')*1 == data_id*1)) {
-					if(flip) 
-						$(this).find('.td.star i').removeClass('fa-spinner').removeClass('fa-pulse').removeClass('fa-star-o').addClass('fa-star');
-					else
-						$(this).find('.td.star i').removeClass('fa-spinner').removeClass('fa-pulse').removeClass('fa-star').addClass('fa-star-o');
-				}
-				if((info_screen_id*1 == data_id*1) && (info_screen_type == data_type))
-					$('.file_dialog .right .item.star').html(flip ? "<i class='fa fa-fw fa-star-o'></i>Remove from Starred Items" : "<i class='fa fa-fw fa-star'></i>Add to Starred Items")
-			});
-		}
-		$.ajax({
-      type: "POST",
-      url: "/folders/star",
-      dataType: 'json',
-      cache: false,
-      data: { data_type: data_type, id: data_id, add: add }, 
-      success: function(response) {
-      	if(response.success) {
-					flipStar(add);
-      	}	else {
-					flipStar(!add);
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-				flipStar(!add);
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
-	}
 	var current_mode = 'all';
-	var openFileDialog = window.openFileDialog = function(hash_string, mode) {
-		if(mode != 'search') $('.file_dialog .search input').val('');
-		loadind_worksheet = false;
-		current_mode = mode;
-		window.showFileDialog();
-    $('.file_dialog .center').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
-		$.ajax({
-      type: "POST",
-      url: "/folders",
-      dataType: 'json',
-      cache: false,
-      data: {mode: mode, hash_string: hash_string }, 
-      success: function(response) {
-      	if(response.success) {
-      		setCurrentFolder(response.id, response.url_end);
-      		$('.file_dialog .top').html(response.path);
-					$('.file_dialog .center').html(response.html);
-					if(response.info && (response.info != '')) {
-						info_screen_type = 'Folder';
-						info_screen_id = response.id;
-						$('.file_dialog .right .default').hide();
-						$('.file_dialog .right .content').show();
-						$('.file_dialog .right .content').html(response.info);
-					} else {
-						info_screen_id = false;
-						$('.file_dialog .right .default').show();
-						$('.file_dialog .right .content').hide();
-					}
-					var el = $('.file_dialog');
-					addFileItemEvents(el.find('.file_item'));
-      	}	else {
-					$('.file_dialog .center').html('An error occurred');
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-				$('.file_dialog .center').html('An error occurred');
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
-	}
+
+
 	var processSearch = function() {
 		var search_terms = $('.file_dialog .search input').val().trim();
 		if(search_terms.length < 3)
 			showNotice('Please enter at least 3 characters to search', 'red');
 		else {
-			current_folder_navigable_url = '/folders/' + encodeURIComponent(search_terms.replace(/( |-)/g,'_')) + '-search';
+			current_project_navigable_url = '/folders/' + encodeURIComponent(search_terms.replace(/( |-)/g,'_')) + '-search';
 			loadFolder();
 		}
 	}
@@ -793,31 +1013,31 @@ $(function() {
 		e.stopPropagation();
 	})
 	$('.file_dialog .left').on('click', '.all_folders', function(e) {
-		current_folder_navigable_url = 'folders/0-all/All_Files';
+		current_project_navigable_url = 'folders/0-all/All_Files';
 		loadFolder();
 	});
 	$('.file_dialog').on('click', '.my_folder', function(e) {
-		current_folder_navigable_url = 'folders/0-mine/Your_Files';
+		current_project_navigable_url = 'folders/0-mine/Your_Files';
 		loadFolder();
 	});
 	$('.file_dialog').on('click', '.shared_folder', function(e) {
-		current_folder_navigable_url = 'folders/0-shared/Shared_Files';
+		current_project_navigable_url = 'folders/0-shared/Shared_Files';
 		loadFolder();
 	});
 	$('.file_dialog').on('click', '.invites', function(e) {
-		current_folder_navigable_url = 'folders/0-invites/Invitations';
+		current_project_navigable_url = 'folders/0-invites/Invitations';
 		loadFolder();
 	});
 	$('.file_dialog').on('click', '.recent_folder', function(e) {
-		current_folder_navigable_url = 'folders/0-recent/Recent_Files';
+		current_project_navigable_url = 'folders/0-recent/Recent_Files';
 		loadFolder();
 	});
 	$('.file_dialog').on('click', '.starred_folder', function(e) {
-		current_folder_navigable_url = 'folders/0-starred/Starred_Files';
+		current_project_navigable_url = 'folders/0-starred/Starred_Files';
 		loadFolder();
 	});
 	$('.file_dialog .left').on('click', '.bookmarks', function(e) {
-		current_folder_navigable_url = 'folders/0-bookmarks/All_Bookmarks';
+		current_project_navigable_url = 'folders/0-bookmarks/All_Bookmarks';
 		loadFolder();
 	});
 	$('.file_dialog .left').on('click', 'div.fa-search', function(e) {
@@ -860,16 +1080,6 @@ $(function() {
 	});
 	$('.file_dialog .right').on('click', '.item.batch', function(e) {
 		batchCommand($(this).attr('data-command'));
-		e.preventDefault();
-	});
-	$('.file_dialog .right').on('click', '.item.star', function(e) {
-		if($(this).find('i.fa').hasClass('fa-spinner')) return;
-		if($(this).find('i.fa').hasClass('fa-star-o')) {
-			removeStar($(this).attr('data-type'), $(this).attr('data-id'));
-		} else {
-			addStar($(this).attr('data-type'), $(this).attr('data-id'));
-		}
-		$(this).html("<i class='fa fa-fw fa-spinner fa-pulse'></i>Loading...");
 		e.preventDefault();
 	});
 	$('.file_dialog .new_worksheet').on('click', function(e) {

@@ -170,10 +170,10 @@ $(function() {
   $('body').on('click', '#account_bar .star_select', function(e) {
   	if($(this).hasClass('on')) {
   		$(this).removeClass('on');
-  		// DO STUFF
+			SwiftCalcs.pushState.loadUrl();
   	} else {
   		$(this).addClass('on');
-  		// DO STUFF
+			SwiftCalcs.pushState.loadUrl();
   	}
   });
 
