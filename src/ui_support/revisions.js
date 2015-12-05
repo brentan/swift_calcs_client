@@ -37,6 +37,7 @@ $(function() {
           	e.preventDefault();
           	return false;
           });
+          window.resizePopup();
       	} else {
       		window.hidePopupOnTop();
       		showNotice(response.message, 'red');

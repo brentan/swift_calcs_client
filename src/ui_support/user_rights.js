@@ -278,6 +278,7 @@ $(function() {
           buttons.find('button.submit').on('click', function() {
             submitRights($('form.rights_form'));
           });
+          window.resizePopup();
       	}	else {
           window.hidePopupOnTop();
       		showNotice(response.message, 'red');

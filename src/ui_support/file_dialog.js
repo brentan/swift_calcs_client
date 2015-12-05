@@ -27,6 +27,18 @@ $(function() {
 		$('#account_bar .content, #account_bar .logo').show();
 		$('.feedback_link').css('left', '25px');
 	}
+	var resizePopup = window.resizePopup = function(center) {
+		$('.popup_dialog').css('bottom', 'auto');
+		if(center === true) {
+			var high = $('.popup_dialog .full').prop("scrollHeight") + 70;
+			var available = Math.max(400, $(window).height());
+			if(high > (available-200))
+				$('.popup_dialog').css('top', 60 + 'px').css('bottom', 100 + 'px');
+			else 
+				$('.popup_dialog').css('top', Math.floor((available - high)/2) + 'px').css('bottom', Math.floor((available - high)/2) + 'px');
+		} else
+			$('.popup_dialog').css('top', 60 + 'px').css('bottom', 100 + 'px');
+	}
 	var openFileDialog = window.openFileDialog = function(hash_string) {
     $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
     data = { hash_string: hash_string };
@@ -58,7 +70,7 @@ $(function() {
 		current_project_navigable_url = url;
 	}
 	var loadWorksheet = window.loadWorksheet = function(hash_string, name) {
-		window.hideDialogs();
+    window.hidePopupOnTop();
 		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 	}
 	var loadProject = window.loadProject = function(hash_string, name) {
@@ -349,18 +361,150 @@ $(function() {
             window.showLoadingOnTop();
             callbackFunction(project_id);
           });
+    			window.resizePopup();
       	}	else {
-      		window.hideDialogs();
+      		window.hidePopupOnTop();
       		showNotice(response.message, 'red');
       	}
       },
       error: function(err) {
-      	window.hideDialogs();
+      	window.hidePopupOnTop();
       	console.log('Error: ' + err.responseText, 'red');
 				showNotice('Error: There was a server error.  We have been notified', 'red');
       }
     });
 	}
+	var promptDialog = function(prompt, button_text, suggested_name, callbackFunction) {
+    window.showPopupOnTop();
+    var el = $('.popup_dialog .full').html("<div class='title'>" + prompt + "</div><div class='input'><input type=text></div>");
+    // Create the buttons at the bottom
+    buttons = $('.popup_dialog .bottom_links').html('');
+    buttons.append('<button class="submit">' + button_text + '</button>');
+    buttons.append('<button class="close grey">Cancel</button>');
+    el.find('.input input').val(suggested_name);
+    buttons.find('button.submit').on('click', function() {
+      var name = el.find('.input input').val();
+      if(name.trim() == '') return showNotice('No name provided', 'red');
+      window.showLoadingOnTop();
+      callbackFunction(name);
+    });
+    resizePopup(true);
+    el.find('input').focus();
+	}
+	var newProject = window.newProject = function(parent_project_id) {
+		if(typeof parent_project_id === 'undefined') parent_project_id = current_project_id;
+		promptDialog('Name your new project', 'Create', '', function(parent_project_id) { return function(name) { processNewProject(name, parent_project_id) }; }(parent_project_id));
+	}
+	var processNewProject = function(name, parent_project_id) {
+		window.showLoadingOnTop();
+		post_data = { name: name };
+		if(parent_project_id) post_data.project_id = parent_project_id;
+		$.ajax({
+      type: "POST",
+      url: "/projects/new",
+      dataType: 'json',
+      cache: false,
+      data: post_data, 
+      success: function(response) {
+      	window.hidePopupOnTop();
+      	if(response.success) {
+      		showNotice('Project Created', 'green');
+      		var found = false;
+      		$('.project_list').find('.item').each(function() {
+      			if(found) return;
+      			if($(this).attr('data-id') == response.parent_project_id) {
+      				found = true;
+      				$(response.html).appendTo($(this).children('.expand'));
+      				$(this).removeClass('no_arrows').removeClass('closed');
+      				$(this).children('.project_title').addClass('expandable');
+      				$(this).children('.expand').show();
+      			}
+      		});
+      		if(!found) 
+      			$(response.html).appendTo('.project_list');
+      	}	else {
+      		showNotice(response.message, 'red');
+      	}
+      },
+      error: function(err) {
+      	window.hidePopupOnTop();
+      	console.log('Error: ' + err.responseText, 'red');
+				showNotice('Error: There was a server error.  We have been notified', 'red');
+      }
+    });
+	}
+	$('body').on('click', '.leftbar span.fa-plus-circle', function(e) {
+		if($(this).attr('data-type') == 'project') window.newProject(null);
+		// NEW UI: create new label?
+		e.preventDefault();
+		e.stopPropagation();
+	});
+
+	$('body').on('click', '.project_title .fa-cog', function(e) {
+		var offset = $(this).offset();
+		var project_id = $(this).closest('.item').attr('data-id');
+		var project_name = $(this).closest('.item').attr('data-name');
+		var el = $(this).closest('.item');
+		var closeMenu = function() {
+			$('.project_menu').remove();
+			$('.project_title.highlight').removeClass('highlight');
+		}
+		closeMenu();
+		$(this).closest('.project_title').addClass('highlight');
+		var menu = $('<div/>').addClass('project_menu').on('mouseleave', function(e) {
+			closeMenu();
+		});
+		$('<div/>').html('<i class="fa fa-fw fa-plus"></i>Add Sub-Project').on('click', function(e) {
+			window.newProject(project_id);
+			closeMenu();
+		}).appendTo(menu);
+		$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Sharing').on('click', function(e) {
+			window.openSharingDialog(project_id*1, 'Project');
+			closeMenu();
+		}).appendTo(menu);
+		$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
+			// Archive
+			closeMenu();
+		}).appendTo(menu);
+		$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
+			promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processRename(el, project_id, name) }; }(el, project_id));
+			closeMenu();
+		}).appendTo(menu);
+		menu.appendTo('.base_layout').css('top', offset.top + 'px').css('left', offset.left + 'px');
+		e.preventDefault();
+		e.stopPropagation();
+	});
+
+	var processRename = function(el, project_id, new_name) {
+		el.attr('data-name', new_name);
+		el.children('.project_title').children('.name').html(new_name);
+		$.ajax({
+      type: "POST",
+      url: "/projects/rename",
+      dataType: 'json',
+      cache: false,
+      data: { id: project_id, name: new_name }, 
+      success: function(response) {
+      	window.hidePopupOnTop();
+      	if(!response.success) {
+      		showNotice(response.message, 'red');
+      	}
+      },
+      error: function(err) {
+      	window.hidePopupOnTop();
+      	console.log('Error: ' + err.responseText, 'red');
+				showNotice('Error: There was a server error.  We have been notified', 'red');
+      }
+    });
+	}
+
+
+
+
+
+
+
+
 
 
 
@@ -438,7 +582,6 @@ $(function() {
       }
     });
 	}
-
 
 
 
@@ -529,6 +672,7 @@ $(function() {
             window.showLoadingOnTop();
             callbackFunction(name, folder_id);
           });
+          window.resizePopup();
           el.find('.input input').focus();
       	}	else {
       		window.showFileDialog();
@@ -612,42 +756,6 @@ $(function() {
     });
 	}
 
-	var newFolder = window.newFolder = function() {
-		newItemDialog('Please enter a name for your new folder', '', processNewFolder);
-	}
-
-	var processNewFolder = function(name, folder_id) {
-    window.showFileDialog();
-    $('.file_dialog .center').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
-		post_data = { name: name };
-		if(folder_id) post_data.folder_id = folder_id;
-		$.ajax({
-      type: "POST",
-      url: "/folders/new",
-      dataType: 'json',
-      cache: false,
-      data: post_data, 
-      success: function(response) {
-      	if(response.success) {
-      		SwiftCalcs.pushState.navigate('/folders/' + response.hash_string + '/' + encodeURIComponent(response.name.replace(/ /g,'_')));
-    			$('.file_dialog .center').html('<div style="text-align:center; margin-top:40px;"><i>This folder is empty</i></div>');
-    			setCurrentProject(response.id, response.url_end);
-					$('.file_dialog .right .content').hide();
-					$('.file_dialog .right .default').show();
-					info_screen_id = false;
-					$('.file_dialog .top').html(response.path);
-      	}	else {
-    			$('.file_dialog .center').html('An error occurred');
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-    		$('.file_dialog .center').html('An error occurred');
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
-	}
 	var showInfo = function() {
 	}
 	var loadind_worksheet = false;

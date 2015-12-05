@@ -453,6 +453,7 @@ var plot = P(Element, function(_, super_) {
 				units_field.cmd('\\Unit');
 		}
     var links = $('.popup_dialog .bottom_links').html('');
+    window.resizePopup();
     $('<button class="grey">Close</button>').on('click', function(e) {
 			$('.standalone_textarea').remove();
 			window.hidePopupOnTop();
