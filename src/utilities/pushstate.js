@@ -110,6 +110,13 @@ var PushState = P(function(_) {
         }
       });
       return true;
+    } else if(fragment.match(/archive_projects\//i)) {
+      var hash_string = fragment.replace(/archive_projects\/([a-z0-9\-]*).*$/i,"$1");
+      if(hash_string.length == 0)
+        window.openFileDialog('archive');
+      else
+        window.openFileDialog(hash_string, true);
+      return true;
     } else if(fragment.match(/projects\//i)) {
       var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1");
       if(hash_string.length == 0)
@@ -119,6 +126,9 @@ var PushState = P(function(_) {
       return true;
     } else if(fragment.match(/active/i)) {
       window.openFileDialog('active');
+      return true;
+    } else if(fragment.match(/archive/i)) {
+      window.openFileDialog('archive');
       return true;
     }
 		return false;

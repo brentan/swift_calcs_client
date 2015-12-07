@@ -39,9 +39,10 @@ $(function() {
 		} else
 			$('.popup_dialog').css('top', 60 + 'px').css('bottom', 100 + 'px');
 	}
-	var openFileDialog = window.openFileDialog = function(hash_string) {
+	var openFileDialog = window.openFileDialog = function(hash_string, archive) {
     $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
     data = { hash_string: hash_string };
+    if(archive) data.show_archived = true;
     if($('.star_select').hasClass('on')) data.star = true;
 		$.ajax({
       type: "POST",
@@ -73,11 +74,13 @@ $(function() {
     window.hidePopupOnTop();
 		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 	}
-	var loadProject = window.loadProject = function(hash_string, name) {
+	var loadProject = window.loadProject = function(hash_string, name, archive) {
 		if(hash_string && (hash_string == 'active'))
 			SwiftCalcs.pushState.navigate('/active/', {trigger: true});
 		else if(hash_string && (hash_string == 'archive'))
 			SwiftCalcs.pushState.navigate('/archive/', {trigger: true});
+		else if(hash_string && archive)
+			SwiftCalcs.pushState.navigate('/archive_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 		else if(hash_string)
 			SwiftCalcs.pushState.navigate('/projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 		else if(current_project_navigable_url)
@@ -97,7 +100,7 @@ $(function() {
 	});
 	$('body').on('click', '.project_title', function(e) {
 		var $container = $(this).closest('div.item');
-		window.loadProject($container.attr('data-hash'), $container.attr('data-name'));
+		window.loadProject($container.attr('data-hash'), $container.attr('data-name'), $container.closest('.archive').length > 0);
 	});
 
 	var month_string = function(date) {
@@ -110,7 +113,7 @@ $(function() {
 	var worksheet_html = function(w) {
 		return "<span class='select_box'><i class='fa fa-square-o'></i><i class='fa fa-check-square-o'></i></span>"
 			+ "<span class='name'>" + w.name + "</span>"
-			+ "<span class='icons'><i class='fa fa-external-link' title='Open in New Window'></i><i class='fa fa-print' title='Print'></i><i class='fa fa-files-o' title='Make a Copy'></i><i class='fa fa-archive' title='Archive'></i></span>"
+			+ "<span class='icons'><i class='fa fa-external-link' title='Open in New Window'></i><i class='fa fa-print' title='Print'></i><i class='fa fa-files-o' title='Make a Copy'></i><i class='fa fa-archive archive' title='Archive'></i><i class='fa fa-archive unarchive' title='Restore'></i></span>"
 			+ "<span class='star'><i class='fa fa-star" + (w.star_id ? '' : '-o') + "' title='Add or Remove Star'></i></span>"
 			+ "<span class='menu'><i class='fa fa-ellipsis-v' title='Options Menu'></i></span>";
 	}
@@ -154,7 +157,8 @@ $(function() {
 				box = $('<div/>').addClass('worksheet_holder_box');
 				in_box = true;
 			}
-			$('<div/>').addClass('worksheet_item').attr('data-id', worksheets[i].id).html(worksheet_html(worksheets[i])).appendTo(box);
+			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + worksheets[i].id).attr('data-id', worksheets[i].id).html(worksheet_html(worksheets[i])).appendTo(box);
+			if(worksheets[i].archive_id) el.addClass('archived');
 		}
 		if(in_box) box.appendTo('.worksheet_holder')
 	}
@@ -196,7 +200,7 @@ $(function() {
       }
     });
 	}
-	$('body').on('click', 'i.fa-star, i.fa-star-o', function(e) {
+	$('body').on('click', '.worksheet_item i.fa-star, .worksheet_item i.fa-star-o', function(e) {
 		var w_id = $(this).closest('.worksheet_item').attr('data-id');
 		if($(this).hasClass('fa-star')) {
 			removeStar(w_id);
@@ -276,7 +280,10 @@ $(function() {
       	window.hidePopupOnTop();
       	if(response.success) {
       		$('.worksheet_item').each(function() {
-      			if(response.to_remove[$(this).attr('data-id')]) $(this).remove();
+      			if(response.to_remove[$(this).attr('data-id')]) {
+      				$(this).removeClass('selected');
+      				$(this).slideUp({ duration: 200, always: function() { $(this).remove(); } });
+      			}
       		});
       		if(command == "add_star") {
 	      		$('.worksheet_item.selected').each(function() {
@@ -290,6 +297,9 @@ $(function() {
       		}
       		if(response.failed_on_one)
       			showNotice('Some items could not be changed: Insufficient access rights.', 'red');
+					var tot = $('.worksheet_item.selected').length;
+					if(tot > 0) batch_toolbar(tot);
+					else clear_batch();
       	} else {
       		showNotice(response.message, 'red');
       	}
@@ -411,10 +421,9 @@ $(function() {
       		showNotice('Project Created', 'green');
       		var found = false;
       		$('.project_list').find('.item').each(function() {
-      			if(found) return;
       			if($(this).attr('data-id') == response.parent_project_id) {
-      				found = true;
       				$(response.html).appendTo($(this).children('.expand'));
+      				if($(this).closest('.archive').length) return;
       				$(this).removeClass('no_arrows').removeClass('closed');
       				$(this).children('.project_title').addClass('expandable');
       				$(this).children('.expand').show();
@@ -441,7 +450,10 @@ $(function() {
 	});
 
 	$('body').on('click', '.project_title .fa-cog', function(e) {
+		var archived = $(this).closest('.archive').length > 0;
 		var offset = $(this).offset();
+		var top = offset.top - $(window).scrollTop();
+		var left = offset.left - $(window).scrollLeft();
 		var project_id = $(this).closest('.item').attr('data-id');
 		var project_name = $(this).closest('.item').attr('data-name');
 		var el = $(this).closest('.item');
@@ -454,23 +466,57 @@ $(function() {
 		var menu = $('<div/>').addClass('project_menu').on('mouseleave', function(e) {
 			closeMenu();
 		});
-		$('<div/>').html('<i class="fa fa-fw fa-plus"></i>Add Sub-Project').on('click', function(e) {
-			window.newProject(project_id);
-			closeMenu();
-		}).appendTo(menu);
-		$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Sharing').on('click', function(e) {
-			window.openSharingDialog(project_id*1, 'Project');
-			closeMenu();
-		}).appendTo(menu);
-		$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
-			// Archive
-			closeMenu();
-		}).appendTo(menu);
-		$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
-			promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processRename(el, project_id, name) }; }(el, project_id));
-			closeMenu();
-		}).appendTo(menu);
-		menu.appendTo('.base_layout').css('top', offset.top + 'px').css('left', offset.left + 'px');
+		if(archived) {
+			$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Restore Project').on('click', function(e) {
+				// Restore
+				el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
+				window.ajaxRequest("/projects/archive", { add: "false", id: project_id, data_type: 'Project'}, function(response) { 
+					showNotice('Project and all sub-projects and worksheets restored.','green'); 
+					$('.left_item.projects > .expand').html(response.tree); el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); 					
+					if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
+						// Not in an archive view, so refresh
+						SwiftCalcs.pushState.loadUrl();
+					} else {
+						// in an archive view...remove returned ids
+						for(var i = 0; i < response.ids.length; i++) {
+							$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
+						}
+					}
+				}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
+				closeMenu();
+			}).appendTo(menu);
+		} else {
+			$('<div/>').html('<i class="fa fa-fw fa-plus"></i>Add Sub-Project').on('click', function(e) {
+				window.newProject(project_id);
+				closeMenu();
+			}).appendTo(menu);
+			$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Sharing').on('click', function(e) {
+				window.openSharingDialog(project_id*1, 'Project');
+				closeMenu();
+			}).appendTo(menu);
+			$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
+				// Archive
+				el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
+				window.ajaxRequest("/projects/archive", { add: "true", id: project_id, data_type: 'Project'}, function(response) { 
+					el.slideUp({duration: 200, always: function() { el.remove(); } }); 
+					if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
+						// Not in an archive view, so remove returned ids
+						for(var i = 0; i < response.ids.length; i++) {
+							$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
+						}
+					} else {
+						// in an archive view...so refresh
+						SwiftCalcs.pushState.loadUrl();
+					}
+				}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
+				closeMenu();
+			}).appendTo(menu);
+			$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
+				promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processRename(el, project_id, name) }; }(el, project_id));
+				closeMenu();
+			}).appendTo(menu);
+		}
+		menu.appendTo('.base_layout').css('top', top + 'px').css('left', left + 'px');
 		e.preventDefault();
 		e.stopPropagation();
 	});
@@ -478,25 +524,114 @@ $(function() {
 	var processRename = function(el, project_id, new_name) {
 		el.attr('data-name', new_name);
 		el.children('.project_title').children('.name').html(new_name);
-		$.ajax({
-      type: "POST",
-      url: "/projects/rename",
-      dataType: 'json',
-      cache: false,
-      data: { id: project_id, name: new_name }, 
-      success: function(response) {
-      	window.hidePopupOnTop();
-      	if(!response.success) {
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-      	window.hidePopupOnTop();
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
+		window.ajaxRequest("/projects/rename", { id: project_id, name: new_name }, function() { 
+			window.hidePopupOnTop(); 
+      $('.project_list').find('.item').each(function() {
+      	if($(this).attr('data-id') == project_id) 
+      		$(this).children('.project_title').children('.name').html(new_name);
+      });
+		}, function() { window.hidePopupOnTop(); });
 	}
+	// Archive button
+	$('body').on('click', '.worksheet_item i.fa-archive', function(e) {
+		var w_id = $(this).closest('.worksheet_item').attr('data-id');
+		if($(this).closest('.worksheet_item').hasClass('archived')) {
+			unArchive(w_id, 'Worksheet');
+		} else {
+			Archive(w_id, 'Worksheet');
+		}
+		$(this).removeClass('fa-archive').addClass('fa-spinner').addClass('fa-pulse').addClass('archive');
+		e.preventDefault();
+		e.stopPropagation();
+	});
+	var Archive = window.Archive = function(data_id, data_type) {
+		toggleArchive(data_id, data_type, true);
+	}
+	var unArchive = window.unArchive = function(data_id, data_type) {
+		toggleArchive(data_id, data_type, false);
+	}
+	var toggleArchive = function(data_id, data_type, add) {
+		if(data_type == 'Worksheet') {
+			var flipArchive = function(flip) {
+				$('.worksheet_item').each(function() {
+					if($(this).attr('data-id')*1 == data_id*1) {
+						if(!flip) {
+							$(this).find('i.archive').removeClass('fa-spinner').removeClass('fa-pulse').removeClass('archive').addClass('fa-archive');
+							return;
+						} else {
+							var to_rem = $(this);
+							to_rem.slideUp({duration: 200, always: function() { to_rem.remove(); } });
+						}
+					}
+				});
+			}
+		} else {
+			var flipArchive = function(flip) {
+
+			}
+		}
+		window.ajaxRequest("/projects/archive", { id: data_id, data_type: data_type, add: add }, function() { flipArchive(true); }, function() { flipArchive(false); });
+	}
+	$('body').on('click', '.archive_not_loaded', function(e) {
+		$(this).children('.project_list').html('<i class="fa fa-spinner fa-pulse"></i>').addClass('archive_tree');
+		$(this).removeClass('archive_not_loaded');
+		window.ajaxRequest("/projects/archive_tree", { }, function(response) { $('.archive_tree').html(response.archive_html).removeClass('archive_tree'); }, function() { $('.archive_tree').html('An error occurred').removeClass('archive_tree').closest('.left_item').addClass('archive_not_loaded'); });
+	});
+	var closeActive = function(el) { 
+		el.each(function() {
+			var wrapper_box = $(this);
+			var prev_box = wrapper_box.prev();
+			wrapper_box.animate({'margin-left':0, 'margin-right': 0, 'padding-top': "-=15", 'padding-bottom': "-=15"}, {duration: 250});
+			wrapper_box.children('.active_holder').children('.content').slideUp({duration: 250});
+			var timeout_function = function() {};
+			if(prev_box)
+				window.setTimeout(function() { prev_box.removeClass('add_bottom_border'); }, 275);
+			window.setTimeout(function() {
+				if(wrapper_box.hasClass('add_bottom_border')) wrapper_box.children('.active_holder').children('.worksheet_item').addClass('add_bottom_border');
+				wrapper_box.children('.active_holder').children('.worksheet_item').detach().insertBefore(wrapper_box);
+				wrapper_box.remove();
+			}, 275);
+		});
+		// TODO: Unbind worksheet as well
+	};
+	var openActive = function(el) {
+		// TODO: NEED TO ADD SCROLL FIXING!
+		closeActive($('.active_worksheet'));
+		var before_item = el.prev();
+		var after_item = el.next();
+		var wrapper_box = $('<div/>').addClass('active_worksheet').insertAfter(el);
+		var wrapper = $('<div/>').addClass('active_holder').appendTo(wrapper_box);
+		el.detach().appendTo(wrapper);
+		// TODO: if before item is a wrapper, we need to add border to it's item!
+		if(before_item.length) 
+			before_item.addClass('add_bottom_border');
+		else 
+			wrapper_box.css({'margin-top': '-10px', 'padding-top': '10px'});
+		if(after_item.length == 0)
+			wrapper_box.css({'margin-bottom': '-10px', 'padding-bottom': '10px'});
+		$content = $('<div style="height: 300px;margin-top: 25px;" class="content">CONTENT</div>').hide();
+    var menu_height = Math.max(Math.max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height()) + $('#toolbar_holder').height();
+		$content.appendTo(wrapper).slideDown({duration: 250, progress: function() {
+			var offset = wrapper_box.offset();
+			var to_scroll = Math.max(0, $(window).scrollTop() - offset.top + menu_height);
+			if(to_scroll > 0) $(window).scrollTop($(window).scrollTop() - to_scroll);
+		}});
+		wrapper_box.animate({'margin-left':-30, 'margin-right': -30, 'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
+	}
+	$('body').on('click', '.worksheet_item', function(e) {
+		if($(this).closest('.active_worksheet').length) 
+			closeActive($(this).closest('.active_worksheet')); 
+		else {
+			openActive($(this));
+		}
+	});
+
+
+
+
+
+
+
 
 
 

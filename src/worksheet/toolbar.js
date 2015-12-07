@@ -149,41 +149,74 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	}
 	// Batch toolbar used when selecting multiple worksheets
 	_.batchToolbar = function(tot) {
-		return [
-			{
-				id: 'title',
-				html: "<span style='font-weight:bold;font-size:1.2em;position:relative;top:-4px;'>" + tot + " item" + (tot > 1 ? 's' : '') + " selected</span>",
-				method: function(el) { el.batch('clear'); }
-			},
-			{
-				id: 'batch_archive',
-				title: 'Archive',
-				icon: 'archive', 
-				right: true,
-				method: function(el) { el.batch('archive'); }
-			},
-			{
-				id: 'batch_star',
-				title: 'Add Star',
-				icon: 'star', 
-				right: true,
-				method: function(el) { el.batch('add_star'); }
-			},
-			{
-				id: 'batch_unstar',
-				title: 'Remove Star',
-				icon: 'star-o', 
-				right: true,
-				method: function(el) { el.batch('remove_star'); }
-			},
-			{
-				id: 'batch_move',
-				icon: 'share', 
-				title: 'Move',
-				right: true,
-				method: function(el) { el.batch('move'); }
-			}
-		];
+		if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
+			// In active worksheet zone
+			return [
+				{
+					id: 'title',
+					html: "<span style='font-weight:bold;font-size:1.2em;position:relative;top:-4px;'>" + tot + " item" + (tot > 1 ? 's' : '') + " selected</span>",
+					method: function(el) { el.batch('clear'); }
+				},
+				{
+					id: 'batch_archive',
+					title: 'Archive',
+					icon: 'archive', 
+					right: true,
+					method: function(el) { el.batch('archive'); }
+				},
+				{
+					id: 'batch_star',
+					title: 'Add Star',
+					icon: 'star', 
+					right: true,
+					method: function(el) { el.batch('add_star'); }
+				},
+				{
+					id: 'batch_unstar',
+					title: 'Remove Star',
+					icon: 'star-o', 
+					right: true,
+					method: function(el) { el.batch('remove_star'); }
+				},
+				{
+					id: 'batch_move',
+					icon: 'share', 
+					title: 'Move',
+					right: true,
+					method: function(el) { el.batch('move'); }
+				}
+			];
+		} else {
+			// In archive folder, only option in un-archive
+			return [
+				{
+					id: 'title',
+					html: "<span style='font-weight:bold;font-size:1.2em;position:relative;top:-4px;'>" + tot + " item" + (tot > 1 ? 's' : '') + " selected</span>",
+					method: function(el) { el.batch('clear'); }
+				},
+				{
+					id: 'batch_unarchive',
+					title: 'Restore',
+					icon: 'archive', 
+					right: true,
+					method: function(el) { el.batch('unarchive'); }
+				},
+				{
+					id: 'batch_star',
+					title: 'Add Star',
+					icon: 'star', 
+					right: true,
+					method: function(el) { el.batch('add_star'); }
+				},
+				{
+					id: 'batch_unstar',
+					title: 'Remove Star',
+					icon: 'star-o', 
+					right: true,
+					method: function(el) { el.batch('remove_star'); }
+				}
+			];
+		}
 	}
 
 	// Return the default textToolbar with extra options.  To_add is appended to the menu, and to_remove will remove any items with matching id
