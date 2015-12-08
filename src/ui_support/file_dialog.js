@@ -592,31 +592,31 @@ $(function() {
 				wrapper_box.remove();
 			}, 275);
 		});
-		// TODO: Unbind worksheet as well
+		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
 	};
 	var openActive = function(el) {
-		// TODO: NEED TO ADD SCROLL FIXING!
 		closeActive($('.active_worksheet'));
 		var before_item = el.prev();
 		var after_item = el.next();
 		var wrapper_box = $('<div/>').addClass('active_worksheet').insertAfter(el);
 		var wrapper = $('<div/>').addClass('active_holder').appendTo(wrapper_box);
 		el.detach().appendTo(wrapper);
-		// TODO: if before item is a wrapper, we need to add border to it's item!
 		if(before_item.length) 
 			before_item.addClass('add_bottom_border');
 		else 
 			wrapper_box.css({'margin-top': '-10px', 'padding-top': '10px'});
 		if(after_item.length == 0)
 			wrapper_box.css({'margin-bottom': '-10px', 'padding-bottom': '10px'});
-		$content = $('<div style="height: 300px;margin-top: 25px;" class="content">CONTENT</div>').hide();
+		$content = $('<div class="content"></div>').hide();
     var menu_height = Math.max(Math.max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height()) + $('#toolbar_holder').height();
-		$content.appendTo(wrapper).slideDown({duration: 250, progress: function() {
+		$content.appendTo(wrapper);
+		$loader = $('<div class="loader"><i class="fa fa-spinner fa-pulse"></i></div>').hide().slideDown({duration: 250, progress: function() {
 			var offset = wrapper_box.offset();
 			var to_scroll = Math.max(0, $(window).scrollTop() - offset.top + menu_height);
 			if(to_scroll > 0) $(window).scrollTop($(window).scrollTop() - to_scroll);
 		}});
 		wrapper_box.animate({'margin-left':-30, 'margin-right': -30, 'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
+		window.loadWorksheet(el);
 	}
 	$('body').on('click', '.worksheet_item', function(e) {
 		if($(this).closest('.active_worksheet').length) 
@@ -625,9 +625,23 @@ $(function() {
 			openActive($(this));
 		}
 	});
-
-
-
+	var loadWorksheet = window.loadWorksheet = function(el) {
+		var id = el.attr('data-id');
+		var el_next = el.next('.content');
+		if(el_next.length == 0) el_next = $('<div/>').addClass('content').insertAfter(el);
+		var success = function(response) {
+      if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
+      var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level, response.settings);
+      worksheet.bind(el_next);
+      el_next.slideDown({duration: 250});
+      if(el_next.next().hasClass('loader')) el_next.next().slideUp({duration: 250, always: function() { $(this).remove(); }});
+      worksheet.load(response.data);
+      window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
+      if(response.folder_id) 
+        window.setCurrentProject(response.folder_id, response.folder_url_end);
+		}
+		window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {id: id} }, success);
+	}
 
 
 

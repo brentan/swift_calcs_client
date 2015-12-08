@@ -49,9 +49,13 @@ var receiveMessage = function(command) {
     restart_string = command.restart_string;
   }
   if(command.set_units) {
+    console.log('clear_usual_units')
     Module.caseval('clear_usual_units()');
-    for(var i = 0; i < command.set_units.length; i++)
+    for(var i = 0; i < command.set_units.length; i++) {
+      console.log('set_units(_' + command.set_units[i] + ')');
       Module.caseval('set_units(_' + command.set_units[i] + ')');
+    }
+    console.log('complete');
     return;
   }
   if(command.varList) {
