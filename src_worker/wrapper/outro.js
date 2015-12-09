@@ -29,7 +29,11 @@ obj.onprogress = function(input_module) { return function(e){
 		input_module.updateProgress((e.loaded / e.total)*0.5);
 }; }(Module);
 var loadGiac = function(v) {
-	obj.open('GET','/libraries/giac' + v + '.js',true);
+	var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
+	if(is_chrome && ((navigator.userAgent.toLowerCase().replace(/.*chrome\/([0-9]+)\..*/,"$1")*1) > 46))
+		obj.open('GET','/libraries/chrome_giac' + v + '.js',true);
+	else
+		obj.open('GET','/libraries/giac' + v + '.js',true);
 	obj.send(null);
 }
 sendMessage({command: 'giac_version'});
