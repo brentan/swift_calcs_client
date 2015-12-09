@@ -80,7 +80,6 @@ var Worksheet = P(function(_) {
 		this.bindUploads();
 		this.bindSettings();
 		SwiftCalcs.active_worksheet = this;
-		this.setWidth();
     $('.fatal_div').hide();
     ajaxQueue.suppress = false;
 		this.bound = true;
@@ -174,6 +173,8 @@ var Worksheet = P(function(_) {
 				this.save();
 		}
 	}
+	// Load function is broken up since the parser can take on order of 1 second, and delay is noticeable.  Instead, have parser insert block by block so there is visual feedback to user that 
+	// document is loading.
 	_.load = function(to_parse) {
 		var auto_evaluation = giac.auto_evaluation;
 		ajaxQueue.suppress = true;
@@ -181,18 +182,33 @@ var Worksheet = P(function(_) {
 		var blocks = parse(to_parse);
 		if(blocks.length > 0) {
 			blocks[0].appendTo(this).show(0);
-	    var after = this.ends[L];
+    	window.setTimeout(function(_this) { return function() { _this.continueLoad(auto_evaluation, to_parse, blocks, _this.ends[-1], 1); }; }(this));
+	    /*var after = this.ends[L];
 	    for(var i = 1; i < blocks.length; i++) {
 	      blocks[i].insertAfter(after).show(0);
 	      after = blocks[i];
-	    }
+	    }*/
 	  } else {
 			math().appendTo(this).show(0).focus(-1);
+			this.completeLoad(auto_evaluation, to_parse);
 	  }
+	}
+	_.continueLoad = function(auto_evaluation, to_parse, blocks, after, i) {
+		if(!this.bound) this.completeLoad(auto_evaluation, to_parse);
+    blocks[i].insertAfter(after).show(0);
+    after = blocks[i];
+    i++;
+    if(i == blocks.length) this.completeLoad(auto_evaluation, to_parse);
+    else window.setTimeout(function(_this) { return function() { _this.continueLoad(auto_evaluation, to_parse, blocks, after, i); }; }(this));
+	}
+	_.completeLoad = function(auto_evaluation, to_parse) {
+	  giac.auto_evaluation = auto_evaluation;
+		if(!this.bound) return;
+		if(giac.giac_ready) setComplete();
+    if(this.jQ.next().hasClass('loader')) this.jQ.next().slideUp({duration: 200, always: function() { $(this).remove(); }});
 	  this.commandChildren(function(_this) { _this.needsEvaluation = false }); // Set to false as we are loading a document and dont want to trigger a save
 	  ajaxQueue.suppress = false;
 	  ajaxQueue.jQ.html(ajaxQueue.save_message);
-	  giac.auto_evaluation = auto_evaluation;
 	  this.ends[L].evaluate(true, true);
 	  this.updateUploads();
 	  this.reset_server_base(to_parse);
@@ -212,10 +228,11 @@ var Worksheet = P(function(_) {
 		var children = this.children();
 		for(var i = 0; i < children.length; i++)
 			children[i].destroy();
-		this.toolbar.detachToolbar();
+		this.toolbar.blurToolbar();
 		this.toolbar = false;
 		$('#account_bar .content').html('');
 		this.bound = false;
+		SwiftCalcs.active_worksheet = null;
 		return this;
 	}
 	// Focus the textarea and place a cursor

@@ -474,6 +474,7 @@ var Element = P(function(_) {
 		return this;
 	}
 	_.reflow = function() {
+		if(!this.worksheet.bound) return;
 		this.setWidth();
 		for(var i = 0; i < this.focusableItems.length; i++) 
 			for(var j = 0; j < this.focusableItems[i].length; j++)

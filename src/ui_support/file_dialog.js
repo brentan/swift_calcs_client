@@ -578,6 +578,7 @@ $(function() {
 		window.ajaxRequest("/projects/archive_tree", { }, function(response) { $('.archive_tree').html(response.archive_html).removeClass('archive_tree'); }, function() { $('.archive_tree').html('An error occurred').removeClass('archive_tree').closest('.left_item').addClass('archive_not_loaded'); });
 	});
 	var closeActive = function(el) { 
+		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
 		el.each(function() {
 			var wrapper_box = $(this);
 			var prev_box = wrapper_box.prev();
@@ -592,9 +593,10 @@ $(function() {
 				wrapper_box.remove();
 			}, 275);
 		});
-		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
 	};
+	var beginLoad = false;
 	var openActive = function(el) {
+		beginLoad = false;
 		closeActive($('.active_worksheet'));
 		var before_item = el.prev();
 		var after_item = el.next();
@@ -610,11 +612,11 @@ $(function() {
 		$content = $('<div class="content"></div>').hide();
     var menu_height = Math.max(Math.max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height()) + $('#toolbar_holder').height();
 		$content.appendTo(wrapper);
-		$loader = $('<div class="loader"><i class="fa fa-spinner fa-pulse"></i></div>').hide().slideDown({duration: 250, progress: function() {
+		$loader = $('<div class="loader"><i class="fa fa-spinner fa-pulse"></i></div>').appendTo(wrapper).hide().slideDown({duration: 250, progress: function() {
 			var offset = wrapper_box.offset();
 			var to_scroll = Math.max(0, $(window).scrollTop() - offset.top + menu_height);
 			if(to_scroll > 0) $(window).scrollTop($(window).scrollTop() - to_scroll);
-		}});
+		}, always: function() { beginLoad = true; }});
 		wrapper_box.animate({'margin-left':-30, 'margin-right': -30, 'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
 		window.loadWorksheet(el);
 	}
@@ -633,14 +635,18 @@ $(function() {
       if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
       var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level, response.settings);
       worksheet.bind(el_next);
-      el_next.slideDown({duration: 250});
-      if(el_next.next().hasClass('loader')) el_next.next().slideUp({duration: 250, always: function() { $(this).remove(); }});
+      el_next.show();
       worksheet.load(response.data);
-      window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
+      worksheet.setWidth();
+    	window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
       if(response.folder_id) 
         window.setCurrentProject(response.folder_id, response.folder_url_end);
 		}
-		window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {id: id} }, success);
+		var try_success = function(response) {
+			if(beginLoad) success(response);
+			else window.setTimeout(function() { try_success(response); }, 50);
+		}
+		window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {id: id} }, try_success);
 	}
 
 

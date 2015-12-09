@@ -31,7 +31,7 @@ var GiacHandler = P(function(_) {
 			var me = 0;
 			for(var ell = el[L]; ell instanceof Element; ell = ell[L])
 				me++;
-			setProgress(me/total);
+			if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) setProgress(me/total);
 		} 
 		return this;
 	}
@@ -236,7 +236,7 @@ var GiacHandler = P(function(_) {
 	  	//	window.start_time = new Date().getTime();
 			this.worker.postMessage(JSON.stringify(hash_string));
 		}	else {
-			if(this.giac_ready) 
+			if(this.giac_ready && ((SwiftCalcs.active_worksheet == null) || (SwiftCalcs.active_worksheet == undefined) || (SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded))) 
 				setManual('Auto-Evaluation is disabled.  <a href="#" onclick="SwiftCalcs.giac.manualEvaluation();$(this).html(\'Starting...\');return false;">Recalculate Now</a> &nbsp; <a href="#" onclick="SwiftCalcs.giac.manual_mode(false);$(this).html(\'Working...\');return false;">Re-enable Auto-Evaluation</a>');
 			window.setTimeout(function(_this) { return function() { _this.sendCommand(hash_string, el); }; }(this), 250);
 		}
@@ -279,7 +279,8 @@ var loadWorker = function(giacHandler) {
 				giac.postMessage(JSON.stringify({giac_version: window.giac_version}));
       	return;
     	case 'results':
-    		Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
+    		if(Element.byId[response.callback_id]) Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
+    		else setComplete();
     		break;
     	case 'variable':
     		response.results = cleanOutput(response.results);
