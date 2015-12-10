@@ -124,7 +124,6 @@ $(function() {
 		if(el_type == 'text')
 			to_create.textField.magicCommands();
 	}
-	$('body').on('click', '#account_bar .revision_history', function(e) { window.loadRevisions(); return false; });
 
 	$('body').on('click', '#account_bar .about', function(e) { window.loadToPopup('/about',{}); return false; });
 

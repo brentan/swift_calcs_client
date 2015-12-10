@@ -173,29 +173,100 @@ var Worksheet = P(function(_) {
 				this.save();
 		}
 	}
+	var labelInput = function(el, _this) {
+    // create ul to hold labels once entered
+    $list = $('<ul />');
+    $placeholder = $('<span/>').addClass('placeholder').html('Add labels to this worksheet');
+    // Input box
+    var $input = $('<input type="text"/>');
+    // function to take content from input and push to list
+
+    var scanInput = function() {
+      $.each($input.val().replace(/;/g,',').split(','), function(i, v) {
+        if(v.trim() == '') return; // Ignore blank guys
+        $list.append($('<li class="labelInput"><span>' + v + '</span></li>')
+          .append($('<i class="fa fa-times-circle"></i>')
+            .click(function(e) {
+              $(this).parent().remove();
+              e.preventDefault();
+            })
+          )
+        );
+      });
+      // clear input
+      $input.val('');
+    }
+    // container div
+    var $container = $('<div class="labelInput-container" />').click(function() {
+      $input.focus();
+    });
+    // input box listeners
+    $input.keyup(function(event) {
+      if(event.which == 188) { //188
+        // key press is enter, comma
+        $(this).val($(this).val().slice(0, -1)); // remove last space/comma from value
+        scanInput();
+      }
+      if(event.which == 13) {
+        scanInput();
+        event.preventDefault();
+      }
+    }).on("blur", function() {
+      scanInput();
+      $container.removeClass('focused');
+      var list = [];
+      $list.find('li.labelInput span').each(function() { list.push($(this).html()); });
+      _this.updateLabels(list);
+    }).on("focus", function() {
+      $placeholder.hide();
+      $container.addClass('focused');
+    });
+    // insert elements into DOM
+    $container.append($placeholder).append($list).append($input).insertAfter(el);
+    el.hide();
+  }
 	// Load function is broken up since the parser can take on order of 1 second, and delay is noticeable.  Instead, have parser insert block by block so there is visual feedback to user that 
 	// document is loading.
-	_.load = function(to_parse) {
+	_.load = function(response) {
+		var to_parse = response.data;
+		// Load the details section
+		var det_div = $('<div/>').addClass('details_span').html('<table><tbody>'
+			+ '<tr><td class="left"><i class="fa fa-users"></i></td><td class="collaborators right"></td></tr>'
+			+ '<tr><td class="left"><i class="fa fa-folder-open"></i></td><td class="projects right"></td></tr>'
+			+ '<tr><td class="left"><i class="fa fa-tags"></i></td><td class="labels right"></td></tr>'
+			+ '<tr><td class="left"><i class="fa fa-history"></i></td><td class="info right"></td></tr>'
+			+ '</tbody></table>');
+		labelInput($('<span/>').appendTo(det_div.find('.labels')), this);
+		if(response.project_path) 
+			det_div.find('.projects').html(response.project_path);
+		else 
+			det_div.find('.projects').html('<div class="placeholder">Worksheet is not part of a project</div>');
+		det_div.find('.info').html(response.update_time);
+		det_div.insertBefore(this.jQ).slideDown({duration: 200});
+		det_div.find('.collaborators').html(response.collaborators);
 		var auto_evaluation = giac.auto_evaluation;
 		ajaxQueue.suppress = true;
 		giac.auto_evaluation = false;
 		var blocks = parse(to_parse);
 		if(blocks.length > 0) {
-			blocks[0].appendTo(this).show(0);
-    	window.setTimeout(function(_this) { return function() { _this.continueLoad(auto_evaluation, to_parse, blocks, _this.ends[-1], 1); }; }(this));
+			blocks[0].appendTo(this).show(200);
+			if(blocks.length > 1)
+    		window.setTimeout(function(_this) { return function() { _this.continueLoad(auto_evaluation, to_parse, blocks, _this.ends[-1], 1); }; }(this));
+    	else
+    		this.completeLoad(auto_evaluation, to_parse);
 	    /*var after = this.ends[L];
 	    for(var i = 1; i < blocks.length; i++) {
 	      blocks[i].insertAfter(after).show(0);
 	      after = blocks[i];
 	    }*/
 	  } else {
-			math().appendTo(this).show(0).focus(-1);
+			math().appendTo(this).show(200).focus(-1);
 			this.completeLoad(auto_evaluation, to_parse);
 	  }
 	}
 	_.continueLoad = function(auto_evaluation, to_parse, blocks, after, i) {
 		if(!this.bound) this.completeLoad(auto_evaluation, to_parse);
-    blocks[i].insertAfter(after).show(0);
+    blocks[i].insertAfter(after).show(200);
     after = blocks[i];
     i++;
     if(i == blocks.length) this.completeLoad(auto_evaluation, to_parse);
@@ -277,6 +348,10 @@ var Worksheet = P(function(_) {
 		jQuery.each(this.children(), function(i, child) {
 			start = child.numberBlock(start);
 		});
+	}
+	_.updateLabels = function(list) {
+		console.log(list);
+		//NEW UI: Need to save labels.
 	}
   _.updateUploads = function() {
     var uploads = this.insertJQ.find('.' + css_prefix + 'uploadedData');

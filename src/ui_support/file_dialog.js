@@ -40,6 +40,7 @@ $(function() {
 			$('.popup_dialog').css('top', 60 + 'px').css('bottom', 100 + 'px');
 	}
 	var openFileDialog = window.openFileDialog = function(hash_string, archive) {
+    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
     $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
     data = { hash_string: hash_string };
     if(archive) data.show_archived = true;
@@ -70,8 +71,8 @@ $(function() {
 		current_project_id = id;
 		current_project_navigable_url = url;
 	}
-	var loadWorksheet = window.loadWorksheet = function(hash_string, name) {
-    window.hidePopupOnTop();
+	var loadNewWindowWorksheet = window.loadNewWindowWorksheet = function(hash_string, name) {
+		alert('do in new window');
 		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 	}
 	var loadProject = window.loadProject = function(hash_string, name, archive) {
@@ -157,7 +158,7 @@ $(function() {
 				box = $('<div/>').addClass('worksheet_holder_box');
 				in_box = true;
 			}
-			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + worksheets[i].id).attr('data-id', worksheets[i].id).html(worksheet_html(worksheets[i])).appendTo(box);
+			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + worksheets[i].id).attr('data-id', worksheets[i].id).attr('parent-id', worksheets[i].parent_project_id).html(worksheet_html(worksheets[i])).appendTo(box);
 			if(worksheets[i].archive_id) el.addClass('archived');
 		}
 		if(in_box) box.appendTo('.worksheet_holder')
@@ -584,6 +585,7 @@ $(function() {
 			var prev_box = wrapper_box.prev();
 			wrapper_box.animate({'margin-left':0, 'margin-right': 0, 'padding-top': "-=15", 'padding-bottom': "-=15"}, {duration: 250});
 			wrapper_box.children('.active_holder').children('.content').slideUp({duration: 250});
+			wrapper_box.children('.active_holder').children('.details_span').slideUp({duration: 250});
 			var timeout_function = function() {};
 			if(prev_box)
 				window.setTimeout(function() { prev_box.removeClass('add_bottom_border'); }, 275);
@@ -636,7 +638,7 @@ $(function() {
       var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level, response.settings);
       worksheet.bind(el_next);
       el_next.show();
-      worksheet.load(response.data);
+      worksheet.load(response);
       worksheet.setWidth();
     	window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
       if(response.folder_id) 
@@ -648,7 +650,39 @@ $(function() {
 		}
 		window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {id: id} }, try_success);
 	}
-
+	$('body').on('click', '.project_item', function(e) {
+		var archive = $(this).closest('.archived').length > 0;
+		window.loadProject($(this).attr('data-hash_string'), $(this).attr('data-name'), archive);
+	});
+	$('body').on('click', '.projects .placeholder', function(e) {
+		window.moveWorksheet($(this).closest('.active_holder').children('.worksheet_item'));
+	});
+	var moveWorksheet = window.moveWorksheet = function(el) {
+		var dets = el.closest('.active_holder').children('.details_span');
+		var success = function(response) {
+			window.hidePopupOnTop();
+			el.attr('parent-id', response.id);
+			if(response.path) 
+				dets.find('td.projects').html(response.path);
+			else
+				dets.find('td.projects').html('<div class="placeholder">Worksheet is not part of a project</div>');
+		}
+		var fail = function(response) {
+			window.hidePopupOnTop();
+			dets.find('td.projects').html('<div class="placeholder">An error occurred</div>');
+		}
+		var processMove = function(project_id) {
+			dets.find('td.projects').html('<i class="fa fa-spinner fa-pulse"></i>');
+			window.ajaxRequest("/projects/move", { data_type: 'Worksheet', id: el.attr('data-id'), project_id: project_id}, success, fail);
+		}
+		moveDialog(processMove, el.attr('parent-id'));
+	}
+	$('body').on('click', 'td.info .info', function(e) {
+		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item').attr('data-id'));
+	});
+	$('body').on('click', 'td.collaborators .bubble, td.collaborators .placeholder', function(e) {
+		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item').attr('data-id'), 'Worksheet');
+	});
 
 
 

@@ -145,3 +145,6 @@ var SwiftCalcs = {};
       SwiftCalcs.active_worksheet.setWidth();
     }
   });
+
+
+  RIGHTS = { NO_RIGHTS: 0, READ_ONLY: 1, READ_ONLY_WITH_DUPLICATION: 2, EDIT_RIGHTS: 3,  ADMIN_RIGHTS: 4 };

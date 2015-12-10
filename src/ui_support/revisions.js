@@ -15,18 +15,14 @@ $(function() {
     var name = SwiftCalcs.active_worksheet.name;
 		SwiftCalcs.pushState.navigate('/revisions/' + hash_string + '/' + id + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 	}
-	var loadRevisions = window.loadRevisions = function() {
-    if(SwiftCalcs.active_worksheet.rights == -1) {
-      showNotice('This document has no saved revisions.');
-      return;
-    }
+	var loadRevisions = window.loadRevisions = function(id) {
 		window.showLoadingOnTop();
 		$.ajax({
       type: "POST",
       url: '/revisions',
       dataType: 'json',
       cache: false,
-      data: { id: SwiftCalcs.active_worksheet.server_id }, 
+      data: { id: id }, 
       success: function(response) {
       	if(response.success) {
       		window.showPopupOnTop();
