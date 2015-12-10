@@ -663,7 +663,7 @@ $(function() {
 			window.hidePopupOnTop();
 			el.attr('parent-id', response.id);
 			if(response.path) 
-				dets.find('td.projects').html(response.path);
+				dets.find('td.projects').html(response.path).closest('tr').show();
 			else
 				dets.find('td.projects').html('<div class="placeholder">Worksheet is not part of a project</div>');
 		}

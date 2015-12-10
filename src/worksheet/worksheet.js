@@ -240,7 +240,7 @@ var Worksheet = P(function(_) {
 		if(response.project_path) 
 			det_div.find('.projects').html(response.project_path);
 		else 
-			det_div.find('.projects').html('<div class="placeholder">Worksheet is not part of a project</div>');
+			det_div.find('.projects').html('<div class="placeholder">Worksheet is not part of a project</div>').closest('tr').hide();
 		det_div.find('.info').html(response.update_time);
 		det_div.insertBefore(this.jQ).slideDown({duration: 200});
 		det_div.find('.collaborators').html(response.collaborators);
