@@ -95,7 +95,7 @@ var Worksheet = P(function(_) {
 		return div;
 	}
 	_.generateTopWarning = function() {
-		this.jQ.find('.top_warning').remove();
+		this.jQ.closest('.active_holder').find('.top_warning').remove();
 		switch(this.rights) {
 			case -2: //revision of a worksheet
 				if(window.user_logged_in) {
@@ -123,30 +123,19 @@ var Worksheet = P(function(_) {
 					e.preventDefault();
 					return false;
 				});
-
-				this.jQ.prepend(createWarningBox(els));
+				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item'));
 				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
 				break;
-			/*case -1: //new worksheet for user who is not logged in...
-				var els = $('<div/>').html('<strong>Welcome to SwiftCalcs</strong>.  To save this masterpiece or share it with others, you must first <a href="#" class="create">login or create an account with Swift Calcs</a>.');
-				els.find('a.create').on('click', function(e) {
-					window.loadSigninBox();
-					e.preventDefault();
-					return false;
-				});
-				this.jQ.prepend(createWarningBox(els));
-				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
-				break;*/
 			case 1: //view-only
 				var els = $('<div/>').html('<strong>File is View Only</strong>.  Any changes you make will not be saved.');
-				this.jQ.prepend(createWarningBox(els));
+				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item'));
 				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
 				break;
 			case 2: //view-only but can duplicate
-				var els = $('<div/>').html('<strong>Make a Copy to Save</strong>.  To save any changes you have made to this worksheet, <a href="#" class="copy">create a copy of the worksheet</a> in your own folder.');
+				var els = $('<div/>').html('<strong>File is View Only</strong>.  To save changes you make to this worksheet, <a href="#" class="copy">create a copy</a>.');
 				els.find('a.copy').on('click', function(e) {
 					if(window.user_logged_in)
-						window.newWorksheet(true); 
+						window.newWorksheet(true);  //NEW UI: Change to copy
 					else {
 						showNotice("Login or create an account to make a copy of this document");
 						window.loadSigninBox();
@@ -154,7 +143,7 @@ var Worksheet = P(function(_) {
 					e.preventDefault();
 					return false;
 				});
-				this.jQ.prepend(createWarningBox(els));
+				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item'));
 				this.save(); // Won't actually save, but will set the saving message to an appropriate message.
 				break;
 		}
@@ -225,16 +214,37 @@ var Worksheet = P(function(_) {
     $container.append($placeholder).append($list).append($input).insertAfter(el);
     el.hide();
   }
+  var rename = function(_this, name_span, e) {
+  	name_span.hide();
+  	var input_div = $('<span/>').addClass('name_change').html('<input type="text">').insertAfter(name_span).on('click', function(e) {
+  		e.stopPropagation();
+  		return false;
+  	});
+  	var setName = function(el) { 
+  		_this.rename(el.val());
+  		el.closest('span').prev('span').show().children('span').html(el.val());
+  		el.closest('span').remove();
+  		window.setTimeout(function() { _this.ends[-1].focus(-1); });
+  	}
+  	input_div.children('input').val(_this.name).on('blur', function(e) {
+  		setName($(this));
+  	}).on('keyup', function(e) {
+  		if(e.keyCode == 13) setName($(this));
+  	}).focus();
+  	e.preventDefault();
+  	e.stopPropagation();
+  }
 	// Load function is broken up since the parser can take on order of 1 second, and delay is noticeable.  Instead, have parser insert block by block so there is visual feedback to user that 
 	// document is loading.
 	_.load = function(response) {
 		var to_parse = response.data;
 		// Load the details section
-		var det_div = $('<div/>').addClass('details_span').html('<table><tbody>'
+		var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody>'
 			+ '<tr><td class="left"><i class="fa fa-users"></i></td><td class="collaborators right"></td></tr>'
 			+ '<tr><td class="left"><i class="fa fa-folder-open"></i></td><td class="projects right"></td></tr>'
 			+ '<tr><td class="left"><i class="fa fa-tags"></i></td><td class="labels right"></td></tr>'
 			+ '<tr><td class="left"><i class="fa fa-history"></i></td><td class="info right"></td></tr>'
+			+ '<tr><td class="left"><i class="fa fa-cog"></i></td><td class="settings right"></td></tr>'
 			+ '</tbody></table>');
 		labelInput($('<span/>').appendTo(det_div.find('.labels')), this);
 		if(response.project_path) 
@@ -243,7 +253,15 @@ var Worksheet = P(function(_) {
 			det_div.find('.projects').html('<div class="placeholder">Worksheet is not part of a project</div>').closest('tr').hide();
 		det_div.find('.info').html(response.update_time);
 		det_div.insertBefore(this.jQ).slideDown({duration: 200});
+
 		det_div.find('.collaborators').html(response.collaborators);
+		$('<div/>').addClass('message').html(this.setSettingsText()).appendTo(det_div.find('td.settings')).on('click', function(_this) { return function(e) {
+			_this.loadSettingsPane();
+		}; }(this));
+		var name_span = this.jQ.closest('.active_holder').find('.worksheet_item span.name');
+		if(this.rights >= 3) 
+			name_span.addClass('change').children('span').on('click', function(_this, name_span) { return function(e) { rename(_this, name_span, e); }; }(this, name_span));
+		ajaxQueue.save_div = $('<span/>').addClass('save_span').insertAfter(name_span);
 		var auto_evaluation = giac.auto_evaluation;
 		ajaxQueue.suppress = true;
 		giac.auto_evaluation = false;
@@ -254,13 +272,8 @@ var Worksheet = P(function(_) {
     		window.setTimeout(function(_this) { return function() { _this.continueLoad(auto_evaluation, to_parse, blocks, _this.ends[-1], 1); }; }(this));
     	else
     		this.completeLoad(auto_evaluation, to_parse);
-	    /*var after = this.ends[L];
-	    for(var i = 1; i < blocks.length; i++) {
-	      blocks[i].insertAfter(after).show(0);
-	      after = blocks[i];
-	    }*/
 	  } else {
-			math().appendTo(this).show(200).focus(-1);
+			math().appendTo(this).show(200);
 			this.completeLoad(auto_evaluation, to_parse);
 	  }
 	}
@@ -296,14 +309,25 @@ var Worksheet = P(function(_) {
 		this.unbindMouse();
 		this.unbindKeyboard();
 		this.unbindSettings();
-		var children = this.children();
-		for(var i = 0; i < children.length; i++)
-			children[i].destroy();
+		ajaxQueue.save_div.remove();
+		ajaxQueue.save_div = $('<span/>');
+		this.jQ.closest('.active_holder').find('.name.change').removeClass('change').children('.hover').off('click');
 		this.toolbar.blurToolbar();
 		this.toolbar = false;
 		$('#account_bar .content').html('');
 		this.bound = false;
 		SwiftCalcs.active_worksheet = null;
+		this.destroyChildren();
+		return this;
+	}
+	_.destroyChildren = function() {
+		if(ajaxQueue.saving && ajaxQueue.holding_pen[this.server_id]) {
+			// Save is not complete, so wait to destroy children until save finishes
+			return window.setTimeout(function(_this) { return function() { _this.destroyChildren(); }; }(this), 50);
+		}
+		var children = this.children();
+		for(var i = 0; i < children.length; i++)
+			children[i].destroy();
 		return this;
 	}
 	// Focus the textarea and place a cursor
@@ -334,7 +358,7 @@ var Worksheet = P(function(_) {
 		return this;
 	}
 	_.setWidth = function() {
-		this.insertJQ.css('max-width',max(300, min(900, this.jQ.width()-50)) + 'px');
+		this.insertJQ.css('max-width',max(300, this.jQ.closest('.worksheet_holder_box').width() + 55) + 'px');
 		this.commandChildren(function(_this) { _this.setWidth(); });
 		return this;
 	}

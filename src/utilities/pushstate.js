@@ -45,36 +45,22 @@ var PushState = P(function(_) {
     if (!this.matchRoot()) return false;
     fragment = this.fragment = this.getFragment(fragment);
     if(fragment.match(/worksheets\//i)) {
-      window.showLoadingPopup();
-      $.ajax({
-        type: "POST",
-        url: "/worksheet_commands",
-        dataType: 'json',
-        cache: false,
-        data: { command: 'get_worksheet', data: {hash_string: fragment.replace(/worksheets\/([^\/]*).*$/i,"$1")} }, 
-        success: function(response) {
-          if(response.success) {
-            window.hideDialogs();
-            if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level, response.settings);
-            worksheet.bind($('.worksheet_holder'));
-            worksheet.load(response.data);
-            window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
-            if(response.folder_id) 
-              window.setCurrentProject(response.folder_id, response.folder_url_end);
-          } else {
-            window.showFileDialog();
-            showNotice(response.message, 'red');
-          }
-        },
-        error: function(err) {
-          window.showFileDialog();
-          showNotice('Error: ' + err.responseText, 'red');
-          console.log(err);
-          //Depending on error, do we try again?
-          // TODO: Much better error handling!
-        }
-      });
+      var hash_string = fragment.replace(/worksheets\/([^\/]*).*$/i,"$1");
+      window.closeActive($('.active_worksheet'));
+      $('.worksheet_holder').html('');
+      var box = $('<div/>').addClass('worksheet_holder_box').addClass('single_sheet').appendTo($('.worksheet_holder'));
+      var loading_div = $('<div/>').addClass('worksheet_loading').addClass('worksheet_item').attr('data-id', '-1').html('<i class="fa fa-spinner fa-pulse"></i><span>Loading Worksheet...</span>').prependTo(box);
+      var success = function(response) {
+        var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + response.id).attr('data-id', response.id).attr('data-name', response.name).attr('parent-id', response.project_id).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
+        if(response.archive_id) el.addClass('archived');
+        loading_div.remove();
+        window.openActive(el);
+        window.loadWorksheet(el, response);
+      }
+      var fail = function(message) {
+        loading_div.html('<span>There was an error: ' + message + '</span>');
+      }
+      window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: { hash_string: hash_string } }, success, fail);
       return true;
     } else if(fragment.match(/revisions\//i)) {
       window.showLoadingPopup();

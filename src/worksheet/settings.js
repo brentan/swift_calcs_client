@@ -5,11 +5,83 @@
 Worksheet.open(function(_) {
 	var default_settings = { angle: 'rad', complex: 'on', units: 'mks', digits: '9', custom_units: false, base_units: ['m','kg','s','K'], derived_units: ['A','mol','cd','E','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'] };
 	var showApplyNow = function() {
-		if(!$('.apply_now').hasClass('shown')) {
-			$('.apply_now').hide().addClass('shown').slideDown({duration: 250});
-			window.setTimeout(function() { $('.apply_now').stop().css("background-color", "#ffa0a0").animate({ backgroundColor: "#d7e0e2"}, {complete: function() { $(this).css('background-color','')} , duration: 500 }) }, 300);
-		}
+		$('.popup_dialog .bottom_links button.submit').show();
 	}
+	_.setSettingsText = function() {
+		var out = "Angle mode: ";
+		out += this.settings.angle == 'rad' ? 'Radians' : 'Degrees';
+		out += " - Complex Mode: ";
+		out += this.settings.complex == 'on' ? 'On' : 'Off';
+		out += " - Digits: ";
+		out += this.settings.digits;
+		out += " - Units: " + this.settings.base_units[0] + ' (length), ' + this.settings.base_units[1] + ' (mass), ' + this.settings.base_units[2] + ' (time), ' + this.settings.base_units[3] + ' (temperature)';
+		return out;
+	}
+	var settingsHTML = "<div class='settings'>"
+			+ "<div class='title'><i class='fa fa-cog'></i> Worksheet Settings</div>"
+			+ "<div class='section'>"
+			+ "Angle Mode: "
+			+ "<div class='select'><select class='angle_mode' data-type='angle_mode'>"
+			+ "<option value='rad'>Radians</option>"
+			+ "<option value='deg'>Degrees</option>"
+			+ "</select></div>"
+			+ "</div>"
+			+ "<div class='section'>"
+			+ "Complex Mode: "
+			+ "<div class='select'><select class='complex_mode' data-type='complex_mode'>"
+			+ "<option value='on'>Enabled</option>"
+			+ "<option value='off'>Disabled</option>"
+			+ "</select></div>"
+			+ "</div>"
+			+ "<div class='section'>"
+			+ "Significant Digits: "
+			+ "<div class='select'><select class='digits_select' data-type='digits_select'>"
+			+ "<option value='1'>1</option>"
+			+ "<option value='2'>2</option>"
+			+ "<option value='3'>3</option>"
+			+ "<option value='4'>4</option>"
+			+ "<option value='5'>5</option>"
+			+ "<option value='6'>6</option>"
+			+ "<option value='7'>7</option>"
+			+ "<option value='8'>8</option>"
+			+ "<option value='9'>9</option>"
+			+ "<option value='10'>10</option>"
+			+ "<option value='11'>11</option>"
+			+ "<option value='12'>12</option>"
+			+ "<option value='13'>13</option>"
+			+ "<option value='14'>14</option>"
+			+ "</select></div>"
+			+ "</div>"
+			+ "<div class='section'>"
+			+ "Unit System: "
+			+ "<div class='select'><select class='unit_mode' data-type='unit_mode'>"
+			+ "<option value='mks'>Meters-Kilograms-Seconds</option>"
+			+ "<option value='cgs'>Centimeter-Grams-Seconds</option>"
+			+ "<option value='ips'>Inch-Pounds-Seconds</option>"
+			+ "</select>"
+			+ "<div class='explain'><a class='custom_units' href='#'>customize</a></div>"
+			+ "</div>"
+			+ "<div class='custom_units'>"
+			+ "<div><b>Base Units</b></div>"
+			+ "<table border=0 width='100%'><tbody>"
+			+ "<tr><td>Length: </td><td style='text-align:right;'><span class='length'></span></td></tr>"
+			+ "<tr><td>Mass: </td><td style='text-align:right;'><span class='mass'></span></td></tr>"
+			+ "<tr><td>Time: </td><td style='text-align:right;'><span class='time'></span></td></tr>"
+			+ "<tr><td>Temperature: </td><td style='text-align:right;'><span class='temp'></span></td></tr>"
+			+ "</tbody></table>"
+			+ "<div><b>Derived Units</b></div>"
+			+ "<div class='explain'>"
+			+ "Derived units are combinations of base units.  For example, force is mass * length / time^2, but we often express in its own unit for simplicity.  Add derived units to the list below.  When found in answer, base units will be auto-simplified to the derived equivalent."
+			+ "</div>"
+			+ "<div class='added_units'>"
+			+ "</div>"
+			+ "<div class='add_unit'>"
+			+ "</div>"
+			+ "<div class='remove_units explain'>"
+			+ "</div>"
+			+ "</div>"
+			+ "</div>"
+			+ "</div>";
 	var setUnitSidebar = function(_this) {
 		if((_this.settings.custom_units == "true") || (_this.settings.custom_units ===true)) {
 	    $('div.custom_units').addClass('shown');
@@ -77,7 +149,7 @@ Worksheet.open(function(_) {
 		setUnitSidebar(this);
 	}
 	var handleSelectChange = function(e) {
-		switch($(this).attr('id')) {
+		switch($(this).attr('data-type')) {
 			case 'angle_mode':
 				SwiftCalcs.active_worksheet.settings.angle = $(this).val();
 				break;
@@ -110,16 +182,25 @@ Worksheet.open(function(_) {
 		}
 		showApplyNow();
 	}
-	_.bindSettings = function() {
-		if(!(this.settings.saved == "true") && !(this.settings.saved ===true)) 
-			this.settings = default_settings;
-		// Add new settings that aren't in all files
-		if(typeof this.settings.digits === 'undefined') this.settings.digits = default_settings.digits;
-		$('select#angle_mode').val(this.settings.angle).on('change', handleSelectChange);
-		$('select#complex_mode').val(this.settings.complex).on('change', handleSelectChange);
-		$('select#unit_mode').val(this.settings.units).on('change', handleSelectChange);
-		$('select#digits_select').val(this.settings.digits).on('change', handleSelectChange);
-		$('.apply_now').on('click', function(_this) { return function(e) { _this.settingsToGiac(true); }; }(this));
+	_.loadSettingsPane = function() {
+		window.showPopupOnTop();
+		$('.popup_dialog .full').html(settingsHTML);
+    $('.popup_dialog .bottom_links').html('<button class="submit" style="display:none;">Save Settings and Recalculate</button><button class="close grey">Close</button>');
+    window.resizePopup(false);
+		$('select.angle_mode').val(this.settings.angle).on('change', handleSelectChange);
+		$('select.complex_mode').val(this.settings.complex).on('change', handleSelectChange);
+		$('select.unit_mode').val(this.settings.units).on('change', handleSelectChange);
+		$('select.digits_select').val(this.settings.digits).on('change', handleSelectChange);
+		$('.popup_dialog .bottom_links button.close').on('click', function(e) { 
+			$('.popup_dialog .settings').remove();
+			window.hideDialogs();
+		});
+		$('.popup_dialog .bottom_links button.submit').on('click', function(_this) { return function(e) { 
+			$('.popup_dialog .settings').remove();
+			window.hideDialogs();
+			_this.jQ.closest('.active_holder').find('td.settings .message').html(_this.setSettingsText())
+			_this.settingsToGiac(true); 
+		}; }(this));
 		setUnitSidebar(this);
 		var _this = this;
 		$('<span/>').html('Add a Unit').on('click', function(e) {
@@ -131,17 +212,16 @@ Worksheet.open(function(_) {
 			_this.settings.derived_units = [];
 			setUnitSidebar(_this);
 		}).appendTo('div.custom_units .remove_units');
+	}
+	_.bindSettings = function() {
+		if(!(this.settings.saved == "true") && !(this.settings.saved ===true)) 
+			this.settings = default_settings;
+		// Add new settings that aren't in all files
+		if(typeof this.settings.digits === 'undefined') this.settings.digits = default_settings.digits;
 		this.settingsToGiac(false);
 		return this;
 	}
 	_.unbindSettings = function() {
-		$('select#angle_mode').off('change', handleSelectChange);
-		$('select#complex_mode').off('change', handleSelectChange);
-		$('select#unit_mode').off('change', handleSelectChange);
-		$('select#digits_select').off('change', handleSelectChange);
-		$('.apply_now').off('click');
-		$('div.custom_units .add_unit span').remove();
-		$('div.custom_units .remove_units a').remove();
 		return this;
 	}
 	_.settingsToGiac = function(recalculate) {
