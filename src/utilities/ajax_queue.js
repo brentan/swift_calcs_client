@@ -48,7 +48,7 @@ var ajaxQueueClass = P(function(_) {
 		if((this.holding_pen[id].worksheet.ends[L] === 0) && (this.holding_pen[id].worksheet.ends[R] === 0)) {
 			// This should never happen.  It indicates that the tree was corrupted.  Stop now to avoid destroying data.
 			ajaxQueue.jQ.html('Fatal error on save.  Saving disabled.');
-			ajaxQueue.jQ_fatal.show();
+			//ajaxQueue.jQ_fatal.show();
 			ajaxQueue.running[id] = false;
 			ajaxQueue.suppress = true;
 			ajaxQueue.saving = false;
@@ -84,7 +84,7 @@ var ajaxQueueClass = P(function(_) {
       	}
       	else {
 					ajaxQueue.jQ.html('Fatal error on save.  Saving disabled.');
-					ajaxQueue.jQ_fatal.show();
+					//ajaxQueue.jQ_fatal.show();
 					ajaxQueue.running[id] = false;
 					ajaxQueue.suppress = true;
 					ajaxQueue.saving = false;
@@ -96,7 +96,7 @@ var ajaxQueueClass = P(function(_) {
       },
       error: function(err) {
 				ajaxQueue.jQ.html('Fatal error on save.  Saving disabled.');
-				ajaxQueue.jQ_fatal.show();
+				//ajaxQueue.jQ_fatal.show();
 				ajaxQueue.running[id] = false;
 				ajaxQueue.suppress = true;
 				ajaxQueue.saving = false;

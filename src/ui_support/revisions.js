@@ -9,42 +9,25 @@ $(function() {
 			SwiftCalcs.active_worksheet.save(true);
 		} 
 	}
-	var loadRevision = function(id) {
+	var loadRevision = function(id, hash_string, name) {
 		hideDialogs();
-    var hash_string = SwiftCalcs.active_worksheet.hash_string;
-    var name = SwiftCalcs.active_worksheet.name;
 		SwiftCalcs.pushState.navigate('/revisions/' + hash_string + '/' + id + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 	}
-	var loadRevisions = window.loadRevisions = function(id) {
-		window.showLoadingOnTop();
-		$.ajax({
-      type: "POST",
-      url: '/revisions',
-      dataType: 'json',
-      cache: false,
-      data: { id: id }, 
-      success: function(response) {
-      	if(response.success) {
-      		window.showPopupOnTop();
-      		$('.popup_dialog .full').html(response.html);
-          $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
-          $('.popup_dialog').find('.load_revision').on('click', function(e) {
-          	loadRevision($(this).attr('data-id'));
-          	e.preventDefault();
-          	return false;
-          });
-          window.resizePopup();
-      	} else {
-      		window.hidePopupOnTop();
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-      	window.hidePopupOnTop();
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
-	}
-
+	var loadRevisions = window.loadRevisions = function(id, hash_string, name) {
+    var success = function(response) {
+      window.showPopupOnTop();
+      $('.popup_dialog .full').html(response.html);
+      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+      $('.popup_dialog').find('.load_revision').on('click', function(e) {
+        loadRevision($(this).attr('data-id'), hash_string, name);
+        e.preventDefault();
+        return false;
+      });
+      window.resizePopup();
+    }
+    var fail = function() {
+      window.hidePopupOnTop();
+    }
+    window.ajaxRequest("/revisions", { id: id }, success, fail);
+  }
 });

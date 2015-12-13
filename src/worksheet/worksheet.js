@@ -79,6 +79,7 @@ var Worksheet = P(function(_) {
 		this.bindKeyboard();
 		this.bindUploads();
 		this.bindSettings();
+		this.jQ.closest('.active_holder').children('.worksheet_item').attr('data-hash', this.hash_string);
 		SwiftCalcs.active_worksheet = this;
     $('.fatal_div').hide();
     ajaxQueue.suppress = false;
@@ -99,25 +100,25 @@ var Worksheet = P(function(_) {
 		switch(this.rights) {
 			case -2: //revision of a worksheet
 				if(window.user_logged_in) {
-					var els = $('<div/>').html('<strong>File Revisions are View Only</strong>.  Any changes you make to this revision will not be saved.  You can <a href="#" class="copy">create a new worksheet from these revisions</a>, <a href="#" class="restore">restore the worksheet to this revision</a>, or <a href="#" class="back">go back to the current worksheet version</a>.');
-					els.find('a.copy').on('click', function(e) {
-						window.newWorksheet(true); 
+					var els = $('<div/>').html('<strong>Revision is View Only</strong>.  <a href="#" class="copy">Copy revision into new worksheet</a>, <a href="#" class="restore">restore worksheet to this revision</a>, or <a href="#" class="back">go to the current version</a>.');
+					els.find('a.copy').on('click', function(_this) { return function(e) {
+						window.newWorksheet(true, _this.server_id, _this.revision_id);
 						e.preventDefault();
 						return false;
-					});
+					}; }(this));
 				} else {
-					var els = $('<div/>').html('<strong>File Revisions are View Only</strong>.  Any changes you make to this revision will not be saved.  You can <a href="#" class="create">login or create an account with Swift Calcs</a> to create a copy of this worksheet based on this revision, you can <a href="#" class="restore">restore the worksheet to this revision</a>, or you can <a href="#" class="back">go back to the current worksheet version</a>.');
+					var els = $('<div/>').html('<strong>File Revisions are View Only</strong>.  <a href="#" class="create">Login or create an account with Swift Calcs</a> to create a copy of this worksheet, <a href="#" class="restore">restore worksheet to this revision</a>, or <a href="#" class="back">go to current version</a>.');
 					els.find('a.create').on('click', function(e) {
 						window.loadSigninBox();
 						e.preventDefault();
 						return false;
 					});
 				}
-				els.find('a.restore').on('click', function(e) {
+				els.find('a.restore').on('click', function(_this) { return function(e) {
 					window.restoreWorksheet();
 					e.preventDefault();
 					return false;
-				});
+				}; }(this));
 				els.find('a.back').on('click', function(e) {
 					pushState.navigate('/worksheets/' + SwiftCalcs.active_worksheet.hash_string + '/' + encodeURIComponent(SwiftCalcs.active_worksheet.name.replace(/ /g,'_')), {trigger: true});
 					e.preventDefault();
@@ -237,6 +238,10 @@ var Worksheet = P(function(_) {
 	// Load function is broken up since the parser can take on order of 1 second, and delay is noticeable.  Instead, have parser insert block by block so there is visual feedback to user that 
 	// document is loading.
 	_.load = function(response) {
+		if(this.rights == -2) {
+			this.revision_id = response.revision_id;
+			this.revision_rights_level = response.revision_rights_level;
+		}
 		var to_parse = response.data;
 		// Load the details section
 		var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody>'

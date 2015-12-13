@@ -38,7 +38,7 @@ $(function() {
       data: data,
       success: function(response) {
       	if(response.success) {
-      		window.displayWorksheetList(response.worksheets)
+      		window.displayWorksheetList(response.worksheets, response.path)
       		setCurrentProject(response.id, response.url_end);
       	}	else {
 					$('.worksheet_holder').html('An error occurred');
@@ -103,10 +103,11 @@ $(function() {
 			+ "<span class='star'><i class='fa fa-star" + (w.star_id ? '' : '-o') + "' title='Add or Remove Star'></i></span>"
 			+ "<span class='menu'><i class='fa fa-ellipsis-v' title='Options Menu'></i></span>";
 	}
-	var displayWorksheetList = window.displayWorksheetList = function(worksheets) {
+	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html) {
 		clear_batch();
 		// Assumes worksheets already sorted by date from latest to earliest
 		$('.worksheet_holder').html('');
+		$('<div/>').addClass('active_path').html(path_html).appendTo('.worksheet_holder');
 		var d = new Date();
 		d.setHours(0,0,0,0);
 		var in_box = false;
@@ -464,59 +465,75 @@ $(function() {
 		}
 		closeMenu();
 		$(this).closest('.project_title').addClass('highlight');
-		var menu = $('<div/>').addClass('project_menu').on('mouseleave', function(e) {
+		var menu = $('<div/>').addClass('project_menu').addClass('loading').addClass('loading_p' + project_id).on('mouseleave', function(e) {
 			closeMenu();
 		});
-		if(archived) {
-			$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Restore Project').on('click', function(e) {
-				// Restore
-				el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
-				window.ajaxRequest("/projects/archive", { add: "false", id: project_id, data_type: 'Project'}, function(response) { 
-					showNotice('Project and all sub-projects and worksheets restored.','green'); 
-					$('.left_item.projects > .expand').html(response.tree); el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); 					
-					if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
-						// Not in an archive view, so refresh
-						SwiftCalcs.pushState.loadUrl();
-					} else {
-						// in an archive view...remove returned ids
-						for(var i = 0; i < response.ids.length; i++) {
-							$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
-						}
-					}
-				}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
-				closeMenu();
-			}).appendTo(menu);
-		} else {
-			$('<div/>').html('<i class="fa fa-fw fa-plus"></i>Add Sub-Project').on('click', function(e) {
-				window.newProject(project_id);
-				closeMenu();
-			}).appendTo(menu);
-			$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
-				window.openSharingDialog(project_id*1, 'Project');
-				closeMenu();
-			}).appendTo(menu);
-			$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
-				// Archive
-				el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
-				window.ajaxRequest("/projects/archive", { add: "true", id: project_id, data_type: 'Project'}, function(response) { 
-					el.slideUp({duration: 200, always: function() { el.remove(); } }); 
-					if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
-						// Not in an archive view, so remove returned ids
-						for(var i = 0; i < response.ids.length; i++) {
-							$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
-						}
-					} else {
-						// in an archive view...so refresh
-						SwiftCalcs.pushState.loadUrl();
-					}
-				}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
-				closeMenu();
-			}).appendTo(menu);
-			$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
-				promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processRename(el, project_id, name) }; }(el, project_id));
-				closeMenu();
-			}).appendTo(menu);
+		$('<div/>').html('<i class="fa fa-fw fa-pulse fa-spinner"></i>').appendTo(menu);		
+		var fail = function(message) {
+			closeMenu();
 		}
+		var success = function(response) {
+			if($('.loading_p' + project_id).length == 0) return;
+			var menu = $('.loading_p' + project_id).removeClass('loading_p' + project_id).removeClass('loading').off('mouseleave');
+			menu.find('div').remove();
+			if(archived) {
+				$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Restore Project').on('click', function(e) {
+					// Restore
+					el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
+					window.ajaxRequest("/projects/archive", { add: "false", id: project_id, data_type: 'Project'}, function(response) { 
+						showNotice('Project and all sub-projects and worksheets restored.','green'); 
+						$('.left_item.projects > .expand').html(response.tree); el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); 					
+						if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
+							// Not in an archive view, so refresh
+							SwiftCalcs.pushState.loadUrl();
+						} else {
+							// in an archive view...remove returned ids
+							for(var i = 0; i < response.ids.length; i++) {
+								$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
+							}
+						}
+					}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
+					closeMenu();
+				}).appendTo(menu);
+			} else {
+				if(response.rights_level >= 3)
+					$('<div/>').html('<i class="fa fa-fw fa-plus"></i>Add Sub-Project').on('click', function(e) {
+						window.newProject(project_id);
+						closeMenu();
+					}).appendTo(menu);
+				if(response.rights_level >= 3)
+					$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
+						window.openSharingDialog(project_id*1, 'Project');
+						closeMenu();
+					}).appendTo(menu);
+				$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
+					// Archive
+					el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
+					window.ajaxRequest("/projects/archive", { add: "true", id: project_id, data_type: 'Project'}, function(response) { 
+						el.slideUp({duration: 200, always: function() { el.remove(); } }); 
+						if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
+							// Not in an archive view, so remove returned ids
+							for(var i = 0; i < response.ids.length; i++) {
+								$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
+							}
+						} else {
+							// in an archive view...so refresh
+							SwiftCalcs.pushState.loadUrl();
+						}
+					}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
+					closeMenu();
+				}).appendTo(menu);
+				if(response.rights_level >= 3)
+					$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
+						promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processRename(el, project_id, name) }; }(el, project_id));
+						closeMenu();
+					}).appendTo(menu);
+			}
+			menu.on('mouseleave', function(e) {
+				closeMenu();
+			});
+		}
+		window.ajaxRequest('/projects/rights_level', {id: project_id}, success, fail);
 		menu.appendTo('.base_layout').css('top', top + 'px').css('left', left + 'px');
 		e.preventDefault();
 		e.stopPropagation();
@@ -703,7 +720,7 @@ $(function() {
 		moveDialog(processMove, el.attr('parent-id'));
 	}
 	$('body').on('click', 'td.info .info.revisions', function(e) {
-		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item').attr('data-id'));
+		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item').attr('data-id'), $(this).closest('.active_holder').children('.worksheet_item').attr('data-hash'), $(this).closest('.active_holder').children('.worksheet_item').attr('data-name'));
 	});
 	$('body').on('click', 'td.collaborators .bubble, td.collaborators .placeholder', function(e) {
 		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item').attr('data-id'), 'Worksheet');
@@ -720,55 +737,116 @@ $(function() {
 			$('.project_menu').remove();
 		}
 		closeMenu();
-		el.addClass('force_hover')
-		var menu = $('<div/>').addClass('project_menu').on('mouseleave', function(e) {
+		el.addClass('force_hover');
+		var menu = $('<div/>').addClass('project_menu').addClass('loading').addClass('loading_' + worksheet_id).on('mouseleave', function(e) {
 			closeMenu();
 		});
-		$('<div/>').html('<i class="fa fa-fw fa-external-link"></i>Open in New Window').on('click', function(e) {
-			el.find('.fa-external-link').click();
+		$('<div/>').html('<i class="fa fa-fw fa-pulse fa-spinner"></i>').appendTo(menu);
+		var fail = function(message) {
 			closeMenu();
-		}).appendTo(menu);
-		$('<div/>').html('<i class="fa fa-fw fa-files-o"></i>Create a Copy').on('click', function(e) {
-			el.find('.fa-external-link').click();
-			closeMenu();
-		}).appendTo(menu);
-		$('<div/>').html('<i class="fa fa-fw fa-share"></i>Move Worksheet').on('click', function(e) {
-			window.moveWorksheet(el);
-			closeMenu();
-		}).appendTo(menu);
-		if(archived) {
-			$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Restore Worksheet').on('click', function(e) {
-				el.find('.fa.unarchive').click();
-				closeMenu();
-			}).appendTo(menu);
-		} else {
-			$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Worksheet').on('click', function(e) {
-				el.find('.fa.archive').click();
-				closeMenu();
-			}).appendTo(menu);
 		}
-		$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename').on('click', function(e) {
-			if(el.closest('.active_holder').length > 0) {
-				el.find('.name .hover').click();
+		var success = function(response) {
+			if($('.loading_' + worksheet_id).length == 0) return;
+			el.attr('data-hash', response.hash_string);
+			var menu = $('.loading_' + worksheet_id).removeClass('loading_' + worksheet_id).removeClass('loading').off('mouseleave');
+			menu.find('div').remove();
+			$('<div/>').html('<i class="fa fa-fw fa-external-link"></i>Open in New Window').on('click', function(e) {
+				el.find('.fa-external-link').click();
+				closeMenu();
+			}).appendTo(menu);
+			if(response.rights_level >= 2) 
+				$('<div/>').html('<i class="fa fa-fw fa-files-o"></i>Create a Copy').on('click', function(e) {
+					window.newWorksheet(true, worksheet_id);
+					closeMenu();
+				}).appendTo(menu);
+			if(response.rights_level >= 3) 
+				$('<div/>').html('<i class="fa fa-fw fa-share"></i>Move Worksheet').on('click', function(e) {
+					window.moveWorksheet(el);
+					closeMenu();
+				}).appendTo(menu);
+			if(archived) {
+				$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Restore Worksheet').on('click', function(e) {
+					el.find('.fa.unarchive').click();
+					closeMenu();
+				}).appendTo(menu);
 			} else {
-				promptDialog('Rename Worksheet', 'Rename', el.attr('data-name'), function(worksheet_id, el) { return function(name) { processRename(el, name, worksheet_id) }; }(worksheet_id, el));
+				$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Worksheet').on('click', function(e) {
+					el.find('.fa.archive').click();
+					closeMenu();
+				}).appendTo(menu);
 			}
-			closeMenu();
-		}).appendTo(menu);
-		$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
-			window.openSharingDialog(worksheet_id*1, 'Worksheet');
-			closeMenu();
-		}).appendTo(menu);
-		$('<div/>').html('<i class="fa fa-fw fa-history"></i>View Revisions').on('click', function(e) {
-			window.loadRevisions(worksheet_id);
-			closeMenu();
-		}).appendTo(menu);
+			if(response.rights_level >= 3) 
+				$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename').on('click', function(e) {
+					if(el.closest('.active_holder').length > 0) {
+						el.find('.name .hover').click();
+					} else {
+						promptDialog('Rename Worksheet', 'Rename', el.attr('data-name'), function(worksheet_id, el) { return function(name) { processRename(el, name, worksheet_id) }; }(worksheet_id, el));
+					}
+					closeMenu();
+				}).appendTo(menu);
+			if(response.rights_level >= 3) 
+				$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
+					window.openSharingDialog(worksheet_id*1, 'Worksheet');
+					closeMenu();
+				}).appendTo(menu);
+			if(response.rights_level >= 3) 
+				$('<div/>').html('<i class="fa fa-fw fa-history"></i>View Revisions').on('click', function(e) {
+					window.loadRevisions(worksheet_id, el.attr('data-hash'), el.attr('data-name'));
+					closeMenu();
+				}).appendTo(menu);
+			if(response.rights_level >= 4) 
+				$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Worksheet').on('click', function(e) {
+					if(confirm('Are you sure?  You are the owner of this worksheet, and it will be removed for collaborators as well.  This action cannot be undone.'))
+						window.removeWorksheet(el, worksheet_id);
+					closeMenu();
+				}).appendTo(menu);
+			else  
+				$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Worksheet').on('click', function(e) {
+					if(confirm('Are you sure?  You are not the owner of this worksheet, it will be removed from your worksheet list but will still be available to collaborators.  This action can only be undone by having worksheet admins re-invite you to the worksheet.'))
+						window.removeWorksheet(el, worksheet_id);
+					closeMenu();
+				}).appendTo(menu);
+			menu.css('top', '0px').css('left', '0px');
+			var wide = menu.width();
+			menu.css('top', (top -5) + 'px').css('left', Math.max(0, left - wide + 30) + 'px').on('mouseleave', function(e) {
+				closeMenu();
+			});
+		}
 		menu.appendTo('.base_layout').css('top', '0px').css('left', '0px');
 		var wide = menu.width();
-		menu.appendTo('.base_layout').css('top', (top -5) + 'px').css('left', Math.max(0, left - wide + 30) + 'px');
+		menu.css('top', (top -5) + 'px').css('left', Math.max(0, left - wide + 30) + 'px');
+		window.ajaxRequest('/worksheet_commands', { command: 'rights_level', data: { id: worksheet_id } }, success, fail);
 		e.preventDefault();
 		e.stopPropagation();
 	});
+	var removeWorksheet = window.removeWorksheet = function(el, worksheet_id) {
+		el.find('.name .hover').hide();
+		el.find('.name').append('<span class="fa fa-spinner fa-pulse"></span>');
+		var success = function(response) {
+			if(el.closest('.single_sheet').length > 0) {
+				// Single item on page, delete and move!
+				SwiftCalcs.pushState.navigate('/active/', { trigger: true });
+			} else {
+				// In a list
+				if(el.closest('.active_worksheet').length > 0) {
+					closeActive(el.closest('.active_worksheet'));
+					el.addClass('closing').slideUp({duration: 400, always: function() { el.remove(); } });
+				} else 
+					el.addClass('closing').slideUp({duration: 200, always: function() { el.remove(); } });
+    		var h = el.closest('.worksheet_holder_box')
+  			if(h.find('.worksheet_item').length <= 1) {
+					h.slideUp({duration: 200, always: function() { $(this).remove(); } });
+					h.prev('.date_box').slideUp({duration: 200, always: function() { $(this).remove(); } });
+  			}
+  		}
+		}
+		var fail = function(message) {
+			el.find('.name .fa.fa-spinner').remove();
+			el.find('.name .hover').show();
+		}
+		window.ajaxRequest("/projects/remove", { data_type: 'Worksheet', id: worksheet_id }, success, fail);
+		window.hidePopupOnTop();
+	}
 	var processRename = function(el, name, worksheet_id) {
 		el.find('.name .hover').hide();
 		el.find('.name').append('<span class="fa fa-spinner fa-pulse"></span>');
@@ -790,11 +868,17 @@ $(function() {
 		$(window).scrollTop(0);
 		var date_box = $('.today_box').first();
 		if(date_box.length == 0) {
-			var date_box = $('<div/>').addClass('date_box  today_box').html('Today').prependTo('.worksheet_holder').hide().slideDown({duration: 150});
+			var date_box = $('<div/>').addClass('date_box  today_box').html('Today');
+			if($('.active_path').length > 0)
+				date_box.insertAfter('.active_path');
+			else
+				date_box.prependTo('.worksheet_holder');
+			date_box.hide().slideDown({duration: 150});
 			$('<div/>').addClass('worksheet_holder_box').insertAfter(date_box).hide().slideDown({duration: 150});
 		}
 		var loading_div = $('<div/>').addClass('worksheet_loading').addClass('worksheet_item').attr('data-id', '-1').html('<i class="fa fa-spinner fa-pulse"></i><span>' + (duplicate ? 'Copying' : 'Creating') + ' Worksheet...</span>').prependTo(date_box.next()).hide().slideDown({duration: 200});
 		var success = function(response) {
+			if(window.location.href.match(/\/(worksheets|revisions)\//)) SwiftCalcs.pushState.navigate('/');
 			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + response.id).attr('data-id', response.id).attr('data-name', response.name).attr('parent-id', current_project_id).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
 			if(response.archive_id) el.addClass('archived');
 			loading_div.remove();

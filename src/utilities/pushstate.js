@@ -44,8 +44,7 @@ var PushState = P(function(_) {
   _.loadUrl = function(fragment) {
     if (!this.matchRoot()) return false;
     fragment = this.fragment = this.getFragment(fragment);
-    if(fragment.match(/worksheets\//i)) {
-      var hash_string = fragment.replace(/worksheets\/([^\/]*).*$/i,"$1");
+    if(fragment.match(/worksheets\//i) || fragment.match(/revisions\//i)) {
       window.closeActive($('.active_worksheet'));
       $('.worksheet_holder').html('');
       var box = $('<div/>').addClass('worksheet_holder_box').addClass('single_sheet').appendTo($('.worksheet_holder'));
@@ -60,41 +59,14 @@ var PushState = P(function(_) {
       var fail = function(message) {
         loading_div.html('<span>There was an error: ' + message + '</span>');
       }
-      window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: { hash_string: hash_string } }, success, fail);
-      return true;
-    } else if(fragment.match(/revisions\//i)) {
-      window.showLoadingPopup();
-      $.ajax({
-        type: "POST",
-        url: "/worksheet_commands",
-        dataType: 'json',
-        cache: false,
-        data: { command: 'get_revision', data: {hash_string: fragment.replace(/revisions\/([^\/]*).*$/i,"$1"), revision: fragment.replace(/revisions\/([^\/]*)\/([0-9]+).*$/i,"$2")} }, 
-        success: function(response) {
-          if(response.success) {
-            window.hideDialogs();
-            if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-            var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, -2, response.settings);
-            worksheet.revision_id = response.revision_id;
-            worksheet.revision_rights_level = response.rights_level;
-            worksheet.bind($('.worksheet_holder'));
-            worksheet.load(response.data);
-            window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
-            if(response.folder_id) 
-              window.setCurrentProject(response.folder_id, response.folder_url_end);
-          } else {
-            window.showFileDialog();
-            showNotice(response.message, 'red');
-          }
-        },
-        error: function(err) {
-          window.showFileDialog();
-          showNotice('Error: ' + err.responseText, 'red');
-          console.log(err);
-          //Depending on error, do we try again?
-          // TODO: Much better error handling!
-        }
-      });
+      if(fragment.match(/worksheets\//i)) {
+        var hash_string = fragment.replace(/worksheets\/([^\/]*).*$/i,"$1");
+        window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: { hash_string: hash_string } }, success, fail);
+      } else {
+        var hash_string = fragment.replace(/revisions\/([^\/]*).*$/i,"$1");
+        var revision = fragment.replace(/revisions\/([^\/]*)\/([0-9]+).*$/i,"$2");
+        window.ajaxRequest("/worksheet_commands", { command: 'get_revision', data: { hash_string: hash_string, revision: revision } }, success, fail);
+      }
       return true;
     } else if(fragment.match(/archive_projects\//i)) {
       var hash_string = fragment.replace(/archive_projects\/([a-z0-9\-]*).*$/i,"$1");

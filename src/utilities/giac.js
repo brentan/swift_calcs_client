@@ -97,10 +97,7 @@ var GiacHandler = P(function(_) {
 		if(this.errors_encountered)
 			setError('Error encountered during computation.  Please correct to continue computation.'); // BRENTAN: Add link to line number?
 		else {
-			if(this.evaluation_full[eval_id]) {
-				this.sendCommand({varList: true});
-			} else
-				setComplete();
+			setComplete();
 		}
 		//var endtime = new Date().getTime();
 		//console.log(endtime - window.start_time);
@@ -141,42 +138,6 @@ var GiacHandler = P(function(_) {
 			return textToGreek(var_name[0]);
 		else
 			return textToGreek(var_name[0]) + '_{' + textToGreek(var_name[1]) + '}';
-	}
-	_.varListCallback = function(response) {
-		this.variable_list = response.totalVarList;
-		this.object_list = response.objects;
-    var $vars = $('#variables');
-    $vars.html('');
-    var _this = this;
-    $.each(response.userVarList, function(i, varr) {
-    	var link = $('<div class="var_name"><span class="fa fa-fw fa-caret-right"></span>' + SwiftCalcs.active_worksheet.latexToHtml(varToLatex(varr)) + '</div>');
-    	link.appendTo($vars);
-    	link.on('click', function(e) {
-    		$(this).next('div.var_callback').remove();
-    		var caret = $(this).find('span.fa');
-    		if(caret.hasClass('fa-caret-right')) {
-	    		caret.removeClass('fa-caret-right').addClass('fa-caret-down');
-	    		$('<div id="var_callback_' + _this.varCallbackCounter + '" class="var_callback"><span class="fa fa-spinner fa-pulse"></span></div>').insertAfter($(this));
-	    		var last_scope = SwiftCalcs.active_worksheet.ends[R].previousScope();
-	    		if(last_scope) last_scope = last_scope.worksheet.id + '_' + last_scope.id;
-	    		else last_scope = false;
-	    		_this.sendCommand({variable: true, previous_scope: last_scope, commands: [{command: varr}], callback_id:_this.varCallbackCounter });
-	    		_this.varCallbackCounter++;
-	    	} else {
-	    		caret.removeClass('fa-caret-down').addClass('fa-caret-right');
-	    	}
-    		return false;
-    	});
-    });
-		setComplete();
-	}
-	_.variableCallback = function(response) {
-		var $el = $('#var_callback_' + response.callback_id);
-		if($el.length == 0) return;
-		if(response.results[0].success)
-			$el.html(SwiftCalcs.active_worksheet.latexToHtml(response.results[0].returned));
-		else
-			$el.html('ERROR: ' + response.results[0].returned);
 	}
 	_.current_evaluations = function() {
 		var output = [];
@@ -282,13 +243,6 @@ var loadWorker = function(giacHandler) {
     		if(Element.byId[response.callback_id]) Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
     		else setComplete();
     		break;
-    	case 'variable':
-    		response.results = cleanOutput(response.results);
-    		giacHandler.variableCallback(response);
-    		break;
-    	case 'varList':
-    		giacHandler.varListCallback(response);
-    		break;
       case 'print': 
       	console.log('giac output: ' + text);
         break;
@@ -309,7 +263,7 @@ var loadWorker = function(giacHandler) {
         	giacHandler.giac_ready = true;
         	if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.settingsToGiac(false);
 					$('.worksheet_holder').removeClass(css_prefix + 'giac_loading');
-					giac.postMessage(JSON.stringify({varList: true}));
+					setComplete();
         	return;
         }
         changeMessage('Loading Computational Library: ' + text);

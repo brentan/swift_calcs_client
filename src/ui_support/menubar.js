@@ -1,15 +1,5 @@
 $(function() {
 	
-	$('body').on('click', '#account_bar .open', function(e) { 
-		if(window.user_logged_in) {
-			window.loadFolder(); 
-			SwiftCalcs.giac.cancelEvaluations(); 
-		} else {
-			showNotice('Please login or create an account to open other documents.');
-			window.loadSigninBox();
-		}
-		return false; 
-	});
 	$('body').on('click', '#account_bar .new', function(e) { 
 		if(window.user_logged_in)
 			window.newWorksheet(); 
@@ -19,81 +9,14 @@ $(function() {
 		}
 		return false; 
 	});
-	$('body').on('click', '#account_bar .save', function(e) { 
-		if(SwiftCalcs.active_worksheet) { 
-			if(SwiftCalcs.active_worksheet.rights >= 3)
-				SwiftCalcs.active_worksheet.save(true); 
-			else if(SwiftCalcs.active_worksheet.rights == 2) {
-				if(window.user_logged_in)
-					window.newWorksheet(true);
-				else {
-					showNotice('Please login or create an account to save your changes to a copy of this document');
-					window.loadSigninBox();
-				}
-			} else if(SwiftCalcs.active_worksheet.rights == -2) 
-				window.restoreWorksheet();
-			else if((SwiftCalcs.active_worksheet.rights == -1) && !window.user_logged_in) {
-				showNotice('Please login or create an account to save this document');
-				window.loadSigninBox();
-			} else
-				showNotice('This document is view only and changes cannot be saved.', 'red');
-		} 
-		return false; 
-	});
-	$('body').on('click', '#account_bar .rename', function(e) { 
-		if(SwiftCalcs.active_worksheet) { 
-			if(SwiftCalcs.active_worksheet.rights >= 4)
-				SwiftCalcs.active_worksheet.rename(); 
-			else if((SwiftCalcs.active_worksheet.rights == -1) && !window.user_logged_in) {
-				showNotice('Please login or create an account to save this document.');
-				window.loadSigninBox();
-			} else
-				showNotice('You do not have the required permissions to rename this file.','red');
-		} 
-		return false; 
-	});
-	$('body').on('click', '#account_bar .duplicate', function(e) { 
-		if(SwiftCalcs.active_worksheet) { 
-			if((SwiftCalcs.active_worksheet.rights >= 2) || (SwiftCalcs.active_worksheet.rights <= -1)) {
-				if(window.user_logged_in)
-					window.newWorksheet(true); 
-				else {
-					showNotice('Please login or create an account to create a copy of this document');
-					window.loadSigninBox();
-				}
-			}	else
-				showNotice('You do not have the required permissions to duplicate this file.','red');
-		} 
-		return false; 
-	});
-	$('body').on('click', '#account_bar .print', function(e) { window.print(); return false; });
-	$('body').on('click', '#account_bar .delete', function(e) { 
-		var msg = 'Are you sure you want to delete this item (if you are not the owner, this item will be removed from your shared folder)?  This action cannot be undone.';
-		if(confirm(msg)) {
-			window.showLoadingOnTop();
-			$.ajax({
-	      type: "POST",
-	      url: "/folders/destroy",
-	      dataType: 'json',
-	      cache: false,
-	      data: { data_type: 'Worksheet', id: SwiftCalcs.active_worksheet.server_id }, 
-	      success: function(response) {
-	      	if(response.success) {
-	      		showNotice('Item has been removed');
-						window.loadFolder();
-	      	}	else {
-						window.hideDialogs();
-	      		showNotice(response.message, 'red');
-					}
-	      },
-	      error: function(err) {
-					window.hideDialogs();
-	      	console.log('Error: ' + err.responseText, 'red');
-					showNotice('Error: There was a server error.  We have been notified', 'red');
-	      }
-	    });
+	$('body').on('click', '#account_bar .new_project', function(e) { 
+		if(window.user_logged_in)
+			window.newProject(); 
+		else {
+			showNotice('Please login or create an account to create new documents.');
+			window.loadSigninBox();
 		}
-		return false;
+		return false; 
 	});
 
 	$('body').on('click', '#account_bar .undoLink', function(e) { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.restoreUndoPoint(); } e.preventDefault(); e.stopPropagation(); return false; });
