@@ -97,7 +97,10 @@ var GiacHandler = P(function(_) {
 		if(this.errors_encountered)
 			setError('Error encountered during computation.  Please correct to continue computation.'); // BRENTAN: Add link to line number?
 		else {
-			setComplete();
+			if(this.evaluation_full[eval_id]) {
+				this.sendCommand({varList: true});
+			} else
+				setComplete();
 		}
 		//var endtime = new Date().getTime();
 		//console.log(endtime - window.start_time);
@@ -138,6 +141,11 @@ var GiacHandler = P(function(_) {
 			return textToGreek(var_name[0]);
 		else
 			return textToGreek(var_name[0]) + '_{' + textToGreek(var_name[1]) + '}';
+	}
+	_.varListCallback = function(response) {
+		this.variable_list = response.totalVarList;
+		this.object_list = response.objects;
+		setComplete();
 	}
 	_.current_evaluations = function() {
 		var output = [];
@@ -243,6 +251,9 @@ var loadWorker = function(giacHandler) {
     		if(Element.byId[response.callback_id]) Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
     		else setComplete();
     		break;
+    	case 'varList':
+    		giacHandler.varListCallback(response);
+    		break;
       case 'print': 
       	console.log('giac output: ' + text);
         break;
@@ -263,7 +274,7 @@ var loadWorker = function(giacHandler) {
         	giacHandler.giac_ready = true;
         	if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.settingsToGiac(false);
 					$('.worksheet_holder').removeClass(css_prefix + 'giac_loading');
-					setComplete();
+					giac.postMessage(JSON.stringify({varList: true}));
         	return;
         }
         changeMessage('Loading Computational Library: ' + text);

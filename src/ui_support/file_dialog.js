@@ -420,6 +420,7 @@ $(function() {
       window.hidePopupOnTop();
   		showNotice('Project Created', 'green');
   		var found = false;
+  		$('.leftbar .left_item.projects .explain').remove();
   		$('.project_list').find('.item').each(function() {
   			if($(this).attr('data-id') == response.parent_project_id) {
   				$(response.html).appendTo($(this).children('.expand'));
@@ -432,6 +433,7 @@ $(function() {
   		});
   		if(!found) 
   			$(response.html).appendTo('.project_list');
+  		window.createProjectList();
 		};
 		var fail = function(message) {
       window.hidePopupOnTop();
@@ -943,6 +945,7 @@ $(function() {
 	var createLabelList = window.createLabelList = function() {
 		SwiftCalcs.labelList = [];
 		SwiftCalcs.labelIds = {};
+		// Label List
 		$('.leftbar .left_item.labels .item').each(function() {
 			SwiftCalcs.labelList.push({
 				id: $(this).attr('data-id'),
@@ -951,6 +954,23 @@ $(function() {
 			});
 			SwiftCalcs.labelIds[$(this).attr('data-id')*1] = true;
 		});
+	}
+	var createProjectList = window.createProjectList = function() {
+		// Project List
+		var projectListIterator = function(el) {
+			var out = el.hasClass('left_item') ? { } : {
+				id: el.attr('data-id'),
+				name: el.attr('data-name'),
+				hash: el.attr('data-hash')
+			}; 
+			var kids = [];
+			el.children('.expand').children('.item').each(function() {
+				kids.push(projectListIterator($(this)));
+			});
+			if(el.hasClass('left_item')) return kids;
+			return out;
+		}
+		SwiftCalcs.projectList = projectListIterator($('.leftbar .left_item.projects'));
 	}
 	$('body').on('click', '.label_title', function(e) {
 		var $container = $(this).closest('div.item');
@@ -979,8 +999,11 @@ $(function() {
 		e.preventDefault();
 		e.stopPropagation();
 	});
-
-
+	var resizeResults = window.resizeResults = function() {
+		var width = Math.min(842, Math.max($('.worksheet_holder_outer_box').width() - 140,300));
+		$('.worksheet_holder').width(width);
+	}
+	window.resizeResults();
 
 
 

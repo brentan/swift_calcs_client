@@ -140,10 +140,9 @@ var SwiftCalcs = {};
   }
     
   $(window).on('resize', function() {
-    if(SwiftCalcs.active_worksheet) {
-      SwiftCalcs.active_worksheet.reshapeToolbar();
-      SwiftCalcs.active_worksheet.setWidth();
-    }
+    window.resizeResults();
+    if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
+    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
   });
 
 

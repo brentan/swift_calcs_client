@@ -54,21 +54,6 @@ $(function() {
 	$('body').on('click', '#account_bar .hide_vaporware', function(e) { $(this).parent().hide(); $(this).parent().next().show(); $('body').removeClass('show_vaporware'); return false; });
 	$('body').on('click', '#account_bar .show_vaporware', function(e) { $(this).parent().hide(); $(this).parent().prev().show(); $('body').addClass('show_vaporware'); return false; });
 
-  $('body').on('click', '#account_bar .sidebar_item', function(e) {
-    $('.base_layout').removeClass('closed_sidebar');
-    $('div.sidebar div.content.selected').removeClass('selected');
-    $('div.sidebar div.content.' + $(this).attr('data-select')).addClass('selected');
-    if(SwiftCalcs.active_worksheet) {
-    	SwiftCalcs.active_worksheet.reshapeToolbar();
-			SwiftCalcs.active_worksheet.setWidth();
-		}
-		var sel = $(this).attr('data-select');
-		$('div.sidetabs li.item.selected').removeClass('selected');
-		$('div.sidetabs li.item').each(function() {
-			if($(this).attr('data-select') == sel) $(this).addClass('selected');
-		});
-    return false;
-  });
   $('body').on('focus', 'input.search_bar', function() {
   	$(this).closest('div.search_box_holder').css('border-color', '#cccccc');
   });
@@ -77,17 +62,15 @@ $(function() {
   });
   $('body').on('click', '.leftbar .top_title', function(e) { 
   	$('.base_layout').addClass('leftbar_hidden');
-    if(SwiftCalcs.active_worksheet) {
-    	SwiftCalcs.active_worksheet.reshapeToolbar();
-			SwiftCalcs.active_worksheet.setWidth();
-		}
+  	window.resizeResults();
+		if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
+    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
   });
   $('body').on('click', '.leftbar_top .top_title', function(e) { 
   	$('.base_layout').removeClass('leftbar_hidden');
-    if(SwiftCalcs.active_worksheet) {
-    	SwiftCalcs.active_worksheet.reshapeToolbar();
-			SwiftCalcs.active_worksheet.setWidth();
-		}
+  	window.resizeResults();
+		if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
+    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
   });
   $('body').on('click', '#account_bar .star_select', function(e) {
   	if($(this).hasClass('on')) {

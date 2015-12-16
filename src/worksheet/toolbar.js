@@ -49,7 +49,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		var toolbar_height = this.toolbar_holder.height();
 		var top = menu_height;
 		var bot = top + toolbar_height;
-		$('.worksheet_holder').css('padding-top', (bot + 20) + 'px');
+		$('.worksheet_holder_outer_box').css('padding-top', (bot + 20) + 'px');
 		this.toolbar_holder.css('top', top + 'px');
 		$('div.sidebar').css('top', bot + 'px');
 		$('div.leftbar').css('top', top + 'px');
@@ -59,6 +59,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	_.attachToolbar = function(el, options) {
 		if(current_toolbar_target === el) this.unblurToolbar();
 		this.detachToolbar();
+		SwiftCalcs.current_toolbar = this;
 		current_toolbar_target = el;
 		// Helper function to build the toolbar.  Parses the options
 		var buildMenu = function(element, toolbar) {
@@ -139,6 +140,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		if(add_tutorial) this.toolbar_holder.addClass('tutorial').addClass('highlight');
 		if(this.toolbar) this.toolbar.remove();
 		this.toolbar = false;
+		SwiftCalcs.current_toolbar = false;
 	}
 	_.blurToolbar = function(el) {
 		if(el && (el !== current_toolbar_target)) return;

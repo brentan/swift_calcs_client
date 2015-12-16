@@ -88,6 +88,11 @@ var plot = P(Element, function(_, super_) {
 		}
 		this.collapse();
 	}
+	_.destroy = function() {
+		if(this.plotBox)
+			this.plotBox = this.plotBox.destroy();
+		return super_.destroy.call(this);
+	}
 	_.addSpinner = function(eval_id) {
 		super_.addSpinner.call(this, eval_id);
 		if(this.plotBox)

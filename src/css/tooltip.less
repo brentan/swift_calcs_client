@@ -85,3 +85,26 @@
 	  -o-transform:      rotate(45deg);
   }
 }
+.sc_autocomplete {
+  display: block;
+  position: absolute;
+  min-width: 200px;
+  max-height: 200px;
+  overflow-y: scroll;
+  background-color: white;
+  border: 1px solid black;
+  z-index: 100;
+  ul {
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px;
+    li {
+      list-style-type: none;
+      padding: 5px 2px;
+      cursor: pointer;
+      &.selected {
+        background-color: #d7efed;
+      }
+    }
+  }
+}

@@ -173,6 +173,7 @@ var Worksheet = P(function(_) {
     // function to take content from input and push to list
     el.attr('data-list', null);
     var scanInput = function() {
+    	$box.html('').hide();
       $.each($input.val().replace(/;/g,',').split(','), function(i, v) {
         if(v.trim() == '') return; // Ignore blank guys
         $list.append($('<li class="labelInput"><span>' + v + '</span></li>')
@@ -191,24 +192,76 @@ var Worksheet = P(function(_) {
     var $container = $('<div class="labelInput-container" />').addClass('active').click(function() {
       $input.focus();
     });
+    var timeout = false;
+    $box = $('<div/>').addClass(css_prefix + 'autocomplete').css({top: 20, left: 20}).appendTo($container).hide();
     // input box listeners
-    $input.keyup(function(event) {
-      if(event.which == 188) { //188
-        // key press is enter, comma
+    $input.keydown(function(event) { if((event.which == 9) || (event.which == 38) || (event.which == 40)) { event.preventDefault(); } }).keyup(function(event) {
+      if(event.which == 188) { 
+        // comma
         $(this).val($(this).val().slice(0, -1)); // remove last space/comma from value
         scanInput();
-      }
-      if(event.which == 13) {
+      } else if(event.which == 40) {      	
+      	// Down arrow
+      	if($box.find('li.selected').length) {
+      		var next = $box.find('li.selected').next('li');
+      		if(next.length) {
+      			$box.find('li.selected').removeClass('selected');
+      			next.addClass('selected');
+      		}
+      	}
+        event.preventDefault();
+      } else if(event.which == 38) {
+      	// Up arrow
+      	if($box.find('li.selected').length) {
+      		var next = $box.find('li.selected').prev('li');
+      		if(next.length) {
+      			$box.find('li.selected').removeClass('selected');
+      			next.addClass('selected');
+      		}
+      	}
+        event.preventDefault();
+      } else if((event.which == 13) || (event.which == 9)) {
+      	// enter or tab
+      	if($box.find('li.selected').length) 
+      		$input.val($box.find('li.selected').html());
         scanInput();
         event.preventDefault();
-      }
+      } else if($(this).val().trim().length > 3) {
+      	var search = $(this).val().trim().toLowerCase();
+      	var match = [];
+      	var secondary = [];
+      	var checkAlreadyIn = function(label) {
+      		var match = false;
+      		$container.find('.labelInput span').each(function() {
+      			if(match) return;
+      			if(label.toLowerCase().trim() == $(this).html().toLowerCase().trim()) match = true;
+      		});
+      		return match;
+      	}
+      	for(var i = 0; i < SwiftCalcs.labelList.length; i++) {
+      		if(SwiftCalcs.labelList[i].name.toLowerCase().indexOf(search) === 0) {
+      			if(!checkAlreadyIn(SwiftCalcs.labelList[i].name)) match.push(SwiftCalcs.labelList[i].name)
+      		}
+      		else if(SwiftCalcs.labelList[i].name.toLowerCase().indexOf(search) > 0) {
+      			if(!checkAlreadyIn(SwiftCalcs.labelList[i].name)) secondary.push(SwiftCalcs.labelList[i].name)
+      		}
+      	}
+      	match = match.concat(secondary);
+      	if(match.length > 0) {
+      		var offset = $input.offset();
+      		var offset2 = $container.offset();
+      		$box.css({top: (offset.top  - offset2.top + $input.height()), left: (offset.left - offset2.left) }).html("<ul><li class='selected'>" + match.join("</li><li>") + "</li></ul>").show();
+      	} else $box.html('').hide();
+      } else $box.html('').hide();
     }).on("blur", function() {
       scanInput();
       $container.removeClass('focused');
       var list = [];
       $list.find('li.labelInput span').each(function() { list.push($(this).html()); });
-      _this.updateLabels(list);
+      timeout = window.setTimeout(function() { _this.updateLabels(list); timeout = false; }, 250);
+      $box.hide();
     }).on("focus", function() {
+    	if(timeout) window.clearTimeout(timeout);
       $placeholder.hide();
       $container.addClass('focused');
     });
@@ -402,6 +455,7 @@ var Worksheet = P(function(_) {
 						hash: response.labels[i].labels_hash
 					});
 					$("<div/>").addClass('item').append($("<div/>").addClass('label_title').html("<span class='fa fa-trash'></span>" + response.labels[i].name)).attr('data-id', response.labels[i].id).attr('data-name',response.labels[i].name).attr('data-hash',response.labels[i].labels_hash).appendTo($('.leftbar .left_item.labels .expand'));
+					$('.leftbar .left_item.labels .explain').remove();
 				}
 			}
 		});
