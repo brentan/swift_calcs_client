@@ -24,11 +24,12 @@ $(function() {
 		} else
 			$('.popup_dialog').css('top', 60 + 'px').css('bottom', 100 + 'px');
 	}
-	var openFileDialog = window.openFileDialog = function(hash_string, archive) {
+	var openFileDialog = window.openFileDialog = function(hash_string, archive, labels_hash) {
     if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
     $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
     data = { hash_string: hash_string };
     if(archive) data.show_archived = true;
+    if(labels_hash) data.labels_hash = labels_hash;
     if($('.star_select').hasClass('on')) data.star = true;
 		$.ajax({
       type: "POST",
@@ -60,15 +61,19 @@ $(function() {
 		alert('do in new window');
 		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 	}
-	var loadProject = window.loadProject = function(hash_string, name, archive) {
+	var loadProject = window.loadProject = function(hash_string, name, archive, labels_hash, label_name) {
 		if(hash_string && (hash_string == 'active'))
 			SwiftCalcs.pushState.navigate('/active/', {trigger: true});
 		else if(hash_string && (hash_string == 'archive'))
 			SwiftCalcs.pushState.navigate('/archive/', {trigger: true});
 		else if(hash_string && archive)
 			SwiftCalcs.pushState.navigate('/archive_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
-		else if(hash_string)
+		else if(hash_string && labels_hash) 
+			SwiftCalcs.pushState.navigate('/project_label/' + hash_string + '/' + labels_hash + '/' + encodeURIComponent(name.replace(/ /g,'_')) + '/' + encodeURIComponent(label_name.replace(/ /g,'_')), {trigger: true});
+		else if(hash_string) 
 			SwiftCalcs.pushState.navigate('/projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
+		else if(labels_hash) 
+			SwiftCalcs.pushState.navigate('/labels/' + labels_hash + '/' + encodeURIComponent(label_name.replace(/ /g,'_')), {trigger: true});
 		else if(current_project_navigable_url)
 			SwiftCalcs.pushState.navigate(current_project_navigable_url, {trigger: true});
 		else
@@ -411,42 +416,36 @@ $(function() {
 		window.showLoadingOnTop();
 		post_data = { name: name };
 		if(parent_project_id) post_data.project_id = parent_project_id;
-		$.ajax({
-      type: "POST",
-      url: "/projects/new",
-      dataType: 'json',
-      cache: false,
-      data: post_data, 
-      success: function(response) {
-      	window.hidePopupOnTop();
-      	if(response.success) {
-      		showNotice('Project Created', 'green');
-      		var found = false;
-      		$('.project_list').find('.item').each(function() {
-      			if($(this).attr('data-id') == response.parent_project_id) {
-      				$(response.html).appendTo($(this).children('.expand'));
-      				if($(this).closest('.archive').length) return;
-      				$(this).removeClass('no_arrows').removeClass('closed');
-      				$(this).children('.project_title').addClass('expandable');
-      				$(this).children('.expand').show();
-      			}
-      		});
-      		if(!found) 
-      			$(response.html).appendTo('.project_list');
-      	}	else {
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-      	window.hidePopupOnTop();
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
+		var success = function(response) {
+      window.hidePopupOnTop();
+  		showNotice('Project Created', 'green');
+  		var found = false;
+  		$('.project_list').find('.item').each(function() {
+  			if($(this).attr('data-id') == response.parent_project_id) {
+  				$(response.html).appendTo($(this).children('.expand'));
+  				if($(this).closest('.archive').length) return;
+  				$(this).removeClass('no_arrows').removeClass('closed');
+  				$(this).children('.project_title').addClass('expandable');
+  				$(this).children('.expand').show();
+  				found = true;
+  			}
+  		});
+  		if(!found) 
+  			$(response.html).appendTo('.project_list');
+		};
+		var fail = function(message) {
+      window.hidePopupOnTop();
+		}
+		window.ajaxRequest('/projects/new', post_data, success, fail);
 	}
 	$('body').on('click', '.leftbar span.fa-plus-circle', function(e) {
 		if($(this).attr('data-type') == 'project') window.newProject(null);
-		// NEW UI: create new label?
+		if($(this).attr('data-type') == 'label') {
+  		window.showPopupOnTop();
+  		$('.popup_dialog .full').html("<div class='title'>Add a new label</div><div>Labels allow you to keep track of worksheets across projects and time.  Creating a new label is easy: when viewing a worksheet, look for the labels icon <i class='fa fa-fw fa-tags'></i> at the top of the sheet and the list of labels (or the messaage 'add labels to this worksheet').  Simply click on the list of labels (or the 'add labels to this worksheet message') and begin typing the labels you want to add, seperated by commas.  All the labels you create will automatically be populated in the menubar on the left of the page.</div>");
+      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+      window.resizePopup(true);
+		}
 		e.preventDefault();
 		e.stopPropagation();
 	});
@@ -699,7 +698,7 @@ $(function() {
 	$('body').on('click', '.projects .placeholder', function(e) {
 		window.moveWorksheet($(this).closest('.active_holder').children('.worksheet_item'));
 	});
-	var moveWorksheet = window.moveWorksheet = function(el) {
+	var moveWorksheet = window.moveWorksheet = function(el, remove_after_move) {
 		var dets = el.closest('.active_holder').children('.details_span');
 		var success = function(response) {
 			window.hidePopupOnTop();
@@ -715,7 +714,7 @@ $(function() {
 		}
 		var processMove = function(project_id) {
 			dets.find('td.projects').html('<i class="fa fa-spinner fa-pulse"></i>');
-			window.ajaxRequest("/projects/move", { data_type: 'Worksheet', id: el.attr('data-id'), project_id: project_id}, success, fail);
+			window.ajaxRequest("/projects/move", { data_type: 'Worksheet', id: el.attr('data-id'), project_id: project_id, current_view: current_project_id}, success, fail);
 		}
 		moveDialog(processMove, el.attr('parent-id'));
 	}
@@ -761,7 +760,7 @@ $(function() {
 				}).appendTo(menu);
 			if(response.rights_level >= 3) 
 				$('<div/>').html('<i class="fa fa-fw fa-share"></i>Move Worksheet').on('click', function(e) {
-					window.moveWorksheet(el);
+					window.moveWorksheet(el, true);
 					closeMenu();
 				}).appendTo(menu);
 			if(archived) {
@@ -941,6 +940,47 @@ $(function() {
 		$('.new_bubble_mouseover').remove();
 		$('.new_bubble.new_project').fadeOut(150);
 	});
+	var createLabelList = window.createLabelList = function() {
+		SwiftCalcs.labelList = [];
+		SwiftCalcs.labelIds = {};
+		$('.leftbar .left_item.labels .item').each(function() {
+			SwiftCalcs.labelList.push({
+				id: $(this).attr('data-id'),
+				name: $(this).attr('data-name'),
+				hash: $(this).attr('data-hash')
+			});
+			SwiftCalcs.labelIds[$(this).attr('data-id')*1] = true;
+		});
+	}
+	$('body').on('click', '.label_title', function(e) {
+		var $container = $(this).closest('div.item');
+		if($container.closest('.project_list').length > 0) {
+			$project = $container.closest('.expand').closest('div.item').closest('.expand').closest('div.item');
+			window.loadProject($project.attr('data-hash'), $project.attr('data-name'), false, $container.attr('data-hash'), $container.attr('data-name'));
+		} else
+			window.loadProject(null, null, false, $container.attr('data-hash'), $container.attr('data-name'));
+	});
+	$('body').on('click', '.label_title .fa-trash', function(e) {
+		if(confirm('Are you sure?  Worksheets that you labeled will have the label removed.  Worksheets labeled by another user will retain the label.  This action cannot be undone.')) {
+			var $container = $(this).closest('div.item');
+			data = {id: $container.attr('data-id') } 
+			if($container.closest('.project_list').length > 0) 
+				data.project_id = $container.closest('.expand').closest('div.item').closest('.expand').closest('div.item').attr('data-id');
+			$icon = $(this);
+			$icon.removeClass('fa-trash').addClass('fa-spinner').addClass('fa-pulse');
+			var success = function(response) {
+				$container.slideUp({duration: 200, always: function() { $(this).remove(); } });
+			}
+			var fail = function() {
+				$icon.removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-trash');
+			}
+			window.ajaxRequest('/labels/delete', data, success, fail);
+		}
+		e.preventDefault();
+		e.stopPropagation();
+	});
+
+
 
 
 

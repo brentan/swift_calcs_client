@@ -82,6 +82,21 @@ var PushState = P(function(_) {
       else
         window.openFileDialog(hash_string);
       return true;
+    } else if(fragment.match(/labels\//i)) {
+      var labels_hash = fragment.replace(/labels\/([a-z0-9\-]*).*$/i,"$1");
+      if(labels_hash.length == 0)
+        window.openFileDialog('active');
+      else
+        window.openFileDialog('active', false, labels_hash);
+      return true;
+    } else if(fragment.match(/project_label\//i)) {
+      var hash_string = fragment.replace(/project_label\/([a-z0-9\-]*)\/([a-z0-9\-]*).*$/i,"$1");
+      var labels_hash = fragment.replace(/project_label\/([a-z0-9\-]*)\/([a-z0-9\-]*).*$/i,"$2");
+      if((hash_string.length == 0) || (labels_hash.length == 0))
+        window.openFileDialog('active');
+      else
+        window.openFileDialog(hash_string, false, labels_hash);
+      return true;
     } else if(fragment.match(/active/i)) {
       window.openFileDialog('active');
       return true;

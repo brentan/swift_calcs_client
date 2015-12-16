@@ -168,9 +168,10 @@ var Worksheet = P(function(_) {
     $list = $('<ul />');
     $placeholder = $('<span/>').addClass('placeholder').html('Add labels to this worksheet');
     // Input box
-    var $input = $('<input type="text"/>');
+    var $input = $('<input type="text"/>').val(el.attr('data-list'));
+    if(el.attr('data-list').trim().length > 0) $placeholder.hide();
     // function to take content from input and push to list
-
+    el.attr('data-list', null);
     var scanInput = function() {
       $.each($input.val().replace(/;/g,',').split(','), function(i, v) {
         if(v.trim() == '') return; // Ignore blank guys
@@ -187,7 +188,7 @@ var Worksheet = P(function(_) {
       $input.val('');
     }
     // container div
-    var $container = $('<div class="labelInput-container" />').click(function() {
+    var $container = $('<div class="labelInput-container" />').addClass('active').click(function() {
       $input.focus();
     });
     // input box listeners
@@ -214,6 +215,7 @@ var Worksheet = P(function(_) {
     // insert elements into DOM
     $container.append($placeholder).append($list).append($input).insertAfter(el);
     el.hide();
+    scanInput();
   }
   var rename = function(_this, name_span, e) {
   	name_span.hide();
@@ -251,7 +253,18 @@ var Worksheet = P(function(_) {
 			+ '<tr><td class="left"><i class="fa fa-history"></i></td><td class="info right"></td></tr>'
 			+ '<tr><td class="left"><i class="fa fa-cog"></i></td><td class="settings right"></td></tr>'
 			+ '</tbody></table>');
-		labelInput($('<span/>').appendTo(det_div.find('.labels')), this);
+		if(this.rights >= 3)
+			labelInput($('<span/>').attr('data-list', response.labels).appendTo(det_div.find('.labels')), this);
+		else {
+			var $list = $('<ul/>').appendTo($('<div class="labelInput-container" />').appendTo(det_div.find('.labels')));
+			var add_message = true;
+      $.each(response.labels.replace(/;/g,',').split(','), function(i, v) {
+        if(v.trim() == '') return; // Ignore blank guys
+        $list.append($('<li class="labelInput"><span>' + v + '</span></li>'));
+        	add_message = false;
+      });
+      if(add_message) $('<span/>').addClass('placeholder').html('This worksheet has no labels').insertBefore($list);
+		}
 		if(response.project_path) 
 			det_div.find('.projects').html(response.project_path);
 		else 
@@ -379,8 +392,19 @@ var Worksheet = P(function(_) {
 		});
 	}
 	_.updateLabels = function(list) {
-		console.log(list);
-		//NEW UI: Need to save labels.
+		window.silentRequest('/worksheet_commands', {command: 'update_labels', data: { id: this.server_id, labels: list } }, function(response) {
+			for(var i = 0; i < response.labels.length; i++) {
+				if(SwiftCalcs.labelIds[response.labels[i].id*1] !== true) {
+					SwiftCalcs.labelIds[response.labels[i].id*1] = true;
+					SwiftCalcs.labelList.push({
+						id: response.labels[i].id,
+						name: response.labels[i].name,
+						hash: response.labels[i].labels_hash
+					});
+					$("<div/>").addClass('item').append($("<div/>").addClass('label_title').html("<span class='fa fa-trash'></span>" + response.labels[i].name)).attr('data-id', response.labels[i].id).attr('data-name',response.labels[i].name).attr('data-hash',response.labels[i].labels_hash).appendTo($('.leftbar .left_item.labels .expand'));
+				}
+			}
+		});
 	}
   _.updateUploads = function() {
     var uploads = this.insertJQ.find('.' + css_prefix + 'uploadedData');
