@@ -175,7 +175,7 @@ var receiveMessage = function(command) {
         simplify_command = '(' + simplify_command;
       if(command.commands[ii].unit) { // If provided, this is a 2 element array.  The first is the unit in evaluatable text, the second is an HTML representation
         output.push({ success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(ufactor(' + to_send + ',' + command.commands[ii].unit[0] + '))))') });
-        if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
+        /*if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
           // Perhaps the auto-unit conversion messed this up...remove it
           // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...
           errors[ii] = null;
@@ -183,7 +183,7 @@ var receiveMessage = function(command) {
           output[ii] = { success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + '))))') };
           if(!errors[ii] && (output[ii].returned.indexOf('Incompatible units') === -1))
             warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit[1]);  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
-        } 
+        } */
       } else
         output.push({ success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + '))))') });
       // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
@@ -222,7 +222,7 @@ var testError = function(output, ii) {
     output = {success: false, returned: fix_message(output.returned.replace('GIAC_ERROR:',''))};
   else if((output.returned == '"\\,\\mathrm{undef}\\,"') || (output.returned == '"\\begin{bmatrix0}\\,\\mathrm{undef}\\,\\end{bmatrix0} "')) {
     output = {success: true, returned: ''}
-    warnings[ii].push('Undefined result');
+    warnings[ii].push('Undefined result - Check for division by zero or inconsistent units');
   } else if(output.returned.match(/,\\mathrm{undef}\\,/))
     warnings[ii].push('Result contains undefined values');
   return output;

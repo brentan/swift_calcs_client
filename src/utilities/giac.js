@@ -15,6 +15,7 @@ var GiacHandler = P(function(_) {
 		this.varCallbackCounter = 0;
 	}
 	_.registerEvaluation = function(full) {
+		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.ready_to_print = false;
 		this.evaluations.push(true);
 		this.manual_evaluation.push(!full); //We allow single line evaluations, even in manual mode
 		this.evaluation_full.push(full);
@@ -71,6 +72,7 @@ var GiacHandler = P(function(_) {
 	_.cancelEvaluations = function(el) { 
 		// User initiated abort.  Initiate the abort, let the user know the abort is happening, and if 5 seconds pass with no response, add option to force quit
 		// If el is passed, set to 'aborting' and use that to allow for full worker kill if no response occurs
+		if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) SwiftCalcs.active_worksheet.ready_to_print = true;
 		var to_cancel = this.current_evaluations();
 		for(var i = 0; i < to_cancel.length; i++)
 			this.cancelEvaluation(to_cancel[i]); 
@@ -93,6 +95,7 @@ var GiacHandler = P(function(_) {
 	}
 	_.evaluationComplete = function(eval_id) {
 		if(this.evaluations[eval_id] === false) return this;
+		if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) SwiftCalcs.active_worksheet.ready_to_print = true;
 		this.evaluations[eval_id] = false;
 		if(this.errors_encountered)
 			setError('Error encountered during computation.  Please correct to continue computation.'); // BRENTAN: Add link to line number?

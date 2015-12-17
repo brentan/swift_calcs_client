@@ -28,6 +28,7 @@ var Worksheet = P(function(_) {
 	_.uploads = "";
 	_.revision_id = 0;
 	_.loaded = false;
+	_.ready_to_print = false;
 
   var id = 0;
   function uniqueWorksheetId() { return id += 1; }

@@ -54,12 +54,6 @@ $(function() {
 	$('body').on('click', '#account_bar .hide_vaporware', function(e) { $(this).parent().hide(); $(this).parent().next().show(); $('body').removeClass('show_vaporware'); return false; });
 	$('body').on('click', '#account_bar .show_vaporware', function(e) { $(this).parent().hide(); $(this).parent().prev().show(); $('body').addClass('show_vaporware'); return false; });
 
-  $('body').on('focus', 'input.search_bar', function() {
-  	$(this).closest('div.search_box_holder').css('border-color', '#cccccc');
-  });
-  $('body').on('blur', 'input.search_bar', function() {
-  	$(this).closest('div.search_box_holder').css('border-color', '#5888a9');
-  });
   $('body').on('click', '.leftbar .top_title', function(e) { 
   	$('.base_layout').addClass('leftbar_hidden');
   	window.resizeResults();
