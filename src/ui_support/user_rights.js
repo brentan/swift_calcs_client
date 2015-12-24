@@ -1,6 +1,6 @@
 $(function() {
 
-  var emailInput = function(el) {
+  var emailInput = window.userRightsEmailInput = function(el) {
     // create ul to hold email addresses once entered
     $list = $('<ul />');
     $placeholder = $('<span/>').addClass('placeholder').html('Email addresses of people to invite');
@@ -56,7 +56,7 @@ $(function() {
     i.find("i.fa-circle-o").addClass('fa-dot-circle-o').removeClass('fa-circle-o');
     i.closest(".collapsable_item").find("input.public_rights").val(i.attr('data-type'));
   }
-  var createRightsDropdown = function(span) {
+  var createRightsDropdown = window.createUserRightsDropdown = function(span) {
     var id = span.attr('data-id');
     var sel = $('<select/>')
       .append("<option value='1'>Can view</option>")

@@ -11,6 +11,12 @@
   box-shadow: 0 0 7px #777777;
   z-index: 99;
   color: #000000;
+  position: absolute;
+  display: inline-block;
+  font-size: 11px;
+  &.high_z {
+    z-index: 4500;
+  }
   .code {
   	font-family: monospace;
   }
@@ -23,40 +29,27 @@
   	border: 1px solid #cccccc;
   	padding: 0px 1px;
   }
-}
-.sc_tooltip {
-  position: absolute;
-	display: inline-block;
-  font-size: 11px;
-  max-width: 300px;
   .code {
-  	font-size: 12px;
+    font-size: 12px;
   }
   .sc_close {
-  	font-size: 10px;
-  	font-style: italic;
-  	text-align: right;
-  	display:inline-block;
-  	float: right;
-  	cursor: pointer;
-  	&:hover {
-  		text-decoration: underline;
-  	}
+    font-size: 12px;
+    font-style: italic;
+    text-align: right;
+    display:inline-block;
+    float: right;
+    cursor: pointer;
+    color: #999999;
+    &:hover {
+      color: #000000;
+    }
   }
 }
+.sc_tooltip {
+  max-width: 300px;
+}
 .sc_help_popup {
-  position: fixed;
-	display: none;
-	border-bottom-right-radius: 0px;
-	border-bottom-left-radius: 0px;
-	border-bottom-width: 0px;
-	width:240px;
-	right:0px;
-	bottom: 0px;
-  font-size: 12px;
-  .code {
-  	font-size: 14px;
-  }
+  max-width: 450px;
 }
 .sc_arrow {
   width: 55px;
@@ -64,25 +57,32 @@
   overflow: hidden;
   position: absolute;
   &.left {
-  	left: 20px;
+    left: 20px;
   }
   &.right {
-  	right: 0px;
+    right: 0px;
   }
   margin-left: -35px;
   top: -16px;
   &:after {
-	  content: "";
-	  position: absolute;
-	  left: 20px;
-	  top: 10px;
-	  width: 25px;
-	  height: 25px;
-	  box-shadow: 0 0 7px #777777;
-	  -webkit-transform: rotate(45deg);
-	  -moz-transform:    rotate(45deg);
-	  -ms-transform:     rotate(45deg);
-	  -o-transform:      rotate(45deg);
+    content: "";
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    width: 25px;
+    height: 25px;
+    box-shadow: 0 0 7px #777777;
+    -webkit-transform: rotate(45deg);
+    -moz-transform:    rotate(45deg);
+    -ms-transform:     rotate(45deg);
+    -o-transform:      rotate(45deg);
+  }
+  &.down {
+    bottom: -16px;
+    top: auto;
+    &:after {
+      top: -20px;
+    }
   }
 }
 .sc_autocomplete {

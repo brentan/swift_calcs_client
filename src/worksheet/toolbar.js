@@ -135,9 +135,9 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	}
 	_.detachToolbar = function() {
 		current_toolbar_target = false;
-		var add_tutorial = this.toolbar_holder.hasClass('tutorial');
+		var add_tutorial = this.toolbar_holder.hasClass('screen_explanation');
 		this.toolbar_holder.removeClass().addClass('toolbar');
-		if(add_tutorial) this.toolbar_holder.addClass('tutorial').addClass('highlight');
+		if(add_tutorial) this.toolbar_holder.addClass('screen_explanation').addClass('highlight');
 		if(this.toolbar) this.toolbar.remove();
 		this.toolbar = false;
 		SwiftCalcs.current_toolbar = false;

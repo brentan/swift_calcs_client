@@ -135,7 +135,7 @@ $(function() {
         showNotice('This feature is not yet available');
         return;
       }
-      closeSidebar();
+      window.closeSidebar();
       // Handle full click events as mousedown and then mouseup
       var el = SwiftCalcs.active_worksheet.lastActive;
       var check_for_storeAsVariable = true;
@@ -218,21 +218,21 @@ $(function() {
 		}
     SwiftCalcs.active_worksheet.bindDragging(e, $(this), click_handler(_this), drag_done_handler)
 	};
-  function closeSidebar() {
+  window.closeSidebar = function() {
     $('div.sidebar').animate({width: 25}, {duration: 250, easing: 'easeOutQuad', always: function() { $('div.sidebar div.toolbox_icon').addClass('closed') }});
     $('div.sidebar_close').remove();
-    $(window).off('blur', closeSidebar);
+    $(window).off('blur', window.closeSidebar);
   }
   $('body').on('mousedown', 'div.sidebar .tool', mouseDown);
   $('body').on('click', '#account_bar .insert_menu a.tool', function(e) { var _this = $(this); click_handler(_this)(e); _this.closest('ul.insert_menu').hide(); window.setTimeout(function() { _this.closest('ul.insert_menu').css('display',''); },500); return false; });
   $('body').on('mouseover', 'div.sidebar div.toolbox_icon.closed', function(e) {
     $(this).removeClass('closed');
-    $(window).on('blur', closeSidebar);
+    $(window).on('blur', window.closeSidebar);
     $('div.sidebar').animate({width: 275}, {duration: 250, easing: 'easeOutQuad', always: function() {
       $('<div/>').addClass('sidebar_close').appendTo('.base_layout').on('mouseover', function() {
-        closeSidebar();
+        window.closeSidebar();
       }).on('dragover', function() {
-        closeSidebar();
+        window.closeSidebar();
       });
     }});
   });

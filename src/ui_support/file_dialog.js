@@ -114,46 +114,128 @@ $(function() {
 		// Assumes worksheets already sorted by date from latest to earliest
 		$('.worksheet_holder').html('');
 		$('<div/>').addClass('active_path').html(path_html).appendTo('.worksheet_holder');
-		var d = new Date();
-		d.setHours(0,0,0,0);
-		var in_box = false;
-		var box = false;
-		var index = 0;
-		var time_splits = [d, d-24*3600*1000, d-7*24*3600*1000];
-		var time_names = ['Today', 'Yesterday', 'Last Seven Days'];
-		var current_month_string = '';
-		for(var i = 0; i < worksheets.length; i++) {
-			worksheets[i].updated_at = new Date(worksheets[i].updated_at * 1000);
-			if(in_box) {
-			  if((index < time_splits.length) && (worksheets[i].updated_at < d)) in_box = false;
-				if((index >= time_splits.length) && (current_month_string != month_string(worksheets[i].updated_at))) in_box = false;
-				if(!in_box) box.appendTo('.worksheet_holder')
-			}
-			if(!in_box) {
-				if((index == 0) && (worksheets[i].updated_at >= time_splits[0])) {
-					d = time_splits[0];
-					index = 1;
-					current_month_string = 'Today';
-				} else if((index <= 1) && (worksheets[i].updated_at >= time_splits[1])) {
-					d = time_splits[1];
-					index = 2;
-					current_month_string = 'Yesterday';
-				} else if((index <= 2) && (worksheets[i].updated_at >= time_splits[2])) {
-					d = time_splits[2];
-					index = 3;
-					current_month_string = 'Last Seven Days';
-				} else {
-					index = time_splits.length;
-					current_month_string = month_string(worksheets[i].updated_at);
+		if(worksheets.length > 0) {
+			var d = new Date();
+			d.setHours(0,0,0,0);
+			var in_box = false;
+			var box = false;
+			var index = 0;
+			var time_splits = [d, d-24*3600*1000, d-7*24*3600*1000];
+			var time_names = ['Today', 'Yesterday', 'Last Seven Days'];
+			var current_month_string = '';
+			for(var i = 0; i < worksheets.length; i++) {
+				worksheets[i].updated_at = new Date(worksheets[i].updated_at * 1000);
+				if(in_box) {
+				  if((index < time_splits.length) && (worksheets[i].updated_at < d)) in_box = false;
+					if((index >= time_splits.length) && (current_month_string != month_string(worksheets[i].updated_at))) in_box = false;
+					if(!in_box) box.appendTo('.worksheet_holder')
 				}
-				$('<div/>').addClass('date_box' + (index == 1 ? ' today_box' : '')).html(current_month_string).appendTo('.worksheet_holder');
-				box = $('<div/>').addClass('worksheet_holder_box');
-				in_box = true;
+				if(!in_box) {
+					if((index == 0) && (worksheets[i].updated_at >= time_splits[0])) {
+						d = time_splits[0];
+						index = 1;
+						current_month_string = 'Today';
+					} else if((index <= 1) && (worksheets[i].updated_at >= time_splits[1])) {
+						d = time_splits[1];
+						index = 2;
+						current_month_string = 'Yesterday';
+					} else if((index <= 2) && (worksheets[i].updated_at >= time_splits[2])) {
+						d = time_splits[2];
+						index = 3;
+						current_month_string = 'Last Seven Days';
+					} else {
+						index = time_splits.length;
+						current_month_string = month_string(worksheets[i].updated_at);
+					}
+					$('<div/>').addClass('date_box' + (index == 1 ? ' today_box' : '')).html(current_month_string).appendTo('.worksheet_holder');
+					box = $('<div/>').addClass('worksheet_holder_box');
+					in_box = true;
+				}
+				var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + worksheets[i].id).attr('data-id', worksheets[i].id).attr('data-name', worksheets[i].name).attr('data-hash', worksheets[i].hash_string).attr('parent-id', worksheets[i].parent_project_id).html(worksheet_html(worksheets[i])).appendTo(box);
+				if(worksheets[i].archive_id) el.addClass('archived');
 			}
-			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + worksheets[i].id).attr('data-id', worksheets[i].id).attr('data-name', worksheets[i].name).attr('data-hash', worksheets[i].hash_string).attr('parent-id', worksheets[i].parent_project_id).html(worksheet_html(worksheets[i])).appendTo(box);
-			if(worksheets[i].archive_id) el.addClass('archived');
+			if(in_box) box.appendTo('.worksheet_holder')
+		} else {
+			var star = $('.star_select').hasClass('on');
+	    var search_term = $('div.search_bar input').val().trim().length > 0;
+    	var fragment = SwiftCalcs.pushState.fragment || '';
+	    var archive = fragment.match(/archive_projects\//i) || fragment.match(/archive/i);
+	    var project = fragment.match(/project_label\//i) || fragment.match(/archive_projects\//i) || fragment.match(/projects\//i);
+	    var label = fragment.match(/project_label\//i) || fragment.match(/labels\//i);
+	    if(!star && !search_term && !archive && !label) {
+	    	// No active sheets (or sheets in a project), give 'welcome' message here, push them to create a new sheet
+	    	var $div = $('<div/>').addClass('no_results');
+	    	if(project) {
+	    		$('<div/>').addClass('title').html('This Project is Empty').appendTo($div);
+	    		$('<div/>').addClass('explain').html('Consider loosening your search criteria:').appendTo($div);
+	    		var $ul = $('<ul/>');
+	    		$('<li/>').html('View archived sheets in this project').on('click', function(e) {
+    				var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1");
+      			var name = fragment.replace(/projects\/([a-z0-9\-]*)\/(.*)$/i,"$2");
+	    			window.loadProject(hash_string, name, true);
+		    	}).appendTo($ul);
+		    	$('<li/>').html('View all active sheets, not just sheets in this project').on('click', function(e) {
+		    		window.loadProject('active');
+		    	}).appendTo($ul);
+		    	$ul.appendTo($div);
+	    	} else {
+	    		$('.active_path').hide();
+	    		$('<div/>').addClass('title').html('Welcome to Swift Calcs').appendTo($div);
+	    		$('<div/>').addClass('explain').html('You\'re one step away from starting your first calculation.  Click the red <strong>New Sheet</strong> icon in the bottom right to get started.').appendTo($div);
+	    	}
+	    	$('<div/>').addClass('new_sheet').html('Click the <strong>New Sheet</strong> button to get started').appendTo($div);
+	    	$('<div/>').addClass('new_sheet_arrow').appendTo($div);
+	    } else {
+	    	var $div = $('<div/>').addClass('no_results');
+	    	$('<div/>').addClass('title').html('No Worksheets Found').appendTo($div);
+	    	$('<div/>').addClass('explain').html('Consider loosening your search criteria:').appendTo($div);
+	    	var $ul = $('<ul/>')
+	    	if(star) $('<li/>').html('Include non-starred worksheets in your results').on('click', function(e) {
+		    		$('.star_select').removeClass('on');
+		    		SwiftCalcs.pushState.loadUrl();
+		    	}).appendTo($ul);
+	    	if(search_term) $('<li/>').html('Remove your search term (' + $('div.search_bar input').val().trim() + ')').on('click', function(e) {
+		    		$('div.search_bar input').val('');
+		    		SwiftCalcs.pushState.loadUrl();
+		    	}).appendTo($ul);
+	    	if(archive) $('<li/>').html('Search in active sheets instead of in archived sheets').on('click', function(e) {
+		    		if(project) {
+      				var hash_string = fragment.replace(/archive_projects\/([a-z0-9\-]*).*$/i,"$1");
+      				var name = fragment.replace(/archive_projects\/([a-z0-9\-]*)\/(.*)$/i,"$2");
+		    			window.loadProject(hash_string, name);
+		    		}	else
+		    			window.loadProject('active');
+		    	}).appendTo($ul);
+		    else if(!label) $('<li/>').html('Search in archived sheets instead of in active sheets').on('click', function(e) {
+		    		if(project) {
+      				var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1");
+      				var name = fragment.replace(/projects\/([a-z0-9\-]*)\/(.*)$/i,"$2");
+		    			window.loadProject(hash_string, name, true);
+		    		}	else
+		    			window.loadProject('archive');
+		    	}).appendTo($ul);
+		    if(project) $('<li/>').html('Search all sheets, not just in this project').on('click', function(e) {
+		    		if(label) {
+      				var labels_hash = fragment.replace(/project_label\/([a-z0-9\-]*)\/([a-z0-9\-]*).*$/i,"$2");
+		    			window.loadProject('active', '', false, labels_hash, '');
+		    		}	else if(archive)
+		    			window.loadProject('archive');
+		    		else
+		    			window.loadProject('active');
+		    	}).appendTo($ul);
+		    if(label) $('<li/>').html('Search all sheets, not just with this label').on('click', function(e) {
+		    		if(project) {
+      				var hash_string = fragment.replace(/project_label\/([a-z0-9\-]*)\/([a-z0-9\-]*).*$/i,"$1");
+		    			window.loadProject(hash_string, '', false);
+		    		}	else if(archive)
+		    			window.loadProject('archive');
+		    		else
+		    			window.loadProject('active');
+		    	}).appendTo($ul);
+	    	$ul.appendTo($div);
+	    }
+	    $div.appendTo('.worksheet_holder')
 		}
-		if(in_box) box.appendTo('.worksheet_holder')
 	}
 	var addStar = window.addStar = function(data_id) {
 		toggleStar(data_id, true);
@@ -424,9 +506,54 @@ $(function() {
       }
     });
 	}
-	var promptDialog = function(prompt, button_text, suggested_name, callbackFunction) {
+	var promptDialog = function(prompt, button_text, suggested_name, callbackFunction, invite_dialog) {
     window.showPopupOnTop();
     var el = $('.popup_dialog .full').html("<div class='title'>" + prompt + "</div><div class='input'><input type=text></div>");
+    if(invite_dialog) {
+			$("<div/>").html("<div style='margin-top:10px;' class='title'><i class='fa fa-fw fa-user-plus'></i>Add Collaborators</div><div><table border=0><tbody><tr><td><span class='email_input'></span></td><td style='width:1px;' class='invite_rights'><span class='rights_select' data-val='1'></span></td></tr></tbody></table><span class='checkbox notify' data-val='1'><i class='fa fa-fw fa-check-square-o'></i>Notify Users by Email</span> - <a href='' class='add_message'>Add Message</a><div class='add_message' style='display:none;'><textarea class='add_message'></textarea></div></div>").appendTo(el);
+      el.find('span.rights_select').each(function() {
+        window.createUserRightsDropdown($(this));
+      });
+      el.find('span.email_input').each(function() {
+        window.userRightsEmailInput($(this));
+      });
+      el.find('.checkbox').on('click', function(e) {
+        var box = $(this).children('i.fa');
+        if(box.hasClass('fa-check-square-o')) {
+          box.removeClass('fa-check-square-o').addClass('fa-square-o');
+          $(this).attr('data-val', '0');
+        } else {
+          box.removeClass('fa-square-o').addClass('fa-check-square-o');
+          $(this).attr('data-val', '1');
+        }
+      });
+      el.find('a.add_message').on('click', function(e) {
+        var box = el.find('div.add_message');
+        if(box.hasClass('shown')) {
+          box.removeClass('shown');
+          box.hide();
+          $(this).html('Add Message');
+        } else {
+          box.addClass('shown');
+          box.show();
+          $(this).html('Discard Message');
+        }
+        box.find('textarea').val('');
+        e.preventDefault();
+        return false;
+      });
+      // Autogrow the textarea
+      el.find('textarea').on('paste input', function () {
+        if ($(this).outerHeight() > this.scrollHeight)
+          $(this).height(60)
+        var height = $(this).height();
+        while ($(this).outerHeight() < this.scrollHeight) {
+          $(this).height(height + 5);
+          height += 5;
+        }
+        $(this).height(height + 5);
+      });
+    }
     // Create the buttons at the bottom
     buttons = $('.popup_dialog .bottom_links').html('');
     buttons.append('<button class="submit">' + button_text + '</button>');
@@ -436,18 +563,31 @@ $(function() {
       var name = el.find('.input input').val();
       if(name.trim() == '') return showNotice('No name provided', 'red');
       window.showLoadingOnTop();
-      callbackFunction(name);
+      if(invite_dialog) {
+		    // New invited users
+		    var data = {};
+		    data.invite_emails = [];
+		    el.find('.emailInput').each(function() {
+		      if($(this).hasClass('invalid')) return;
+		      data.invite_emails.push($(this).children('span').html());
+		    });
+		    data.invite_rights = el.find('.invite_rights select').val()*1;
+		    data.invite_notify = el.find('.checkbox.notify').attr('data-val')*1;
+		    data.invite_message = el.find('textarea.add_message').val();
+      	callbackFunction(name, data);
+      } else
+      	callbackFunction(name);
     });
-    resizePopup(true);
-    el.find('input').focus();
+    resizePopup(invite_dialog ? false : true);
+    el.find('.input input').focus();
 	}
 	var newProject = window.newProject = function(parent_project_id) {
 		if(typeof parent_project_id === 'undefined') parent_project_id = current_project_id;
-		promptDialog('Name your new project', 'Create', '', function(parent_project_id) { return function(name) { processNewProject(name, parent_project_id) }; }(parent_project_id));
+		promptDialog('Name your new project', 'Create', '', function(parent_project_id) { return function(name, data) { processNewProject(name, data, parent_project_id) }; }(parent_project_id), true);
 	}
-	var processNewProject = function(name, parent_project_id) {
+	var processNewProject = function(name, data, parent_project_id) {
 		window.showLoadingOnTop();
-		post_data = { name: name };
+		post_data = { name: name, rights: data };
 		if(parent_project_id) post_data.project_id = parent_project_id;
 		var success = function(response) {
       window.hidePopupOnTop();
@@ -467,6 +607,7 @@ $(function() {
   		if(!found) 
   			$(response.html).appendTo('.project_list');
   		window.createProjectList();
+  		SwiftCalcs.pushState.navigate(response.url, {trigger: true});
 		};
 		var fail = function(message) {
       window.hidePopupOnTop();
@@ -691,6 +832,7 @@ $(function() {
 	}
 	$('body').on('click', '.worksheet_item', function(e) {
 		if($(this).hasClass('worksheet_loading')) return;
+		if($(this).hasClass('screen_explanation')) return;
 		if($(this).closest('.active_worksheet').length) 
 			closeActive($(this).closest('.active_worksheet')); 
 		else {
@@ -714,8 +856,9 @@ $(function() {
       	el.removeClass('change_name');
       	el.find('.name .hover').click();
       	el.find('.name_change input').select();
+      	window.setTimeout( function() { window.loadNextScreenExplanation(2); }, 250);
       } else
-    		window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); });
+    		window.setTimeout(function() { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); } });
       if(response.folder_id) 
         window.setCurrentProject(response.folder_id, response.folder_url_end);
 		}
@@ -732,7 +875,7 @@ $(function() {
 		var archive = $(this).closest('.archived').length > 0;
 		window.loadProject($(this).attr('data-hash_string'), $(this).attr('data-name'), archive);
 	});
-	$('body').on('click', '.projects .placeholder', function(e) {
+	$('body').on('click', 'td.info .placeholder', function(e) {
 		window.moveWorksheet($(this).closest('.active_holder').children('.worksheet_item'));
 	});
 	var moveWorksheet = window.moveWorksheet = function(el, remove_after_move) {
@@ -898,6 +1041,8 @@ $(function() {
 		window.hidePopupOnTop();
 	}
 	var newWorksheet = window.newWorksheet = function(duplicate, worksheet_id, revision_id) {
+		$('.no_results').remove();
+		window.closeScreenExplanation();
 		closeActive($('.active_worksheet'));
 		var name = "";
 		post_data = {name: name, duplicate: (duplicate ? worksheet_id : null), revision: (duplicate ? revision_id : null), project_id: current_project_id };

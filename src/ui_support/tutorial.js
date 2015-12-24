@@ -2,7 +2,6 @@ $(function() {
 	// Screen explanation will highlight various sections of the screen and show explanatory text
 
 	var load_whiteout = function() {
-		$('.whiteout').remove();
 		$('<div/>').addClass('whiteout').addClass('screen_explanation').appendTo($('body')).on('click', function(e) {
 			e.preventDefault();
 			e.stopPropagation();
@@ -21,163 +20,89 @@ $(function() {
 		$(el).addClass('screen_explanation').addClass('highlight');
 	}
 	var setContent = function(html, css, clear) {
-		if(clear) {
-			$('.screen_explanation.content').remove();
-			$('.screen_explanation.highlight').removeClass('screen_explanation').removeClass('highlight').removeClass('show_file');
-		}
+		if(clear) window.closeScreenExplanation(true);
 		html = html.replace(/\[next=([0-9]+)\]/g, "<div><a class='next button' data-next='$1'>Continue</a></div>");
 		html = html.replace(/\[fa=([a-z]+)\]/g, "<i class='fa fa-chevron-$1'></i>");
+		html = html.replace(/\{([^\{\}]*)\}/g, "<kbd>$1</kbd>");
 		html = html.replace(/\[([^\[\]]*)\]/g, "<div class='title'>$1</div>");
-		$('<div/>').addClass('content').addClass('screen_explanation').html(html).css(css).appendTo($('body')).find('a.next.button').on('click', function(e) {
+		$div = $('<div/>').addClass('content').addClass('screen_explanation').html(html).css(css).appendTo($('body'));
+		$div.find('a.next.button').on('click', function(e) {
 			loadStep($(this).attr('data-next')*1);
 			e.preventDefault();
 			return false;
 		});
+		return $div;
 	}
+	window.ScreenExplanationStep = 0;
 	var loadStep = function(step) {
+		if(step == 0) { step = 1; window.ScreenExplanationStep = 1}
+		if(step != window.ScreenExplanationStep) return;
+		window.ScreenExplanationStep = step + 1;
 		switch(step) {
 			case 1:
-				load_whiteout();
+				$('div.no_results').hide();
+				$('div.new_sheet').hide();
+				$('.whiteout').remove();
 				load_blackout();
-				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">You\'re eager to get started.  We\'re eager too!  We just want to introduce ourselves and show you around.<BR><BR>Swift Calcs is a <i>Beta</i> product.  We\'re counting on <i>you</i> to tell us what comes next.  Let us know what features we should add, or if you encounter any bugs.</div><BR>[next=2]',{top: '150px', left: '0px', right: '0px', 'text-align':'center'},true);
-				$('.screen_explanation.content a.next.button').html('Let\'s Show You the Ropes!');
+				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">You\'re moments away from performing quick, easy, human-readable calculations!<BR><BR>We rely on a proven, open-source mathematics engine, but Swift Calcs is still a <i>Beta</i> product.<BR>Help us get better: report bugs or suggest features by clicking <span style="display:inline-block;width:34px;height:30px;padding-top:4px;border-radius:17px;font-weight:bold;text-align:center;background-color:#386889"><i class="fa fa-question" style="font-size:22px;"></i></span> at the top right of any page.</div>',{top: '100px', left: '0px', right: '0px', 'text-align':'center'},true);
+				setContent('[fa=right]',{right: '110px',bottom:'25px'});
+				setContent('<div style="border:3px solid white;border-right-width:0px;padding:5px 20px 5px 5px;">Click the <i>New Worksheet</i> button to get started</div>',{right: '153px',bottom:'45px'});
+				highlight('.new_bubble.new_worksheet');
 				break;
-			/*case 5:
-				setContent('<table border=0><tbody><tr><td>[It\'s Alive!]Swift Calcs computes your document as your type.  Check the status bar for information about the current computation, including computation progress or errors.</td><td valign=bottom>[next=' + (step+1) + ']</td></tr></tbody></table>',{left: '145px', bottom: '35px', 'text-align':'left', 'max-width':'750px'}, true);
-				setContent('[fa=down]',{left: '50px',bottom:'35px'});
-				highlight('div.status_bar');
-				break;*/
-			/*case 8:
-				setContent('[Keep in Touch]We want to hear from you!  Report bugs or request features using the <i>Feedback</i> box on every page.[next=' + (step+1) + ']',{left: '140px', top: '335px', 'text-align':'left', 'max-width':'550px'}, true);
-				setContent('[fa=left]',{left: '60px',top:'335px'});
-				highlight('div.feedback_link');
-				break;*/
-			case 4:
-				setContent('[It\'s Cloudy Out]All your files are in the cloud, accessible anywhere.  Create a new worksheet or open previous worksheets from anywhere with an internet connection.  [next=' + (step+1) + ']',{left: '190px', top: '210px', 'text-align':'left', 'max-width':'400px'}, true);
-				setContent('[fa=left]',{left: '190px',top:'115px'});
-				if($(window).width() > 930) {
-					setContent('[Learn to Share]Click the share worksheet button to open your document up to collaborators or the world.  Choose who can view, who can edit, and who can invite others.',{right: '70px', top: '132px', 'text-align':'right', 'max-width':'250px'});
-					setContent('[fa=up]',{right: '70px',top:'55px'});
-				}
-				highlight('div#menu_bar');
-				$('div#menu_bar').addClass('show_file');
-				break;
-			/*case 2:
-				setContent('[Let\'s Take It from the Top]Your Worksheet name is shown at the top of the page.  Click the name to change it.  [next=' + (step+1) + ']',{left: '80px', top: '112px', 'text-align':'left', 'max-width':'550px'}, true);
-				setContent('[fa=up]',{left: '80px',top:'35px'});
-				highlight('div#account_bar');
-				break;*/
-			/*case 4:
-				setContent('[Add a Wingman]Click the share worksheet button to open your document up to collaborators or the world.  Choose who can view, who can edit, and who can invite others.[next=' + (step+1) + ']',{right: '70px', top: '132px', 'text-align':'right', 'max-width':'550px'}, true);
-				setContent('[fa=up]',{right: '70px',top:'55px'});
-				highlight('div#menu_bar');
-				break;*/
 			case 2:
-				var height = $('div.toolbar').height();
-				setContent('[Enter Math Naturally]In math mode, the toolbar holds helpers to insert various mathematical commands.  In text mode, use the toolbar to format your text.  The toolbar changes its options depending on the input mode.[next=' + (step+1) + ']',{left: '100px', top: (160 + height) + 'px', 'text-align':'left', 'max-width':'500px'}, true);
-				setContent('[fa=up]',{left: '100px',top: (70 + height) + 'px'});
+				load_blackout();
+				var loc = $('.active_holder .worksheet_item').offset();
+				setContent('[Name your Worksheet]No more "Do Not Erase!" in the corner of the whiteboard.  A descriptive name helps you find it later when you need it again.<div style="font-size:11px">Enter a new name and press Enter to continue</div>', {left: (loc.left + 120) + 'px', top: (75 + loc.top) + 'px', 'text-align':'left', 'max-width':'600px'}, true);
+				setContent('[fa=up]',{left: (loc.left + 10) + 'px',top: (loc.top + 55) + 'px'});
+				highlight('.active_holder .worksheet_item');
+				break;
+			case 3:
+				load_blackout();
+				var examples = {
+					"Calculate with Units": "{2}{4} {v}{o}{l}{t} {*} {7} {a}{m}{p} {Space} {Enter}",
+					"Store and Retrieve Variables": "{x} {=} {4} {^} {2}{.}{2} {Enter}<BR>{x}{/}{3}{.}{5}{Enter}",
+					"Define and Utilize Functions": "{A}{_}{c}{(} {r} {)} {=} {p}{i} {*} {r} {^} {2} {Enter}<BR>{A}{_}{c}{(} {2}{0}{.}{2} {c}{m} {)} {Enter}"
+				};
+				var commands = [];
+				$.each(examples, function(k, v) { commands.push(k + "</td><td>" + v.replace(/ /g,'<span class="spacer"></span>')); });
+				$div = setContent('<div style="text-align:right;">[next=4]</div><div>[Sample Commands]<table class="help_table"><tbody><tr><td style="width:250px;">' + commands.join("</td></tr><tr><td>") + '</td></tr></tbody></table></div>', {'text-align':'left'}, true);
+				$div.detach().insertAfter('.active_holder').css({position: 'relative', margin: '10px 0px 0px 0px;'});
+				$div = setContent('<table><tbody><tr><td valign=top style="vertical-align:bottom;"><i class="fa fa-chevron-down"></i></td><td style="padding-left:20px;">[Get Calculating]Enter commands and get answers.  Swift Calcs is designed to make equation entry fast and simple.  Need inspiration?  Look to the sample commands below.</td></tr></tbody></table>', {'text-align':'left'});
+				$div.detach().insertBefore('.active_holder .content').css({position: 'relative', height: '0px', top: '-110px', color: 'white'});
+				setContent('<div style="background-color: #184869;height:' + (40 + $('div.toolbar').height()) + 'px;">&nbsp;</div>', {left: '0px', right: '0px', top: '0px'});
+				setContent('<i class="fa fa-chevron-down" style="font-size:26px;margin-right:10px;"></i>Use the toolbar to insert special characters or mathematical commands',{left: '230px',top: '5px'});
+				$('.active_holder .content').addClass('screen_explanation_content');
 				highlight('div.toolbar');
-				break;
-			case 3:
-				setContent('[Spice Up your Worksheet]Add text, plots, videos, solvers, and more to your Worksheet.  Click an item or click and drag it onto your document to use.[next=' + (step+1) + ']',{right: '360px', top: '140px', 'text-align':'right', 'max-width':'500px'}, true);
-				setContent('[fa=right]',{right: '280px',top: '160px'});
-				highlight('div.sidebar');
-				setContent('[It\'s Alive!]Swift Calcs computes your document as your type.  Check the status bar for information about the current computation, including computation progress or errors.',{left: '145px', bottom: '35px', 'text-align':'left', 'max-width':'750px'});
-				setContent('[fa=down]',{left: '50px',bottom:'35px'});
+				highlight('td.left div.logo');
 				highlight('div.status_bar');
-				break;
-			case 5:
-				setContent('[Prepare to Jump]<div style="max-width:530px;margin: 0px auto;">Thanks for letting us show you around.  You can always find more tips and hints from the <i>help</i> menu.<BR><BR>You\'re ready...</div>[next=' + (step + 1) + ']',{top: '150px', left: '0px', right: '0px', 'text-align':'center'},true);
-				$('.screen_explanation.content a.next.button').html('Let\'s Jump In!');
-				break;
-			case 6:
-				$('.screen_explanation.highlight').removeClass('screen_explanation').removeClass('highlight');
-				$('.screen_explanation').remove();
-				if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.ends[-1].focus(-1);
-				if(window.location.href.match(/\/worksheets\/new[\s\/?]*$/) || window.loadTutorialAfterScreen) window.loadTutorial();
-				break;
-		}
-	}
-	window.loadScreenExplanation = function() { loadStep(1); }
-});
-$(function() {
-	// tutorial will load over bottom portion of screen and show the user how to create a basic document
-	var blackout = function(html, gif) {
-		html = html.replace(/<a ([^<>]*)>/g, "<a href='#' class='button $1'>");
-		html = html.replace(/\[next\]/g, "<div><a class='next button'>Continue</a></div>");
-		html = html.replace(/\[([^\[\]]*)\]/g, "<div class='title'>$1</div>");
-		html = html.replace(/\{([^\{\}]*)\}/g, "<kbd>$1</kbd>");
-		html = html.replace(/\(\(([^\(\)]*)\)\)/g, "<div class='explain'>$1</div>");
-		html = html.replace(/\n/g, "<br/>");
-		if(gif) 
-			html = "<table border=0 width='100%'><tbody><tr><td>" + html + "</td><td style='width:1px;border-left:1px solid #bbbbbb;padding: 2px;'><img src='" + window.tutorial_images[gif] + "'></td></tr></tbody></table>";
-		if($(".worksheet_holder").hasClass('tutorial')) {
-			$('.tutorial .content').html(html).width(Math.max(300, $('.sc_element_container').width() - 100));
-		} else {
-			$(".worksheet_holder").addClass('tutorial');
-			var tutorial = $('<div/>').addClass('tutorial').addClass('help').appendTo($('body'));
-			var content = $('<div/>').addClass('content').html(html).appendTo(tutorial);
-			window.setTimeout(function() {
-				$('<div/>').addClass('close').addClass('fa').addClass('fa-times-circle-o').prependTo(tutorial).on('click', function() { closeTutorial(); });
-				$('<div/>').addClass('blackout_gradient').prependTo(tutorial);
-				$('<div/>').addClass('blackout').prependTo(tutorial);
-				content.width(Math.max(300, $('.sc_element_container').width() - 100)).slideDown({duration: 450});
-			},750);
-		}
-		$('.tutorial .content').find('a.next').on('click', function(e) {
-			window.swift_calcs_tutorial();
-			e.preventDefault();
-			return false;
-		});
-	}
-	var closeTutorial = function() {
-		$(".worksheet_holder").removeClass('tutorial');
-		$(".tutorial .content").slideUp({duration: 300, always: function() { $(".tutorial").remove(); }});
-		window.desired_tutorial_output = false;
-	}
-	var current_step = 1;
-	window.desired_tutorial_output = false;
-	window.swift_calcs_tutorial = function(step) {
-		if(step) current_step = step;
-		else { current_step++; step = current_step; }
-		switch(step) {
-			case 1:
-				blackout("[Need Some Ideas?]Looking to create your first document or see what Swift Calcs can do?<div class='button_fixed_width'><a next>Walk through a simple example</a>\n<a grey>View the full list of examples</a></div>");
-				$(".tutorial .content").find('a.grey').on('click', function() { window.loadToPopup('/examples/list',{}); closeTutorial(); return false; });
-				$('<div><a href="#" class="direct_link">No thanks, I got this</a></div>').appendTo($(".button_fixed_width")).find('a').on('click', function() { closeTutorial(); return false; });
-				break;
-			case 2:
-				blackout("[Let's Get Started]We will solve a simple problem: The Pythagorean Theorem.  Start by defining the first leg of the triangle:\n{a}{=}{4}{f}{t}{enter}[next]",2);
-				SwiftCalcs.active_worksheet.ends[1].focus(1);
-				window.desired_tutorial_output = 'a := 4*(_ft)';
-				break;
-			case 3:
-				blackout("[Moving Right Along]And the second leg:\n{b}{=}{1}{2}{0}{c}{m}{enter}[next]",3);
-				SwiftCalcs.active_worksheet.ends[1].focus(1);
-				window.desired_tutorial_output = 'b := 120*(_cm)';
+				$('.next.button').html('Finish the Tutorial');
 				break;
 			case 4:
-				blackout("[Drumroll Please]Time to calculate the hypotenuse:\n{s}{q}{r}{t}{(}{a}{^}{2}{space}{+}{b}{^}{2}{enter}[next]",4);
-				SwiftCalcs.active_worksheet.ends[1].focus(1);
-				window.desired_tutorial_output = ' sqrt(a^(2)+b^(2))';
+				load_blackout();
+				load_whiteout();
+				setContent('[We\'re Just Getting Warmed Up]Use the expandable toolbox on the screen\'s right edge to add text, plots, videos, solvers, and more to your Worksheet.<BR><BR>[Ready to Jump In?]We\'ve just scratched the surface of the power and flexibility of Swift Calcs.  Now it\'s your turn to dive in.<BR>[next=5]',{right: '360px', top: '100px', 'text-align':'right', 'max-width':'500px'}, true);
+				setContent('[fa=right]',{right: '280px',top: '120px'});
+				highlight('div.sidebar');
+				window.setTimeout(function() { $('div.sidebar').animate({width: 275}, {duration: 450, easing: 'easeOutQuad'}); }, 250);
+				$('.next.button').html('Close Tutorial');
 				break;
 			case 5:
-				if(($('.sc_sign_in').length == 0) && !window.shown_signin) {
-					window.shown_signin = true;
-					window.setTimeout(function() { SwiftCalcs.elements['signin_block']().insertAfter(SwiftCalcs.active_worksheet.ends[1]).show(450); }, 1000);
-				}
-				blackout("[You're Just Scratching the Surface]We've got you started, and there is much more under the hood.  Check out our example worksheets and learn about defining functions, adding text, creating plots, importing data, and more.  Or head out on your own and explore all there is on offer. <div class='button_fixed_width'><a tut>View example worksheets</a>\n<a grey next>Close the tutorial</a></div>");
-				$(".tutorial .content").find('a.tut').on('click', function() { window.loadToPopup('/examples/list',{}); closeTutorial(); return false; });
-				SwiftCalcs.active_worksheet.ends[1].focus(1);
-				break;
-			case 6:
-				closeTutorial();
-				SwiftCalcs.active_worksheet.ends[1].focus(1);
+				window.closeScreenExplanation();
+				window.setTimeout(function() { SwiftCalcs.active_worksheet.ends[1].focus(1); window.closeSidebar(); });
+				window.setTimeout(function() { SwiftCalcs.createTooltip("<<Help is Always Here>>\nRemember, if you run in to trouble or need a hint, click this icon and send us a note.", $('nav.accounts li.icon.help'), $('nav.accounts li.icon.help i'), true)}, 1000);
 				break;
 		}
 	}
-	window.loadTutorial = function() { 
-		window.swift_calcs_tutorial(1);
-	};
-	$('body').on('click', '#account_bar .load_tutorial', function(e) { window.loadScreenExplanation(); window.loadTutorialAfterScreen = true; return false; });
+	window.closeScreenExplanation = function(dont_remove_blackout) { 
+		$('.screen_explanation.highlight').removeClass('screen_explanation').removeClass('highlight');
+		$('.screen_explanation_content').removeClass('screen_explanation_content');
+		if(dont_remove_blackout === true) {
+			$('.screen_explanation.content').remove();
+			return;
+		}
+		$('.screen_explanation').remove(); 
+	}
+	window.loadNextScreenExplanation = function(step) { loadStep(step); }
+	window.loadTutorial = function() { loadStep(0); };
+	$('body').on('click', '#account_bar .load_tutorial', function(e) { window.loadTutorial(); return false; });
 });

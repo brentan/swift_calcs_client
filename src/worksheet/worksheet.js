@@ -282,6 +282,8 @@ var Worksheet = P(function(_) {
   		el.closest('span').prev('span').show().children('span').html(el.val());
   		el.closest('span').remove();
   		window.setTimeout(function() { _this.ends[-1].focus(-1); });
+  		window.closeScreenExplanation();
+  		window.setTimeout(function() { window.loadNextScreenExplanation(3); }, 300);
   	}
   	input_div.children('input').val(_this.name).on('blur', function(e) {
   		setName($(this));
@@ -302,11 +304,10 @@ var Worksheet = P(function(_) {
 		// Load the details section
 		var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody>'
 			+ '<tr><td class="left"><i class="fa fa-users"></i></td><td class="collaborators right"></td></tr>'
-			+ '<tr><td class="left"><i class="fa fa-folder-open"></i></td><td class="projects right"></td></tr>'
 			+ '<tr><td class="left"><i class="fa fa-tags"></i></td><td class="labels right"></td></tr>'
-			+ '<tr><td class="left"><i class="fa fa-history"></i></td><td class="info right"></td></tr>'
-			+ '<tr><td class="left"><i class="fa fa-cog"></i></td><td class="settings right"></td></tr>'
+			+ '<tr><td class="left"><i class="fa fa-info-circle"></i></td><td class="info right"></td></tr>'
 			+ '</tbody></table>');
+		// Labels:
 		if(this.rights >= 3)
 			labelInput($('<span/>').attr('data-list', response.labels).appendTo(det_div.find('.labels')), this);
 		else {
@@ -319,17 +320,21 @@ var Worksheet = P(function(_) {
       });
       if(add_message) $('<span/>').addClass('placeholder').html('This worksheet has no labels').insertBefore($list);
 		}
+		// Project
 		if(response.project_path) 
-			det_div.find('.projects').html(response.project_path);
+			det_div.find('td.info').append($('<div/>').html('Project: ' + response.project_path));
 		else 
-			det_div.find('.projects').html('<div class="placeholder">Worksheet is not part of a project</div>').closest('tr').hide();
-		det_div.find('.info').html(response.update_time);
-		det_div.insertBefore(this.jQ).slideDown({duration: 200});
-
+			det_div.find('td.info').append($('<div/>').addClass('placeholder').html('No project'));
+		det_div.find('td.info').append($('<div/>').addClass('break').html('-'));
+		det_div.find('td.info').append($('<div/>').html(response.update_time));
+		det_div.find('td.info').append($('<div/>').addClass('break').html('-'));
+		// Collaborators
 		det_div.find('.collaborators').html(response.collaborators);
-		$('<div/>').addClass('message').html(this.setSettingsText()).appendTo(det_div.find('td.settings')).on('click', function(_this) { return function(e) {
+		// Settings
+		$('<div/>').addClass('settings').html(this.setSettingsText()).appendTo(det_div.find('td.info')).on('click', function(_this) { return function(e) {
 			_this.loadSettingsPane();
 		}; }(this));
+		det_div.insertBefore(this.jQ).slideDown({duration: 200});
 		var name_span = this.jQ.closest('.active_holder').find('.worksheet_item span.name');
 		if(this.rights >= 3) 
 			name_span.addClass('change').children('span').on('click', function(_this, name_span) { return function(e) { rename(_this, name_span, e); }; }(this, name_span));

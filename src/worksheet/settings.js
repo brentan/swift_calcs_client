@@ -8,13 +8,13 @@ Worksheet.open(function(_) {
 		$('.popup_dialog .bottom_links button.submit').show();
 	}
 	_.setSettingsText = function() {
-		var out = "Angle mode: ";
-		out += this.settings.angle == 'rad' ? 'Radians' : 'Degrees';
-		out += " - Complex Mode: ";
-		out += this.settings.complex == 'on' ? 'On' : 'Off';
-		out += " - Digits: ";
+		var out = "";
+		out += this.settings.angle == 'rad' ? 'Rad' : 'Deg';
+		out += ", ";
+		out += this.settings.complex == 'on' ? 'Complex' : 'Real';
+		out += ", ";
 		out += this.settings.digits;
-		out += " - Units: " + this.settings.base_units[0] + ' (length), ' + this.settings.base_units[1] + ' (mass), ' + this.settings.base_units[2] + ' (time), ' + this.settings.base_units[3] + ' (temperature)';
+		out += " digits, " + this.settings.base_units[0] + ', ' + this.settings.base_units[1] + ', ' + this.settings.base_units[2] + ', ' + this.settings.base_units[3];
 		return out;
 	}
 	var settingsHTML = "<div class='settings'>"
