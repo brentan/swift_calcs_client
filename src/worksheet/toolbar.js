@@ -53,6 +53,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		this.toolbar_holder.css('top', top + 'px');
 		$('div.sidebar').css('top', bot + 'px');
 		$('div.leftbar').css('top', top + 'px');
+		$('div.anonymous_message').css('top', bot + 'px');
 		$('div.leftbar_top').css('height', toolbar_height + 'px');
 	}
 	var current_toolbar_target = 0;

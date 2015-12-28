@@ -10,6 +10,7 @@ $(function() {
 	}
 	var load_blackout = function() {
 		$('.blackout').remove();
+		$('.base_layout').addClass('tutorial_open');
 		$('<div/>').addClass('blackout').addClass('screen_explanation').appendTo($('body')).on('click', function(e) {
 			e.preventDefault();
 			e.stopPropagation();
@@ -40,8 +41,6 @@ $(function() {
 		window.ScreenExplanationStep = step + 1;
 		switch(step) {
 			case 1:
-				$('div.no_results').hide();
-				$('div.new_sheet').hide();
 				$('.whiteout').remove();
 				load_blackout();
 				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">You\'re moments away from performing quick, easy, human-readable calculations!<BR><BR>We rely on a proven, open-source mathematics engine, but Swift Calcs is still a <i>Beta</i> product.<BR>Help us get better: report bugs or suggest features by clicking <span style="display:inline-block;width:34px;height:30px;padding-top:4px;border-radius:17px;font-weight:bold;text-align:center;background-color:#386889"><i class="fa fa-question" style="font-size:22px;"></i></span> at the top right of any page.</div>',{top: '100px', left: '0px', right: '0px', 'text-align':'center'},true);
@@ -60,7 +59,7 @@ $(function() {
 				load_blackout();
 				var examples = {
 					"Calculate with Units": "{2}{4} {v}{o}{l}{t} {*} {7} {a}{m}{p} {Space} {Enter}",
-					"Store and Retrieve Variables": "{x} {=} {4} {^} {2}{.}{2} {Enter}<BR>{x}{/}{3}{.}{5}{Enter}",
+					"Store and Retrieve Variables": "{x} {=} {4} {^} {2}{.}{2} {Enter}<BR>{x} {/} {3}{.}{5} {Space} {+} {2} {Enter}",
 					"Define and Utilize Functions": "{A}{_}{c}{(} {r} {)} {=} {p}{i} {*} {r} {^} {2} {Enter}<BR>{A}{_}{c}{(} {2}{0}{.}{2} {c}{m} {)} {Enter}"
 				};
 				var commands = [];
@@ -100,6 +99,7 @@ $(function() {
 			$('.screen_explanation.content').remove();
 			return;
 		}
+		$('.base_layout').removeClass('tutorial_open');
 		$('.screen_explanation').remove(); 
 	}
 	window.loadNextScreenExplanation = function(step) { loadStep(step); }

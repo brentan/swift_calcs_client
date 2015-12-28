@@ -1,21 +1,11 @@
 $(function() {
 	
 	$('body').on('click', '#account_bar .new', function(e) { 
-		if(window.user_logged_in)
-			window.newWorksheet(); 
-		else {
-			showNotice('Please login or create an account to create new documents.');
-			window.loadSigninBox();
-		}
+		window.newWorksheet(); 
 		return false; 
 	});
 	$('body').on('click', '#account_bar .new_project', function(e) { 
-		if(window.user_logged_in)
-			window.newProject(); 
-		else {
-			showNotice('Please login or create an account to create new documents.');
-			window.loadSigninBox();
-		}
+		window.newProject(); 
 		return false; 
 	});
 

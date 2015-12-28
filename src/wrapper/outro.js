@@ -20,7 +20,6 @@
 		'plot_bar': plot_bar,
 		'plot_histogram': plot_histogram,
 		'solve': solve,
-		'signin_block': signIn,
 		'desolve': desolve,
 		'regression': regression,
 		'import': importData,

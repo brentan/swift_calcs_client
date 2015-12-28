@@ -47,7 +47,7 @@ var math = P(MathOutput, function(_, super_) {
     show_text_mode_popup = false;
 	}
 	_.notifyEqualSign = function(el) {
-		if(window.show_equal_explanation && (el.ctrlSeq == '=')) {
+		if(window.show_equal_explanation && (el.ctrlSeq == '=') && !$('.base_layout').hasClass('tutorial_open')) {
 			window.silentRequest('/users/equal_popup');
 			window.show_equal_explanation = false;
     	SwiftCalcs.createTooltip("<<What's the deal with equal?>>\n<span style='font-size:1.5em;font-family:Symbola, Times, serif;position:relative;top:2px;' class='code'>&#8801;</span> is assignment.  Example: <i>x <span style='font-family:Symbola, Times, serif;'>&#8801;</span> 4</i> stores 4 in <i>x</i>\n<span style='font-size:1.5em;font-family:Symbola, Times, serif;position:relative;top:1px;' class='code'>=</span> is logical test.  Use it to test if two values are equal.\n<i>Wrong Equal?</i> Press <[=]> again to toggle between the two.<BR>", el.jQ);
@@ -140,20 +140,11 @@ var math = P(MathOutput, function(_, super_) {
 						_this.worksheet.save();
 					}
 				}
-				if(window.desired_tutorial_output && (to_compute == window.desired_tutorial_output)) window.swift_calcs_tutorial();
-				else if(!_this.mark_for_deletion && !window.user_logged_in && (_this.worksheet.rights != 1) && !window.shown_signin) {
-					expression_count++;
-					_this.registerSignInPopup();
-				}
 				_this.commands = _this.genCommand(to_compute);
 				_this.evaluate();
 				_this.needsEvaluation = false;
 			}
 		};
-	}
-	_.registerSignInPopup = function() { 
-		if(signin_timeout) window.clearTimeout(signin_timeout);
-		signin_timeout = window.setTimeout(function(_this) { return function() { if(!window.shown_signin) { signin_timeout = false; window.shown_signin = true; signIn().insertAfter(_this).show(450); } }; }(this), (expression_count >= 5) ? 100 : 6000);
 	}
 	_.storeAsVariable = function() {
     this.focus(-1);
@@ -189,7 +180,6 @@ var math = P(MathOutput, function(_, super_) {
 	}
 	_.changed = function(el) {
 		super_.changed.call(this, el);
-		if(signin_timeout) this.registerSignInPopup();
 		this.implicit = false;
 		this.needsEvaluation = true;
 	}
@@ -198,7 +188,4 @@ var math = P(MathOutput, function(_, super_) {
 		return this;
 	}
 });
-window.shown_signin = false;
-var signin_timeout = false;
-var expression_count = 0;
 var show_text_mode_popup = true;

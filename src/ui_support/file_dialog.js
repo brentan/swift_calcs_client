@@ -99,6 +99,7 @@ $(function() {
 		var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 		var today = new Date();
 		var string = monthNames[date.getMonth()];
+		if((today.getFullYear() == date.getFullYear()) && (today.getMonth() == date.getMonth())) return 'This Month';
 		if(today.getFullYear() != date.getFullYear()) string += ' ' + date.getFullYear();
 		return string;
 	}
@@ -289,8 +290,19 @@ $(function() {
 	$('body').on('click', '.worksheet_item i.fa-external-link', function(e) {
 		var name = $(this).closest('.worksheet_item').attr('data-name');
 		var hash_string = $(this).closest('.worksheet_item').attr('data-hash');
-		window.open('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')),'_blank');
-		if($(this).closest('.active_worksheet').length > 0) window.closeActive($(this).closest('.active_worksheet'));
+		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
+		if($(this).closest('.active_worksheet').length == 0) {
+			window.openActive($(this).closest('.worksheet_item'));
+			window.loadWorksheet($(this).closest('.worksheet_item'));
+		} else
+			window.setTimeout(function() { SwiftCalcs.active_worksheet.ends[-1].focus(-1); }, 150);
+		window.setTimeout(function(_this) { return function() { $(_this).closest('.active_worksheet').css({"margin":"-10px -30px", "padding-top":"25px", "padding-bottom":"25px"}); }; }(this), 350);
+		var parent = $(this).closest('.worksheet_holder_box').addClass('single_sheet');
+		parent.children('.worksheet_item').slideUp({duration: 250, always: function() { $(this).remove(); }});
+		parent.siblings('div').slideUp({duration: 250, always: function() { $(this).remove(); }});
+
+		$('.base_layout').addClass('leftbar_hidden');
+		$(window).scrollTop(0);
 		e.preventDefault();
 		e.stopPropagation();
 	});
@@ -510,7 +522,7 @@ $(function() {
     window.showPopupOnTop();
     var el = $('.popup_dialog .full').html("<div class='title'>" + prompt + "</div><div class='input'><input type=text></div>");
     if(invite_dialog) {
-			$("<div/>").html("<div style='margin-top:10px;' class='title'><i class='fa fa-fw fa-user-plus'></i>Add Collaborators</div><div><table border=0><tbody><tr><td><span class='email_input'></span></td><td style='width:1px;' class='invite_rights'><span class='rights_select' data-val='1'></span></td></tr></tbody></table><span class='checkbox notify' data-val='1'><i class='fa fa-fw fa-check-square-o'></i>Notify Users by Email</span> - <a href='' class='add_message'>Add Message</a><div class='add_message' style='display:none;'><textarea class='add_message'></textarea></div></div>").appendTo(el);
+			var $div = $("<div/>").html("<div style='margin-top:10px;' class='title'><i class='fa fa-fw fa-user-plus'></i>Add Collaborators</div><div><table border=0><tbody><tr><td><span class='email_input'></span></td><td style='width:1px;' class='invite_rights'><span class='rights_select' data-val='1'></span></td></tr></tbody></table><span class='checkbox notify' data-val='1'><i class='fa fa-fw fa-check-square-o'></i>Notify Users by Email</span> - <a href='' class='add_message'>Add Message</a><div class='add_message' style='display:none;'><textarea class='add_message'></textarea></div></div>").appendTo(el);
       el.find('span.rights_select').each(function() {
         window.createUserRightsDropdown($(this));
       });
@@ -553,6 +565,13 @@ $(function() {
         }
         $(this).height(height + 5);
       });
+    	if(!window.user_logged_in) {
+    		$div.hide();
+    		$("<div/>").html("<div style='margin-top:10px;' class='title'><i class='fa fa-fw fa-user-plus'></i>Add Collaborators</div><a href='#'>Create a Swift Calcs account</a> to collaborate on projects with other users around the world.  Accounts are free and take only moments to create").appendTo(el).find('a').on('click', function(e) {
+		      window.loadSigninBox();
+    			e.preventDefault();
+    		});
+    	}
     }
     // Create the buttons at the bottom
     buttons = $('.popup_dialog .bottom_links').html('');
@@ -1204,464 +1223,6 @@ $(function() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	var newItemDialog = function(prompt, suggested_name, callbackFunction, parent_project_id) {
-		if(typeof parent_project_id === 'undefined') parent_project_id = current_project_id;
-		var expandCollapse = function(el) {
-			if(el.find('i.fa').hasClass('fa-caret-right')) {
-				// Expand
-				el.find('i.fa').addClass('fa-caret-down').removeClass('fa-caret-right');
-				el.next('div').show();
-			} else {
-				// Collapse
-				el.find('i.fa').removeClass('fa-caret-down').addClass('fa-caret-right');
-				el.next('div').hide();
-			}
-		}
-		window.showLoadingOnTop();
-		$.ajax({
-      type: "POST",
-      url: "/folders/tree",
-      dataType: 'json',
-      cache: false,
-      data: { }, 
-      success: function(response) {
-      	if(response.success) {
-      		window.showPopupOnTop();
-      		var el = $('.popup_dialog .full').html("<div class='name'><div class='title'>" + prompt + "</div><div class='input'><input type=text></div><BR></div><div class='title'>Location</div><div class='tree'></div>");
-      		if(prompt == '')
-      			el.find('.name').hide();
-      		el.find('.input input').val(suggested_name);
-      		el.find('.tree').html(response.html);
-      		el.find('.expandable i.fa').on('click', function(e) {
-      			expandCollapse($(this).closest('.expandable'));
-      			e.preventDefault();
-      		});
-      		el.find('.folder').on('click', function(e) {
-      			if($(this).attr('data-id')) { // Can't select 'shared' folder as a place to store documents
-	      			el.find('.folder').removeClass('selected');
-	      			$(this).addClass('selected');
-	      		}
-	      		e.preventDefault();
-      		});
-      		// Select current folder, if any
-      		var found_one = false;
-      		el.find('.folder').each(function() {
-      			if($(this).attr('data-id') && ($(this).attr('data-id')*1 == parent_project_id*1)) {
-      				found_one = true;
-	      			el.find('.folder').removeClass('selected');
-	      			$(this).addClass('selected');
-	      			var current = $(this);
-	      			while(true) {
-	      				if(current.parent().closest('.expandable_content').length == 0) break;
-	      				current = current.parent().closest('.expandable_content');
-	      				expandCollapse(current.prev());
-	      			}
-      			}
-      		});
-      		if(!found_one) 
-      			el.find('.folder').eq(0).addClass('selected');
-          // Create the buttons at the bottom
-          buttons = $('.popup_dialog .bottom_links').html('');
-          buttons.append('<button class="submit">OK</button>');
-          buttons.append('<button class="close grey">Cancel</button>');
-          buttons.find('button.submit').on('click', function() {
-            var name = el.find('.input input').val();
-            if(prompt != '' && (name.trim() == '')) return showNotice('No name provided', 'red');
-            var folder_id = el.find('.selected').attr('data-id');
-            window.showLoadingOnTop();
-            callbackFunction(name, folder_id);
-          });
-          window.resizePopup();
-          el.find('.input input').focus();
-      	}	else {
-      		window.showFileDialog();
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-      	window.showFileDialog();
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
-	}
-
-	var processNewWorksheet = function(name, folder_id, duplicate) {
-		window.showLoadingPopup();
-		post_data = {name: name, duplicate: duplicate ? SwiftCalcs.active_worksheet.server_id : 0, revision: duplicate ? SwiftCalcs.active_worksheet.revision_id : 0 };
-		if(folder_id) post_data.folder_id = folder_id;
-		$.ajax({
-      type: "POST",
-      url: "/worksheet_commands",
-      dataType: 'json',
-      cache: false,
-      data: { command: duplicate ? 'copy_worksheet' : 'new_worksheet', data: post_data }, 
-      success: function(response) {
-      	if(response.success) {
-					if(duplicate) {
-						window.hidePopupOnTop();
-						SwiftCalcs.active_worksheet.rename(name, response.hash_string, response.worksheet_id);
-						SwiftCalcs.pushState.navigate('/worksheets/' + response.hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
-						if(SwiftCalcs.active_worksheet.rights == 2) {
-							SwiftCalcs.active_worksheet.rights = 4;
-							SwiftCalcs.active_worksheet.save(true);
-						} else
-							SwiftCalcs.active_worksheet.rights = 4;
-						SwiftCalcs.active_worksheet.generateTopWarning(); 
-						// Update all uploaded file references:
-				    var uploads = SwiftCalcs.active_worksheet.insertJQ.find('.sc_uploadedData');
-				    var ids = {};
-				    uploads.each(function(i, hash_string) {
-				    	hash_string = $(hash_string);
-				    	var el = SwiftCalcs.elementById(hash_string.attr('sc_element_id')*1);
-				    	if(el.upload_id) ids[el.upload_id] = el;
-				    });
-				    for(var i = 0; i < response.to_change.length; i++) {
-				    	to_change = ids[response.to_change[i].old_id*1];
-				    	if(to_change) {
-				    		to_change.upload_id = response.to_change[i].new_id*1;
-				    		to_change.url = response.to_change[i].url;
-				    	}
-				    }
-	  				SwiftCalcs.active_worksheet.updateUploads();
-				    // Set queue to reported server contents to ensure data validity moving forward
-				    SwiftCalcs.active_worksheet.reset_server_base(response.data);
-					} else {
-      			window.hideDialogs();
-						if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-						var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.worksheet_id, 1, 4, response.settings);
-						worksheet.reset_server_base(worksheet.toString());
-						worksheet.bind($('.worksheet_holder'));
-						SwiftCalcs.elements.math().appendTo(worksheet).show().focus(-1);
-						window.setTimeout(function() { SwiftCalcs.active_worksheet.blur().focus();SwiftCalcs.active_worksheet.ends[-1].focus(-1); },100);
-						SwiftCalcs.pushState.navigate('/worksheets/' + response.hash_string + '/' + encodeURIComponent(response.name.replace(/ /g,'_')));
-					}
-      	}	else {
-      		window.showFileDialog();
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-      	window.showFileDialog();
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
-	}
-
-	var showInfo = function() {
-	}
-	var loadind_worksheet = false;
-	var info_load = false;
-	var info_screen_type = false;
-	var info_screen_id = false;
-	var loadInfo = function(data_type, id) {
-		if(loadind_worksheet) return;
-		if((data_type == info_screen_type) && (id == info_screen_id)) return;
-		$('.file_dialog .right .content').html('<div style="text-align:center;font-size:60px;margin-top:60px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
-		$('.file_dialog .right .content').show();
-		$('.file_dialog .right .default').hide();
-		info_screen_type = data_type;
-		info_screen_id = id;
-		if(info_load) {
-			info_load.abort();
-			$('.file_dialog .right .content').html('<div style="text-align:center;font-size:60px;margin-top:60px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
-			info_load = false;
-		}
-		info_load = $.ajax({
-      type: "POST",
-      url: "/folders/info",
-      dataType: 'json',
-      cache: false,
-      data: { data_type: info_screen_type, id: info_screen_id}, 
-      success: function(response) {
-      	$('.file_dialog .right .content').html(response.html);
-      },
-      error: function(err) {
-      	$('.file_dialog .right .content').html('Error: ' + err.responseText);
-      }
-    });
-	}
-	var loadItem = function(data_type, hash_string, name) {
-		if(data_type == 'Worksheet') {
-			if(info_load) {
-				info_load.abort();
-				info_load = false;
-			}
-			loadind_worksheet = true;
-			loadWorksheet(hash_string, name);
-		} else if(data_type == 'Folder')
-			loadFolder(hash_string, name);
-	}
-	var destroyItem = function(data_type, data_id, full_destroy) {
-		if(full_destroy)
-			var msg = 'Are you sure you want to delete this item?  Any users who have access to this item through the sharing settings will also lose access. This action cannot be undone.';
-		else 
-			var msg = 'Are you sure you want to remove this item from your shared folders?  This action cannot be undone, and you will have to request access from the document owner to gain access in the future.'
-		if(confirm(msg)) {
-			$('.file_dialog .right .content').hide();
-			$('.file_dialog .right .default').show();
-			info_screen_id = false;
-			$('.file_dialog .file_item').each(function() {
-				if(($(this).attr('data-type') == data_type) && ($(this).attr('data-id') == data_id))
-					$(this).remove();
-			});
-			if((data_type == 'Folder') && (current_project_id*1 == data_id*1)) 
-				openFileDialog('','all');
-			$.ajax({
-	      type: "POST",
-	      url: full_destroy ? "/folders/destroy" : "/folders/remove",
-	      dataType: 'json',
-	      cache: false,
-	      data: { data_type: data_type, id: data_id }, 
-	      success: function(response) {
-	      	if(!response.success) {
-	      		showNotice(response.message, 'red');
-	      	} 
-	      },
-	      error: function(err) {
-	      	console.log('Error: ' + err.responseText, 'red');
-					showNotice('Error: There was a server error.  We have been notified', 'red');
-	      }
-	    });
-		}
-	}
-	var renameItem = function(data_type, data_id, data_name, parent_id) {
-		newItemDialog('Please enter a new name for this item', data_name, function(name, folder_id) { processRenameItem(data_type, data_id, name, folder_id); }, parent_id);
-	}
-	var moveItem = function(data_type, data_id, data_name, parent_id) {
-		newItemDialog('Please select a new location for this item', data_name, function(name, folder_id) { processRenameItem(data_type, data_id, name, folder_id); }, parent_id);
-	}
-	var processRenameItem = function(data_type, data_id, new_name, folder_id) {
-		$('.file_dialog .file_item').each(function() {
-			if(($(this).attr('data-type') == data_type) && ($(this).attr('data-id')*1 == data_id*1))
-				$(this).find('.name').html(new_name);
-		})
-		if(data_type == 'Folder') {
-			$('.file_dialog .folder_item').each(function() {
-				if($(this).attr('data-id')*1 == data_id*1) {
-					$(this).html(new_name);
-					$(this).attr('data-name',new_name);
-				}
-			});
-		}
-		$('.file_dialog .right .name').html(new_name);
-		$('.file_dialog .right .actions .item').each(function() {
-			if($(this).attr('data-name'))
-				$(this).attr('data-name', new_name);
-		});
-		$.ajax({
-      type: "POST",
-      url: "/folders/rename",
-      dataType: 'json',
-      cache: false,
-      data: { data_type: data_type, id: data_id, name: new_name, folder_id: folder_id }, 
-      success: function(response) {
-      	window.hidePopupOnTop();
-      	if(response.do_remove) {
-					$('.file_dialog .right .content').hide();
-					$('.file_dialog .right .default').show();
-					info_screen_id = false;
-      		showNotice('Item has been successfully moved', 'green');
-					$('.file_dialog .file_item').each(function() {
-						if(($(this).attr('data-type') == data_type) && ($(this).attr('data-id')*1 == data_id*1))
-							$(this).remove();
-					});
-					if((data_type == 'Folder') && (current_project_id*1 == data_id*1))
-						$('.file_dialog .top').html(response.path);
-      	}
-      	if(!response.success) {
-      		showInfo();
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-      	window.hidePopupOnTop();
-      	showInfo();
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
-	}
-	var copyItem = function(data_type, data_id, data_name) {
-		newItemDialog('Please enter a name for the copy', data_name + ' (copy)', function(name, folder_id) { processCopyItem(data_type, data_id, name, folder_id); });
-	}
-	var processCopyItem = function(data_type, data_id, new_name, folder_id) {
-		$('.file_dialog .right .content').show();
-		$('.file_dialog .right .default').hide();
-		$('.file_dialog .right .content').html('<div style="text-align:center;font-size:60px;margin-top:60px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
-		info_screen_id = false;
-		$.ajax({
-      type: "POST",
-      url: "/folders/duplicate",
-      dataType: 'json',
-      cache: false,
-      data: { data_type: data_type, id: data_id, name: new_name, folder_id: folder_id }, 
-      success: function(response) {
-      	window.hidePopupOnTop();
-      	if(response.success) {
-					$('.file_dialog .file_item').removeClass('selected');
-      		if((folder_id*1) == (current_project_id*1)) {
-	      		loadInfo("Worksheet", response.id);
-	      		$('.file_dialog .title').after(response.html);
-						$('.file_dialog .file_item').eq(0).addClass('selected');
-						addFileItemEvents($('.file_dialog .file_item').eq(0));
-					} else {
-						$('.file_dialog .right .default').show();
-						info_screen_id = false;
-						$('.file_dialog .right .content').hide();
-      			showNotice('Copy Successfully Created', 'green');
-					}
-      	} else {
-      		showInfo();
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-      	window.hidePopupOnTop();
-      	showInfo();
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
-	}
-
-
-	var addFileItemEvents = function(els) { 
-		els.on('click', function(e) {
-			if(e.shiftKey && $(this).closest('.list').find('.file_item.selected').length) {
-				// march forward
-				var to_select = [];
-				var do_it = false;
-				for(var el = $(this); el.length; el = el.next('.file_item')) {
-					to_select.push(el);
-					if(el.hasClass('selected')) { do_it = true; break; }
-				}
-				if(!do_it) {
-					to_select = [];
-					for(var el = $(this); el.length; el = el.prev('.file_item')) {
-						to_select.push(el);
-						if(el.hasClass('selected')) { do_it = true; break; }
-					}
-				}
-				if(!do_it)
-					to_select = [$(this)];
-				$.each(to_select, function(i, v) { v.addClass('selected'); });
-			} else {
-				if(!e.ctrlKey && !e.metaKey) {
-					$(this).closest('.list').find('.file_item').removeClass('selected');
-					$(this).addClass('selected');
-				} else 
-					$(this).toggleClass('selected');
-			}
-			showInfo();
-			e.preventDefault();
-		});
-		els.on('dblclick', function(e) {
-			if($(this).attr('data-type') == 'Invite') return;
-			loadItem($(this).attr('data-type'), $(this).attr('data-hash_string'), $(this).attr('data-name'));
-			e.preventDefault();
-		});
-		els.find('.td.star i').on('click', function(e) {
-			if($(this).hasClass('fa-spinner')) return;
-			if($(this).hasClass('fa-star')) {
-				removeStar($(this).closest('.file_item').attr('data-type'), $(this).closest('.file_item').attr('data-id'));
-			} else {
-				addStar($(this).closest('.file_item').attr('data-type'), $(this).closest('.file_item').attr('data-id'));
-			}
-			$(this).removeClass('fa-star').removeClass('fa-star-o').addClass('fa-spinner fa-pulse');
-			e.preventDefault();
-			e.stopPropagation();
-		});
-		function dragEnter(e_drag) {
-			if($(e_drag.target).closest('.file_item').hasClass('selected')) return;
-			if($(e_drag.target).closest('.file_item').attr('data-type') != 'Folder') return;
-			$(e_drag.target).closest('.file_item').addClass('big-border');
-			e_drag.preventDefault();
-		}
-		function dragLeave(e_drag) {
-			if($(e_drag.target).closest('.file_item').hasClass('selected')) return;
-			if($(e_drag.target).closest('.file_item').attr('data-type') != 'Folder') return;
-			$(e_drag.target).closest('.file_item').removeClass('big-border');
-		}
-		function dragOver(e_drag) {
-			if($(e_drag.target).closest('.file_item').hasClass('selected')) return;
-			if($(e_drag.target).closest('.file_item').attr('data-type') != 'Folder') return;
-			$(e_drag.target).closest('.file_item').addClass('big-border');
-			e_drag.preventDefault();
-		}
-		function dragDrop(e_drag) {
-			var target_id = $(e_drag.target).closest('.file_item').attr('data-id');
-			processBatchCommand(target_id, 'move');
-			dragLeave(e_drag);
-		}
-		function dragEnter2(e_drag) {
-			if(!$(e_drag.target).attr('data-id')) return;
-			$(e_drag.target).addClass('big-border');
-			e_drag.preventDefault();
-		}
-		function dragLeave2(e_drag) {
-			if(!$(e_drag.target).attr('data-id')) return;
-			$(e_drag.target).removeClass('big-border');
-		}
-		function dragOver2(e_drag) {
-			if(!$(e_drag.target).attr('data-id')) return;
-			$(e_drag.target).addClass('big-border');
-			e_drag.preventDefault();
-		}
-		function dragDrop2(e_drag) {
-			var target_id = $(e_drag.target).attr('data-id');
-			processBatchCommand(target_id, 'move');
-			dragLeave2(e_drag);
-		}
-		function dragStart(e_drag) {
-			if(!$(e_drag.target).closest('.file_item').hasClass('selected')) {
-				$(e_drag.target).closest('.list').find('.file_item').removeClass('selected');
-	      $(e_drag.target).addClass('selected');
-				loadInfo($(e_drag.target).attr('data-type'), $(e_drag.target).attr('data-id'));
-			}
-      e_drag.originalEvent.dataTransfer.setData("text/plain", "Draggable Element");
-      $(e_drag.target).on('dragend', dragEnd);
-      var to_listen = $('.file_dialog .file_item');
-    	to_listen.on('dragenter', dragEnter).on('dragleave', dragLeave).on('drop', dragDrop).on('dragover', dragOver);
-      var to_listen2 = $('.file_dialog .folder_path.folder_item');
-    	to_listen2.on('dragenter', dragEnter2).on('dragleave', dragLeave2).on('drop', dragDrop2).on('dragover', dragOver2);
-		}
-		function dragEnd(e_drag) {
-      var to_listen = $('.file_dialog .file_item');
-    	to_listen.off('dragenter', dragEnter).off('dragleave', dragLeave).off('drop', dragDrop).off('dragover', dragOver);
-      var to_listen2 = $('.file_dialog .folder_path.folder_item');
-    	to_listen2.off('dragenter', dragEnter2).off('dragleave', dragLeave2).off('drop', dragDrop2).off('dragover', dragOver2);
-      $(e_drag.target).off('dragend', dragEnd);
-		}
-		els.on('dragstart', dragStart)
-	}
-	var current_mode = 'all';
-
-
-	var processSearch = function() {
-		var search_terms = $('.file_dialog .search input').val().trim();
-		if(search_terms.length < 3)
-			showNotice('Please enter at least 3 characters to search', 'red');
-		else {
-			current_project_navigable_url = '/folders/' + encodeURIComponent(search_terms.replace(/( |-)/g,'_')) + '-search';
-			loadFolder();
-		}
-	}
 	var acceptInvite = function(id) {
 		processInvite(id, true);
 		$('.file_dialog .right .content').hide();
@@ -1726,97 +1287,6 @@ $(function() {
 		rejectInvite($(this).attr('data-id'));
 		e.preventDefault();
 		e.stopPropagation();
-	})
-	$('.file_dialog .left').on('click', '.all_folders', function(e) {
-		current_project_navigable_url = 'folders/0-all/All_Files';
-		loadFolder();
-	});
-	$('.file_dialog').on('click', '.my_folder', function(e) {
-		current_project_navigable_url = 'folders/0-mine/Your_Files';
-		loadFolder();
-	});
-	$('.file_dialog').on('click', '.shared_folder', function(e) {
-		current_project_navigable_url = 'folders/0-shared/Shared_Files';
-		loadFolder();
-	});
-	$('.file_dialog').on('click', '.invites', function(e) {
-		current_project_navigable_url = 'folders/0-invites/Invitations';
-		loadFolder();
-	});
-	$('.file_dialog').on('click', '.recent_folder', function(e) {
-		current_project_navigable_url = 'folders/0-recent/Recent_Files';
-		loadFolder();
-	});
-	$('.file_dialog').on('click', '.starred_folder', function(e) {
-		current_project_navigable_url = 'folders/0-starred/Starred_Files';
-		loadFolder();
-	});
-	$('.file_dialog .left').on('click', '.bookmarks', function(e) {
-		current_project_navigable_url = 'folders/0-bookmarks/All_Bookmarks';
-		loadFolder();
-	});
-	$('.file_dialog .left').on('click', 'div.fa-search', function(e) {
-		processSearch();
-	});
-	$('.file_dialog .left').on('keydown', '.search input', function(e) {
-		if((e.which == 13) || (e.which == 10)) {
-			this.blur();
-			processSearch();
-			e.preventDefault();
-		}
-	});
-	$('.file_dialog .right').on('click', '.item.open', function(e) {
-		loadItem($(this).attr('data-type'), $(this).attr('data-hash_string'), $(this).attr('data-name'));
-		e.preventDefault();
-	});
-	$('.file_dialog .right').on('click', '.item.destroy', function(e) {
-		destroyItem($(this).attr('data-type'), $(this).attr('data-id'), true);
-		e.preventDefault();
-	});
-	$('.file_dialog .right').on('click', '.item.remove', function(e) {
-		destroyItem($(this).attr('data-type'), $(this).attr('data-id'), false);
-		e.preventDefault();
-	});
-	$('.file_dialog .right').on('click', '.item.share', function(e) {
-		window.openSharingDialog($(this).attr('data-id')*1, $(this).attr('data-type'));
-		e.preventDefault();
-	});
-	$('.file_dialog .right').on('click', '.item.rename', function(e) {
-		renameItem($(this).attr('data-type'), $(this).attr('data-id'), $(this).attr('data-name'), $(this).attr('data-parent'));
-		e.preventDefault();
-	});
-	$('.file_dialog .right').on('click', '.item.move', function(e) {
-		moveItem($(this).attr('data-type'), $(this).attr('data-id'), $(this).attr('data-name'), $(this).attr('data-parent'));
-		e.preventDefault();
-	});
-	$('.file_dialog .right').on('click', '.item.copy', function(e) {
-		copyItem($(this).attr('data-type'), $(this).attr('data-id'), $(this).attr('data-name'));
-		e.preventDefault();
-	});
-	$('.file_dialog .right').on('click', '.item.batch', function(e) {
-		batchCommand($(this).attr('data-command'));
-		e.preventDefault();
-	});
-	$('.file_dialog .new_worksheet').on('click', function(e) {
-		newWorksheet(false);
-		e.preventDefault();
-	});
-	$('.file_dialog .new_folder').on('click', function(e) {
-		newFolder();
-		e.preventDefault();
-	});
-	$('.file_dialog').on('click', '.folder_item', function(e) {
-		loadItem("Folder", $(this).attr('data-hash_string'), $(this).attr('data-name'));
-		e.preventDefault();
-	});
-	// Increase timeout time links 
-	$('body').on('click','a.increase_timeout', function(e) {
-		SwiftCalcs.giac.worker.postMessage(JSON.stringify({ increase_timeout: true }));
-		var el = SwiftCalcs.elementById($(e.target).closest('.sc_element').attr('sc_element_id') || -1);
-		if(el)
-			el.evaluate(true);
-		$(this).remove();
-		return false;
 	});
 
 });

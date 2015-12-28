@@ -12,6 +12,7 @@ $(function() {
   // Create a tooltip with content HTML and location topblock.  Optional leftblock can be used as a different element to use for left position.  Assumes blocks are within sc_element_container
   var createTooltip = SwiftCalcs.createTooltip = function(html, topBlock, leftBlock, high_z) {
   	destroyTooltip();
+    if($('.base_layout').hasClass('tutorial_open')) return false; // No tooltips with tutorial open
     var container = $('.sc_element_container');
   	if(typeof leftBlock === 'undefined') leftBlock = topBlock;
     var leftOffset = leftBlock.offset().left - 13;
@@ -31,6 +32,7 @@ $(function() {
     if(high_z)
       $el.addClass('high_z');
     exposed = true;
+    return true;
 	};
 
 	var destroyTooltip = SwiftCalcs.destroyTooltip = function() {

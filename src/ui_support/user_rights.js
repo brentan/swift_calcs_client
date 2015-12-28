@@ -187,6 +187,11 @@ $(function() {
       }
       return;
     }
+    if(!window.user_logged_in) {
+      showNotice("Login and create an account to share this document");
+      window.loadSigninBox();
+      return;
+    }
     window.showLoadingOnTop();
 		$.ajax({
       type: "POST",
