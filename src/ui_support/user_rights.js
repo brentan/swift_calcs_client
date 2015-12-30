@@ -298,10 +298,5 @@ $(function() {
       }
     });
 	}
-  $('body').on('click', '.share_link', function(e) {
-    openSharingDialog(SwiftCalcs.active_worksheet.server_id, "Worksheet");
-    e.preventDefault();
-    return false;
-  });
 
 });

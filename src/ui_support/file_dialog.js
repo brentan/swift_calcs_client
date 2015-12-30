@@ -65,6 +65,8 @@ $(function() {
 	var loadProject = window.loadProject = function(hash_string, name, archive, labels_hash, label_name) {
 		if(hash_string && (hash_string == 'active'))
 			SwiftCalcs.pushState.navigate('/active/', {trigger: true});
+		else if(hash_string && (hash_string == 'invites'))
+			SwiftCalcs.pushState.navigate('/invites/', {trigger: true});
 		else if(hash_string && (hash_string == 'archive'))
 			SwiftCalcs.pushState.navigate('/archive/', {trigger: true});
 		else if(hash_string && archive)
@@ -110,6 +112,13 @@ $(function() {
 			+ "<span class='star'><i class='fa fa-star" + (w.star_id ? '' : '-o') + "' title='Add or Remove Star'></i></span>"
 			+ "<span class='menu'><i class='fa fa-ellipsis-v' title='Options Menu'></i></span>";
 	}
+	var invitation_html = window.invitation_html = function(w) {
+		return "<span class='file_type'><i class='fa fa-" + (w.worksheet ? "file" : "folder-open") + "'></i></span>"
+			+ "<span class='name'><span class='hover'>" + w.name + "</span></span>"
+			+ "<span class='invite_accept'><span class='fa fa-check-circle'></span>Accept</span>"
+			+ "<span class='invite_reject'><span class='fa fa-times-circle'></span>Reject</span>"
+			+ "<span class='invite_pending'><i class='fa fa-pulse fa-spinner'></i></span>";
+	}
 	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html) {
 		clear_batch();
 		// Assumes worksheets already sorted by date from latest to earliest
@@ -152,7 +161,11 @@ $(function() {
 					box = $('<div/>').addClass('worksheet_holder_box');
 					in_box = true;
 				}
-				var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + worksheets[i].id).attr('data-id', worksheets[i].id).attr('data-name', worksheets[i].name).attr('data-hash', worksheets[i].hash_string).attr('parent-id', worksheets[i].parent_project_id).html(worksheet_html(worksheets[i])).appendTo(box);
+				var el;
+				if(worksheets[i].invitation) 
+					el = $('<div/>').addClass('invitation_item').addClass('rights_id_' + worksheets[i].rights_id).attr('data-rights-id', worksheets[i].rights_id).attr('data-project', worksheets[i].worksheet ? 0 : 1).attr('data-id', worksheets[i].id).attr('data-hash', worksheets[i].hash_string).attr('data-name', worksheets[i].name).html(invitation_html(worksheets[i])).appendTo(box);
+				else
+					el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + worksheets[i].id).attr('data-id', worksheets[i].id).attr('data-name', worksheets[i].name).attr('data-hash', worksheets[i].hash_string).attr('parent-id', worksheets[i].parent_project_id).html(worksheet_html(worksheets[i])).appendTo(box);
 				if(worksheets[i].archive_id) el.addClass('archived');
 			}
 			if(in_box) box.appendTo('.worksheet_holder')
@@ -160,10 +173,14 @@ $(function() {
 			var star = $('.star_select').hasClass('on');
 	    var search_term = $('div.search_bar input').val().trim().length > 0;
     	var fragment = SwiftCalcs.pushState.fragment || '';
-	    var archive = fragment.match(/archive_projects\//i) || fragment.match(/archive/i);
-	    var project = fragment.match(/project_label\//i) || fragment.match(/archive_projects\//i) || fragment.match(/projects\//i);
-	    var label = fragment.match(/project_label\//i) || fragment.match(/labels\//i);
-	    if(!star && !search_term && !archive && !label) {
+	    var archive = fragment.match(/^archive_projects\//i) || fragment.match(/^archive/i);
+	    var project = fragment.match(/^project_label\//i) || fragment.match(/^archive_projects\//i) || fragment.match(/^projects\//i);
+	    var label = fragment.match(/^project_label\//i) || fragment.match(/^labels\//i);
+	    if(fragment.match(/^invites/i)) {
+	    	var $div = $('<div/>').addClass('no_results');
+	    	$('<div/>').addClass('title').html('No pending invitations').appendTo($div);
+	    	$('<div/>').addClass('explain').html('New items will appear here as others invite you to projects or worksheets.').appendTo($div);
+	    } else if(!star && !search_term && !archive && !label) {
 	    	// No active sheets (or sheets in a project), give 'welcome' message here, push them to create a new sheet
 	    	var $div = $('<div/>').addClass('no_results');
 	    	if(project) {
@@ -817,8 +834,8 @@ $(function() {
 			if(prev_box)
 				window.setTimeout(function() { prev_box.removeClass('add_bottom_border'); }, 275);
 			window.setTimeout(function() {
-				if(wrapper_box.hasClass('add_bottom_border')) wrapper_box.children('.active_holder').children('.worksheet_item').addClass('add_bottom_border');
-				wrapper_box.children('.active_holder').children('.worksheet_item').detach().insertBefore(wrapper_box);
+				if(wrapper_box.hasClass('add_bottom_border')) wrapper_box.children('.active_holder').children('.worksheet_item, .invitation_item').addClass('add_bottom_border');
+				wrapper_box.children('.active_holder').children('.worksheet_item, .invitation_item').detach().insertBefore(wrapper_box);
 				wrapper_box.remove();
 			}, 275);
 		});
@@ -849,11 +866,13 @@ $(function() {
 		}, always: function() { beginLoad = true; }});
 		wrapper_box.animate({'margin-left':-30, 'margin-right': -30, 'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
 	}
-	$('body').on('click', '.worksheet_item', function(e) {
+	$('body').on('click', '.worksheet_item, .invitation_item', function(e) {
 		if($(this).hasClass('worksheet_loading')) return;
 		if($(this).hasClass('screen_explanation')) return;
 		if($(this).closest('.active_worksheet').length) 
 			closeActive($(this).closest('.active_worksheet')); 
+		else if(($(this).attr('data-project')*1) == 1) 
+			window.loadProject($(this).attr('data-hash'), $(this).attr('data-name'));
 		else {
 			openActive($(this));
 			window.loadWorksheet($(this));
@@ -895,7 +914,7 @@ $(function() {
 		window.loadProject($(this).attr('data-hash_string'), $(this).attr('data-name'), archive);
 	});
 	$('body').on('click', 'td.info .placeholder', function(e) {
-		window.moveWorksheet($(this).closest('.active_holder').children('.worksheet_item'));
+		window.moveWorksheet($(this).closest('.active_holder').children('.worksheet_item, .invitation_item'));
 	});
 	var moveWorksheet = window.moveWorksheet = function(el, remove_after_move) {
 		var dets = el.closest('.active_holder').children('.details_span');
@@ -918,10 +937,10 @@ $(function() {
 		moveDialog(processMove, el.attr('parent-id'));
 	}
 	$('body').on('click', 'td.info .info.revisions', function(e) {
-		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item').attr('data-id'), $(this).closest('.active_holder').children('.worksheet_item').attr('data-hash'), $(this).closest('.active_holder').children('.worksheet_item').attr('data-name'));
+		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-name'));
 	});
 	$('body').on('click', 'td.collaborators .bubble, td.collaborators .placeholder', function(e) {
-		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item').attr('data-id'), 'Worksheet');
+		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), 'Worksheet');
 	});
 	$('body').on('click', '.worksheet_item i.fa-ellipsis-v', function(e) {
 		var archived = $(this).closest('.archive').length > 0;
@@ -1087,7 +1106,7 @@ $(function() {
 			window.loadWorksheet(el, response);
 		}
 		var fail = function(message) {
-			loading_div.html('<span>There was an error: ' + message + '</span>');
+			loading_div.remove();
 		}
 		window.ajaxRequest("/worksheet_commands", { command: (duplicate ? 'copy_worksheet': 'new_worksheet'), data: post_data }, success, fail);
 		window.hidePopupOnTop();
@@ -1214,77 +1233,48 @@ $(function() {
  	}).on('keyup', 'div.search_bar input', function(e) {
  		if(e.which == 13) $(this).blur();
  	});
- 	
-
-
-
-
-
-
-
-
-	var acceptInvite = function(id) {
-		processInvite(id, true);
-		$('.file_dialog .right .content').hide();
-		$('.file_dialog .right .default').show();
-		info_screen_id = false;
-		$('.file_dialog .file_item').each(function() {
-			if(($(this).attr('data-type') == "Invite") && ($(this).attr('data-id') == id))
-				$(this).slideUp({duration: 200, always: function() { $(this).remove(); } });
-		});
+	var acceptInvite = function(el) {
+		processInvite(el, true);
 	}
-	var acceptandOpenInvite = function(id, data_type, hash_string, name) {
-		processInvite(id, true, data_type, hash_string, name);
-		window.showLoadingOnTop();
+	var rejectInvite = function(el) {
+		processInvite(el, false);
 	}
-	var rejectInvite = function(id) {
-		processInvite(id, false);
-		$('.file_dialog .right .content').hide();
-		$('.file_dialog .right .default').show();
-		info_screen_id = false;
-		$('.file_dialog .file_item').each(function() {
-			if(($(this).attr('data-type') == "Invite") && ($(this).attr('data-id') == id))
-				$(this).slideUp({duration: 200, always: function() { $(this).remove(); } });
-		});
-	}
-	var processInvite = function(id, accept, data_type, hash_string, name) {
-		var count = $('.file_dialog .invite_count');
+	var processInvite = function(el, accept) {
+		el.find('.invite_accept').hide();
+		el.find('.invite_reject').hide();
+		el.find('.invite_pending').show();
+		var count = $('.left_item.invites .invite_count');
 		var new_count = count.html()*1 - 1;
 		if(new_count > 0)
 			count.html(new_count);
 		else
 			count.hide();
-		$.ajax({
-      type: "POST",
-      url: "/folders/invite",
-      dataType: 'json',
-      cache: false,
-      data: {id: id, add: accept }, 
-      success: function(response) {
-      	if(response.success) {
-      		if(data_type)
-      			loadItem(data_type, hash_string, name)
-      	} else
-      		showNotice(response.message, 'red');
-      },
-      error: function(err) {
-      	console.log('Error: ' + err.responseText, 'red');
-				showNotice('Error: There was a server error.  We have been notified', 'red');
-      }
-    });
+		var success = function(response) {
+			if(el.closest('.active_worksheet').length > 0) {
+				closeActive(el.closest('.active_worksheet'));
+				el.addClass('closing').slideUp({duration: 400, always: function() { el.remove(); } });
+			} else 
+				el.addClass('closing').slideUp({duration: 200, always: function() { el.remove(); } });
+  		var h = el.closest('.worksheet_holder_box')
+			if(h.find('.invitation_item').length <= 1) {
+				h.slideUp({duration: 200, always: function() { $(this).remove(); } });
+				h.prev('.date_box').slideUp({duration: 200, always: function() { $(this).remove(); } });
+			}
+		}
+		var fail = function(message) {
+		el.find('.invite_accept').show();
+		el.find('.invite_reject').show();
+		el.find('.invite_pending').hide();
+		}
+		window.ajaxRequest("/projects/invite", {id: el.attr('data-rights-id'), add: accept }, success, fail);
 	}
-	$('.file_dialog').on('click', '.invite_accept_and_open', function(e) {
-		acceptandOpenInvite($(this).attr('data-id'), $(this).attr('data-type'), $(this).attr('data-hash_string'), $(this).attr('data-name'));
+	$('.base_layout').on('click', '.invite_accept', function(e) {
+		acceptInvite($(this).closest('.invitation_item'));
 		e.preventDefault();
 		e.stopPropagation();
 	})
-	$('.file_dialog').on('click', '.invite_accept', function(e) {
-		acceptInvite($(this).attr('data-id'));
-		e.preventDefault();
-		e.stopPropagation();
-	})
-	$('.file_dialog').on('click', '.invite_reject', function(e) {
-		rejectInvite($(this).attr('data-id'));
+	$('.base_layout').on('click', '.invite_reject', function(e) {
+		rejectInvite($(this).closest('.invitation_item'));
 		e.preventDefault();
 		e.stopPropagation();
 	});

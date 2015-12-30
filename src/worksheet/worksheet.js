@@ -80,7 +80,7 @@ var Worksheet = P(function(_) {
 		this.bindKeyboard();
 		this.bindUploads();
 		this.bindSettings();
-		this.jQ.closest('.active_holder').children('.worksheet_item').attr('data-hash', this.hash_string);
+		this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash', this.hash_string);
 		SwiftCalcs.active_worksheet = this;
     $('.fatal_div').hide();
     ajaxQueue.suppress = false;
@@ -116,12 +116,12 @@ var Worksheet = P(function(_) {
 					e.preventDefault();
 					return false;
 				});
-				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item'));
+				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
 				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
 				break;
 			case 1: //view-only
 				var els = $('<div/>').html('<strong>File is View Only</strong>.  Any changes you make will not be saved.');
-				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item'));
+				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
 				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
 				break;
 			case 2: //view-only but can duplicate
@@ -131,7 +131,7 @@ var Worksheet = P(function(_) {
 					e.preventDefault();
 					return false;
 				}; }(this));
-				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item'));
+				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
 				this.save(); // Won't actually save, but will set the saving message to an appropriate message.
 				break;
 		}

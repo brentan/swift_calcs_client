@@ -103,6 +103,9 @@ var PushState = P(function(_) {
     } else if(fragment.match(/archive/i)) {
       window.openFileDialog('archive');
       return true;
+    } else if(fragment.match(/invites/i)) {
+      window.openFileDialog('invites');
+      return true;
     }
 		return false;
   }
