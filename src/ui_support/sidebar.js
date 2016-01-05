@@ -137,7 +137,10 @@ $(function() {
       }
       window.closeSidebar();
       // Handle full click events as mousedown and then mouseup
-      var el = SwiftCalcs.active_worksheet.lastActive;
+      if(SwiftCalcs.active_worksheet)
+        var el = SwiftCalcs.active_worksheet.lastActive;
+      else
+        return showNotice('Create or open a worksheet to insert this item');
       var check_for_storeAsVariable = true;
       if(el === 0) {
         el = SwiftCalcs.active_worksheet.ends[1];
@@ -216,7 +219,10 @@ $(function() {
       SwiftCalcs.active_worksheet.endUndoStream();
   		return;
 		}
-    SwiftCalcs.active_worksheet.bindDragging(e, $(this), click_handler(_this), drag_done_handler)
+    if(SwiftCalcs.active_worksheet)
+      SwiftCalcs.active_worksheet.bindDragging(e, $(this), click_handler(_this), drag_done_handler)
+    else
+      showNotice('Create or open a worksheet to insert this item');
 	};
   window.closeSidebar = function() {
     $('div.sidebar').animate({width: 25}, {duration: 250, easing: 'easeOutQuad', always: function() { $('div.sidebar div.toolbox_icon').addClass('closed') }});

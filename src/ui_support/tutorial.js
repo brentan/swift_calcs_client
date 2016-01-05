@@ -43,7 +43,10 @@ $(function() {
 			case 1:
 				$('.whiteout').remove();
 				load_blackout();
-				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">You\'re moments away from performing quick, easy, human-readable calculations!<BR><BR>We rely on a proven, open-source mathematics engine, but Swift Calcs is still a <i>Beta</i> product.<BR>Help us get better: report bugs or suggest features by clicking <span style="display:inline-block;width:34px;height:30px;padding-top:4px;border-radius:17px;font-weight:bold;text-align:center;background-color:#386889"><i class="fa fa-question" style="font-size:22px;"></i></span> at the top right of any page.</div>',{top: '100px', left: '0px', right: '0px', 'text-align':'center'},true);
+				var message = 'You\'re moments away from performing quick, easy, human-readable calculations!<BR><BR>We rely on a proven, open-source mathematics engine, but Swift Calcs is still a <i>Beta</i> product.<BR>Help us get better: report bugs or suggest features by clicking <span style="display:inline-block;width:34px;height:30px;padding-top:4px;border-radius:17px;font-weight:bold;text-align:center;background-color:#386889"><i class="fa fa-question" style="font-size:22px;"></i></span> at the top right of any page.';
+				if(!window.user_logged_in)
+					message += "<BR><BR><div style='font-size:11px;'>Already a user?  <a href='#' style='color:white;' onclick='window.forceLoadTutorial=false;window.closeScreenExplanation();window.loadSigninBox();return false;'>Login to your account</a></div>";
+				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">' + message + '</div>',{top: '100px', left: '0px', right: '0px', 'text-align':'center'},true);
 				setContent('[fa=right]',{right: '110px',bottom:'25px'});
 				setContent('<div style="border:3px solid white;border-right-width:0px;padding:5px 20px 5px 5px;">Click the <i>New Worksheet</i> button to get started</div>',{right: '153px',bottom:'45px'});
 				highlight('.new_bubble.new_worksheet');
@@ -86,6 +89,7 @@ $(function() {
 				$('.next.button').html('Close Tutorial');
 				break;
 			case 5:
+      	window.forceLoadTutorial = false;
 				window.closeScreenExplanation();
 				window.setTimeout(function() { SwiftCalcs.active_worksheet.ends[1].focus(1); window.closeSidebar(); });
 				window.setTimeout(function() { SwiftCalcs.createTooltip("<<Help is Always Here>>\nRemember, if you run in to trouble or need a hint, click this icon and send us a note.", $('nav.accounts li.icon.help'), $('nav.accounts li.icon.help i'), true)}, 1000);

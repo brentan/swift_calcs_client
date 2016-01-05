@@ -30,9 +30,13 @@ obj.onprogress = function(input_module) { return function(e){
 }; }(Module);
 var loadGiac = function(v) {
 	var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
-	if(is_chrome && ((navigator.userAgent.toLowerCase().replace(/.*chrome\/([0-9]+)\..*/,"$1")*1) > 46))
+	var chrome_version = 0;
+	if(is_chrome)
+		chrome_version = navigator.userAgent.toLowerCase().replace(/.*chrome\/([0-9]+)\..*/,"$1")*1;
+	if((chrome_version > 46) && (chrome_version < 49)) {
+		sendMessage({command: 'chrome_workaround_enabled'});
 		obj.open('GET','/libraries/chrome_giac' + v + '.js',true);
-	else
+	} else
 		obj.open('GET','/libraries/giac' + v + '.js',true);
 	obj.send(null);
 }

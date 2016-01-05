@@ -12,18 +12,6 @@ $(function() {
 	  $('.popup_dialog').hide();
 		$('.feedback_link').css('left', '25px');
 	}
-	var resizePopup = window.resizePopup = function(center) {
-		$('.popup_dialog').css('bottom', 'auto');
-		if(center === true) {
-			var high = $('.popup_dialog .full').prop("scrollHeight") + 70;
-			var available = Math.max(400, $(window).height());
-			if(high > (available-200))
-				$('.popup_dialog').css('top', 60 + 'px').css('bottom', 100 + 'px');
-			else 
-				$('.popup_dialog').css('top', Math.floor((available - high)/2) + 'px').css('bottom', Math.floor((available - high)/2) + 'px');
-		} else
-			$('.popup_dialog').css('top', 60 + 'px').css('bottom', 100 + 'px');
-	}
 	var openFileDialog = window.openFileDialog = function(hash_string, archive, labels_hash) {
     if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
     $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
@@ -339,7 +327,7 @@ $(function() {
 					window.hidePopupOnTop();
 					$('.loading_box .name').html('Loading');
 					window.print();
-				}, 300);
+				}, 400);
 			} else
 				window.setTimeout(doPrint, 250);
 		}
@@ -614,7 +602,7 @@ $(function() {
       } else
       	callbackFunction(name);
     });
-    resizePopup(invite_dialog ? false : true);
+    window.resizePopup(invite_dialog ? false : true);
     el.find('.input input').focus();
 	}
 	var newProject = window.newProject = function(parent_project_id) {
@@ -654,7 +642,7 @@ $(function() {
 		if($(this).attr('data-type') == 'project') window.newProject(null);
 		if($(this).attr('data-type') == 'label') {
   		window.showPopupOnTop();
-  		$('.popup_dialog .full').html("<div class='title'>Add a new label</div><div>Labels allow you to keep track of worksheets across projects and time.  Creating a new label is easy: when viewing a worksheet, look for the labels icon <i class='fa fa-fw fa-tags'></i> at the top of the sheet and the list of labels (or the messaage 'add labels to this worksheet').  Simply click on the list of labels (or the 'add labels to this worksheet message') and begin typing the labels you want to add, seperated by commas.  All the labels you create will automatically be populated in the menubar on the left of the page.</div>");
+  		$('.popup_dialog .full').html("<div class='title'>Add a new label</div><div>Labels allow you to keep track of worksheets across projects and time.  Creating a new label is easy: when viewing a worksheet, look for the labels icon <i class='fa fa-fw fa-tags'></i> at the top of the sheet and the list of labels (or the message 'add labels to this worksheet').  Simply click on the list of labels (or the 'add labels to this worksheet message') and begin typing the labels you want to add, seperated by commas.  All the labels you create will automatically be populated in the menubar on the left of the page.</div>");
       $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
       window.resizePopup(true);
 		}
@@ -736,7 +724,7 @@ $(function() {
 				}).appendTo(menu);
 				if(response.rights_level >= 3)
 					$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
-						promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processRename(el, project_id, name) }; }(el, project_id));
+						promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processProjectRename(el, project_id, name) }; }(el, project_id));
 						closeMenu();
 					}).appendTo(menu);
 			}
@@ -750,7 +738,7 @@ $(function() {
 		e.stopPropagation();
 	});
 
-	var processRename = function(el, project_id, new_name) {
+	var processProjectRename = function(el, project_id, new_name) {
 		el.attr('data-name', new_name);
 		el.children('.project_title').children('.name').html(new_name);
 		window.ajaxRequest("/projects/rename", { id: project_id, name: new_name }, function() { 
@@ -967,7 +955,7 @@ $(function() {
 			el.attr('data-hash', response.hash_string);
 			var menu = $('.loading_' + worksheet_id).removeClass('loading_' + worksheet_id).removeClass('loading').off('mouseleave');
 			menu.find('div').remove();
-			$('<div/>').html('<i class="fa fa-fw fa-external-link"></i>Open in New Window').on('click', function(e) {
+			$('<div/>').html('<i class="fa fa-fw fa-external-link"></i>Open in Full Window').on('click', function(e) {
 				el.find('.fa-external-link').click();
 				closeMenu();
 			}).appendTo(menu);
