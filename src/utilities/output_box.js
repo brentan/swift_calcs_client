@@ -30,6 +30,7 @@ var outputBox = P(function(_) {
 		return this;
 	}
 	_.setWarning = function(html, append) {
+		html = html.replace(/warning[,:\-]/i, "Notice:").replace(/warning/i, "Notice");
 		if(!append) this.clearState();
 		this.el.jQ.addClass('warn');
 		var err = $('<div/>').addClass('warning').html(html);

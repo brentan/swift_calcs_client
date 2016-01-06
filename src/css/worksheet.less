@@ -113,8 +113,7 @@ div.sc_element_container {
       }
     }
     &.warn > table.sc_element_table > tbody > tr > td.sc_element_td i.fa-exclamation-triangle {
-      display: inline-block;
-      color: #AAAA00;
+      display: none;
     }
     &.error > table.sc_element_table > tbody > tr > td.sc_element_td i.fa-exclamation-triangle, &.error.warn > table.sc_element_table > tbody > tr > td.sc_element_td i.fa-exclamation-triangle {
       display: inline-block;
@@ -138,7 +137,6 @@ div.sc_element_container {
       }
       div.warn {
         text-align:center;
-        background-color:#FFFFD6;
         border-radius:5px;
         margin:3px;
         padding:6px;
@@ -430,13 +428,6 @@ div.sc_element_container {
               }
               &:hover {
                 background-color: #efefef;
-              }
-            }
-            &.warn {
-              background-color: #FFFFD6;
-              div.pulldown { border-color: #FFFFA6; }
-              &:hover {
-                background-color: #FFFFA6;
               }
             }
             &.error {
