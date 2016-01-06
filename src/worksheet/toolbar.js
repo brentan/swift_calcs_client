@@ -1386,6 +1386,13 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	        { text: 'Hyperbolic Arccosine', giac_func: 'acosh(' },
 	        { text: 'Hyperbolic Arctangent', giac_func: 'atanh(' },
 	      ],
+	      [ 'Simplifications',
+	        { text: 'Simplify, preference for sin', giac_func: 'trigsin(' },
+	        { text: 'Simplify, preference for cos', giac_func: 'trigcos(' },
+	        { text: 'Simplify, preference for tan', giac_func: 'trigtan(' },
+	        { text: 'Collect sin & cos of same angle', giac_func: 'tcollect(' },
+	        { text: 'Expand a trigonemetric expression', giac_func: 'texpand(' }
+	      ],
 	      [ 'Algabraic Manipulations',
 	        { text: 'Convert cos -> sin/tan', giac_func: 'cos2sintan(' },
 	        { text: 'Convert sin -> cos/tan', giac_func: 'sin2costan(' },
