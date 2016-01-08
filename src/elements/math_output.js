@@ -216,7 +216,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 			this.unitMode.cmd('\\Unit');
 		this.outputBox.jQ.addClass('unit_input');
 	}
-	_.unitChosen = function(output) {
+	_.itemChosen = function(output) {
 		if(!this.unitMode) return;
 		this.expectedUnits = output;
 		this.outputBox.jQ.removeClass('unit_input').find(".unit_add").remove();

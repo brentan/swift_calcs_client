@@ -196,7 +196,7 @@ var GiacHandler = P(function(_) {
 			var restart = false;
 		}
 		var next_scope = el.worksheet.id + '_' + el.id;
-		this.sendCommand({eval_id: eval_id, restart: restart, scoped: el.scoped, move_to_next: move_to_next, commands: commands, previous_scope: previous_scope, next_scope: next_scope, callback_id: el.id, callback_function: callback}, el);
+		this.sendCommand({eval_id: eval_id, restart: restart, scoped: el.scoped, move_to_next: move_to_next, commands: commands, previous_scope: previous_scope, next_scope: next_scope, callback_id: el.id, focusable: el instanceof aFocusableItem, callback_function: callback}, el);
 	}
 	_.sendCommand = function(hash_string, el) {
 		if(el) {
@@ -251,7 +251,9 @@ var loadWorker = function(giacHandler) {
 				giac.postMessage(JSON.stringify({giac_version: window.giac_version}));
       	return;
     	case 'results':
-    		if(Element.byId[response.callback_id]) Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
+    		if(response.focusable) {
+    			if(aFocusableItem.byId[response.callback_id]) aFocusableItem.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
+    		} else if(Element.byId[response.callback_id]) Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
     		else setComplete();
     		break;
     	case 'varList':

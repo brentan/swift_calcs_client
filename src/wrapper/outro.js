@@ -26,6 +26,7 @@
 		'import': importData,
 		'image': image,
 		'imageBlock': imageBlock,
+		'slider': slider,
 		'csv': csv,
 		'csvBlock': csvBlock,
 		'video': video,

@@ -205,7 +205,7 @@ var receiveMessage = function(command) {
   if(command.variable)
     sendMessage({command: 'variable', results: output, callback_id: command.callback_id})
   else
-	  sendMessage({command: 'results', results: output, eval_id: command.eval_id, move_to_next: command.move_to_next, callback_id: command.callback_id, callback_function: command.callback_function});
+	  sendMessage({command: 'results', results: output, eval_id: command.eval_id, move_to_next: command.move_to_next, callback_id: command.callback_id, focusable: command.focusable, callback_function: command.callback_function});
 }
 this.addEventListener("message", function (evt) {
   receiveMessage(JSON.parse(evt.data));
