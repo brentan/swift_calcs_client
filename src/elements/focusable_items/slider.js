@@ -22,8 +22,26 @@ var Slider = P(aFocusableItem, function(_, super_) {
 			this.unit_html = unit[1].replace("mq-editable-field","");
 		}
 		this.handlers = options.handlers;
-		this.initSlider({});
+		this.initSlider(options);
 		this.worksheet = el.worksheet;
+	}
+	_.update = function(options) {
+		if(options.unit && options.unit.length) {
+			var unit = this.element.worksheet.latexToUnit(options.unit);
+			this.unit = unit[0];
+			this.unit_latex = options.unit;
+			this.unit_html = unit[1].replace("mq-editable-field","");
+		} else {
+			this.unit = '';
+			this.unit_latex = '';
+			this.unit_html = '';
+		}
+    this.min    = tryParseFloat(options.min, 0);
+    this.max    = tryParseFloat(options.max, 100);
+    this.step   = tryParseFloat(options.step, 0);
+    var val = this.value;
+    this.value = val + 1; // Do this to force save/re-eval
+    this.write(val, true);
 	}
 	// API Functions that are called by the enclosing element //
 	_.keystroke = function(description, event) {
@@ -100,8 +118,8 @@ var Slider = P(aFocusableItem, function(_, super_) {
 		input.setElement(this);
 		input.setCaptiveMode(true); 
 		input.focus();
-		var latex = this.value;
-		if(this.unit.length) latex = latex + "\\cdot " + this.unit_latex;
+		var latex = this.value + '';
+		if(this.unit.length) latex = latex + " " + this.unit_latex;
 		input.latex(latex).select();
 		this.mathquill = true;
 		this.input_open = input;
@@ -174,6 +192,9 @@ var Slider = P(aFocusableItem, function(_, super_) {
 		else
 			this.input_open.paste(text);
 		return this;
+	}
+	_.toString = function() {
+		return this.value + '';
 	}
 	_.write = function(text, force_remove) {
 		if((force_remove === true) || (this.input_open === false)) {
@@ -470,8 +491,9 @@ var Slider = P(aFocusableItem, function(_, super_) {
           rangePos    = this.$range[0].getBoundingClientRect()[this.DIRECTION],
           handlePos   = this.getPositionFromNode(this.$handle[0]) - rangePos,
           setPos      = (this.orientation === 'vertical') ? (this.maxHandlePos - (pos - this.grabPos)) : (pos - this.grabPos);
-
-      this.setPosition(setPos);
+      this.changed = false;
+			this.scheduleUndoPoint();
+      this.setPosition(setPos, true, false);
 
       if (pos >= handlePos && pos < handlePos + this.handleDimension) {
           this.grabPos = pos - handlePos;
@@ -482,7 +504,7 @@ var Slider = P(aFocusableItem, function(_, super_) {
       e.preventDefault();
       var pos = this.getRelativePosition(e);
       var setPos = (this.orientation === 'vertical') ? (this.maxHandlePos - (pos - this.grabPos)) : (pos - this.grabPos);
-      this.setPosition(setPos);
+      this.setPosition(setPos, true, false);
   };
 
   _.mouseUp = function(e) {
@@ -491,6 +513,9 @@ var Slider = P(aFocusableItem, function(_, super_) {
       if (this.onSlideEnd && typeof this.onSlideEnd === 'function') {
           this.onSlideEnd(this.position, this.value);
       }
+      if(this.changed && (this.element.changed)) this.element.changed(this);
+      if(this.changed) this.element.worksheet.save();
+
   };
 
   _.cap = function(pos, min, max) {
@@ -499,11 +524,14 @@ var Slider = P(aFocusableItem, function(_, super_) {
       return pos;
   };
 
-  _.setPosition = function(pos, triggerSlide) {
+  _.setPosition = function(pos, triggerSlide, evaluate_immediately) {
       var value, newPos;
 
       if (triggerSlide === undefined) {
           triggerSlide = true;
+      }
+      if (evaluate_immediately === undefined) {
+          evaluate_immediately = true;
       }
 
       // Snapping steps
@@ -516,9 +544,18 @@ var Slider = P(aFocusableItem, function(_, super_) {
 
       // Update globals
       this.position = newPos;
-      if((this.value != value) && (this.element.changed)) this.element.changed(this);
+      var change = false;
+      if(evaluate_immediately) {
+      	if(this.value != value) {
+      		change = true;
+      		this.scheduleUndoPoint();
+      	}
+	    } else if(this.value != value)
+	    	this.changed = true;
       this.value = value;
       this.setVal();
+      if(change && (this.element.changed)) this.element.changed(this);
+      if(change) this.element.worksheet.save();
 
       if (triggerSlide && this.onSlide && typeof this.onSlide === 'function') {
           this.onSlide(newPos, value);

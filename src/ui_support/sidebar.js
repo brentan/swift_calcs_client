@@ -62,6 +62,7 @@ $(function() {
       {left: 'x&#8801;', text: 'Define a Variable', el: 'math', option: 'latex{x=}', prepend: true, highlight: "Shift-Right"},
       {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;', text: 'Define a Function', el: 'math', option: 'latex{\\operatorname{f}\\left({}\\right)=}', prepend: true, highlight: "Right Shift-Right"},
       {left: 'fa-trash', text: 'Purge Variable', el: 'purge' },
+      {left: 'fa-sliders', text: 'Input Slider', el: 'slider' },
     ],
   };
   var first = true;
