@@ -209,8 +209,8 @@ var Slider = P(aFocusableItem, function(_, super_) {
 	}
 	_.blur = function() {
 		this.sliderJQ.children().removeClass('highlight');
-		if(this.input_open !== false)
-			this.setVal();
+		if(this.input_open !== false) 
+			this.input_open.blur();
 	}
 	_.setVal = function(text) {
 		if(typeof text === 'undefined') text = (this.value + this.unit_html);

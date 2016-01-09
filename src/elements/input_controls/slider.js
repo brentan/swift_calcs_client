@@ -13,7 +13,7 @@ var slider = P(Element, function(_, super_) {
 	_.helpText = "<<slider>>\nThe slider provides a user visual slider that a user can click and manipulate in order to change an input.\nClick the <i class='fa fa-wrench'></i> icon to customize the minimum, maximum, step size, and units of the slider.";
 
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span>' + focusableHTML('Slider', 'value') + "<span class='gear'><i class='fa fa-wrench'></i></span>" + helpBlock();
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span>' + focusableHTML('Slider', 'value') + "<span class='gear'><i class='fa fa-wrench'></i></span>" + helpBlock() + "</div>" + answerSpan();;
 	}
 	_.postInsertHandler = function() {
 		this.varStoreField = registerFocusable(MathQuill, this, 'var_store', { ghost: 'ans', noWidth: true, handlers: {
@@ -58,9 +58,26 @@ var slider = P(Element, function(_, super_) {
 			}
 		};
 	}
+	_.evaluationFinished = function(result) {
+		if(!result[0].success) {
+			this.outputBox.setError(result[0].returned);
+			this.outputBox.expand();
+		} else
+			this.outputBox.collapse();
+		return true;
+	}
   _.toString = function() {
   	return '{slider}{{' + this.argumentList().join('}{') + '}}';
   }
+	_.PrependBlankItem = function(el) {
+		if(el === this.focusableItems[0][0]) {
+			//add a blank block just before this one
+			math().insertBefore(this).show();
+			this.focus(L);
+			return true;
+		} else
+			return false;
+	}
 	// Callback for math elements notifying that this element has been changed
 	_.changed = function(el) {
 		if(el == this.varStoreField) this.needsEvaluation = true;
