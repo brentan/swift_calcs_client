@@ -291,7 +291,7 @@ var loadWorker = function(giacHandler) {
       		else
       			showNotice('Your Chrome version includes a bug that significantly slows Swift Calcs.  <a href="#" onclick=\'window.showPopupOnTop();$(".popup_dialog .full").html("<div class=\\"title\\">Chrome bug causes slow computations</div>Chrome 47 and 48 include a bug in the javascript interpreter which breaks a core portion of the Swift Calcs computation engine.  We have notified the Chrome development team about this issue, and a fix will be included in the Chrome 49 release on February 29, 2016.<BR><BR>In the meantime, <b>we have implemented a workaround for Chrome users that slows computation speeds</b>.  Chrome users are advised to work through the slowness until the stable release of Chrome 49 occurs in February, temporarily switch to another browser such as Firefox or Safari, or download the Chrome development version <i>Chrome Canary</i>, which includes the bug fix that will be released more broadly in February.<BR><BR>For further information on the source of this bug, please check out our blog post on the subject at <a target=\\"_blank\\" href=\\"http://blog.swiftcalcs.com/two-steps-forward/\\">blog.swiftcalcs.com/two-steps-forward</a>");$(".popup_dialog .bottom_links").html("<button class=\\"close\\">Close</button>");window.resizePopup();return false;\'>Learn More</a>','yellow', 6000);
       	}
-      	chrome_err_function();
+      	//chrome_err_function();
       	break;
     }
   }
