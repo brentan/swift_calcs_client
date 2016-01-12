@@ -109,4 +109,8 @@ $(function() {
 	window.loadNextScreenExplanation = function(step) { loadStep(step); }
 	window.loadTutorial = function() { loadStep(0); };
 	$('body').on('click', '#account_bar .load_tutorial', function(e) { window.loadTutorial(); return false; });
+
+	if(window.returning_user) {
+		showNotice("Welcome Back!  <a href='#' onclick='window.loadTutorial();return false;'>Take a tour</a> to familiarize yourself with Swift Calcs v0.3", 'yellow', 6000);
+	}
 });
