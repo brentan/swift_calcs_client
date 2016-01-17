@@ -1169,6 +1169,7 @@ $(function() {
 			SwiftCalcs.labelIds[$(this).attr('data-id')*1] = true;
 		});
 	}
+	createLabelList();
 	var createProjectList = window.createProjectList = function() {
 		// Project List
 		var projectListIterator = function(el) {
