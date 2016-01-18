@@ -37,3 +37,4 @@
 }());
 window.SwiftCalcs_js_ready = true;
 window.createProjectList();
+window.createLabelList();
