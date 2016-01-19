@@ -11,6 +11,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 	_.approx = false;
 	_.factor_expand = false;
 	_.pre_command = false;
+	_.nomarkup = false;
 	_.answerLatex = '';
 	// Output mode has three values: 0 is auto, 1 is force hide, 2 is force show
 	_.outputMode = 0
@@ -27,7 +28,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		return this;
 	}
 	_.genCommand = function(to_compute) {
-		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, simplify: this.factor_expand}];
+		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, simplify: this.factor_expand, nomarkup: this.nomarkup}];
 		if(this.pre_command)
 			to_send.pre_command = this.pre_command;
 		return to_send;

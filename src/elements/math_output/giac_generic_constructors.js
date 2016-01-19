@@ -12,6 +12,16 @@ createGiacElement({
 	command: "fft($1)" 
 });
 createGiacElement({
+	name: 'pfactor',
+	code: 'prime factorization',
+	helpText: '<<prime factorization <[NUMBER]>>>\nCompute the prime factors of the integer provided.',
+	content: [ 
+		"<<MathQuill {ghost: 'number'}>>",
+	],
+	command: "latex(ifactor($1))",
+	nomarkup: true
+});
+createGiacElement({
 	name: 'ifft',
 	code: 'inverse fourier transform',
 	helpText: '<<inverse fourier transform <[DATA]>>>\nCompute the inverse fourier transform of the array provided.',

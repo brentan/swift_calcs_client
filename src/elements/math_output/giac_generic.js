@@ -110,6 +110,7 @@ var createGiacElement = function(options) {
 	// Generate the required class variables based on the input stuct
 	var focusable_list = [];
 	if(typeof options.code === 'undefined') options.code = options.name;
+	if(typeof options.nomarkup === 'undefined') options.nomarkup = false;
 	var id = 0;
 	var html = '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
  	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span>' + focusableHTML('CodeBlock',  options.code) + '</td>'
@@ -138,6 +139,7 @@ var createGiacElement = function(options) {
 	giac_elements_to_add.push({key: options.name, el: P(GiacGeneric, function(_, super_) {
 		_.klass = [options.name];
 		_.helpText = options.helpText;
+		_.nomarkup = options.nomarkup;
 		_.function_of = options.function_of ? options.function_of : false;
 		_.pre_command = options.pre_command ? options.pre_command : false;
 		var block_html = html;
