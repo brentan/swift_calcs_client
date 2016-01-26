@@ -10,7 +10,7 @@ window.MathquillSetup = function() {
 		charsThatBreakOutOfSupSub: '$=<>',
 		autoCommands: 'and or xor true false sqrt sum nthroot abs alpha beta gamma delta varepsilon epsilon zeta eta theta iota kappa lambda mu nu xi rho pi sigma tau upsilon phi chi psi omega Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega',
 		autocomplete: [],
-		staticAutocomplete: ['acos','acosh','acot','asin','asinh','atan','atanh','ceil','comb','cos','cosh','cot','cross','csc','det','eigenvals','eigenvects','exp2trig','expand','factor','floor','log','log10','mean','median','nthroot','partfrac','perm','quartiles','rand','randnorm','rank','round','sec','simplify','sin','sinh','sqrt','stddev','tan','tanh','tcollect','texpand','tlin','trig2exp','variance'],
+		staticAutocomplete: ['acos','acosh','acot','asin','asinh','atan','atan2','atanh','ceil','comb','cos','cosh','cot','cross','csc','det','eigenvals','eigenvects','exp2trig','expand','factor','floor','log','log10','mean','median','nthroot','partfrac','perm','quartiles','rand','randnorm','rank','round','sec','simplify','sin','sinh','sqrt','stddev','tan','tanh','tcollect','texpand','tlin','trig2exp','variance'],
 		unitList: [
 			{ name: 'meter', symbol: 'm', prefix: true, mksa: [1,1,0,0,0,0,0,0,0]},
 			{ name: 'foot', symbol: 'ft', prefix: false, mksa: [1,1,0,0,0,0,0,0,0]},
@@ -185,7 +185,8 @@ window.MathquillSetup = function() {
 			asin2atan:"<<asin2atan(2*asin(x))>>\nReplaces arcsin(x) by arctan(x/sqrt(1-x^2)) in the argument\n|Also See: asin2acos|",
 			asinh:"<<asinh(0)>>\nHyperbolic arcsine.\n|Also See: sinh,asin|",
 			at:"<<at([10,11,12],1)>>\nat(l,j) (or at(m,[j,k])) is the element of the list l (or matrix m) for index=j (or for index j,k).\n|Also See: of|",
-			atan:"<<atan(0)>>\nArctangent.\n|Also See: tan,atanh|",
+			atan:"<<atan(20)>>\nArctangent.\n|Also See: tan,atanh,atan2|",
+			atan2:"<<atan2(20,62)>>\nArctangent of the quotient of the arguments.  The y coordinate is first, and the x coordinate is second (equivalent to atan(y/x) is atan2(y,x).  This function, unlike atan, has full sign information for both x and y and will return the angle corresponding to the correct quadrant for x and y.\n|Also See: tan,atanh,atan|",
 			atan2acos:"<<atan2acos(atan(x))>>\nReplaces arctan(x) by pi/2-arccos(x/sqrt(1+x^2)) in the argument",
 			atan2asin:"<<atan2asin(atan(x))>>\nReplaces arctan(x) by arcsin(x/sqrt(1+x^2))in the argument.",
 			atanh:"<<atan(0)>>\nHyperbolic arctangent.\n|Also See: tan|",
