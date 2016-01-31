@@ -46,11 +46,18 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	_.reshapeToolbar = function() {
     var menu_height = max(max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height());
     $('#account_bar').height(menu_height);
-		var toolbar_height = this.toolbar_holder.height();
+		if(window.matchMedia("only screen and (max-device-width: 480px)").matches) {
+			var toolbar_height = 0;
+			var extra_padding = 2;
+		} else {
+			var toolbar_height = this.toolbar_holder.height();
+			var extra_padding = 20;
+		}
 		var top = menu_height;
 		var bot = top + toolbar_height;
-		$('.worksheet_holder_outer_box').css('padding-top', (bot + 20) + 'px');
-		this.toolbar_holder.css('top', top + 'px');
+		$('.worksheet_holder_outer_box').css('padding-top', (bot + extra_padding) + 'px');
+		if(!window.matchMedia("only screen and (max-device-width: 480px)").matches)
+			this.toolbar_holder.css('top', top + 'px');
 		$('div.sidebar').css('top', bot + 'px');
 		$('div.leftbar').css('top', top + 'px');
 		$('div.anonymous_message').css('top', bot + 'px');
@@ -68,6 +75,10 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			for(var i = 0; i < toolbar.length; i++) {
 				var cur_item = toolbar[i];
 				if(cur_item.skip) continue;
+				if((cur_item.title === '|') && cur_item.hide_mobile) {
+					$('<li class="separator hide_on_mobile"></li>').appendTo($ul);
+					continue;
+				}
 				if(cur_item.title === '|') {
 					$('<li class="separator"></li>').appendTo($ul);
 					continue;
@@ -79,6 +90,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 					$li.addClass('right');
 				var $div = $('<div/>').addClass('item').appendTo($li);
 				if(cur_item.klass) $div.addClass(cur_item.klass);
+				if(cur_item.hide_mobile) $div.addClass('hide_on_mobile');
 				if(cur_item.html)
 					if(cur_item.html) $div.html(cur_item.html);
 				if(cur_item.icon)
@@ -145,10 +157,16 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	}
 	_.blurToolbar = function(el) {
 		if(el && (el !== current_toolbar_target)) return;
-		if(this.toolbar) this.toolbar.addClass('blurred');
+		if(this.toolbar) {
+			this.toolbar.addClass('blurred');
+			this.toolbar_holder.addClass('blurred');
+		}
 	}
 	_.unblurToolbar = function() {
-		if(this.toolbar) this.toolbar.removeClass('blurred');
+		if(this.toolbar) {
+			this.toolbar.removeClass('blurred');
+			this.toolbar_holder.removeClass('blurred');
+		}
 	}
 	// Batch toolbar used when selecting multiple worksheets
 	_.batchToolbar = function(tot) {
@@ -229,6 +247,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			id: 'format',
 			icon: 'paragraph',
 			title: 'Paragraph',
+			hide_mobile: true,
 			sub: [
 				{ html: '<h1>Large Heading</h1>', method: function(el) { el.command('H1'); } },
 				{ html: '<h2>Medium Heading</h2>', method: function(el) { el.command('H2'); } },
@@ -237,11 +256,13 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{ html: 'Normal', method: function(el) { el.command('normalFormat'); } }
 			]
 		},
-		{ title: '|' },
+		{ title: '|',
+			hide_mobile: true },
 		{
 			id: 'font-family',
 			icon: 'font',
 			title: 'Font',
+			hide_mobile: true,
 			html: '<span class="fontName">Arial</span>',
 			sub: [
 				{ html: '<span style="font-family: sans-serif;">Arial</span>', method: function(el) { el.command('fontName', 'Arial, sans-serif'); } },
@@ -252,11 +273,13 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{ html: '<span style="font-family: serif;">Times</span>', method: function(el) { el.command('fontName', 'Times, serif'); } }
 			]
 		},
-		{ title: '|' },
+		{ title: '|',
+			hide_mobile: true },
 		{
 			id: 'text-height',
 			icon: 'text-height',
 			title: 'Size',
+			hide_mobile: true,
 			html: '<span class="fontSize">2</span>',
 			sub: [
 				{ html: '<span style="font-size:48px;">Font Size 7</span>', method: function(el) { el.command('fontSize', 7); } },
@@ -268,20 +291,24 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{ html: '<span style="font-size:10px;">Font Size 1</span>', method: function(el) { el.command('fontSize', 1); } }
 			]
 		},
-		{ title: '|' },
+		{ title: '|',
+			hide_mobile: true },
 		{ 
 			id: 'foreColor',
 			title: 'Font Color',
+			hide_mobile: true,
 			html: '<span class="fa-stack" style="line-height: inherit;"><span style="font-size:1.25em;border-bottom:4px solid black;" class="fa fa-font fa-stack-2x foreColor"></span></span>',
 			colorPicker: function(el, color) { el.command('foreColor', color); }
 		},
 		{ 
 			id: 'backColor',
+			hide_mobile: true,
 			title: 'Background Color',
 			html: '<span class="fa-stack" style="line-height: inherit;"><span class="fa fa-square fa-stack-2x" style="position:relative;top:-2px;font-size:1.35em;" ></span><span style="color: #ecf0f1;font-size:1.35em;border-bottom:4px solid white;" class="fa fa-font fa-inverse fa-stack-2x backColor"></span></span>',
 			colorPicker: function(el, color) { el.command('backColor', color); }
 		},
-		{ title: '|' },
+		{ title: '|',
+			hide_mobile: true },
 		{
 			id: 'bold',
 			icon: 'bold',
@@ -308,34 +335,41 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			icon: 'strikethrough',
 			klass: 'strikethrough',
 			title: 'Srike-through',
+			hide_mobile: true,
 			method: function(el) { el.command('strikeThrough'); } 
 		},
 		{ title: '|' },
 		{
 			id: 'link',
 			icon: 'link',
+			hide_mobile: true,
 			title: 'Create link',
 			method: function(el) { el.command('createLink'); } //BRENTAN: This needs a modal to ask the user for URL and TITLE
 		},
 		{
 			id: 'unlink',
 			icon: 'unlink',
+			hide_mobile: true,
 			title: 'Remove link',
 			method: function(el) { el.command('unlink'); } 
 		},
 		{
 			id: 'subscript',
 			icon: 'subscript',
+			hide_mobile: true,
 			title: 'Subscript',
 			method: function(el) { el.command('subscript'); } 
 		},
 		{
 			id: 'superscript',
 			icon: 'superscript',
+			hide_mobile: true,
 			title: 'Superscript',
 			method: function(el) { el.command('superscript'); } 
 		},
-		{ title: '|' },
+		{ title: '|',
+			hide_mobile: true
+		 },
 		{
 			id: 'justifyLeft',
 			icon: 'align-left',
@@ -380,25 +414,30 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		{
 			id: 'indent',
 			icon: 'indent',
+			hide_mobile: true,
 			title: 'Indent',
 			method: function(el) { el.command('indent'); } 
 		},
 		{
 			id: 'outdent',
 			icon: 'outdent',
+			hide_mobile: true,
 			title: 'Remove Indent',
 			method: function(el) { el.command('outdent'); } 
 		},
-		{ title: '|' },
+		{ title: '|',
+			hide_mobile: true },
 		{
 			id: 'eraser',
 			icon: 'eraser',
+			hide_mobile: true,
 			title: 'Remove all formatting',
 			method: function(el) { el.command('removeFormat'); } 
 		},
 		{
 			id: 'mode',
 			html: 'Text Mode',
+			hide_mobile: true,
 			klass: 'text_mode',
 			right: true,
 			method: function(el) { el.command('mathMode'); },
@@ -436,6 +475,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				icon: 'line-chart',
 				html: '&nbsp;' + ((el instanceof subplot) ? el.name() : 'Data Series') + '&nbsp;',
 				title: 'Data Series',
+				hide_mobile: true,
 				sub: data_sets
 			},
 			{ title: '|' },
@@ -443,6 +483,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				id: 'labels',
 				html: 'Chart Labels&nbsp;',
 				title: 'Chart Labels',
+				hide_mobile: true ,
 				sub: [
 					{ html: 'Chart Title', method: function() { $('.plot_title').find('span.title_span').click(); } },
 					{ html: 'X Axis Label', method: function() { parent_el.setAxis(0); } },
@@ -453,6 +494,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			{
 				id: 'limits',
 				html: 'Limits&nbsp;',
+				hide_mobile: true,
 				title: 'Axis Limits',
 				sub: [
 					{ html: 'X Axis Limits', method: function() { parent_el.setAxis(0); } },
@@ -460,18 +502,20 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 					{ html: 'Secondary Y Axis Limits', method: function() { parent_el.setAxis(2); } },
 				]
 			},
-			(el.chart_type ? { title: '|' } : {skip: true}),
+			(el.chart_type ? { title: '|', hide_mobile: true } : {skip: true}),
 			(el.chart_type ? el.chart_type() : {skip: true}),
 			(el.c3_type && el.c3_type.match(/^(area|line)$/) ? {
 				id: 'spline',
 				html: 'Splines&nbsp;',
 				title: 'splines',
+				hide_mobile: true,
 				sub: [
 					{ html: (el.spline ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Enable', method: function(el) { el.command('spline',true); } },
 					{ html: (!el.spline ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Disable', method: function(el) { el.command('spline',false); } },
 				]
 			} : {skip: true}),
-			{ title: '|' },
+			{ title: '|',
+				hide_mobile: true},
 			{
 				id: 'marker_size',
 				icon: 'circle',
@@ -776,12 +820,14 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			id: 'commands',
 			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">Command Library</div>',
 			title: 'Command Library',
+			hide_mobile: true,
 			commands: function(el, cmd, unit) { el.command(cmd, unit); }
 		},
 		{
 			id: 'mode',
 			html: 'Math Mode',
 			klass: 'math_mode',
+			hide_mobile: true,
 			right: true,
 			method: function(el) { el.command('textMode'); },
 			sub: [
