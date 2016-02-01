@@ -373,7 +373,7 @@ var plot = P(Element, function(_, super_) {
 				},
 		    grid: {
 	        x: ((ignore_custom_xs || this.x_log) ? {} : { lines: [{value: 0}] }),
-	        y: { lines: [{value: 0}] },
+	        y: (this.y_log ? {} : { lines: [{value: 0}] }),
 	        lines: { front: false }
 		    }
 			});
