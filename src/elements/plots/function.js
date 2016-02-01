@@ -67,7 +67,6 @@ var plot_func = P(subplot, function(_, super_) {
 			command = command.replace(new RegExp('([^a-zA-Z])' + name + '([^a-zA-Z_\(\[])','g'),"$1(10^" + name + ")$2");
 			command = command.replace(new RegExp('^' + name + '([^a-zA-Z_\(\[])','g'),"(10^" + name + ")$1");
 			command = command.replace(new RegExp('([^a-zA-Z])' + name + '$','g'),"$1(10^" + name + ")");
-			console.log(command);
 			var command2 = "plotfunc(evalf(" + command + ")," + name + "=log10(" + min_val + ")..log10(" + max_val +"),nstep=400)"; 
 		} else
 			var command2 = "plotfunc(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + ")..(" + max_val +"),nstep=400)"; 
