@@ -372,9 +372,9 @@ var plot = P(Element, function(_, super_) {
 					r: function(d) { return marker_size[d.id]; }
 				},
 		    grid: {
-		        x: (ignore_custom_xs ? {} : { lines: [{value: 0}] }),
-		        y: { lines: [{value: 0}] },
-		        lines: { front: false }
+	        x: ((ignore_custom_xs || this.x_log) ? {} : { lines: [{value: 0}] }),
+	        y: { lines: [{value: 0}] },
+	        lines: { front: false }
 		    }
 			});
 			var el = $(this.plotBox.element);
