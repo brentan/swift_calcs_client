@@ -61,7 +61,16 @@ var plot_func = P(subplot, function(_, super_) {
 		var max_val = this.parent.x_max === false ? (this.parent.calc_x_max === false ? ( 5 * this.parent.x_unit_conversion) : this.parent.calc_x_max) : (this.parent.x_max * this.parent.x_unit_conversion);
 		var unit_command = this.show_unit && this.unit_box.text().length ? this.unit_box.text() : '1';
 		var command1 = "latex(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[(" + min_val + "+0.000000001)*" + unit_command + "])[0])"; // Evaluate at the first x to find units...add something so that we dont get evaluation at 0
-		var command2 = "plotfunc(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + ")..(" + max_val +"),nstep=400)"; 
+		if(this.parent.x_log) {
+			var command = this.eq0.text();
+			var name = this.eq1.text();
+			command = command.replace(new RegExp('([^a-zA-Z])' + name + '([^a-zA-Z_\(\[])','g'),"$1(10^" + name + ")$2");
+			command = command.replace(new RegExp('^' + name + '([^a-zA-Z_\(\[])','g'),"(10^" + name + ")$1");
+			command = command.replace(new RegExp('([^a-zA-Z])' + name + '$','g'),"$1(10^" + name + ")");
+			console.log(command);
+			var command2 = "plotfunc(evalf(" + command + ")," + name + "=log10(" + min_val + ")..log10(" + max_val +"),nstep=400)"; 
+		} else
+			var command2 = "plotfunc(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + ")..(" + max_val +"),nstep=400)"; 
 		var command3 = "latex(evalf(mksa_base(" + unit_command + ")))";
 		return [{command: command1, nomarkup: true},{command: command2, nomarkup: true, pre_command: 'mksareduce_mode(1);' },{command: command3, nomarkup: true, pre_command: 'mksareduce_mode(0);'}]
 	}
@@ -79,7 +88,10 @@ var plot_func = P(subplot, function(_, super_) {
 					this.xs = [];
 					this.ys = [];
 					for(var i = 0; i < output.length; i++) {
-						this.xs.push(output[i][0]);
+						if(this.parent.x_log)
+							this.xs.push(Math.pow(10,output[i][0]));
+						else
+							this.xs.push(output[i][0]);
 						this.ys.push(output[i][1]);
 					}
 					this.ys.unshift('data_' + this.id);
