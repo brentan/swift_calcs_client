@@ -183,7 +183,7 @@ var plot = P(Element, function(_, super_) {
 					children[i].outputBox.setWarning('Function Plot Ignored.  Function is plotted with a bar chart, which assumes a monotonic x-axis.').expand();
 					continue;
 				}
-				if(x_min === false) x_min = -5 * this.x_unit_conversion;
+				if(x_min === false) x_min = (x_log ? 1e-15 : -5) * this.x_unit_conversion;
 				if(x_max === false) x_max = 5 * this.x_unit_conversion;
 			}
 			var y_vals = children[i].ys.slice(0);
