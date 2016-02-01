@@ -7,7 +7,7 @@ var plot = P(Element, function(_, super_) {
 	_.klass = ['plot'];
 	_.evaluatable = true;
 	_.hasChildren = true;
-	_.savedProperties = ['chart_title', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units', 'rotated'];
+	_.savedProperties = ['chart_title', 'x_log', 'y_log', 'y2_log', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units', 'rotated'];
 	_.x_min = false;
 	_.x_max = false;
 	_.x_label = false;
@@ -18,6 +18,9 @@ var plot = P(Element, function(_, super_) {
 	_.y2_min = false;
 	_.y2_max = false;
 	_.y2_label = false;
+	_.x_log = false;
+	_.y_log = false;
+	_.y2_log = false;
 	_.x_units = false;
 	_.y_units = false;
 	_.y2_units = false;
@@ -185,9 +188,19 @@ var plot = P(Element, function(_, super_) {
 			}
 			var y_vals = children[i].ys.slice(0);
 			if(children[i].y_axis == 'y2') {
+				if(this.y2_log) {
+					for(var j=1; j<y_vals.length; j++){
+					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
+					}
+				} 
 				for(var j = 1; j < y_vals.length; j++)
 					y_vals[j] = y_vals[j] / this.y2_unit_conversion;  // Convert from mksa back to requested unit base
 			} else {
+				if(this.y_log) {
+					for(var j=1; j<y_vals.length; j++){
+					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
+					}
+				} 
 				for(var j = 1; j < y_vals.length; j++)
 					y_vals[j] = y_vals[j] / this.y_unit_conversion;  // Convert from mksa back to requested unit base
 			}
@@ -206,6 +219,13 @@ var plot = P(Element, function(_, super_) {
 				} else
 					x_unit = children[i].x_unit;
 				var x_vals = children[i].xs.slice(0);
+				if(this.x_log) {
+					for(var j=1; j<x_vals.length; j++){
+					  x_vals[j] = Math.log(x_vals[j]) / Math.LN10;
+					}
+				  x_min = Math.log(x_min) / Math.LN10;
+				  x_max = Math.log(x_max) / Math.LN10;
+				} 
 				for(var j = 1; j < x_vals.length; j++)
 					x_vals[j] = x_vals[j] / this.x_unit_conversion;  // Convert from mksa back to requested unit base
 				columns.push(x_vals);
@@ -311,26 +331,28 @@ var plot = P(Element, function(_, super_) {
 				axis: {
 					rotated: this.rotated,
 					x: { 
-						tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { values: x_ticks, format: function (d) { return ceil10(d, x_tick_order); } }),
+						tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { rotate: (this.x_log ? 90 : 0), values: x_ticks, format: this.x_log ? function (d) { return Math.pow(10,d).toPrecision(3)*1; } : function (d) { return ceil10(d, x_tick_order); } }),
 						label: { text: x_label, position: 'outer-center'}, 
-						min: ((this.x_min === false) || ignore_custom_xs ? undefined : this.x_min),
-						max: ((this.x_max === false) || ignore_custom_xs ? undefined : this.x_max),
+						min: ((this.x_min === false) || ignore_custom_xs ? undefined : (this.x_log ? Math.log(this.x_min) / Math.LN10 : this.x_min)),
+						max: ((this.x_max === false) || ignore_custom_xs ? undefined : (this.x_log ? Math.log(this.x_max) / Math.LN10 : this.x_max)),
 						categories: categories,
 						type: categories.length ? 'category' : 'indexed'
 					},
 					y: { 
 						label: { text: y_label, position: 'outer-middle'},
-						min: (this.y_min === false ? undefined : this.y_min),
-						max: (this.y_max === false ? undefined : this.y_max),
+						min: (this.y_min === false ? undefined : (this.y_log ? Math.log(this.y_min) / Math.LN10 : this.y_min)),
+						max: (this.y_max === false ? undefined : (this.y_log ? Math.log(this.y_max) / Math.LN10 : this.y_max)),
+						tick: (this.y_log ? { format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {})
 					},
 					y2: { 
 						label: { text: y2_label, position: 'outer-middle'}, 
-						min: (this.y2_min === false ? undefined : this.y2_min),
-						max: (this.y2_max === false ? undefined : this.y2_max),
+						min: (this.y2_min === false ? undefined : (this.y2_log ? Math.log(this.y2_min) / Math.LN10 : this.y2_min)),
+						max: (this.y2_max === false ? undefined : (this.y2_log ? Math.log(this.y2_max) / Math.LN10 : this.y2_max)),
+						tick: (this.y2_log ? { format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {}),
 						show: show_y2
 					}
 				},
-				data: {
+				data: { // TODO: Labels for log plots are not shown correctly in the popup (exponents shown instead...)
 					xs: xs,
 					columns: columns,
 					types: types,
@@ -439,9 +461,10 @@ var plot = P(Element, function(_, super_) {
 		if(this.has_bar && (axis == X_AXIS)) 
 			$('.popup_dialog .full').append('<div><strong>' + axis_name[axis] + ' Data Labels</strong><br><input type="text" class="labels"><BR><span class="explain">Comma seperated list of labels for each data bar.</span></div>');
 		else
-			$('.popup_dialog .full').append('<div><strong>' + axis_name[axis] + ' Minimum</strong><br><input type="text" class="min"><BR><span class="explain">Leave blank for auto axis, add units to change default units</span></div><div><strong>' + axis_name[axis] + ' Maximum</strong><br><input type="text" class="max"><BR><span class="explain">Leave blank for auto axis</span></div><div><strong>' + axis_name[axis] + ' Units</strong><div class="white"><span class="units"></span></div><span class="explain">Leave blank for no or auto units</span></div>');
+			$('.popup_dialog .full').append('<div><strong>' + axis_name[axis] + ' Minimum</strong><br><input type="text" class="min"><BR><span class="explain">Leave blank for auto axis, add units to change default units</span></div><div><strong>' + axis_name[axis] + ' Maximum</strong><br><input type="text" class="max"><BR><span class="explain">Leave blank for auto axis</span></div><div><strong>Log Axis</strong><BR><input type="checkbox" class="log" style="width:auto;">&nbsp;Use a logarithmic scale for this axis.<BR><BR></div><div><strong>' + axis_name[axis] + ' Units</strong><div class="white"><span class="units"></span></div><span class="explain">Leave blank for no or auto units</span></div>');
 		min_vals = [this.x_min, this.y_min, this.y2_min];
 		max_vals = [this.x_max, this.y_max, this.y2_max];
+		log_vals = [this.x_log, this.y_log, this.y2_log];
 		units = [this.x_units, this.y_units, this.y2_units];
 		labels = [this.x_label, this.y_label, this.y2_label];
 		if(labels[axis] !== false) $('.popup_dialog').find('input.label').val(labels[axis]);
@@ -450,6 +473,7 @@ var plot = P(Element, function(_, super_) {
 		} else {
 			if(min_vals[axis] !== false) $('.popup_dialog').find('input.min').val(min_vals[axis]);
 			if(max_vals[axis] !== false) $('.popup_dialog').find('input.max').val(max_vals[axis]);
+			if(log_vals[axis] !== false) $('.popup_dialog').find('input.log').prop('checked', true);
 			var units_field = window.standaloneMathquill($('.popup_dialog').find('span.units').eq(0));
 			units_field.setUnitsOnly(true);
 			if(units[axis])
@@ -468,12 +492,16 @@ var plot = P(Element, function(_, super_) {
 			if(!this.has_bar || (axis != X_AXIS)) {
 				var min_val = $('.popup_dialog').find('input.min').val().trim();
 				var max_val = $('.popup_dialog').find('input.max').val().trim();
+				var log_val = $('.popup_dialog').find('input.log').prop('checked');
 			}
 			if(label == '') label = false;
 			if(min_val == '') min_val = false; 
 			else min_val = min_val * 1;
 			if(max_val == '') max_val = false; 
 			else max_val = max_val * 1;
+			if(log_val !== true) log_val = false;
+			if(log_val && (min_val !== false) && (min_val <= 0)) min_val = 1e-15;
+			if(log_val && (max_val !== false) && (max_val <= 0)) max_val = 2e-15;
 			switch(axis) {
 				case X_AXIS:
 					_this.x_label = label;
@@ -484,6 +512,7 @@ var plot = P(Element, function(_, super_) {
 						_this.x_labels = false;
 						_this.x_min = min_val;
 						_this.x_max = max_val;
+						_this.x_log = log_val;
 						_this.x_units = units_field.latex();
 						if(_this.x_units.match(/^\\Unit\{[ ]*\}$/)) _this.x_units = false;
 						var children = _this.children();
@@ -496,6 +525,7 @@ var plot = P(Element, function(_, super_) {
 					_this.y_label = label;
 					_this.y_min = min_val;
 					_this.y_max = max_val;
+					_this.y_log = log_val;
 					_this.y_units = units_field.latex();
 					if(_this.y_units.match(/^\\Unit\{[ ]*\}$/)) _this.y_units = false;
 					break;
@@ -503,6 +533,7 @@ var plot = P(Element, function(_, super_) {
 					_this.y2_label = label;
 					_this.y2_min = min_val;
 					_this.y2_max = max_val;
+					_this.y2_log = log_val;
 					_this.y2_units = units_field.latex();
 					if(_this.y2_units.match(/^\\Unit\{[ ]*\}$/)) _this.y2_units = false;
 					break;
