@@ -62,6 +62,8 @@ var plot_func = P(subplot, function(_, super_) {
 		var unit_command = this.show_unit && this.unit_box.text().length ? this.unit_box.text() : '1';
 		var command1 = "latex(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[(" + min_val + "+0.000000001)*" + unit_command + "])[0])"; // Evaluate at the first x to find units...add something so that we dont get evaluation at 0
 		if(this.parent.x_log) {
+			if(min_val <= 0) min_val = 1e-15;
+			if(max_val <= 0) max_val = 2e-15;
 			var command = this.eq0.text();
 			var name = this.eq1.text();
 			command = command.replace(new RegExp('([^a-zA-Z])' + name + '([^a-zA-Z_\(\[])','g'),"$1(10^" + name + ")$2");
