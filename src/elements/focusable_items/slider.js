@@ -450,7 +450,6 @@ var Slider = P(aFocusableItem, function(_, super_) {
       this.startEvent = this.options.startEvent.join('.' + this.identifier + ' ') + '.' + this.identifier;
       this.moveEvent  = this.options.moveEvent.join('.' + this.identifier + ' ') + '.' + this.identifier;
       this.endEvent   = this.options.endEvent.join('.' + this.identifier + ' ') + '.' + this.identifier;
-      this.toFixed    = (this.step + '').replace('.', '').length - 1;
       this.$fill      = $('<div class="' + this.options.fillClass + '" />');
       this.$handle    = $('<div class="' + this.options.handleClass + '" />');
       this.$range     = $('<div class="' + this.options.rangeClass + ' ' + this.options[this.orientation + 'Class'] + '" id="' + this.identifier + '" />').appendTo(this.sliderJQ).prepend(this.$fill, this.$handle);
@@ -537,7 +536,6 @@ var Slider = P(aFocusableItem, function(_, super_) {
       // Snapping steps
       value = this.getValueFromPosition(this.cap(pos, 0, this.maxHandlePos));
       newPos = this.getPositionFromValue(value);
-
       // Update ui
       this.$fill[0].style[this.DIMENSION] = (newPos + this.grabPos) + 'px';
       this.$handle[0].style[this.DIRECTION_STYLE] = newPos + 'px';
@@ -608,7 +606,8 @@ var Slider = P(aFocusableItem, function(_, super_) {
       	value = this.step * Math.round(percentage * (this.max - this.min) / this.step) + this.min;
       else 
       	return (percentage * (this.max - this.min) + this.min);
-      return Number((value).toFixed(this.toFixed));
+      var toFixed = (this.step + '').replace('.', '').length - 1;
+      return Number((value).toFixed(toFixed));
   };
 
 });
