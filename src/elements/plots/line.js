@@ -63,6 +63,11 @@ var plot_line = P(subplot, function(_, super_) {
 					return true;
 				}
 				this.ys = eval(this.ys);
+				if(((this.y_axis == 'y') && this.parent.y_log) || ((this.y_axis == 'y2') && this.parent.y2_log)) {
+					for(var j=0; j<=this.ys.length; j++) {
+						if(this.ys[j] <= 0) this.ys[j] = NaN;
+					}
+				}
 				if(this.x_provided) {
 					this.xs = '[' + result[3].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
 					this.xs = this.xs.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');
@@ -71,6 +76,15 @@ var plot_line = P(subplot, function(_, super_) {
 						return true;
 					}
 					this.xs = eval(this.xs);
+					if(this.parent.x_log) {
+						for(var j=0; j<=this.xs.length; j++) {
+							if(this.xs[j] <= 0) {
+								this.xs.splice(j,1);
+								this.ys.splice(j,1);
+								j = j - 1;
+							}
+						}
+					}
 				} else {
 					// NO x-array provided...thats ok, create one
 					this.xs = [];

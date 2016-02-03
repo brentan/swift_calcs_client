@@ -7,7 +7,7 @@ var plot = P(Element, function(_, super_) {
 	_.klass = ['plot'];
 	_.evaluatable = true;
 	_.hasChildren = true;
-	_.savedProperties = ['chart_title', 'x_log', 'y_log', 'y2_log', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units', 'rotated'];
+	_.savedProperties = ['chart_title', 'x_grid', 'y_grid', 'y2_grid', 'x_log', 'y_log', 'y2_log', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units', 'rotated'];
 	_.x_min = false;
 	_.x_max = false;
 	_.x_label = false;
@@ -24,6 +24,9 @@ var plot = P(Element, function(_, super_) {
 	_.x_units = false;
 	_.y_units = false;
 	_.y2_units = false;
+	_.x_grid = false;
+	_.y_grid = false;
+	_.y2_grid = false;
 	_.calc_x_min = false;
 	_.calc_x_max = false;
 	_.chart_title = false;
@@ -157,11 +160,17 @@ var plot = P(Element, function(_, super_) {
 		var x_ticks = [];
 		var x_max = this.x_max === false ? this.calc_x_max : (this.x_max * this.x_unit_conversion); // Convert to mksa from requested unit base
 		var x_min = this.x_min === false ? this.calc_x_min : (this.x_min * this.x_unit_conversion);
+		var y_min = this.y_min === false ? undefined : (this.y_min * this.y_unit_conversion);
+		var y_max = this.y_max === false ? undefined : (this.y_max * this.y_unit_conversion);
+		var y2_min = this.y2_min === false ? undefined : (this.y2_min * this.y2_unit_conversion);
+		var y2_max = this.y2_max === false ? undefined : (this.y2_max * this.y2_unit_conversion);
 		var x_unit = this.x_units ? this.x_unit : false;
 		var y_unit = this.y_units ? this.y_unit : false;
 		var y2_unit = this.y2_units ? this.y2_unit : false;
 		var show_y2 = false;
 		var hist_plot = false;
+		var y_ticks = [];
+		var y2_ticks = [];
 		for(var i = 0; i < children.length; i++) {
 			// Collapse error/warn boxes
 			children[i].outputBox.jQ.find('.parent_warning').remove();
@@ -183,26 +192,30 @@ var plot = P(Element, function(_, super_) {
 					children[i].outputBox.setWarning('Function Plot Ignored.  Function is plotted with a bar chart, which assumes a monotonic x-axis.').expand();
 					continue;
 				}
-				if(x_min === false) x_min = (this.x_log ? 1e-15 : -5) * this.x_unit_conversion;
+				if(x_min === false) x_min = -5 * this.x_unit_conversion;
 				if(x_max === false) x_max = 5 * this.x_unit_conversion;
 			}
 			var y_vals = children[i].ys.slice(0);
 			if(children[i].y_axis == 'y2') {
-				if(this.y2_log) {
-					for(var j=1; j<y_vals.length; j++){
-					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
-					}
-				} 
 				for(var j = 1; j < y_vals.length; j++)
 					y_vals[j] = y_vals[j] / this.y2_unit_conversion;  // Convert from mksa back to requested unit base
-			} else {
-				if(this.y_log) {
+				if(this.y2_log) {
 					for(var j=1; j<y_vals.length; j++){
+					  if((y2_min === undefined) || (y_vals[j] < y2_min)) y2_min = y_vals[j];
+					  if((y2_max === undefined) || (y_vals[j] > y2_max)) y2_max = y_vals[j];
 					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
 					}
 				} 
+			} else {
 				for(var j = 1; j < y_vals.length; j++)
 					y_vals[j] = y_vals[j] / this.y_unit_conversion;  // Convert from mksa back to requested unit base
+				if(this.y_log) {
+					for(var j=1; j<y_vals.length; j++){
+					  if((y_min === undefined) || (y_vals[j] < y_min)) y_min = y_vals[j];
+					  if((y_max === undefined) || (y_vals[j] > y_max)) y_max = y_vals[j];
+					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
+					}
+				} 
 			}
 			columns.push(y_vals);
 			els['data_' + children[i].id] = children[i];
@@ -219,15 +232,17 @@ var plot = P(Element, function(_, super_) {
 				} else
 					x_unit = children[i].x_unit;
 				var x_vals = children[i].xs.slice(0);
+				for(var j = 1; j < x_vals.length; j++)
+					x_vals[j] = x_vals[j] / this.x_unit_conversion;  // Convert from mksa back to requested unit base
 				if(this.x_log) {
 					for(var j=1; j<x_vals.length; j++){
 					  x_vals[j] = Math.log(x_vals[j]) / Math.LN10;
 					}
-				  x_min = Math.log(x_min) / Math.LN10;
-				  x_max = Math.log(x_max) / Math.LN10;
+					if(x_min <= 0) x_min = 1e-15;
+					if(x_max <= 0) x_max = 2e-15;
+				  x_min = Math.log(x_min / this.x_unit_conversion) / Math.LN10;
+				  x_max = Math.log(x_max / this.x_unit_conversion) / Math.LN10;
 				} 
-				for(var j = 1; j < x_vals.length; j++)
-					x_vals[j] = x_vals[j] / this.x_unit_conversion;  // Convert from mksa back to requested unit base
 				columns.push(x_vals);
 			}
 			if(children[i].y_axis != 'y2') {
@@ -278,8 +293,44 @@ var plot = P(Element, function(_, super_) {
 		else if(y2_unit && (y2_unit != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(y2_unit)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
 		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
 		if(columns.length) {
-			for(var i = 0; i <= 20; i++) 
-				x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
+			if(this.y_log) {
+				console.log({y_min: y_min, y_max: y_max})
+				if(y_min === undefined) y_min = 1e-15;
+				if(y_max === undefined) y_max = 2e-15;
+				if(y_min <= 0) y_min = 1e-15;
+				if(y_max <= 0) y_max = 2e-15;
+				y_min = Math.log(y_min) / Math.LN10;
+				y_max = Math.log(y_max) / Math.LN10;
+				var exp_min = Math.ceil(y_min);
+				var exp_max = Math.floor(y_max);
+				var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
+				console.log({exp_min: exp_min, exp_max: exp_max, step: step})
+				for(var i = exp_min; i <= exp_max; i = i + step) 
+					y_ticks.push(i);
+			}
+			if(this.y2_log) {
+				if(y2_min === undefined) y2_min = 1e-15;
+				if(y2_max === undefined) y2_max = 2e-15;
+				if(y2_min <= 0) y2_min = 1e-15;
+				if(y2_max <= 0) y2_max = 2e-15;
+				y2_min = Math.log(y2_min) / Math.LN10;
+				y2_max = Math.log(y2_max) / Math.LN10;
+				var exp_min = Math.ceil(y2_min);
+				var exp_max = Math.floor(y2_max);
+				var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
+				for(var i = exp_min; i <= exp_max; i = i + step) 
+					y2_ticks.push(i);
+			}
+			if(this.x_log) {
+				var exp_min = Math.ceil(x_min);
+				var exp_max = Math.floor(x_max);
+				var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
+				for(var i = exp_min; i <= exp_max; i = i + step) 
+					x_ticks.push(i);
+			} else {
+				for(var i = 0; i <= 20; i++) 
+					x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
+			}
 			try {
 				var x_tick_order = ((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2;
 			} catch(e) {
@@ -342,13 +393,13 @@ var plot = P(Element, function(_, super_) {
 						label: { text: y_label, position: 'outer-middle'},
 						min: (this.y_min === false ? undefined : (this.y_log ? Math.log(this.y_min) / Math.LN10 : this.y_min)),
 						max: (this.y_max === false ? undefined : (this.y_log ? Math.log(this.y_max) / Math.LN10 : this.y_max)),
-						tick: (this.y_log ? { format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {})
+						tick: (this.y_log ? { values: y_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {})
 					},
 					y2: { 
 						label: { text: y2_label, position: 'outer-middle'}, 
 						min: (this.y2_min === false ? undefined : (this.y2_log ? Math.log(this.y2_min) / Math.LN10 : this.y2_min)),
 						max: (this.y2_max === false ? undefined : (this.y2_log ? Math.log(this.y2_max) / Math.LN10 : this.y2_max)),
-						tick: (this.y2_log ? { format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {}),
+						tick: (this.y2_log ? { values: y2_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {}),
 						show: show_y2
 					}
 				},
@@ -372,8 +423,9 @@ var plot = P(Element, function(_, super_) {
 					r: function(d) { return marker_size[d.id]; }
 				},
 		    grid: {
-	        x: ((ignore_custom_xs || this.x_log) ? {} : { lines: [{value: 0}] }),
-	        y: (this.y_log ? {} : { lines: [{value: 0}] }),
+	        x: ((ignore_custom_xs || this.x_log) ? { show: this.x_grid } : { show: this.x_grid, lines: [{value: 0}] }),
+	        y: (this.y_log ? { show: this.y_grid } : { show: this.y_grid, lines: [{value: 0}] }),
+	        y2: { show: this.y2_grid },
 	        lines: { front: false }
 		    }
 			});
@@ -461,10 +513,11 @@ var plot = P(Element, function(_, super_) {
 		if(this.has_bar && (axis == X_AXIS)) 
 			$('.popup_dialog .full').append('<div><strong>' + axis_name[axis] + ' Data Labels</strong><br><input type="text" class="labels"><BR><span class="explain">Comma seperated list of labels for each data bar.</span></div>');
 		else
-			$('.popup_dialog .full').append('<div><strong>' + axis_name[axis] + ' Minimum</strong><br><input type="text" class="min"><BR><span class="explain">Leave blank for auto axis, add units to change default units</span></div><div><strong>' + axis_name[axis] + ' Maximum</strong><br><input type="text" class="max"><BR><span class="explain">Leave blank for auto axis</span></div><div><strong>Log Axis</strong><BR><input type="checkbox" class="log" style="width:auto;">&nbsp;Use a logarithmic scale for this axis.<BR><BR></div><div><strong>' + axis_name[axis] + ' Units</strong><div class="white"><span class="units"></span></div><span class="explain">Leave blank for no or auto units</span></div>');
+			$('.popup_dialog .full').append('<div><strong>' + axis_name[axis] + ' Minimum</strong><br><input type="text" class="min"><BR><span class="explain">Leave blank for auto axis, add units to change default units</span></div><div><strong>' + axis_name[axis] + ' Maximum</strong><br><input type="text" class="max"><BR><span class="explain">Leave blank for auto axis</span></div><div><strong>Log Axis</strong><BR><input type="checkbox" class="log" style="width:auto;">&nbsp;Use a logarithmic scale for this axis.<BR><BR><div><strong>Grid Lines</strong><BR><input type="checkbox" class="grid" style="width:auto;">&nbsp;Overlay gridlines on the plot for this axis.<BR><BR></div><div><strong>' + axis_name[axis] + ' Units</strong><div class="white"><span class="units"></span></div><span class="explain">Leave blank for no or auto units</span></div>');
 		min_vals = [this.x_min, this.y_min, this.y2_min];
 		max_vals = [this.x_max, this.y_max, this.y2_max];
 		log_vals = [this.x_log, this.y_log, this.y2_log];
+		grid_vals = [this.x_grid, this.y_grid, this.y2_grid];
 		units = [this.x_units, this.y_units, this.y2_units];
 		labels = [this.x_label, this.y_label, this.y2_label];
 		if(labels[axis] !== false) $('.popup_dialog').find('input.label').val(labels[axis]);
@@ -474,6 +527,7 @@ var plot = P(Element, function(_, super_) {
 			if(min_vals[axis] !== false) $('.popup_dialog').find('input.min').val(min_vals[axis]);
 			if(max_vals[axis] !== false) $('.popup_dialog').find('input.max').val(max_vals[axis]);
 			if(log_vals[axis] !== false) $('.popup_dialog').find('input.log').prop('checked', true);
+			if(grid_vals[axis] !== false) $('.popup_dialog').find('input.grid').prop('checked', true);
 			var units_field = window.standaloneMathquill($('.popup_dialog').find('span.units').eq(0));
 			units_field.setUnitsOnly(true);
 			if(units[axis])
@@ -493,6 +547,7 @@ var plot = P(Element, function(_, super_) {
 				var min_val = $('.popup_dialog').find('input.min').val().trim();
 				var max_val = $('.popup_dialog').find('input.max').val().trim();
 				var log_val = $('.popup_dialog').find('input.log').prop('checked');
+				var grid_val = $('.popup_dialog').find('input.grid').prop('checked');
 			}
 			if(label == '') label = false;
 			if(min_val == '') min_val = false; 
@@ -500,6 +555,7 @@ var plot = P(Element, function(_, super_) {
 			if(max_val == '') max_val = false; 
 			else max_val = max_val * 1;
 			if(log_val !== true) log_val = false;
+			if(grid_val !== true) grid_val = false;
 			if(log_val && (min_val !== false) && (min_val <= 0)) min_val = 1e-15;
 			if(log_val && (max_val !== false) && (max_val <= 0)) max_val = 2e-15;
 			switch(axis) {
@@ -513,6 +569,7 @@ var plot = P(Element, function(_, super_) {
 						_this.x_min = min_val;
 						_this.x_max = max_val;
 						_this.x_log = log_val;
+						_this.x_grid = grid_val;
 						_this.x_units = units_field.latex();
 						if(_this.x_units.match(/^\\Unit\{[ ]*\}$/)) _this.x_units = false;
 						var children = _this.children();
@@ -526,6 +583,7 @@ var plot = P(Element, function(_, super_) {
 					_this.y_min = min_val;
 					_this.y_max = max_val;
 					_this.y_log = log_val;
+					_this.y_grid = grid_val;
 					_this.y_units = units_field.latex();
 					if(_this.y_units.match(/^\\Unit\{[ ]*\}$/)) _this.y_units = false;
 					break;
@@ -534,6 +592,7 @@ var plot = P(Element, function(_, super_) {
 					_this.y2_min = min_val;
 					_this.y2_max = max_val;
 					_this.y2_log = log_val;
+					_this.y2_grid = grid_val;
 					_this.y2_units = units_field.latex();
 					if(_this.y2_units.match(/^\\Unit\{[ ]*\}$/)) _this.y2_units = false;
 					break;

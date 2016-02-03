@@ -95,6 +95,11 @@ var plot_func = P(subplot, function(_, super_) {
 							this.xs.push(output[i][0]);
 						this.ys.push(output[i][1]);
 					}
+					if(((this.y_axis == 'y') && this.parent.y_log) || ((this.y_axis == 'y2') && this.parent.y2_log)) {
+						for(var j=0; j<=this.ys.length; j++) {
+							if(this.ys[j] <= 0) this.ys[j] = NaN;
+						}
+					}
 					this.ys.unshift('data_' + this.id);
 					this.xs.unshift('x_' + this.id);
 					this.plot_me = true;
