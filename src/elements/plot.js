@@ -294,7 +294,6 @@ var plot = P(Element, function(_, super_) {
 		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
 		if(columns.length) {
 			if(this.y_log) {
-				console.log({y_min: y_min, y_max: y_max})
 				if(y_min === undefined) y_min = 1e-15;
 				if(y_max === undefined) y_max = 2e-15;
 				if(y_min <= 0) y_min = 1e-15;
@@ -304,7 +303,6 @@ var plot = P(Element, function(_, super_) {
 				var exp_min = Math.ceil(y_min);
 				var exp_max = Math.floor(y_max);
 				var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
-				console.log({exp_min: exp_min, exp_max: exp_max, step: step})
 				for(var i = exp_min; i <= exp_max; i = i + step) 
 					y_ticks.push(i);
 			}
