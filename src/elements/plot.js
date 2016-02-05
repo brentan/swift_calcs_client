@@ -98,11 +98,22 @@ var plot = P(Element, function(_, super_) {
 			this.plotBox = this.plotBox.destroy();
 		return super_.destroy.call(this);
 	}
+	_.blurOutputBox = function() {
+		if(this.plotBox) {
+			var current = this.plotBox.data.colors();
+			$.each(current, function(k,v) {
+				current[k] = '#cccccc';
+			});
+			this.plotBox.data.colors(current);
+			this.jQ.find('.c3-axis').css('fill','#cccccc');
+			this.jQ.find('.c3-axis, .c3-legend-item text').css('fill','#cccccc');
+			this.jQ.find('.c3-axis path, .c3-axis line').css('stroke','#cccccc');
+		} else
+			this.jQ.find('.' + css_prefix + 'plot_box').html('<div class="explain" style="text-align:center;margin:3px 20px;padding:10px;border:1px solid #dddddd;border-radius:6px;">Generating Plot...</div>');		
+	}
 	_.addSpinner = function(eval_id) {
 		super_.addSpinner.call(this, eval_id);
-		if(this.plotBox)
-			this.plotBox = this.plotBox.destroy();
-		this.jQ.find('.' + css_prefix + 'plot_box').html('<div class="explain" style="text-align:center;margin:3px 20px;padding:10px;border:1px solid #dddddd;border-radius:6px;">Generating Plot...</div>');
+		this.blurOutputBox();
 	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
@@ -132,16 +143,14 @@ var plot = P(Element, function(_, super_) {
 		this.y_unit = result[3].returned;
 		this.y2_unit_conversion = result[4].returned*1;
 		this.y2_unit = result[5].returned;
-		if(this.ends[L])
+		if(this.ends[L]) 
 			this.ends[L].continueEvaluation(evaluation_id, true)
-		else
+		else 
 			this.childrenEvaluated(evaluation_id);
 		return false;
 	}
 	_.childrenEvaluated = function(evaluation_id) {
 		// Draw the plot, if there is anything to plot
-		if(this.plotBox)
-			this.plotBox = this.plotBox.destroy();
 		var columns = [];
 		this.has_bar = false;
 		var ignore_custom_xs = false;
@@ -373,7 +382,7 @@ var plot = P(Element, function(_, super_) {
 				var categories = this.x_labels.split('__s__');
 			else 
 				var categories = [];
-			this.plotBox = c3.generate({
+			var plot_options = {
 				bindto: this.jQ.find('.' + css_prefix + 'plot_box')[0],
 				size: { height: this.height },
 				axis: {
@@ -400,7 +409,7 @@ var plot = P(Element, function(_, super_) {
 						show: show_y2
 					}
 				},
-				data: { // TODO: Labels for log plots are not shown correctly in the popup (exponents shown instead...)
+				data: { 
 					xs: xs,
 					columns: columns,
 					types: types,
@@ -415,6 +424,7 @@ var plot = P(Element, function(_, super_) {
 				    onclick: function (id) { els[id].select(); }
 				  }
 				},
+				onrendered: function(_this) { return function() { _this.jQ.find('.' + css_prefix + 'plot_box').height('auto'); }; }(this),
 				point: {
 					show: function(d) { if(show_points[d.id]) { return 1; } else { return 0; } },
 					r: function(d) { return marker_size[d.id]; }
@@ -424,7 +434,12 @@ var plot = P(Element, function(_, super_) {
 	        y: (this.y_log ? { show: this.y_grid } : { show: this.y_grid, lines: [{value: 0}] }),
 	        lines: { front: false }
 		    }
-			});
+			};
+			if(this.plotBox) {
+				this.jQ.find('.' + css_prefix + 'plot_box').height(this.height);
+				this.plotBox.destroy();
+			}
+			this.plotBox = c3.generate(plot_options);
 			var el = $(this.plotBox.element);
 			el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').find('.tick text').hover(function() {
 				$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'underline');
@@ -460,8 +475,12 @@ var plot = P(Element, function(_, super_) {
 					child.addSelectLine();
 			});
 			// BRENTAN: Still need a way to change the unit of an axis out of mksa units
-		} else
-			this.jQ.find('.' + css_prefix + 'plot_box explain').html('No plot data to draw.  Please setup a data series to plot.');
+		} else {
+			if(this.plotBox) this.plotBox = this.plotBox.destroy();
+			this.jQ.find('.' + css_prefix + 'plot_box').height('auto');
+			this.expand();
+			this.jQ.find('.' + css_prefix + 'plot_box .explain').html('No data to plot.  Please setup a data series to plot.');
+		}
 		if(evaluation_id)
 			this.evaluateNext(evaluation_id, this.move_to_next);
 	}

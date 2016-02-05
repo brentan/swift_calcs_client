@@ -604,12 +604,8 @@ var Element = P(function(_) {
 			if(this.outputBox) this.outputBox.calculating();
 			if(fullEvaluation) {
 			//this.jQ.stop().css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
-				for(var el = this[R]; el !== 0; el = el[R]) {
-					if(el.outputBox) el.outputBox.calculating();
-					el.jQ.find('i.fa-spinner').remove();
-					el.jQ.find('div.' + css_prefix + 'element.error').removeClass('error');
-					el.jQ.find('div.' + css_prefix + 'element.warn').removeClass('warn');
-				}
+				for(var el = this[R]; el !== 0; el = el[R]) 
+					window.setTimeout(function(el) { return function() { el.blurOutputBox() } }(el));
 			} 
 		} else {
 			// If this is a 'full evaluation', we should find the first generation ancestor and do it there
@@ -620,6 +616,16 @@ var Element = P(function(_) {
 			if(this.outputBox) this.outputBox.calculating();
 		}
 		return this;
+	}
+	_.blurOutputBox = function() {
+		if(this.outputBox) this.outputBox.calculating();
+		this.jQ.find('i.fa-spinner').remove();
+		this.jQ.find('div.' + css_prefix + 'element.error').removeClass('error');
+		this.jQ.find('div.' + css_prefix + 'element.warn').removeClass('warn');
+		if(this.hasChildren) {
+			var children = this.children();
+			for(var i = 0; i < children.length; i++) window.setTimeout(function(i) { return function() { children[i].blurOutputBox(); }; }(i));
+		}
 	}
 	_.shouldBeEvaluated = function(evaluation_id) {
 		if(!this.evaluatable || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;

@@ -83,7 +83,7 @@ var plot_func = P(subplot, function(_, super_) {
 				var output = result[1].returned.replace(/[^0-9\.\-,e\[\]]/g,''); // Remove non-numeric characters
 				//output = output.replace(/,,/g,',null,').replace(/\[,/g,'[null,').replace(/,\]/g,',null]');
 				if(!output.match(/[0-9]/)) 
-					this.outputBox.setWarning('No numeric results were returned and nothing will be plotted').expand();
+					this.outputBox.setError('No numeric results were returned and nothing will be plotted').expand();
 				else {
 					output = eval(output);
 					this.xs = [];
