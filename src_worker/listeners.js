@@ -231,7 +231,6 @@ var Module = {
   preRun: [],
   postRun: [],
   print: function(text) {
-    console.log("PRINT:" + text);
   	if(text.match(/error/) && !text.match(/Warning/))
   		errors[ii] = fix_message(text);
   	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1) && !text.match(/declared as global/))
@@ -244,13 +243,13 @@ var Module = {
     if (Module.setStatus.interval) clearInterval(Module.setStatus.interval);
     sendMessage({command: 'setStatus', value: text});
     if(text === '') {
-  		Module.caseval2 = Module.cwrap('_ZN4giac7casevalEPKc', 'string', ['string']);    
+  		Module.caseval = Module.cwrap('_ZN4giac7casevalEPKc', 'string', ['string']);    
       // Initialize timeout
       // Module.caseval('timeout ' + timeout_length);
       // Module.caseval('ckevery 10000');
     }
   },
-  caseval: function(text) {
+  caseval2: function(text) {
     console.log("IN: " + text);
     var out = Module.caseval2(text);
     console.log("OUT: " + out);
