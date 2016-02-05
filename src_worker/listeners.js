@@ -243,7 +243,7 @@ var Module = {
     if (Module.setStatus.interval) clearInterval(Module.setStatus.interval);
     sendMessage({command: 'setStatus', value: text});
     if(text === '') {
-  		Module.caseval = Module.cwrap('_ZN4giac7casevalEPKc', 'string', ['string']);    
+  		Module.caseval = Module.cwrap('caseval', 'string', ['string']);    
       // Initialize timeout
       // Module.caseval('timeout ' + timeout_length);
       // Module.caseval('ckevery 10000');
