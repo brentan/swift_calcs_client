@@ -7,7 +7,7 @@ var plot = P(Element, function(_, super_) {
 	_.klass = ['plot'];
 	_.evaluatable = true;
 	_.hasChildren = true;
-	_.savedProperties = ['chart_title', 'x_grid', 'y_grid', 'y2_grid', 'x_log', 'y_log', 'y2_log', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units', 'rotated'];
+	_.savedProperties = ['chart_title', 'x_grid', 'y_grid', 'x_log', 'y_log', 'y2_log', 'x_min','x_max','x_label','y_min','y_max','y_label','y2_min','y2_max','y2_label', 'x_labels', 'x_units', 'y_units','y2_units', 'rotated'];
 	_.x_min = false;
 	_.x_max = false;
 	_.x_label = false;
@@ -26,7 +26,6 @@ var plot = P(Element, function(_, super_) {
 	_.y2_units = false;
 	_.x_grid = false;
 	_.y_grid = false;
-	_.y2_grid = false;
 	_.calc_x_min = false;
 	_.calc_x_max = false;
 	_.chart_title = false;
@@ -423,7 +422,6 @@ var plot = P(Element, function(_, super_) {
 		    grid: {
 	        x: ((ignore_custom_xs || this.x_log) ? { show: this.x_grid } : { show: this.x_grid, lines: [{value: 0}] }),
 	        y: (this.y_log ? { show: this.y_grid } : { show: this.y_grid, lines: [{value: 0}] }),
-	        y2: { show: this.y2_grid },
 	        lines: { front: false }
 		    }
 			});
@@ -515,7 +513,7 @@ var plot = P(Element, function(_, super_) {
 		min_vals = [this.x_min, this.y_min, this.y2_min];
 		max_vals = [this.x_max, this.y_max, this.y2_max];
 		log_vals = [this.x_log, this.y_log, this.y2_log];
-		grid_vals = [this.x_grid, this.y_grid, this.y2_grid];
+		grid_vals = [this.x_grid, this.y_grid, false];
 		units = [this.x_units, this.y_units, this.y2_units];
 		labels = [this.x_label, this.y_label, this.y2_label];
 		if(labels[axis] !== false) $('.popup_dialog').find('input.label').val(labels[axis]);
@@ -526,6 +524,7 @@ var plot = P(Element, function(_, super_) {
 			if(max_vals[axis] !== false) $('.popup_dialog').find('input.max').val(max_vals[axis]);
 			if(log_vals[axis] !== false) $('.popup_dialog').find('input.log').prop('checked', true);
 			if(grid_vals[axis] !== false) $('.popup_dialog').find('input.grid').prop('checked', true);
+			if(axis == 2) $('.popup_dialog').find('input.grid').closest('div').hide();
 			var units_field = window.standaloneMathquill($('.popup_dialog').find('span.units').eq(0));
 			units_field.setUnitsOnly(true);
 			if(units[axis])
@@ -590,7 +589,6 @@ var plot = P(Element, function(_, super_) {
 					_this.y2_min = min_val;
 					_this.y2_max = max_val;
 					_this.y2_log = log_val;
-					_this.y2_grid = grid_val;
 					_this.y2_units = units_field.latex();
 					if(_this.y2_units.match(/^\\Unit\{[ ]*\}$/)) _this.y2_units = false;
 					break;
