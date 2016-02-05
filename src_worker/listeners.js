@@ -145,7 +145,7 @@ var receiveMessage = function(command) {
       // Do the assignment.  Test if there were errors, if so, report those.  If not, and output is asked for, we return the value of the stored variable
       var test_output = { success: true, returned: Module.casevalWithTimeout(to_send) };
       // Work through the warnings.  If any are present and suggesting a different input, lets evaluate that instead
-      for(var j = 0; j < warnings[ii].length; j++) {
+      for(var j = (warnings[ii].length - 1); j >= 0; j++) {
         if(warnings[ii][j].indexOf('Perhaps you meant') > -1) {
           // Use the cas suggestion, as we probably want to use that
           to_send = warnings[ii][j].replace('Perhaps you meant ','');
@@ -231,6 +231,7 @@ var Module = {
   preRun: [],
   postRun: [],
   print: function(text) {
+    console.log("PRINT:" + text);
   	if(text.match(/error/) && !text.match(/Warning/))
   		errors[ii] = fix_message(text);
   	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1) && !text.match(/declared as global/))
@@ -243,13 +244,13 @@ var Module = {
     if (Module.setStatus.interval) clearInterval(Module.setStatus.interval);
     sendMessage({command: 'setStatus', value: text});
     if(text === '') {
-  		Module.caseval = Module.cwrap('_ZN4giac7casevalEPKc', 'string', ['string']);    
+  		Module.caseval2 = Module.cwrap('_ZN4giac7casevalEPKc', 'string', ['string']);    
       // Initialize timeout
       // Module.caseval('timeout ' + timeout_length);
       // Module.caseval('ckevery 10000');
     }
   },
-  caseval2: function(text) {
+  caseval: function(text) {
     console.log("IN: " + text);
     var out = Module.caseval2(text);
     console.log("OUT: " + out);
