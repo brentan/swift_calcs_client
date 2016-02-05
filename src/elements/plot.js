@@ -424,6 +424,7 @@ var plot = P(Element, function(_, super_) {
 				    onclick: function (id) { els[id].select(); }
 				  }
 				},
+				transition: { duration: 0 },
 				onrendered: function(_this) { return function() { _this.jQ.find('.' + css_prefix + 'plot_box').height('auto'); }; }(this),
 				point: {
 					show: function(d) { if(show_points[d.id]) { return 1; } else { return 0; } },
