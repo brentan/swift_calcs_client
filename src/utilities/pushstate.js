@@ -43,12 +43,16 @@ var PushState = P(function(_) {
     if (current === this.fragment) return false;
     this.loadUrl();
   }
-  _.refresh = function() { 
-    if(this.last_active_url != this.fragment) {
-      // This occurs if we are inline viewing or not, but we type something in the search bar and we aren't on a page that allows 'searching'.
+  _.refresh = function(force_list) { 
+    if(this.fragment.match(/inline_worksheets\//i)) {
+      // This occurs if we are inline viewing, but we type something in the search bar or hit the 'star' option.
       // In that case, we need to revert to the last_active_url and navigate to it
+      if(this.last_active_url.match(/^(\/)?$/)) this.last_active_url = 'active/';
       this.navigate(this.last_active_url);
       this.loadUrl(this.last_active_url, true);
+    } else if((force_list === true) && (this.fragment.match(/(worksheets|revisions)\//i))) {
+      // if force_list is set, we are pushing to return to a list view, so if we are in a worksheet or revision view, we go to 'active'
+      this.navigate('/active', {trigger: true});
     } else
       this.loadUrl(undefined, true)
   }

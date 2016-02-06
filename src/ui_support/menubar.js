@@ -59,10 +59,10 @@ $(function() {
   $('body').on('click', '#account_bar .star_select', function(e) {
   	if($(this).hasClass('on')) {
   		$(this).removeClass('on');
-			SwiftCalcs.pushState.refresh();
+			SwiftCalcs.pushState.refresh(true);
   	} else {
   		$(this).addClass('on');
-			SwiftCalcs.pushState.refresh();
+			SwiftCalcs.pushState.refresh(true);
   	}
   });
 

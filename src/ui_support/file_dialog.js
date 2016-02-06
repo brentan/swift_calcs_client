@@ -196,11 +196,11 @@ $(function() {
 	    	var $ul = $('<ul/>')
 	    	if(star) $('<li/>').html('Include non-starred worksheets in your results').on('click', function(e) {
 		    		$('.star_select').removeClass('on');
-		    		SwiftCalcs.pushState.refresh();
+		    		SwiftCalcs.pushState.refresh(true);
 		    	}).appendTo($ul);
 	    	if(search_term) $('<li/>').html('Remove your search term (' + $('div.search_bar input').val().trim() + ')').on('click', function(e) {
 		    		$('div.search_bar input').val('');
-		    		SwiftCalcs.pushState.refresh();
+		    		SwiftCalcs.pushState.refresh(true);
 		    	}).appendTo($ul);
 	    	if(archive) $('<li/>').html('Search in active sheets instead of in archived sheets').on('click', function(e) {
 		    		if(project) {
@@ -683,8 +683,8 @@ $(function() {
 						showNotice('Project and all sub-projects and worksheets restored.','green'); 
 						$('.left_item.projects > .expand').html(response.tree); el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); 					
 						if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
-							// Not in an archive view, so refresh
-							SwiftCalcs.pushState.refresh();
+							// Not in an archive view, so refresh if on a listing page
+							if(!SwiftCalcs.pushState.fragment.match(/^(worksheets|revisions)\//i)) SwiftCalcs.pushState.refresh();
 						} else {
 							// in an archive view...remove returned ids
 							for(var i = 0; i < response.ids.length; i++) {
@@ -716,8 +716,8 @@ $(function() {
 								$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
 							}
 						} else {
-							// in an archive view...so refresh
-							SwiftCalcs.pushState.refresh();
+							// in an archive view...so refresh if on listing page
+							if(!SwiftCalcs.pushState.fragment.match(/^(worksheets|revisions)\//i)) SwiftCalcs.pushState.refresh();
 						}
 					}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
 					closeMenu();
@@ -1234,12 +1234,12 @@ $(function() {
 	window.resizeResults();
  	$('body').on('click', 'div.search_bar .fa-times-circle', function(e) {
  		$(this).closest('div.search_bar').find('input').val('');
- 		SwiftCalcs.pushState.refresh();
+ 		SwiftCalcs.pushState.refresh(true);
  		e.preventDefault();
  		e.stopPropagation();
  	});
  	$('body').on('blur', 'div.search_bar input', function(e) {
- 		SwiftCalcs.pushState.refresh();
+ 		SwiftCalcs.pushState.refresh(true);
  	}).on('keyup', 'div.search_bar input', function(e) {
  		if(e.which == 13) $(this).blur();
  	});
