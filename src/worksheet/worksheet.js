@@ -140,6 +140,7 @@ var Worksheet = P(function(_) {
 		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
 		if(new_name) {
 			this.name = new_name;
+			$(document).prop('title', new_name);
 			$('#account_bar .content').find("input." + css_prefix + "worksheet_name").val(this.name);
 			if(new_hash && new_server_id) {// new hash_string and server id provided means this is a duplication event.  Do not save, just update my hash_string
 				this.hash_string = new_hash;
