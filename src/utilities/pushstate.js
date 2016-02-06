@@ -17,6 +17,8 @@ var PushState = P(function(_) {
     this._hasPushState    = !!(this.history && this.history.pushState);
     this._usePushState    = this._wantsPushState && this._hasPushState;
     this.fragment         = this.getFragment();
+    this.last_active_url  = '/';
+    this.last_active_title= 'Swift Calcs';
     this.root = ('/' + this.root + '/').replace(rootStripper, '/');
     if (this._wantsHashChange && this._wantsPushState) {
       if (!this._hasPushState && !this.atRoot()) {
@@ -41,11 +43,45 @@ var PushState = P(function(_) {
     if (current === this.fragment) return false;
     this.loadUrl();
   }
-  _.loadUrl = function(fragment) {
+  _.refresh = function() { 
+    if(this.last_active_url != this.fragment) {
+      // This occurs if we are inline viewing or not, but we type something in the search bar and we aren't on a page that allows 'searching'.
+      // In that case, we need to revert to the last_active_url and navigate to it
+      this.navigate(this.last_active_url);
+      this.loadUrl(this.last_active_url, true);
+    } else
+      this.loadUrl(undefined, true)
+  }
+  _.loadUrl = function(fragment, force_refresh) {
     if (!this.matchRoot()) return false;
     fragment = this.fragment = this.getFragment(fragment);
+    if((this.last_active_url == this.fragment) && (force_refresh !== true)) {
+      // This occurs if an 'inline' worksheet is opened, then a back is pressed, for example.
+      window.closeActive($('.active_worksheet'), false);
+      $(document).prop('title', this.last_active_title);
+      return true;
+    } 
+    if(!fragment.match(/worksheets\//i) && !fragment.match(/revisions\//i)) this.last_active_url = this.fragment;
     if(fragment.match(/worksheets\//i) || fragment.match(/revisions\//i)) {
-      window.closeActive($('.active_worksheet'));
+      var set_url = true;
+      if(fragment.match(/inline_worksheets\//i)) {
+        // Test if this worksheet is within the current list, and if so, just open it
+        var hash_string = fragment.replace(/inline_worksheets\/([^\/]*).*$/i,"$1");
+        var opened = false;
+        $('.worksheet_holder').find('.worksheet_item').each(function() {
+          if(opened) return;
+          if($(this).attr('data-hash') == hash_string) {
+            opened = true;
+            window.openActive($(this));
+            window.loadWorksheet($(this));
+          }
+        });
+        if(opened) return true;
+        set_url = false;
+      }
+      this.last_active_url = '/';
+      this.last_active_title = 'Swift Calcs';
+      window.closeActive($('.active_worksheet'), false);
       $('.worksheet_holder').html('');
       var box = $('<div/>').addClass('worksheet_holder_box').addClass('single_sheet').appendTo($('.worksheet_holder'));
       var loading_div = $('<div/>').addClass('worksheet_loading').addClass('worksheet_item').attr('data-id', '-1').html('<i class="fa fa-spinner fa-pulse"></i><span>Loading Worksheet...</span>').prependTo(box);
@@ -53,14 +89,14 @@ var PushState = P(function(_) {
         var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + response.id).attr('data-id', response.id).attr('data-name', response.name).attr('parent-id', response.project_id).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
         if(response.archive_id) el.addClass('archived');
         loading_div.remove();
-        window.openActive(el);
+        window.openActive(el, set_url);
         window.loadWorksheet(el, response);
       }
       var fail = function(message) {
         loading_div.html('<span>There was an error: ' + message + '</span>');
       }
       if(fragment.match(/worksheets\//i)) {
-        var hash_string = fragment.replace(/worksheets\/([^\/]*).*$/i,"$1");
+        var hash_string = fragment.replace(/(inline_)?worksheets\/([^\/]*).*$/i,"$2");
         window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: { hash_string: hash_string } }, success, fail);
       } else {
         var hash_string = fragment.replace(/revisions\/([^\/]*).*$/i,"$1");
@@ -121,6 +157,8 @@ var PushState = P(function(_) {
 
     if (this.fragment === fragment) return;
     this.fragment = fragment;
+
+    if(!fragment.match(/worksheets\//i) && !fragment.match(/revisions\//i) && !(options.trigger)) this.last_active_url = this.fragment;
 
     if (this._usePushState) {
       this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);

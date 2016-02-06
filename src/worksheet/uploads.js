@@ -3,6 +3,7 @@ Worksheet.open(function(_) {
 	var el = false;
 	var into = false;
 	var dir = false;
+    var upload_bind_complete = false;
 	_.outside_drag_done_handler = function(e, el_in, into_in, dir_in) {
 		// BRENTAN: What about if you drag in something other than files?  What happens when you drag in text? 
     e.dataTransfer = e.originalEvent && e.originalEvent.dataTransfer;
@@ -105,9 +106,12 @@ Worksheet.open(function(_) {
 		    { name: 'worksheet_id', value: _this.server_id }
 		  ]
 		});
+        upload_bind_complete = true;
 	}
 	_.unbindUploads = function() {
-		this.jQ.find('input.file_uploads').fileupload('destroy');
+        if(upload_bind_complete)
+		  this.jQ.find('input.file_uploads').fileupload('destroy');
+        upload_bind_complete = false;
 	}
 });
 

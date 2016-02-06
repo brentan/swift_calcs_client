@@ -28,6 +28,8 @@ $(function() {
       data: data,
       success: function(response) {
       	if(response.success) {
+      		SwiftCalcs.pushState.last_active_title = response.path.replace(/(<([^>]+)>)/ig,"");
+      		$(document).prop('title', SwiftCalcs.pushState.last_active_title);
       		window.displayWorksheetList(response.worksheets, response.path)
       		setCurrentProject(response.id, response.url_end);
       	}	else {
@@ -45,10 +47,6 @@ $(function() {
 	var setCurrentProject = window.setCurrentProject = function(id, url) {
 		current_project_id = id;
 		current_project_navigable_url = url;
-	}
-	var loadNewWindowWorksheet = window.loadNewWindowWorksheet = function(hash_string, name) {
-		alert('do in new window');
-		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 	}
 	var loadProject = window.loadProject = function(hash_string, name, archive, labels_hash, label_name) {
 		if(hash_string && (hash_string == 'active'))
@@ -198,11 +196,11 @@ $(function() {
 	    	var $ul = $('<ul/>')
 	    	if(star) $('<li/>').html('Include non-starred worksheets in your results').on('click', function(e) {
 		    		$('.star_select').removeClass('on');
-		    		SwiftCalcs.pushState.loadUrl();
+		    		SwiftCalcs.pushState.refresh();
 		    	}).appendTo($ul);
 	    	if(search_term) $('<li/>').html('Remove your search term (' + $('div.search_bar input').val().trim() + ')').on('click', function(e) {
 		    		$('div.search_bar input').val('');
-		    		SwiftCalcs.pushState.loadUrl();
+		    		SwiftCalcs.pushState.refresh();
 		    	}).appendTo($ul);
 	    	if(archive) $('<li/>').html('Search in active sheets instead of in archived sheets').on('click', function(e) {
 		    		if(project) {
@@ -296,6 +294,8 @@ $(function() {
 		var name = $(this).closest('.worksheet_item').attr('data-name');
 		var hash_string = $(this).closest('.worksheet_item').attr('data-hash');
 		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
+		SwiftCalcs.pushState.last_active_url = '/';
+		SwiftCalcs.pushState.last_active_title = 'Swift Calcs';
 		if($(this).closest('.active_worksheet').length == 0) {
 			window.openActive($(this).closest('.worksheet_item'));
 			window.loadWorksheet($(this).closest('.worksheet_item'));
@@ -684,7 +684,7 @@ $(function() {
 						$('.left_item.projects > .expand').html(response.tree); el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); 					
 						if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
 							// Not in an archive view, so refresh
-							SwiftCalcs.pushState.loadUrl();
+							SwiftCalcs.pushState.refresh();
 						} else {
 							// in an archive view...remove returned ids
 							for(var i = 0; i < response.ids.length; i++) {
@@ -717,7 +717,7 @@ $(function() {
 							}
 						} else {
 							// in an archive view...so refresh
-							SwiftCalcs.pushState.loadUrl();
+							SwiftCalcs.pushState.refresh();
 						}
 					}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
 					closeMenu();
@@ -809,9 +809,13 @@ $(function() {
 		$(this).removeClass('archive_not_loaded');
 		window.ajaxRequest("/projects/archive_tree", { }, function(response) { $('.archive_tree').html(response.archive_html).removeClass('archive_tree'); }, function() { $('.archive_tree').html('An error occurred').removeClass('archive_tree').closest('.left_item').addClass('archive_not_loaded'); });
 	});
-	var closeActive = window.closeActive = function(el) { 
+	var closeActive = window.closeActive = function(el, clear_url) { 
 		$('.base_layout').removeClass('worksheet_open');
 		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
+		if(clear_url !== false) {
+			$(document).prop('title', SwiftCalcs.pushState.last_active_title);
+			SwiftCalcs.pushState.navigate(SwiftCalcs.pushState.last_active_url);
+		}
 		el.each(function() {
 			var wrapper_box = $(this);
 			var prev_box = wrapper_box.prev();
@@ -829,9 +833,14 @@ $(function() {
 		});
 	};
 	var beginLoad = false;
-	var openActive = window.openActive = function(el) {
+	var openActive = window.openActive = function(el, set_url) {
 		beginLoad = false;
-		closeActive($('.active_worksheet'));
+		closeActive($('.active_worksheet'), false);
+		var name = el.attr('data-name');
+		$(document).prop('title', name);
+		var hash_string = el.attr('data-hash');
+		if(!SwiftCalcs.pushState.fragment.match(/^(worksheets|revisions)\//i) && (set_url !== false))
+			SwiftCalcs.pushState.navigate('/inline_worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
 		$('.base_layout').addClass('worksheet_open');
 		var before_item = el.prev();
 		var after_item = el.next();
@@ -1225,12 +1234,12 @@ $(function() {
 	window.resizeResults();
  	$('body').on('click', 'div.search_bar .fa-times-circle', function(e) {
  		$(this).closest('div.search_bar').find('input').val('');
- 		SwiftCalcs.pushState.loadUrl();
+ 		SwiftCalcs.pushState.refresh();
  		e.preventDefault();
  		e.stopPropagation();
  	});
  	$('body').on('blur', 'div.search_bar input', function(e) {
- 		SwiftCalcs.pushState.loadUrl();
+ 		SwiftCalcs.pushState.refresh();
  	}).on('keyup', 'div.search_bar input', function(e) {
  		if(e.which == 13) $(this).blur();
  	});
