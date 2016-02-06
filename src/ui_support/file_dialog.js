@@ -1103,7 +1103,7 @@ $(function() {
 		var loading_div = $('<div/>').addClass('worksheet_loading').addClass('worksheet_item').attr('data-id', '-1').html('<i class="fa fa-spinner fa-pulse"></i><span>' + (duplicate ? 'Copying' : 'Creating') + ' Worksheet...</span>').prependTo(date_box.next()).hide().slideDown({duration: 200});
 		var success = function(response) {
 			if(window.location.href.match(/\/(worksheets|revisions)\//)) SwiftCalcs.pushState.navigate('/');
-			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + response.id).attr('data-id', response.id).attr('data-name', response.name).attr('parent-id', current_project_id).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
+			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + response.id).attr('data-id', response.id).attr('data-hash', response.hash_string).attr('data-name', response.name).attr('parent-id', current_project_id).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
 			if(response.archive_id) el.addClass('archived');
 			loading_div.remove();
 			el.addClass('change_name');
