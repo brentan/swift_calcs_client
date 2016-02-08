@@ -146,6 +146,10 @@ var math = P(MathOutput, function(_, super_) {
 			}
 		};
 	}
+	_.highlightError = function(error_index) {
+		this.mathField.highlightError(error_index);
+		return this;
+	}
 	_.storeAsVariable = function() {
     this.focus(-1);
     this.outputMode = 2;

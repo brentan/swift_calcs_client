@@ -104,7 +104,7 @@ var receiveMessage = function(command) {
       if(output[ii-1].returned.trim() == '[]') output[ii-1].returned = '[undef]';
       to_send = to_send.replace(/\[val\]/g, output[ii-1].returned.replace(/u__/g,'_'));
       var test_output = { success: true, returned: Module.casevalWithTimeout(to_send) };
-      test_output = testError(test_output, ii);
+      test_output = testError(test_output, ii, to_send);
       if(!test_output.success) { // See if this threw an error, likely a bad units error.  If not, we let full calculation continue
         output.push(test_output);
         continue;
@@ -127,19 +127,21 @@ var receiveMessage = function(command) {
     // Otherwise, lets use giac for our evaluation. 
     // Is this an expression that is setting the value of a variable?  If not, we add some simplification, unit converstion, and set output to latex
     if(to_send.match(/^[\s]*[a-z][a-z0-9_]*(\([a-z0-9_,]+\))?[\s]*:=/i)) {
+      var start_pos = to_send.length; // Used by test error reporting.  If column error is reported, we may have to adjust location because of 'evalf(' addition
       // Assignment.  Do the assignment first, then return the value
       if(to_send.match(/^[\s]*([a-z][a-z0-9_]*)[\s]*:=(.*[^a-z0-9]|[\s]*)\1([^a-z0-9_].*|[\s]*)$/i)) {
-        // Self-referencing definition (a = a + 1).  Add evalf in order to make sure giac doesn't attempt to do this recursively and symbolically
+        // Self-referencing definition (a = a + 1).  Add evalf in order to make sure giac doesn't attempt to do this recursively and symbolically, which is computationally SLOW
+        start_pos = to_send.indexOf(':=');        
         to_send = to_send.replace(':=', ':=evalf(') + ')';
       }
       // Test for setting protected variable names
       if(to_send.match(/^[\s]*(i|e|pi)[\s]*:=.*$/)) {
         if(to_send.match(/^[\s]*i[\s]*:=.*$/))
-          output[ii] = {success: false, returned: 'variable name <i>i</i> is protected and defined as sqrt(-1)', warnings: []}
+          output[ii] = {success: false, error_index: 0, returned: 'variable name <i>i</i> is protected and defined as sqrt(-1)', warnings: []}
         else if(to_send.match(/^[\s]*e[\s]*:=.*$/))
-          output[ii] = {success: false, returned: 'variable name <i>e</i> is protected and defined as 2.71828', warnings: []}
+          output[ii] = {success: false, error_index: 0, returned: 'variable name <i>e</i> is protected and defined as 2.71828', warnings: []}
         else 
-          output[ii] = {success: false, returned: 'variable name <i>&pi;</i> is protected and defined as 3.14159', warnings: []}
+          output[ii] = {success: false, error_index: 0, returned: 'variable name <i>&pi;</i> is protected and defined as 3.14159', warnings: []}
         continue;
       }
       // Do the assignment.  Test if there were errors, if so, report those.  If not, and output is asked for, we return the value of the stored variable
@@ -155,15 +157,21 @@ var receiveMessage = function(command) {
           break;
         }
       }
-      test_output = testError(test_output, ii);
+      test_output = testError(test_output, ii, to_send);
       if(test_output.success) {
         to_send = to_send.replace(/^[\s]*([a-zA-Z0-9_]+).*$/,'$1');
       } else {
+        // Correct the error index based on whether we added evalf or not
+        if(test_output.error_index > start_pos) {
+          if((test_output.error_index+1) == to_send.length) test_output.error_index = test_output.error_index - 1;
+          test_output.error_index = test_output.error_index - 6;
+        }
         output.push(test_output);
         continue;
       }
     } 
     if(!command.commands[ii].nomarkup) {
+      // Nomarkup is a flag that ensures we dont add any simplification, latex output commands, or other commands to the input.  This section is run if nomarkup is FALSE
       // if to_send has units associated with it, we attempt to convert to that unit.  On failure, we revert to auto unit handling
       if(to_send.match(/(==|>|<|!=|<=|>=)/))
         var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : '';
@@ -184,17 +192,19 @@ var receiveMessage = function(command) {
           if(!errors[ii] && (output[ii].returned.indexOf('Incompatible units') === -1))
             warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit[1]);  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
         } */
-      } else
+      } else 
         output.push({ success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + '))))') });
       // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
-			if(errors[ii] && errors[ii].indexOf('Timeout') === -1)
+      var test_output = testError(output[ii],ii, to_send);
+			if(!test_output.success)
 				output[ii] = { success: true, returned: Module.casevalWithTimeout(to_send) }
       // Change 1e-4 scientific notation to latex form
-      output[ii].returned = output[ii].returned.replace(/([0-9]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
+      output[ii].returned = output[ii].returned.replace(/([0-9\.]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
     } else {
+      // NO MARKUP command
       output.push({ success: true, returned: Module.casevalWithTimeout(to_send) });
     }
-    output[ii] = testError(output[ii],ii);
+    output[ii] = testError(output[ii],ii, to_send);
     // Set any warnings to the output
 		output[ii].warnings = warnings[ii];
 	}
@@ -211,7 +221,7 @@ this.addEventListener("message", function (evt) {
   receiveMessage(JSON.parse(evt.data));
 },false);
 
-var testError = function(output, ii) {
+var testError = function(output, ii, to_send) {
   // If there were errors, set the output to the error.  Check both the errors array and the direct output. 
   // Also check for an undefined result, which returns a bit of a complex result from giac
   if(errors[ii]) 
@@ -225,6 +235,18 @@ var testError = function(output, ii) {
     warnings[ii].push('Undefined result - Check for division by zero or inconsistent units');
   } else if(output.returned.match(/,\\mathrm{undef}\\,/))
     warnings[ii].push('Result contains undefined values');
+  // If there was an error, try to set the error index to help find the problem in the input
+  if(output.success === false) {
+    if(output.returned.match(/line [0-9]+ col [0-9]+/i)) {
+      //Column returned by giac.  Report it
+      output.error_index = output.returned.replace(/^.*line [0-9]+ col ([0-9]+).*$/i, "$1")*1-1;
+      output.returned = output.returned.replace(/^(.*)line [0-9]+ col [0-9]+.*$/i, "$1");
+    } else if(output.returned.match(/at end of input/i)) {
+      output.error_index = to_send.length-1;
+      output.returned = output.returned.replace(/^(.*)at end of input.*$/i, "$1");
+    } else
+      output.error_index = -1;
+  }
   return output;
 }
 var Module = {

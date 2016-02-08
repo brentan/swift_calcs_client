@@ -105,9 +105,13 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 				}
 			}
 		} else {
+			this.highlightError(result[0].error_index);
 			this.setError(result[0].returned);
 		}  
 		return true;
+	}
+	_.highlightError = function(error_index) {
+		return this;
 	}
 	_.setError = function(error) {
 		this.outputMathBox.jQ.hide();
