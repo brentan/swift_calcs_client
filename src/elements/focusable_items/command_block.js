@@ -221,6 +221,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		return this;
 	}
 	_.write = function(text) {
+		if(typeof text !== "string") text = "";
 		if((text.trim() == '') && !this.editable) return this.flash();
 		if(this.editable && text.match(/({|})/)) return this.flash(); // Don't allow some special characters?
 		if((text == '=') && (this.location == 0) && (this.element.storeAsVariable) && !this.element.scoped)
