@@ -65,30 +65,44 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 				this.outputBox.jQ.find('td.answer_menu').html('<span class="fa fa-toggle-down"></span>').append($('<div></div>').addClass('pulldown_holder').append(menu));
 				this.outputBox.jQ.removeClass('calculating error warn');
 				this.outputBox.expand();
-				this.outputMathBox.latex(result[0].returned);
-				var height = this.outputBox.jQ.find('div.answer').height();
-				this.answerLatex = result[0].returned.replace(/^.*\\Longrightarrow \\whitespace/,'');
-				menu.css({top: Math.floor(height/2-9) + 'px'});
-				if(result[0].suppress_pulldown) {
+				if((result[0].returned.length > 5000) && !result[0].force_display) {
+					// Whew that's a big answer! Warn about it and suppress output.
 					menu.remove();
 					this.outputBox.jQ.addClass('hide_pulldown');
+					this.outputMathBox.jQ.hide();
+					this.outputBox.setWarning("Long result returned, display suppressed to improve performance.  <a class='suppress_display'>Show Result</a>", true);
+					this.outputBox.jQ.find('.suppress_display').on('click', function(_this) { return function() {
+						_this.last_result[0].force_display = true;
+						$(this).hide();
+						$("<div/>").html('<span class="fa fa-spinner fa-pulse"></span><i>working...</i>').insertAfter($(this));
+						window.setTimeout(function() { _this.evaluationFinished(_this.last_result); });
+					}; }(this));
 				} else {
-					// Create the pulldown menu
-					menu.append('<div class="pulldown_item" data-action="copyAnswer"><i class="fa fa-fw"></i>&nbsp; Copy to new line</div>');
-					if(!this.scoped && this.storeAsVariable)
-						menu.append('<div class="pulldown_item" data-action="storeAsVariable"><i class="fa fa-fw"></i>&nbsp; Assign to variable</div>');
-					if(result[0].returned.indexOf('\\Unit') > -1)
-						menu.append('<div class="pulldown_item" data-action="enableUnitMode"><i class="fa fa-fw"></i>&nbsp; Change units</div>');
-					menu.append('<div class="pulldown_item" data-action="toggleApprox"><i class="fa fa-toggle-' + (this.approx ? 'on' : 'off') + ' fa-fw"></i>&nbsp; Approximate mode (1/2 &#8594; 0.5)</div>');
-					var factor = 'off';
-					var expand = 'off';
-					var simplify = 'off';
-					if(this.factor_expand === 'factor') factor = 'on';
-					if(this.factor_expand === 'expand') expand = 'on';
-					if(this.factor_expand === 'simplify') simplify = 'on';
-					menu.append('<div class="pulldown_item" data-action="toggleExpand"><i class="fa fa-toggle-' + expand + ' fa-fw"></i>&nbsp; Expand</div>');
-					//menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
-					menu.append('<div class="pulldown_item" data-action="toggleSimplify"><i class="fa fa-toggle-' + simplify + ' fa-fw"></i>&nbsp; Simplify</div>');
+					this.outputMathBox.latex(result[0].returned);
+					var height = this.outputBox.jQ.find('div.answer').height();
+					this.answerLatex = result[0].returned.replace(/^.*\\Longrightarrow \\whitespace/,'');
+					menu.css({top: Math.floor(height/2-9) + 'px'});
+					if(result[0].suppress_pulldown) {
+						menu.remove();
+						this.outputBox.jQ.addClass('hide_pulldown');
+					} else {
+						// Create the pulldown menu
+						menu.append('<div class="pulldown_item" data-action="copyAnswer"><i class="fa fa-fw"></i>&nbsp; Copy to new line</div>');
+						if(!this.scoped && this.storeAsVariable)
+							menu.append('<div class="pulldown_item" data-action="storeAsVariable"><i class="fa fa-fw"></i>&nbsp; Assign to variable</div>');
+						if(result[0].returned.indexOf('\\Unit') > -1)
+							menu.append('<div class="pulldown_item" data-action="enableUnitMode"><i class="fa fa-fw"></i>&nbsp; Change units</div>');
+						menu.append('<div class="pulldown_item" data-action="toggleApprox"><i class="fa fa-toggle-' + (this.approx ? 'on' : 'off') + ' fa-fw"></i>&nbsp; Approximate mode (1/2 &#8594; 0.5)</div>');
+						var factor = 'off';
+						var expand = 'off';
+						var simplify = 'off';
+						if(this.factor_expand === 'factor') factor = 'on';
+						if(this.factor_expand === 'expand') expand = 'on';
+						if(this.factor_expand === 'simplify') simplify = 'on';
+						menu.append('<div class="pulldown_item" data-action="toggleExpand"><i class="fa fa-toggle-' + expand + ' fa-fw"></i>&nbsp; Expand</div>');
+						//menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
+						menu.append('<div class="pulldown_item" data-action="toggleSimplify"><i class="fa fa-toggle-' + simplify + ' fa-fw"></i>&nbsp; Simplify</div>');
+					}
 				}
 			}
 			if(result[0].warnings.length > 0) {

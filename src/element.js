@@ -560,6 +560,7 @@ var Element = P(function(_) {
 	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method) and whether we also need to evaluate ancesctor/succeeding blocks (fullEvaluation)
 	// This function assigns this evaluation stream a unique id, and registers it in Worksheet.  Other functions can cancel this evaluation stream with this unique id.
 	_.evaluate = function(force, force_full) {
+		//console.log("=========================");
 		if(typeof force === 'undefined') force = false;
 		if(typeof force_full === 'undefined') force_full = false;
 		if(this.mark_for_deletion) return;
@@ -660,6 +661,7 @@ var Element = P(function(_) {
 		}
 	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
+	//_.startTime = 0;
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
@@ -672,8 +674,10 @@ var Element = P(function(_) {
 			} else {
 				if((this.commands.length === 0) || ($.map(this.commands, function(val) { return val.command; }).join('').trim() === '')) // Nothing to evaluate...
 					this.evaluateNext(evaluation_id, move_to_next)
-				else
+				else {
+					//this.startTime = new Date();
 					giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+				}
 			}
 		} else 
 			this.evaluateNext(evaluation_id, move_to_next)
@@ -681,6 +685,8 @@ var Element = P(function(_) {
 
 	// Callback from giac when an evaluation has completed and results are returned
 	_.evaluationCallback = function(evaluation_id, evaluation_callback, move_to_next, results) {
+		//var endTime = new Date();
+		//console.log(this.leftJQ.children('span').html() + " - Elapsed Time: " + (endTime - this.startTime)/1000);
 		if(!giac.shouldEvaluate(evaluation_id)) return;
 		if(this[evaluation_callback](results, evaluation_id, move_to_next)) 
 			this.evaluateNext(evaluation_id, move_to_next);
