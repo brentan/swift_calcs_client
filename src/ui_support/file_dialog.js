@@ -49,24 +49,42 @@ $(function() {
 		current_project_navigable_url = url;
 	}
 	var loadProject = window.loadProject = function(hash_string, name, archive, labels_hash, label_name) {
-		if(hash_string && (hash_string == 'active'))
+		if(hash_string && (hash_string == 'active')) {
+			window.trackEvent("Project", "Load", "Active");
 			SwiftCalcs.pushState.navigate('/active/', {trigger: true});
-		else if(hash_string && (hash_string == 'invites'))
+		}
+		else if(hash_string && (hash_string == 'invites')) {
+			window.trackEvent("Invite", "Load");
 			SwiftCalcs.pushState.navigate('/invites/', {trigger: true});
-		else if(hash_string && (hash_string == 'archive'))
+		}
+		else if(hash_string && (hash_string == 'archive')) {
+			window.trackEvent("Project", "Load", "Archive");
 			SwiftCalcs.pushState.navigate('/archive/', {trigger: true});
-		else if(hash_string && archive)
+		}
+		else if(hash_string && archive) {
+			window.trackEvent("Project", "Load", "Archive: " + hash_string);
 			SwiftCalcs.pushState.navigate('/archive_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
-		else if(hash_string && labels_hash) 
+		}
+		else if(hash_string && labels_hash) {
+			window.trackEvent("Project", "Load", "Label: " + hash_string + '/' + labels_hash);
 			SwiftCalcs.pushState.navigate('/project_label/' + hash_string + '/' + labels_hash + '/' + encodeURIComponent(name.replace(/ /g,'_')) + '/' + encodeURIComponent(label_name.replace(/ /g,'_')), {trigger: true});
-		else if(hash_string) 
+		}
+		else if(hash_string) {
+			window.trackEvent("Project", "Load", hash_string);
 			SwiftCalcs.pushState.navigate('/projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
-		else if(labels_hash) 
+		}
+		else if(labels_hash) {
+			window.trackEvent("Label", "Load", labels_hash);
 			SwiftCalcs.pushState.navigate('/labels/' + labels_hash + '/' + encodeURIComponent(label_name.replace(/ /g,'_')), {trigger: true});
-		else if(current_project_navigable_url)
+		}
+		else if(current_project_navigable_url) {
+			window.trackEvent("Project", "Load", "Current Project");
 			SwiftCalcs.pushState.navigate(current_project_navigable_url, {trigger: true});
-		else
+		}
+		else {
+			window.trackEvent("Project", "Load", "Active");
 			SwiftCalcs.pushState.navigate('/active/', {trigger: true});
+		}
 	}
 	$('body').on('click', '.project_title.expandable, .title.expandable', function(e) {
 		var $container = $(this).closest('div.item');
@@ -242,9 +260,11 @@ $(function() {
 		}
 	}
 	var addStar = window.addStar = function(data_id) {
+    window.trackEvent("Star", "Add", data_id);
 		toggleStar(data_id, true);
 	}
 	var removeStar = window.removeStar = function(data_id) {
+    window.trackEvent("Star", "Remove", data_id);
 		toggleStar(data_id, false);
 	}
 	var toggleStar = function(data_id, add) {
@@ -294,6 +314,7 @@ $(function() {
 		var name = $(this).closest('.worksheet_item').attr('data-name');
 		var hash_string = $(this).closest('.worksheet_item').attr('data-hash');
 		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
+    window.trackEvent("Worksheet", "Expand", '/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
 		SwiftCalcs.pushState.last_active_url = '/';
 		SwiftCalcs.pushState.last_active_title = 'Swift Calcs';
 		if($(this).closest('.active_worksheet').length == 0) {
@@ -312,6 +333,7 @@ $(function() {
 		e.stopPropagation();
 	});
 	$('body').on('click', '.worksheet_item i.fa-print', function(e) {
+    window.trackEvent("Worksheet", "Print");
 		SwiftCalcs.await_printing = true;
 		window.showLoadingPopup();
 		$('.loading_box .name').html('Preparing to Print: Calculating...');
@@ -610,6 +632,7 @@ $(function() {
 		promptDialog('Name your new project', 'Create', '', function(parent_project_id) { return function(name, data) { processNewProject(name, data, parent_project_id) }; }(parent_project_id), true);
 	}
 	var processNewProject = function(name, data, parent_project_id) {
+    window.trackEvent("Project", "Create", name);
 		window.showLoadingOnTop();
 		post_data = { name: name, rights: data };
 		if(parent_project_id) post_data.project_id = parent_project_id;
@@ -769,6 +792,7 @@ $(function() {
 	}
 	var toggleArchive = function(data_id, data_type, add) {
 		if(data_type == 'Worksheet') {
+    	window.trackEvent("Worksheet", add ? "Archive" : "Unarchive", data_id);
 			var flipArchive = function(flip) {
 				$('.worksheet_item').each(function() {
 					if($(this).attr('data-id')*1 == data_id*1) {
@@ -800,6 +824,7 @@ $(function() {
 				});
 			}
 		} else {
+    	window.trackEvent("Project", add ? "Archive" : "Unarchive", data_id);
 			var flipArchive = function(flip) { }
 		}
 		window.ajaxRequest("/projects/archive", { id: data_id, data_type: data_type, add: add }, function() { flipArchive(true); }, function() { flipArchive(false); });
@@ -881,6 +906,7 @@ $(function() {
 	var loadWorksheet = window.loadWorksheet = function(el, response) {
 		var id = el.attr('data-id');
 		var hash_string = el.attr('data-hash');
+    window.trackEvent("Worksheet", "Load", hash_string);
 		var el_next = el.next('.content');
 		if(el_next.length == 0) el_next = $('<div/>').addClass('content').insertAfter(el);
 		var success = function(response) {
@@ -917,6 +943,7 @@ $(function() {
 		window.moveWorksheet($(this).closest('.active_holder').children('.worksheet_item, .invitation_item'));
 	});
 	var moveWorksheet = window.moveWorksheet = function(el, remove_after_move) {
+    window.trackEvent("Worksheet", "Move");
 		var dets = el.closest('.active_holder').children('.details_span');
 		var success = function(response) {
 			window.hidePopupOnTop();
@@ -937,9 +964,11 @@ $(function() {
 		moveDialog(processMove, el.attr('parent-id'));
 	}
 	$('body').on('click', 'td.info .info.revisions', function(e) {
+    window.trackEvent("Worksheet", "Load Revisions", "From Header");
 		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-name'));
 	});
 	$('body').on('click', 'td.collaborators .bubble, td.collaborators .placeholder', function(e) {
+    window.trackEvent("Worksheet", "Sharing Dialog","From Header");
 		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), 'Worksheet');
 	});
 	$('body').on('click', '.worksheet_item i.fa-ellipsis-v', function(e) {
@@ -1008,24 +1037,30 @@ $(function() {
 				}).appendTo(menu);
 			if(response.rights_level >= 3) 
 				$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
+    			window.trackEvent("Worksheet", "Sharing Dialog","From Menu");
 					window.openSharingDialog(worksheet_id*1, 'Worksheet');
 					closeMenu();
 				}).appendTo(menu);
 			if(response.rights_level >= 3) 
 				$('<div/>').html('<i class="fa fa-fw fa-history"></i>View Revisions').on('click', function(e) {
+    			window.trackEvent("Worksheet", "Load Revisions", "From Menu");
 					window.loadRevisions(worksheet_id, el.attr('data-hash'), el.attr('data-name'));
 					closeMenu();
 				}).appendTo(menu);
 			if(response.rights_level >= 4) 
 				$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Worksheet').on('click', function(e) {
-					if(confirm('Are you sure?  You are the owner of this worksheet, and it will be removed for collaborators as well.  This action cannot be undone.'))
+					if(confirm('Are you sure?  You are the owner of this worksheet, and it will be removed for collaborators as well.  This action cannot be undone.')) {
+    				window.trackEvent("Worksheet", "Remove");
 						window.removeWorksheet(el, worksheet_id);
+					}
 					closeMenu();
 				}).appendTo(menu);
 			else  
 				$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Worksheet').on('click', function(e) {
-					if(confirm('Are you sure?  You are not the owner of this worksheet, it will be removed from your worksheet list but will still be available to collaborators.  This action can only be undone by having worksheet admins re-invite you to the worksheet.'))
+					if(confirm('Are you sure?  You are not the owner of this worksheet, it will be removed from your worksheet list but will still be available to collaborators.  This action can only be undone by having worksheet admins re-invite you to the worksheet.')) {
+						window.trackEvent("Worksheet", "Delete");
 						window.removeWorksheet(el, worksheet_id);
+					}
 					closeMenu();
 				}).appendTo(menu);
 			menu.css('top', '0px').css('left', '0px');
@@ -1084,6 +1119,9 @@ $(function() {
 		window.hidePopupOnTop();
 	}
 	var newWorksheet = window.newWorksheet = function(duplicate, worksheet_id, revision_id) {
+    if(duplicate && revision_id) window.trackEvent("Worksheet", "Copy Revision", revision_id);
+    else if(duplicate) window.trackEvent("Worksheet", "Copy", worksheet_id);
+    else window.trackEvent("Worksheet", "New");
 		$('.no_results').remove();
 		window.closeScreenExplanation();
 		closeActive($('.active_worksheet'));
@@ -1207,6 +1245,7 @@ $(function() {
 		if(confirm('Are you sure?  Worksheets that you labeled will have the label removed.  Worksheets labeled by another user will retain the label.  This action cannot be undone.')) {
 			var $container = $(this).closest('div.item');
 			data = {id: $container.attr('data-id') } 
+			window.trackEvent("Label", "Destroy", data.id);
 			if($container.closest('.project_list').length > 0) 
 				data.project_id = $container.closest('.expand').closest('div.item').closest('.expand').closest('div.item').attr('data-id');
 			$icon = $(this);
@@ -1244,9 +1283,11 @@ $(function() {
  		if(e.which == 13) $(this).blur();
  	});
 	var acceptInvite = function(el) {
+		window.trackEvent("Invite", "Accept");
 		processInvite(el, true);
 	}
 	var rejectInvite = function(el) {
+		window.trackEvent("Invite", "Reject");
 		processInvite(el, false);
 	}
 	var processInvite = function(el, accept) {

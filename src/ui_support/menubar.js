@@ -15,8 +15,8 @@ $(function() {
 	$('body').on('click', '#account_bar .copy', function(e) { alert('Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-C.'); return false; });
 	$('body').on('click', '#account_bar .paste', function(e) { alert('Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-V.'); return false; });
 
-	$('body').on('click', '#account_bar .auto_off', function(e) { SwiftCalcs.giac.manual_mode(true); return false; });
-	$('body').on('click', '#account_bar .auto_on', function(e) { SwiftCalcs.giac.manual_mode(false); return false; });
+	$('body').on('click', '#account_bar .auto_off', function(e) { window.trackEvent("Evaluation", "Auto Off"); SwiftCalcs.giac.manual_mode(true); return false; });
+	$('body').on('click', '#account_bar .auto_on', function(e) { window.trackEvent("Evaluation", "Auto On"); SwiftCalcs.giac.manual_mode(false); return false; });
 	$('body').on('click', '#account_bar .calc_now', function(e) { SwiftCalcs.giac.manualEvaluation(); return false; });
 	$('body').on('click', '#account_bar .full_calc', function(e) { if(SwiftCalcs.active_worksheet) { window.start_time = undefined; SwiftCalcs.active_worksheet.ends[-1].evaluate(true, true); if(!SwiftCalcs.giac.auto_evaluation) { SwiftCalcs.giac.manualEvaluation(); } } return false; });
 
@@ -38,9 +38,9 @@ $(function() {
 			to_create.textField.magicCommands();
 	}
 
-	$('body').on('click', '#account_bar .about', function(e) { window.loadToPopup('/about',{}); return false; });
+	$('body').on('click', '#account_bar .about', function(e) { window.trackEvent("Help", "About"); window.loadToPopup('/about',{}); return false; });
 
-	$('body').on('click', '#account_bar .shortcuts', function(e) { window.loadToPopup('/shortcuts',{}); return false; });
+	$('body').on('click', '#account_bar .shortcuts', function(e) { window.trackEvent("Help", "Shortcuts"); window.loadToPopup('/shortcuts',{}); return false; });
 	$('body').on('click', '#account_bar .hide_vaporware', function(e) { $(this).parent().hide(); $(this).parent().next().show(); $('body').removeClass('show_vaporware'); return false; });
 	$('body').on('click', '#account_bar .show_vaporware', function(e) { $(this).parent().hide(); $(this).parent().prev().show(); $('body').addClass('show_vaporware'); return false; });
 

@@ -46,6 +46,7 @@ var outputBox = P(function(_) {
 	}
 	_.setError = function(html, append) {
 		if(!append) this.clearState();
+		window.trackEvent("Interaction", "Error", html);
 		if(this.el.fullEvaluation) { // Stop evaluation on scoped items
 			giac.errors_encountered = true;
 			this.el.jQ.addClass('error'); 

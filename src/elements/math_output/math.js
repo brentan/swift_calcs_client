@@ -31,6 +31,7 @@ var math = P(MathOutput, function(_, super_) {
 		return function(mathField) {
 			var to_compute = mathField.text();
 			if(elements[to_compute.toLowerCase()]) {
+				window.trackEvent("Block", "Typed", to_compute.toLowerCase());
 				_this.needsEvaluation = false;
 				_this.mark_for_deletion = true;
 				elements[to_compute.toLowerCase()]().insertAfter(_this).show().focus(0);
@@ -58,6 +59,7 @@ var math = P(MathOutput, function(_, super_) {
 			// Case of var_name = command.  See if command accepts this type of format (has to allow scoped basically)
       var command = to_text.replace(/^[^=]* := ([a-z0-9\.-]*)$/i,"$1");
       if(SwiftCalcs.elements[command.toLowerCase()]) {
+				window.trackEvent("Block", "Typed", command.toLowerCase());
       	var new_el = SwiftCalcs.elements[command.toLowerCase()]();
       	if(new_el.storeAsVariable) {
 					var stream = this.worksheet.trackingStream;
@@ -80,6 +82,7 @@ var math = P(MathOutput, function(_, super_) {
 		var stream = this.worksheet.trackingStream;
 		if(!stream) this.worksheet.startUndoStream();
 		if(elements[to_text.toLowerCase()]) {
+			window.trackEvent("Block", "Typed", to_text.toLowerCase());
 			this.needsEvaluation = false;
 			elements[to_text.toLowerCase()]().insertAfter(this).show().focus(0);
 		}	else {
@@ -109,12 +112,14 @@ var math = P(MathOutput, function(_, super_) {
 			if(_this.needsEvaluation) {
 				//console.log(_this.mathField.text());
 				var to_compute = _this.mathField.text();
+				window.trackEvent("Block", "Execute", to_compute.toLowerCase());
 				if(to_compute.match(/^.*=.*=[\s]*$/)) { // Trailing = sign is a mathCad thing, use it to force output, and then remove the equal sign
 					_this.mathField.moveToRightEnd().keystroke('Shift-Left',{preventDefault: function() {}}).keystroke('Del',{preventDefault: function() {}}).blur();
 					_this.outputMode = 2;
 					to_compute = _this.mathField.text();
 				}
 				if(elements[to_compute.toLowerCase()]) {
+					window.trackEvent("Block", "Typed", to_compute.toLowerCase());
 					_this.mark_for_deletion = true;
 					_this.needsEvaluation = false;
 					var stream = _this.worksheet.trackingStream;

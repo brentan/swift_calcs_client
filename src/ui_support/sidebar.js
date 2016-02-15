@@ -148,6 +148,7 @@ $(function() {
       else
         return showNotice('Create or open a worksheet to insert this item');
       var check_for_storeAsVariable = true;
+      window.trackEvent("Block", "Sidebar Click", _this.attr('data-el'));
       if(el === 0) {
         el = SwiftCalcs.active_worksheet.ends[1];
         check_for_storeAsVariable = false;
@@ -211,6 +212,7 @@ $(function() {
       }
   		// Begin moving the selected elements to the new target
       SwiftCalcs.active_worksheet.startUndoStream();
+      window.trackEvent("Block", "Sidebar Drag", _this.attr('data-el'));
   		var to_create = SwiftCalcs.elements[_this.attr('data-el')];
   		if(_this.attr('data-option'))
   			to_create = to_create(_this.attr('data-option'));
