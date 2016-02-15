@@ -232,6 +232,8 @@ var plot = P(Element, function(_, super_) {
 				if(!(children[i] instanceof plot_func)) {
 					x_min = x_min === false ? Math.min.apply(Math, children[i].xs.slice(1)) : Math.min(Math.min.apply(Math, children[i].xs.slice(1)), x_min);
 					x_max = x_max === false ? Math.max.apply(Math, children[i].xs.slice(1)) : Math.max(Math.max.apply(Math, children[i].xs.slice(1)), x_max);
+					if(this.x_min !== false) x_min = Math.max(x_min, this.x_min);
+					if(this.x_max !== false) x_max = Math.min(x_max, this.x_max);
 				}
 				if(x_unit && (x_unit != children[i].x_unit)) {
 					this.expand();
