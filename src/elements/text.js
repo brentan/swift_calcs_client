@@ -46,6 +46,10 @@ var text = P(EditableBlock, function(_, super_) {
     this.textField.html(html + this.textField.html());
     return this;
   }
+  _.setWidth = function() {
+    this.jQ.find('.' + css_prefix + 'top').find('img').css('max-width', max(150, this.jQ.closest('.' + css_prefix + 'element').width() - 150) + 'px');
+    return super_.setWidth.call(this);
+  }
   _.command = function(command, option) {
     var param = null;
     switch(command) {

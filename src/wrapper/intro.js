@@ -65,6 +65,20 @@ var SwiftCalcs = {};
       ALLOWED_ATTR: [
         'alt','bgcolor','border','color','cols','colspan','rows','rowspan','style','src','valign','class']
       });
+    var style_blacklist = ['width','min-width', 'position', 'white-space:nowrap', 'flex', 'display:flex'];
+    for(var i = 0; i < style_blacklist.length; i++) {
+      if(style_blacklist[i].match(/:/)) {
+        output = output.replace(new RegExp("(style=\"[\\s]?)" + style_blacklist[i].replace(/:/,":[\\s]*") + "[\\s]*(;|\")" ,'gi'), '$1$2');
+        output = output.replace(new RegExp("(style=\"[^\"]*;[\\s]?)" + style_blacklist[i].replace(/:/,":[\\s]*") + "[\\s]*(;|\")" ,'gi'), '$1$2');
+        output = output.replace(new RegExp("(style=\'[\\s]?)" + style_blacklist[i].replace(/:/,":[\\s]*") + "[\\s]*(;|\')" ,'gi'), '$1$2');
+        output = output.replace(new RegExp("(style=\'[^\']*;[\\s]?)" + style_blacklist[i].replace(/:/,":[\\s]*") + "[\\s]*(;|\')" ,'gi'), '$1$2');
+      } else {
+        output = output.replace(new RegExp("(style=\"[\\s]?)" + style_blacklist[i] + ":[^;\"]*(;|\")" ,'gi'), '$1$2');
+        output = output.replace(new RegExp("(style=\"[^\"]*;[\\s]?)" + style_blacklist[i] + ":[^;\"]*(;|\")" ,'gi'), '$1$2');
+        output = output.replace(new RegExp("(style=\'[\\s]?)" + style_blacklist[i] + ":[^;\']*(;|\')" ,'gi'), '$1$2');
+        output = output.replace(new RegExp("(style=\'[^\']*;[\\s]?)" + style_blacklist[i] + ":[^;\']*(;|\')" ,'gi'), '$1$2');
+      }
+    }
     return [text(output)];
   }
   var status_bar = $('.status_bar');
