@@ -65,7 +65,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 				this.outputBox.jQ.find('td.answer_menu').html('<span class="fa fa-toggle-down"></span>').append($('<div></div>').addClass('pulldown_holder').append(menu));
 				this.outputBox.jQ.removeClass('calculating error warn');
 				this.outputBox.expand();
-				if((result[0].returned.length > 5000) && !result[0].force_display) {
+				if((result[0].returned.length > 3500) && !result[0].force_display) {
 					// Whew that's a big answer! Warn about it and suppress output.
 					menu.remove();
 					this.outputBox.jQ.addClass('hide_pulldown');
