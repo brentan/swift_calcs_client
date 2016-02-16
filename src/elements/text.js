@@ -362,6 +362,7 @@ var WYSIWYG = P(function(_) {
             'Ctrl-Shift-J': 'justifyFull',
             'Ctrl-Ü': 'removeFormat'
           };
+          t.setUndoPoint();
           window.document.execCommand(comms[key], false, null);
           e.preventDefault();
           t.ignoreUndo = true;
