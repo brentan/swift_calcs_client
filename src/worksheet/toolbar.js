@@ -313,28 +313,28 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			id: 'bold',
 			icon: 'bold',
 			klass: 'bold',
-			title: 'Bold',
+			title: 'Bold [Ctrl-B]',
 			method: function(el) { el.command('bold'); } 
 		},
 		{
 			id: 'italic',
 			icon: 'italic',
 			klass: 'italic',
-			title: 'Italic',
+			title: 'Italic [Ctrl-I]',
 			method: function(el) { el.command('italic'); } 
 		},
 		{
 			id: 'underline',
 			icon: 'underline',
 			klass: 'underline',
-			title: 'Underline',
+			title: 'Underline [Ctrl-U]',
 			method: function(el) { el.command('underline'); } 
 		},
 		{
 			id: 'strikethrough',
 			icon: 'strikethrough',
 			klass: 'strikethrough',
-			title: 'Srike-through',
+			title: 'Srike-through [Ctrl-Shift-5]',
 			hide_mobile: true,
 			method: function(el) { el.command('strikeThrough'); } 
 		},
@@ -343,14 +343,14 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			id: 'subscript',
 			icon: 'subscript',
 			hide_mobile: true,
-			title: 'Subscript',
+			title: 'Subscript [Ctrl-,]',
 			method: function(el) { el.command('subscript'); } 
 		},
 		{
 			id: 'superscript',
 			icon: 'superscript',
 			hide_mobile: true,
-			title: 'Superscript',
+			title: 'Superscript [Ctrl-.]',
 			method: function(el) { el.command('superscript'); } 
 		},
 		{
@@ -371,28 +371,28 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			id: 'justifyLeft',
 			icon: 'align-left',
 			klass: 'justifyLeft',
-			title: 'Left align',
+			title: 'Left align [Ctrl-Shift-L]',
 			method: function(el) { el.command('justifyLeft'); } 
 		},
 		{
 			id: 'justifyCenter',
 			icon: 'align-center',
 			klass: 'justifyCenter',
-			title: 'Center align',
+			title: 'Center align [Ctrl-Shift-E]',
 			method: function(el) { el.command('justifyCenter'); } 
 		},
 		{
 			id: 'justifyRight',
 			icon: 'align-right',
 			klass: 'justifyRight',
-			title: 'Right align',
+			title: 'Right align [Ctrl-Shift-R]',
 			method: function(el) { el.command('justifyRight'); } 
 		},
 		{
 			id: 'justifyFull',
 			icon: 'align-justify',
 			klass: 'justifyFull',
-			title: 'Justify',
+			title: 'Justify [Ctrl-Shift-J]',
 			method: function(el) { el.command('justifyFull'); } 
 		},
 		{ title: '|' },
@@ -517,7 +517,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			id: 'eraser',
 			icon: 'eraser',
 			hide_mobile: true,
-			title: 'Remove all formatting',
+			title: 'Remove all formatting [Ctrl-\\]',
 			method: function(el) { el.command('removeFormat'); } 
 		},
 		{

@@ -117,6 +117,7 @@ var text = P(EditableBlock, function(_, super_) {
     }
     this.textField.setUndoPoint();
     window.document.execCommand(command, false, param);
+    this.textField.ignoreUndo = true;
     var font_tag = this.textField.$editor.find('font').first();
     if(font_tag.length > 0) {
       var new_tag = $('<span/>');
@@ -281,6 +282,7 @@ var WYSIWYG = P(function(_) {
     t.isTextarea = false;
     t.checkOnSpace = false;
     t.$e.hide().addClass(pfx + 'textarea');
+    t.ignoreUndo = false;
 
     html = t.$editor.html();
     t.$box.insertAfter(t.$editor)
@@ -296,7 +298,10 @@ var WYSIWYG = P(function(_) {
     t.$editor 
     .on('keypress', function(e) {
       var ch = String.fromCharCode(e.which);
-      t.scheduleUndoPoint();
+      if(t.ignoreUndo)
+        t.ignoreUndo = false;
+      else
+        t.scheduleUndoPoint();
       if(t.el.worksheet.selection.length > 0) {
         e.preventDefault();
         t.el.worksheet.replaceSelection(math(ch), true);
@@ -311,19 +316,66 @@ var WYSIWYG = P(function(_) {
       if(key.match(/Shift-.*/))
         t.el.shft = true;
       switch (key) {
+        case 'Meta-U':
+        case 'Meta-Shift-5':
+        case 'Meta-B':
+        case 'Meta-I':
+        case 'Meta-¼':
+        case 'Meta-¾':
+        case 'Meta-Shift-L':
+        case 'Meta-Shift-E':
+        case 'Meta-Shift-R':
+        case 'Meta-Shift-J':
+        case 'Meta-Ü':
+        case 'Ctrl-U':
+        case 'Ctrl-Shift-5':
+        case 'Ctrl-B':
+        case 'Ctrl-I':
+        case 'Ctrl-¼':
+        case 'Ctrl-¾':
+        case 'Ctrl-Shift-L':
+        case 'Ctrl-Shift-E':
+        case 'Ctrl-Shift-R':
+        case 'Ctrl-Shift-J':
+        case 'Ctrl-Ü':
+          var comms = {
+            'Meta-U': 'underline',
+            'Meta-Shift-5': 'strikeThrough',
+            'Meta-B': 'bold',
+            'Meta-I': 'italic',
+            'Meta-¼': 'subscript',
+            'Meta-¾': 'superscript',
+            'Meta-Shift-L': 'justifyLeft',
+            'Meta-Shift-E': 'justifyCenter',
+            'Meta-Shift-R': 'justifyRight',
+            'Meta-Shift-J': 'justifyFull',
+            'Meta-Ü': 'removeFormat',
+            'Ctrl-U': 'underline',
+            'Ctrl-Shift-5': 'strikeThrough',
+            'Ctrl-B': 'bold',
+            'Ctrl-I': 'italic',
+            'Ctrl-¼': 'subscript',
+            'Ctrl-¾': 'superscript',
+            'Ctrl-Shift-L': 'justifyLeft',
+            'Ctrl-Shift-E': 'justifyCenter',
+            'Ctrl-Shift-R': 'justifyRight',
+            'Ctrl-Shift-J': 'justifyFull',
+            'Ctrl-Ü': 'removeFormat'
+          };
+          window.document.execCommand(comms[key], false, null);
+          e.preventDefault();
+          t.ignoreUndo = true;
+          break;
         case 'Ctrl-Z':
         case 'Meta-Z':
+          t.ignoreUndo = false;
           t.el.worksheet.restoreUndoPoint();
           e.preventDefault();
           return;
         case 'Ctrl-Y':
         case 'Meta-Y':
+          t.ignoreUndo = false;
           t.el.worksheet.restoreRedoPoint();
-          e.preventDefault();
-          return;
-        case 'Ctrl-O':
-        case 'Meta-O':
-          window.openFileDialog();
           e.preventDefault();
           return;
         case 'Ctrl-S':
@@ -332,6 +384,7 @@ var WYSIWYG = P(function(_) {
           e.preventDefault();
           return;
         case 'Shift-Tab':
+          t.ignoreUndo = false;
           var li_parent = t.isSelectionInsideElement('li');
           if(li_parent && rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {
             var range = rangy.getSelection(t.$editor[0]).getRangeAt(0).cloneRange();
@@ -360,6 +413,7 @@ var WYSIWYG = P(function(_) {
           e.preventDefault();
           break;
         case 'Tab':
+          t.ignoreUndo = false;
           var li_parent = t.isSelectionInsideElement('li');
           if(li_parent && rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {
             var range = rangy.getSelection(t.$editor[0]).getRangeAt(0).cloneRange();
@@ -393,6 +447,7 @@ var WYSIWYG = P(function(_) {
             }
           }
         case 'Spacebar':
+          t.ignoreUndo = false;
           if(t.checkOnSpace && rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed && !t.isSelectionInsideElement('li') && t.magicCommands()) {
             e.preventDefault();
             break;
@@ -412,6 +467,7 @@ var WYSIWYG = P(function(_) {
         case 'Shift-Enter':
         case 'Ctrl-Enter':
         case 'Enter':
+          t.ignoreUndo = false;
           // Delete whatever is highlighted
           if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) t.setUndoPoint();
           rangy.getSelection(t.$editor[0]).deleteFromDocument();
@@ -447,6 +503,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Shift-A':
         case 'Meta-Shift-A':
           // Select everything
+          t.ignoreUndo = false;
           t.el.worksheet.selectAll();
           t.el.mouseOut({});
           t.el.worksheet.focus();
@@ -456,6 +513,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Backspace':
         case 'Shift-Backspace':
         case 'Backspace':
+          t.ignoreUndo = false;
           if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {  t.setUndoPoint(); return; }
           // Check if we are in first spot.  If so, delete backwards OR highlight block
           if(t.startPosition()) {
@@ -484,6 +542,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Del':
         case 'Shift-Del':
         case 'Del':
+          t.ignoreUndo = false;
           if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) { t.setUndoPoint(); return; }
           // Same as above, but at the end position
           if(t.endPosition()) {
@@ -500,21 +559,25 @@ var WYSIWYG = P(function(_) {
             t.scheduleUndoPoint();
           break;
         case 'Left':
+          t.ignoreUndo = false;
           // If already at start, move into previous element
           if(t.startPosition() && t.el.moveOutLeftRight(t.el.textField, L))
             e.preventDefault();
           break;
         case 'Right':
+          t.ignoreUndo = false;
           // If already at end, move into next element
           if(t.endPosition() && t.el.moveOutLeftRight(t.el.textField, R))
             e.preventDefault();
           break;
         case 'Up':
+          t.ignoreUndo = false;
           // If on top line, move up to previous item
           if(t.firstLine() && t.el.moveOutUpDown(t.el.textField, L, t.caretOffset().left))
             e.preventDefault();
           break;
         case 'Down':
+          t.ignoreUndo = false;
           // If on bottom line, move down to next item
           if(t.lastLine() && t.el.moveOutUpDown(t.el.textField, R, t.caretOffset().left))
             e.preventDefault();
@@ -523,6 +586,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Shift-Home':
         case 'Shift-Left':
         case 'Shift-Up':
+          t.ignoreUndo = false;
           if(t.startPosition()) {
             t.el.worksheet.selectDir(t.el, L);
             t.el.worksheet.selectionChanged();
@@ -534,6 +598,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Shift-End':
         case 'Shift-Down':
         case 'Shift-Right':
+          t.ignoreUndo = false;
           if(t.endPosition()) {
             t.el.worksheet.selectDir(t.el, R);
             t.el.worksheet.selectionChanged();
@@ -561,6 +626,7 @@ var WYSIWYG = P(function(_) {
       t.setUndoPoint();
     })
     .on('paste', function(e) {
+      t.ignoreUndo = false;
       if(t.el.worksheet.selection.length > 0) {
         // If something is highlighted in the worksheet, just pass control up to the worksheet paste handler
         t.el.worksheet.pasteHandler(e);
@@ -779,7 +845,6 @@ var WYSIWYG = P(function(_) {
       return t.$e.val();
   };
   _.sanitize = function() {
-    //BRENTAN: Sanitize breaks the browser undo stack.  We need to work with that here!
     var blocks = sanitize(this.html());
     if((blocks.length == 1) && (blocks[0] instanceof text)) {
       this.html(blocks[0].html);
@@ -987,6 +1052,7 @@ var WYSIWYG = P(function(_) {
   }
   _.currentState = function() {
     if(this.keydownState) return this.keydownState; // Why the hack? keypress is called AFTER the dom is updated..., but keydown is called for shift, ctrl, and other keys that add no info
+    if(this.ignoreUndo) return false;
     var sel = rangy.getSelection(this.$editor[0]).getRangeAt(0); // Replace with var sel = window.getSelection(); to remove rangy
     var span = $("<span class='range_end'>&#8203;</span>"); //zero width space
     sel.collapse(false);
