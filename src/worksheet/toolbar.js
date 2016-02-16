@@ -340,20 +340,6 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		},
 		{ title: '|' },
 		{
-			id: 'link',
-			icon: 'link',
-			hide_mobile: true,
-			title: 'Create link',
-			method: function(el) { el.command('createLink'); } //BRENTAN: This needs a modal to ask the user for URL and TITLE
-		},
-		{
-			id: 'unlink',
-			icon: 'unlink',
-			hide_mobile: true,
-			title: 'Remove link',
-			method: function(el) { el.command('unlink'); } 
-		},
-		{
 			id: 'subscript',
 			icon: 'subscript',
 			hide_mobile: true,
@@ -366,6 +352,17 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			hide_mobile: true,
 			title: 'Superscript',
 			method: function(el) { el.command('superscript'); } 
+		},
+		{
+			id: 'link',
+			icon: 'link',
+			hide_mobile: true,
+			title: 'Create link',
+			method: function(el) { el.command('createLink'); }, //BRENTAN: This needs a modal to ask the user for URL and TITLE
+			sub: [
+				{ icon: 'link', method: function(el) { el.command('createLink'); }, title: 'Create Link' },
+				{ icon: 'unlink', method: function(el) { el.command('unlink'); }, title: 'Remove Link' },
+			]
 		},
 		{ title: '|',
 			hide_mobile: true
@@ -403,27 +400,116 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			id: 'unorderedList',
 			icon: 'list-ul',
 			title: 'Bulleted list',
-			method: function(el) { el.command('insertUnorderedList'); } 
+			method: function(el) { el.command('insertUnorderedList'); }, 
+			sub: [
+				{
+					id: 'unorderedList',
+					icon: 'list-ul',
+					title: 'Bulleted list',
+					method: function(el) { el.command('insertUnorderedList'); } 
+				},
+				{
+					id: 'orderedList',
+					icon: 'list-ol',
+					title: 'Numbered list',
+					method: function(el) { el.command('insertOrderedList'); } 
+				},
+				{
+					id: 'indent',
+					icon: 'indent',
+					title: 'Indent',
+					method: function(el) { el.command('indent'); } 
+				},
+				{
+					id: 'outdent',
+					icon: 'outdent',
+					title: 'Remove Indent',
+					method: function(el) { el.command('outdent'); } 
+				},
+			]
 		},
 		{
-			id: 'orderedList',
-			icon: 'list-ol',
-			title: 'Numbered list',
-			method: function(el) { el.command('insertOrderedList'); } 
-		},
-		{
-			id: 'indent',
-			icon: 'indent',
+			id: 'greek',
 			hide_mobile: true,
-			title: 'Indent',
-			method: function(el) { el.command('indent'); } 
-		},
-		{
-			id: 'outdent',
-			icon: 'outdent',
-			hide_mobile: true,
-			title: 'Remove Indent',
-			method: function(el) { el.command('outdent'); } 
+			title: 'Greek Letters',
+			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">&alpha;</div>',
+			symbols: {
+				func: function(el, symbol) { el.command('write',symbol); },
+				symbols: [
+					{ html: '&alpha;', cmd: '&alpha;' },
+					{ html: '&beta;', cmd: '&beta;' },
+					{ html: '&gamma;', cmd: '&gamma;' },
+					{ html: '&delta;', cmd: '&delta;' },
+					{ html: '&#1013;', cmd: '&#1013;' },
+					{ html: '&epsilon;', cmd: '&epsilon;' },
+					{ html: '&zeta;', cmd: '&zeta;' },
+					{ html: '&eta;', cmd: '&eta;' },
+					{ html: '&theta;', cmd: '&theta;' },
+					{ html: '&thetasym;', cmd: '&thetasym;' },
+					{ html: '&gamma;', cmd: '&gamma;' },
+					{ html: '&#989;', cmd: '&#989;' },
+					{ html: '&kappa;', cmd: '&kappa;' },
+					{ html: '&#1008;', cmd: '&#1008;' },
+					{ html: '&lambda;', cmd: '&lambda;' },
+					{ html: '&mu;', cmd: '&mu;' },
+					{ html: '&nu;', cmd: '&nu;' },
+					{ html: '&xi;', cmd: '&xi;' },
+					{ html: '&pi;', cmd: '&pi;' },
+					{ html: '&piv;', cmd: '&piv;' },
+					{ html: '&rho;', cmd: '&rho;' },
+					{ html: '&#1009;', cmd: '&#1009;' },
+					{ html: '&sigma;', cmd: '&sigma;' },
+					{ html: '&sigmaf;', cmd: '&sigmaf;' },
+					{ html: '&tau;', cmd: '&tau;' },
+					{ html: '&upsilon;', cmd: '&upsilon;' },
+					{ html: '&#981;', cmd: '&#981;' },
+					{ html: '&phi;', cmd: '&phi;' },
+					{ html: '&chi;', cmd: '&chi;' },
+					{ html: '&psi;', cmd: '&psi;' },
+					{ html: '&omega;', cmd: '&omega;' },
+					{ html: '&Gamma;', cmd: '&Gamma;' },
+					{ html: '&Delta;', cmd: '&Delta;' },
+					{ html: '&Theta;', cmd: '&Theta;' },
+					{ html: '&Lambda;', cmd: '&Lambda;' },
+					{ html: '&Xi;', cmd: '&Xi;' },
+					{ html: '&Pi;', cmd: '&Pi;' },
+					{ html: '&Sigma;', cmd: '&Sigma;' },
+					{ html: '&Upsilon;', cmd: '&Upsilon;' },
+					{ html: '&Phi;', cmd: '&Phi;' },
+					{ html: '&Psi;', cmd: '&Psi;' },
+					{ html: '&Omega;', cmd: '&Omega;' },
+					{ html: '&gt;', cmd: '&gt;' },
+					{ html: '&lt;', cmd: '&lt;' },
+					{ html: '&#8805;', cmd: '&#8805;' },
+					{ html: '&#8804;', cmd: '&#8804;' },
+					{ html: '&#8800;', cmd: '&#8800;' },
+					{ html: '&#8776;', cmd: '&#8776;' },
+					{ html: '&#8734;', cmd: '&#8734;' },
+					{ html: '&#8711;', cmd: '&#8711;' },
+					{ html: '&plusmn;', cmd: '&plusmn;' },
+					{ html: '&#8745;', cmd: '&#8745;' },
+					{ html: '&#8746;', cmd: '&#8746;' },
+					{ html: '&#8733;', cmd: '&#8733;' },
+					{ html: '&#8764;', cmd: '&#8764;' },
+					{ html: '&#8709;', cmd: '&#8709;' },
+					{ html: '&#8712;', cmd: '&#8712;' },
+					{ html: '&#8715;', cmd: '&#8715;' },
+					{ html: '&#8713;', cmd: '&#8713;' },
+					{ html: '&#8836;', cmd: '&#8836;' },
+					{ html: '&#8853;', cmd: '&#8853;' },
+					{ html: '&#8855;', cmd: '&#8855;' },
+					{ html: '&#8834;', cmd: '&#8834;' },
+					{ html: '&#8838;', cmd: '&#8838;' },
+					{ html: '&#8835;', cmd: '&#8835;' },
+					{ html: '&#8839;', cmd: '&#8839;' },
+					{ html: '&#8756;', cmd: '&#8756;' },
+					{ html: '&#171;', cmd: '&#171;' },
+					{ html: '&#187;', cmd: '&#187;' },
+					{ html: '&#8230;', cmd: '&#8230;' },
+					{ html: '&#247;', cmd: '&#247;' },
+					{ html: '&#176;', cmd: '&#176;' },
+				]
+			}
 		},
 		{ title: '|',
 			hide_mobile: true },

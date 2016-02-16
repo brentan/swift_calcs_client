@@ -99,6 +99,21 @@ var text = P(EditableBlock, function(_, super_) {
           param = command;
         command = 'formatBlock';
         break;
+      case 'write':
+        var t = this.textField;
+        t.setUndoPoint();
+        rangy.getSelection(t.$editor[0]).deleteFromDocument();
+        t.write(option + '<span class="caret_position" style="display:none;">&#65279;</span>');
+        t.syncCode();
+        var caret = t.$editor.find('.caret_position');
+        if(caret.length > 0) {
+          var range = rangy.createRange();
+          range.selectNode(caret[0]);
+          range.select();
+          rangy.getSelection(t.$editor[0]).deleteFromDocument();
+          t.$editor.find('.caret_position').remove();
+        }
+        return;
     }
     this.textField.setUndoPoint();
     window.document.execCommand(command, false, param);
