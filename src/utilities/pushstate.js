@@ -13,7 +13,7 @@ var PushState = P(function(_) {
     this._wantsHashChange = true;
     this._hasHashChange   = 'onhashchange' in window;
     this._useHashChange   = this._wantsHashChange && this._hasHashChange;
-    this._wantsPushState  = true;
+    this._wantsPushState  = (window.wantsPushState === false) ? false : true;
     this._hasPushState    = !!(this.history && this.history.pushState);
     this._usePushState    = this._wantsPushState && this._hasPushState;
     this.fragment         = this.getFragment();
@@ -146,7 +146,7 @@ var PushState = P(function(_) {
     } else if(fragment.match(/invites/i)) {
       window.openFileDialog('invites');
       return true;
-    }
+    } 
 		return false;
   }
   _.navigate = function(fragment, options) {
@@ -214,7 +214,7 @@ var PushState = P(function(_) {
       var href = location.href.replace(/(javascript:|#).*$/, '');
       location.replace(href + '#' + fragment);
     } else {
-      location.hash_string = '#' + fragment;
+      location.hash = '#' + fragment;
     }
   }
   var decodeFragment = function(fragment) {

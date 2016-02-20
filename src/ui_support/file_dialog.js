@@ -30,10 +30,10 @@ $(function() {
       	if(response.success) {
       		SwiftCalcs.pushState.last_active_title = response.path.replace(/(<([^>]+)>)/ig,"");
       		$(document).prop('title', SwiftCalcs.pushState.last_active_title);
-      		window.displayWorksheetList(response.worksheets, response.path)
+      		window.displayWorksheetList(response.worksheets, response.path, response.onshape)
       		setCurrentProject(response.id, response.url_end);
       	}	else {
-					$('.worksheet_holder').html('An error occurred');
+					$('.worksheet_holder').html('An error occurred: ' + response.message);
       		showNotice(response.message, 'red');
       	}
       },
@@ -100,6 +100,12 @@ $(function() {
 		var $container = $(this).closest('div.item');
 		window.loadProject($container.attr('data-hash'), $container.attr('data-name'), $container.closest('.archive').length > 0);
 	});
+	$('body').on('click', '.full_swift', function(e) {
+	  var win = window.open("https://www.swiftcalcs.com/", '_blank');
+	  win.focus();
+		e.preventDefault();
+		e.stopPropagation();
+	})
 
 	var month_string = function(date) {
 		var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -123,7 +129,7 @@ $(function() {
 			+ "<span class='invite_reject'><span class='fa fa-times-circle'></span>Reject</span>"
 			+ "<span class='invite_pending'><i class='fa fa-pulse fa-spinner'></i></span>";
 	}
-	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html) {
+	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html, onshape) {
 		clear_batch();
 		// Assumes worksheets already sorted by date from latest to earliest
 		$('.worksheet_holder').html('');
@@ -188,18 +194,30 @@ $(function() {
 	    	// No active sheets (or sheets in a project), give 'welcome' message here, push them to create a new sheet
 	    	var $div = $('<div/>').addClass('no_results');
 	    	if(project) {
-	    		$('<div/>').addClass('title').html('This Project is Empty').appendTo($div);
-	    		$('<div/>').addClass('explain').html('Consider loosening your search criteria:').appendTo($div);
-	    		var $ul = $('<ul/>');
-	    		$('<li/>').html('View archived sheets in this project').on('click', function(e) {
-    				var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1");
-      			var name = fragment.replace(/projects\/([a-z0-9\-]*)\/(.*)$/i,"$2");
-	    			window.loadProject(hash_string, name, true);
-		    	}).appendTo($ul);
-		    	$('<li/>').html('View all active sheets, not just sheets in this project').on('click', function(e) {
-		    		window.loadProject('active');
-		    	}).appendTo($ul);
-		    	$ul.appendTo($div);
+	    		if(onshape) {
+		    		$('<div/>').addClass('title').html('Onshape & Swift Calcs!').appendTo($div);
+		    		$('<div/>').addClass('explain').html('Swift Calcs inside Onshape enables:').appendTo($div);
+		    		var $ul = $('<ul/>');
+		    		$('<li/>').html('Use of Swift Calcs worksheets directly in Onshape').appendTo($ul);
+		    		$('<li/>').html('Automatic association of Swift Calcs worksheets with their Onshape counterpart').appendTo($ul);
+		    		$('<li/>').html('Security and permissions inheitance from Onshape to your Swift Calcs worksheets').appendTo($ul);
+		    		$('<li/>').html('Anytime, anywhere access to worksheets through Onshape or at www.swiftcalcs.com').appendTo($ul);
+			    	$ul.appendTo($div);
+		    		$('<div/>').addClass('explain').html('Click the red icon at the bottom right of the screen to get started').appendTo($div);
+	    		} else {
+		    		$('<div/>').addClass('title').html('This Project is Empty').appendTo($div);
+		    		$('<div/>').addClass('explain').html('Consider loosening your search criteria:').appendTo($div);
+		    		var $ul = $('<ul/>');
+		    		$('<li/>').html('View archived sheets in this project').on('click', function(e) {
+		  				var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1");
+		    			var name = fragment.replace(/projects\/([a-z0-9\-]*)\/(.*)$/i,"$2");
+		    			window.loadProject(hash_string, name, true);
+			    	}).appendTo($ul);
+			    	$('<li/>').html('View all active sheets, not just sheets in this project').on('click', function(e) {
+			    		window.loadProject('active');
+			    	}).appendTo($ul);
+			    	$ul.appendTo($div);
+			    }
 	    	} else {
 	    		$('.active_path').hide();
 	    		$('<div/>').addClass('title').html('Welcome to Swift Calcs').appendTo($div);
@@ -669,6 +687,12 @@ $(function() {
       $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
       window.resizePopup(true);
 		}
+		if($(this).attr('data-type') == 'onshape') {
+  		window.showPopupOnTop();
+  		$('.popup_dialog .full').html("<div class='title'>Add a new Sub-Project</div><div>Sub-Projects help you organize the Swift Calcs worksheets in your Onshape document.  To create a new sub-project, simply click the '+' icon in the bottom left of the screen and select 'Swift Calcs' from the 'Add a Application' menu.</div>");
+      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+      window.resizePopup(true);
+		}
 		e.preventDefault();
 		e.stopPropagation();
 	});
@@ -718,34 +742,44 @@ $(function() {
 					closeMenu();
 				}).appendTo(menu);
 			} else {
-				if(response.rights_level >= 3)
+				if((response.rights_level >= 3) && (!response.onshape_parent))
 					$('<div/>').html('<i class="fa fa-fw fa-plus"></i>Add Sub-Project').on('click', function(e) {
 						window.newProject(project_id);
 						closeMenu();
 					}).appendTo(menu);
-				if(response.rights_level >= 3)
-					$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
-						window.openSharingDialog(project_id*1, 'Project');
+				if(response.rights_level >= 3) {
+					if(response.onshape) 
+						$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
+				  		window.showPopupOnTop();
+				  		$('.popup_dialog .full').html("<div class='title'>Manage Collaborators</div><div>This Project is linked to an Onshape document.  <a href='https://cad.onshape.com/documents/" + response.onshape_did + "' target='_blank'>Open the document in Onshape</a> and manage collaborators within the Onshape window.</div>");
+				      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+				      window.resizePopup(true);
+						}).appendTo(menu);
+					else
+						$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
+							window.openSharingDialog(project_id*1, 'Project');
+							closeMenu();
+						}).appendTo(menu);
+				}
+				if(!response.onshape)
+					$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
+						// Archive
+						el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
+						window.ajaxRequest("/projects/archive", { add: "true", id: project_id, data_type: 'Project'}, function(response) { 
+							el.slideUp({duration: 200, always: function() { el.remove(); } }); 
+							if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
+								// Not in an archive view, so remove returned ids
+								for(var i = 0; i < response.ids.length; i++) {
+									$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
+								}
+							} else {
+								// in an archive view...so refresh if on listing page
+								if(!SwiftCalcs.pushState.fragment.match(/^(worksheets|revisions)\//i)) SwiftCalcs.pushState.refresh();
+							}
+						}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
 						closeMenu();
 					}).appendTo(menu);
-				$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
-					// Archive
-					el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
-					window.ajaxRequest("/projects/archive", { add: "true", id: project_id, data_type: 'Project'}, function(response) { 
-						el.slideUp({duration: 200, always: function() { el.remove(); } }); 
-						if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
-							// Not in an archive view, so remove returned ids
-							for(var i = 0; i < response.ids.length; i++) {
-								$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
-							}
-						} else {
-							// in an archive view...so refresh if on listing page
-							if(!SwiftCalcs.pushState.fragment.match(/^(worksheets|revisions)\//i)) SwiftCalcs.pushState.refresh();
-						}
-					}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
-					closeMenu();
-				}).appendTo(menu);
-				if(response.rights_level >= 3)
+				if((response.rights_level >= 3) && (!response.onshape_parent) && (!response.onshape_element))
 					$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
 						promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processProjectRename(el, project_id, name) }; }(el, project_id));
 						closeMenu();
@@ -833,6 +867,11 @@ $(function() {
 		$(this).children('.project_list').html('<i class="fa fa-spinner fa-pulse"></i>').addClass('archive_tree');
 		$(this).removeClass('archive_not_loaded');
 		window.ajaxRequest("/projects/archive_tree", { }, function(response) { $('.archive_tree').html(response.archive_html).removeClass('archive_tree'); }, function() { $('.archive_tree').html('An error occurred').removeClass('archive_tree').closest('.left_item').addClass('archive_not_loaded'); });
+	});
+	$('body').on('click', '.onshape_not_loaded', function(e) {
+		$(this).children('.project_list').html('<i class="fa fa-spinner fa-pulse"></i>').addClass('onshape_tree');
+		$(this).removeClass('onshape_not_loaded');
+		window.ajaxRequest("/projects/onshape_tree", { }, function(response) { $('.onshape_tree').html(response.onshape_html).removeClass('onshape_tree'); }, function() { $('.onshape_tree').html('An error occurred').removeClass('onshape_tree').closest('.left_item').addClass('onshape_not_loaded'); });
 	});
 	var closeActive = window.closeActive = function(el, clear_url) { 
 		$('.base_layout').removeClass('worksheet_open');

@@ -152,7 +152,7 @@ var math = P(MathOutput, function(_, super_) {
 		};
 	}
 	_.highlightError = function(error_index) {
-		//this.mathField.highlightError(error_index); //commented out as it does not yet work reliably....needs to be debugged
+		this.mathField.highlightError(error_index); //commented out as it does not yet work reliably....needs to be debugged
 		return this;
 	}
 	_.storeAsVariable = function() {
