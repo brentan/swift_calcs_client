@@ -1,5 +1,6 @@
 $(function() {
 	var current_project_id = false;
+	var current_project_onshape = false;
 	var current_project_navigable_url = false;
 	
 	var showLoadingPopup = window.showLoadingPopup = function() {
@@ -12,6 +13,7 @@ $(function() {
 	  $('.popup_dialog').hide();
 		$('.feedback_link').css('left', '25px');
 	}
+	var allowNewProject = true;
 	var openFileDialog = window.openFileDialog = function(hash_string, archive, labels_hash) {
     if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
     $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
@@ -30,8 +32,9 @@ $(function() {
       	if(response.success) {
       		SwiftCalcs.pushState.last_active_title = response.path.replace(/(<([^>]+)>)/ig,"");
       		$(document).prop('title', SwiftCalcs.pushState.last_active_title);
+      		allowNewProject = !response.onshape || response.has_parent;
       		window.displayWorksheetList(response.worksheets, response.path, response.onshape)
-      		setCurrentProject(response.id, response.url_end);
+      		setCurrentProject(response.id, response.url_end, response.onshape_item);
       	}	else {
 					$('.worksheet_holder').html('An error occurred: ' + response.message);
       		showNotice(response.message, 'red');
@@ -44,8 +47,9 @@ $(function() {
       }
     });
 	}
-	var setCurrentProject = window.setCurrentProject = function(id, url) {
+	var setCurrentProject = window.setCurrentProject = function(id, url, onshape) {
 		current_project_id = id;
+		current_project_onshape = onshape;
 		current_project_navigable_url = url;
 	}
 	var loadProject = window.loadProject = function(hash_string, name, archive, labels_hash, label_name) {
@@ -645,9 +649,12 @@ $(function() {
     window.resizePopup(invite_dialog ? false : true);
     el.find('.input input').focus();
 	}
-	var newProject = window.newProject = function(parent_project_id) {
-		if(typeof parent_project_id === 'undefined') parent_project_id = current_project_id;
-		promptDialog('Name your new project', 'Create', '', function(parent_project_id) { return function(name, data) { processNewProject(name, data, parent_project_id) }; }(parent_project_id), true);
+	var newProject = window.newProject = function(parent_project_id, onshape) {
+		if(typeof parent_project_id === 'undefined') {
+			parent_project_id = current_project_id;
+			onshape = current_project_onshape;
+		}
+		promptDialog('Name your new project', 'Create', '', function(parent_project_id) { return function(name, data) { processNewProject(name, data, parent_project_id) }; }(parent_project_id), onshape !== true);
 	}
 	var processNewProject = function(name, data, parent_project_id) {
     window.trackEvent("Project", "Create", name);
@@ -744,7 +751,7 @@ $(function() {
 			} else {
 				if((response.rights_level >= 3) && (!response.onshape_parent))
 					$('<div/>').html('<i class="fa fa-fw fa-plus"></i>Add Sub-Project').on('click', function(e) {
-						window.newProject(project_id);
+						window.newProject(project_id, response.onshape);
 						closeMenu();
 					}).appendTo(menu);
 				if(response.rights_level >= 3) {
@@ -782,6 +789,31 @@ $(function() {
 				if((response.rights_level >= 3) && (!response.onshape_parent) && (!response.onshape_element))
 					$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
 						promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processProjectRename(el, project_id, name) }; }(el, project_id));
+						closeMenu();
+					}).appendTo(menu);
+				if(response.onshape_parent || response.onshape_element)
+					$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Project').on('click', function(e) {
+			  		window.showPopupOnTop();
+			  		$('.popup_dialog .full').html("<div class='title'>Delete Project</div><div>This Project is linked to an Onshape document.  <a href='https://cad.onshape.com/documents/" + response.onshape_did + "' target='_blank'>Open the document in Onshape</a> to delete it.</div>");
+			      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+			      window.resizePopup(true);
+					}).appendTo(menu);
+				else if(response.rights_level >= 4) 
+					$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Project').on('click', function(e) {
+						if(confirm('Are you sure?  All worksheets inside this project will be destroyed as well.  You are the owner of this project, and it will be removed for all collaborators as well.  This action cannot be undone.')) {
+	    				window.trackEvent("Project", "Remove");
+							window.removeProject(el, project_id*1);
+							el.remove();
+						}
+						closeMenu();
+					}).appendTo(menu);
+				else  
+					$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Remove Project').on('click', function(e) {
+						if(confirm('Are you sure?  You are not the owner of this project, it will be removed from your project list but will still be available to collaborators.  Any worksheets you own inside this project will be destroyed and cannot be recovered.  You can gain access to this project again at a later date by having a project admins re-invite you to the project.')) {
+							window.trackEvent("Project", "Delete");
+							window.removeProject(el, project_id*1);
+							el.remove();
+						}
 						closeMenu();
 					}).appendTo(menu);
 			}
@@ -963,7 +995,7 @@ $(function() {
       } else
     		window.setTimeout(function() { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); } });
       if(response.folder_id) 
-        window.setCurrentProject(response.folder_id, response.folder_url_end);
+        window.setCurrentProject(response.folder_id, response.folder_url_end, response.onshape_item);
 		}
 		var try_success = function(response) {
 			if(beginLoad) success(response);
@@ -1143,6 +1175,25 @@ $(function() {
 		window.ajaxRequest("/projects/remove", { data_type: 'Worksheet', id: worksheet_id }, success, fail);
 		window.hidePopupOnTop();
 	}
+	var removeProject = window.removeProject = function(el, project_id) {
+		var success = function(response) {
+			window.hidePopupOnTop();
+			ids = response.project_ids.split(",");
+			for(var i = 0; i > ids.length; i++) {
+				if(ids[i]*1 == current_project_id) {
+					window.loadProject('active');
+					break;
+				}
+			}
+		}
+		var fail = function(message) {
+			window.hidePopupOnTop();
+			showNotice('red', message);
+		}
+		window.ajaxRequest("/projects/remove", { data_type: 'Project', id: project_id }, success, fail);
+		window.hidePopupOnTop();
+		window.showLoadingOnTop();
+	}
 	var processRename = function(el, name, worksheet_id) {
 		el.find('.name .hover').hide();
 		el.find('.name').append('<span class="fa fa-spinner fa-pulse"></span>');
@@ -1238,7 +1289,14 @@ $(function() {
 		$('.new_bubble.new_project').fadeOut(150);
 	});
 	$('body').on('click', '.new_bubble.new_project', function(e) {
-		window.newProject();
+		if(allowNewProject)
+			window.newProject();
+		else {
+  		window.showPopupOnTop();
+  		$('.popup_dialog .full').html("<div class='title'>Add a new Sub-Project</div><div>Sub-Projects help you organize the Swift Calcs worksheets in your Onshape document.  To create a new sub-project, simply click the '+' icon in the bottom left of the screen and select 'Swift Calcs' from the 'Add a Application' menu.</div>");
+      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+      window.resizePopup(true);
+		}
 		$('.new_bubble_mouseover').remove();
 		$('.new_bubble.new_project').fadeOut(150);
 	});
@@ -1277,7 +1335,9 @@ $(function() {
 		if($container.closest('.project_list').length > 0) {
 			$project = $container.closest('.expand').closest('div.item').closest('.expand').closest('div.item');
 			window.loadProject($project.attr('data-hash'), $project.attr('data-name'), false, $container.attr('data-hash'), $container.attr('data-name'));
-		} else
+		} else if($container.attr('data-project-hash'))
+			window.loadProject($container.attr('data-project-hash'), $container.attr('data-project-name'), false, $container.attr('data-hash'), $container.attr('data-name'));
+		else
 			window.loadProject(null, null, false, $container.attr('data-hash'), $container.attr('data-name'));
 	});
 	$('body').on('click', '.label_title .fa-trash', function(e) {

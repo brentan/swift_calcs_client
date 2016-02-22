@@ -358,6 +358,7 @@ var Worksheet = P(function(_) {
 	  ajaxQueue.suppress = false;
 	  ajaxQueue.jQ.html(ajaxQueue.save_message);
 	  this.ends[L].evaluate(true, true);
+	  if((this.ends[L] instanceof math) && (this.ends[L].mathField.text().trim() == "")) this.ready_to_print = true;
 	  this.updateUploads();
 	  this.reset_server_base(to_parse);
 	  this.loaded = true;
