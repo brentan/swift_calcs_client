@@ -255,7 +255,7 @@ var Module = {
   print: function(text) {
   	if(text.match(/error/) && !text.match(/Warning/))
   		errors[ii] = fix_message(text);
-  	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1) && !text.match(/declared as global/))
+  	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1) && !text.match(/declared as global/) && !text.match(/No check were made for singular points/))
   		warnings[ii].push(fix_message(text));
   },
   printErr: function(text) {
