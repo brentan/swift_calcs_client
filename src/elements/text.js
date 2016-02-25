@@ -53,6 +53,8 @@ var text = P(EditableBlock, function(_, super_) {
   _.command = function(command, option) {
     var param = null;
     switch(command) {
+      case 'line_reference':
+
       case 'normalFormat':
         var container = $(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).commonAncestorContainer);
         while(container.closest('.' + css_prefix + 'wysiwyg').length) {
@@ -232,6 +234,44 @@ var text = P(EditableBlock, function(_, super_) {
     super_.copy.call(this,e);
     return false;
   }
+  _.numberBlock = function(start) {
+    window.setTimeout(function(_this) { return function() { _this.updateLineReferences(); } }(this), 50);
+    return super_.numberBlock.call(this, start);
+  }
+  var updateLineNumber = function(_this) {
+    var el = Element.byId[_this.attr('data-element')*1];
+    if((typeof el === 'undefined') || (!el.inTree)) 
+      _this.html("<strong>REFERENCE DELETED</strong>");
+    else 
+      _this.html("line " + el.myLineNumber);
+  }
+  var setElementReference = function(_this, worksheet) {
+    var line = _this.html().replace(/line /,'')*1;
+    if((line > 0) && (typeof worksheet !== 'undefined')) {
+      var el = worksheet.findByLineNumber(line);
+      if((typeof el === 'undefined') || (!el.inTree)) 
+        _this.html("<strong>REFERENCE DELETED</strong>");
+      else
+        _this.attr('data-element', el.id);
+    } else 
+      _this.html("<strong>REFERENCE DELETED</strong>");
+  }
+  _.updateLineReferences = function() {
+    if(typeof this.worksheet === 'undefined') return;
+    if(!this.worksheet.loaded) 
+      return window.setTimeout(function(_this) { return function() { _this.updateLineReferences(); } }(this), 50);
+    var worksheet = this.worksheet;
+    var textField = this.textField;
+    this.jQ.find('.sc_line_reference').each(function() { 
+      if(this.hasAttribute('data-element')) {
+        updateLineNumber($(this));
+        textField.syncCode();
+        worksheet.save();
+      }
+      else
+        setElementReference($(this), worksheet);
+    });
+  }
 });
 
 /**
@@ -385,6 +425,7 @@ var WYSIWYG = P(function(_) {
           e.preventDefault();
           return;
         case 'Shift-Tab':
+          if(t.checkForSpecialBlock(e)) return;
           t.ignoreUndo = false;
           var li_parent = t.isSelectionInsideElement('li');
           if(li_parent && rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {
@@ -414,6 +455,7 @@ var WYSIWYG = P(function(_) {
           e.preventDefault();
           break;
         case 'Tab':
+          if(t.checkForSpecialBlock(e)) return;
           t.ignoreUndo = false;
           var li_parent = t.isSelectionInsideElement('li');
           if(li_parent && rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {
@@ -448,6 +490,7 @@ var WYSIWYG = P(function(_) {
             }
           }
         case 'Spacebar':
+          if(t.checkForSpecialBlock(e)) return;
           t.ignoreUndo = false;
           if(t.checkOnSpace && rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed && !t.isSelectionInsideElement('li') && t.magicCommands()) {
             e.preventDefault();
@@ -468,6 +511,7 @@ var WYSIWYG = P(function(_) {
         case 'Shift-Enter':
         case 'Ctrl-Enter':
         case 'Enter':
+          if(t.checkForSpecialBlock(e)) return;
           t.ignoreUndo = false;
           // Delete whatever is highlighted
           if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) t.setUndoPoint();
@@ -514,6 +558,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Backspace':
         case 'Shift-Backspace':
         case 'Backspace':
+          if(t.checkForSpecialBlock(e, true)) return;
           t.ignoreUndo = false;
           if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) {  t.setUndoPoint(); return; }
           // Check if we are in first spot.  If so, delete backwards OR highlight block
@@ -543,6 +588,7 @@ var WYSIWYG = P(function(_) {
         case 'Ctrl-Del':
         case 'Shift-Del':
         case 'Del':
+          if(t.checkForSpecialBlock(e, true)) return;
           t.ignoreUndo = false;
           if(!rangy.getSelection(t.$editor[0]).getRangeAt(0).collapsed) { t.setUndoPoint(); return; }
           // Same as above, but at the end position
@@ -607,6 +653,9 @@ var WYSIWYG = P(function(_) {
             e.preventDefault();
           }
           break;
+        default:
+          if(t.checkForSpecialBlock(e)) return;
+          break;
       } 
       t.checkOnSpace = false;
       t.keydownState = t.currentState();
@@ -669,6 +718,29 @@ var WYSIWYG = P(function(_) {
       return true;
     }); 
   };
+  _.checkForSpecialBlock = function(e, highlight_on_flash) {
+    var range = rangy.getSelection(this.$editor[0]).getRangeAt(0).cloneRange();
+    var startContainer = range.startContainer;
+    var endContainer = range.endContainer;
+    if($(startContainer).closest('.sc_text_special_block').length && $(endContainer).closest('.sc_text_special_block').length) {
+      // Special span blocks that are hard-coded (do things like line referencing) and so shouldn't be edited directly
+      var el = $(startContainer).closest('.sc_text_special_block');
+      el.stop().css("background-color", "#ffe0e0").animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')} , duration: 400 });
+      e.preventDefault();
+      if(highlight_on_flash === true) {
+        range.selectNode(el[0]);
+        range.select();
+      }
+      return true;
+    } else if($(startContainer).closest('.sc_text_special_block').length) {
+      range.setStartBefore(startContainer);
+      range.select();
+    } else if($(endContainer).closest('.sc_text_special_block').length) {
+      range.setEndAfter(endContainer);
+      range.select();
+    }
+    return false;
+  }
   _.focus = function(dir, dir2) {
     if(this.el.blurred) return this.el.focus(dir);
     this.el.worksheet.unblurToolbar();

@@ -511,6 +511,22 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				]
 			}
 		},
+		{
+			id: 'ref',
+			html: 'f(x)',
+			hide_mobile: true,
+			title: 'Math References',
+			sub: [
+				{html: "Line Reference", method: function(el) { 
+					var line = prompt("Please enter the line number you wish to reference.  As new elements are added or removed from your worksheet, this reference will automatically update.")*1;
+					if(line > 0) {
+						var target = el.worksheet.findByLineNumber(line);
+						if(typeof target === 'undefined') return showNotice("No element found with this line number", 'red');
+						el.command('write', "<div class='sc_text_special_block sc_line_reference' data-element='" + target.id + "'>line " + line + "</div>&#8203;"); 
+					}
+				} } 
+			]
+		},
 		{ title: '|',
 			hide_mobile: true },
 		{

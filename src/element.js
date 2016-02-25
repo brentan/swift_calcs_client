@@ -37,6 +37,7 @@ var Element = P(function(_) {
 	_.blurred = true;
 	_.toParse = false;
 	_.lineNumber = false;
+	_.myLineNumber = false;
 	_.needsEvaluation = false; // This is whether an evaluatable element, when evaluated directly (not in a queue through fullEvaluation), should be evaluated
 	_.evaluatable = false;     // Is this element evaluatable?  If not, just skip it
 	_.fullEvaluation = false;  // When evaluated, should this element evaluate ancestors and suceeding elements?
@@ -271,6 +272,7 @@ var Element = P(function(_) {
 			}
 		}
 		if(this.lineNumber) {
+			this.myLineNumber = start;
 			this.leftJQ.children('span').html(start);
 			start++;
 		} else this.leftJQ.children('span').html('');
@@ -278,6 +280,15 @@ var Element = P(function(_) {
 			start = child.numberBlock(start);
 		});
 		return start;
+	}
+	_.findByLineNumber = function(line) {
+		if(this.myLineNumber === line) return this;
+		var child_found = undefined;
+		jQuery.each(this.children(), function(i, child) {
+			if(child_found) return child_found;
+			child_found = child.findByLineNumber(line);
+		});
+		return child_found;
 	}
 
 	/*

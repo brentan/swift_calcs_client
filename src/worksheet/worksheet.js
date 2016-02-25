@@ -422,6 +422,15 @@ var Worksheet = P(function(_) {
 			children[i].commandChildren(func);
 		return this;
 	}
+	_.findByLineNumber = function(line) {
+		var children = this.children();
+		var child_found = undefined;
+		for(var i = 0; i < children.length; i++) {
+			if(child_found) return child_found;
+			child_found = children[i].findByLineNumber(line);
+		}
+		return child_found;
+	}
 	_.setWidth = function() {
 		this.insertJQ.css('max-width',max(250, this.jQ.closest('.worksheet_holder_box').width() + 55) + 'px');
 		this.commandChildren(function(_this) { _this.setWidth(); });
