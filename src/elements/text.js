@@ -247,6 +247,7 @@ var text = P(EditableBlock, function(_, super_) {
   }
   var setElementReference = function(_this, worksheet) {
     var line = _this.html().replace(/line /,'')*1;
+    _this.css("background-color", "");
     if((line > 0) && (typeof worksheet !== 'undefined')) {
       var el = worksheet.findByLineNumber(line);
       if((typeof el === 'undefined') || (!el.inTree)) 
