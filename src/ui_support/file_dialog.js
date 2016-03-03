@@ -1148,6 +1148,7 @@ $(function() {
 		e.stopPropagation();
 	});
 	var removeWorksheet = window.removeWorksheet = function(el, worksheet_id) {
+		SwiftCalcs.ajaxQueue.killSaves(worksheet_id);
 		el.find('.name .hover').hide();
 		el.find('.name').append('<span class="fa fa-spinner fa-pulse"></span>');
 		var success = function(response) {

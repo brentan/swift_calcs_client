@@ -84,6 +84,7 @@ var Worksheet = P(function(_) {
 		SwiftCalcs.active_worksheet = this;
     $('.fatal_div').hide();
     ajaxQueue.suppress = false;
+    ajaxQueue.ignore_errors[this.server_id] = false;
 		this.bound = true;
 		this.generateTopWarning();
 		return this;
@@ -147,6 +148,7 @@ var Worksheet = P(function(_) {
 				ajaxQueue.server_version[new_server_id] = ajaxQueue.server_version[this.server_id];
 				this.server_id = new_server_id;
 				ajaxQueue.known_server_version[this.server_id] = 1;
+    		ajaxQueue.ignore_errors[this.server_id] = false;
 			} else
 				this.save();
 		}

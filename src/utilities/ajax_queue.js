@@ -23,6 +23,7 @@ var ajaxQueueClass = P(function(_) {
 		this.server_version = {};
 		this.known_server_version = {};
 		this.should_be_server_version = {};
+		this.ignore_errors = {};
 		this.save_div = $('.save_div');
 		this.jQ = {
 			html: function(text) {
@@ -88,6 +89,7 @@ var ajaxQueueClass = P(function(_) {
 					ajaxQueue.running[id] = false;
 					ajaxQueue.suppress = true;
 					ajaxQueue.saving = false;
+					if(this.ignore_errors[id] === true) return;
 					if(response.alert)
 						alert(response.message);
 					else
@@ -100,6 +102,7 @@ var ajaxQueueClass = P(function(_) {
 				ajaxQueue.running[id] = false;
 				ajaxQueue.suppress = true;
 				ajaxQueue.saving = false;
+				if(this.ignore_errors[id] === true) return;
       	showNotice('Error while saving: ' + err.responseText, 'red');
       	console.log(err);
       	//Depending on error, do we try again?
@@ -131,6 +134,11 @@ var ajaxQueueClass = P(function(_) {
 	/*
 	Public commands.  All require an item is attached to a worksheet.
 	*/
+	_.killSaves = function(server_id) {
+		if(this.holding_pen[server_id] && this.holding_pen[server_id].timer) 
+			window.clearTimeout(this.holding_pen[server_id].timer);
+		this.ignore_errors[server_id] = true;
+	}
 	_.saveNeeded = function(worksheet, force) {
 		if(force) this.suppress = false;
 		if(this.suppress) return;
@@ -163,6 +171,7 @@ var ajaxQueueClass = P(function(_) {
 create queue instance
 */
 var ajaxQueue = new ajaxQueueClass();
+SwiftCalcs.ajaxQueue = ajaxQueue;
 
 $(function() {
   window.addEventListener("beforeunload", function (e) {
