@@ -89,9 +89,15 @@ var ajaxQueueClass = P(function(_) {
 					ajaxQueue.running[id] = false;
 					ajaxQueue.suppress = true;
 					ajaxQueue.saving = false;
-					if(this.ignore_errors[id] === true) return;
-					if(response.alert)
-						alert(response.message);
+					if(ajaxQueue.ignore_errors[id] === true) return;
+					if(response.alert) {
+			  		window.showPopupOnTop();
+			  		$('.popup_dialog .full').html("<div class='title'>" + response.title + "</div><div>" + response.message + "</div>");
+			      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+			      window.resizePopup(true);
+			      if(SwiftCalcs.active_worksheet.server_id == id)
+			      	SwiftCalcs.active_worksheet.FailedSaveMessage();
+					}
 					else
       			showNotice('Error while saving: ' + response.message, 'red');
       	}
@@ -102,7 +108,7 @@ var ajaxQueueClass = P(function(_) {
 				ajaxQueue.running[id] = false;
 				ajaxQueue.suppress = true;
 				ajaxQueue.saving = false;
-				if(this.ignore_errors[id] === true) return;
+				if(ajaxQueue.ignore_errors[id] === true) return;
       	showNotice('Error while saving: ' + err.responseText, 'red');
       	console.log(err);
       	//Depending on error, do we try again?

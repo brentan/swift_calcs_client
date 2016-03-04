@@ -137,6 +137,22 @@ var Worksheet = P(function(_) {
 				break;
 		}
 	}
+  _.FailedSaveMessage = function() {
+		var els = $('<div/>').html('<strong>Saving Disabled</strong>.  Changes will not be saved.  <a href="#" class="reload">Reload to re-enable saving</a>.');
+		createWarningBox(els).addClass('error').insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
+		els.find('a.reload').on('click', function(_this) { return function(e) {
+			_this.unbind();
+			var el = $(this).closest('.active_holder');
+			el.children().each(function() {
+				if($(this).hasClass('worksheet_item')) return;
+				$(this).remove();
+			});
+			$('<div class="loader"><i class="fa fa-spinner fa-pulse"></i></div>').appendTo(el)
+			window.loadWorksheet(el.children('.worksheet_item'));
+			e.preventDefault();
+			return false;
+		}; }(this));
+  }
 	_.rename = function(new_name, new_hash, new_server_id) {
 		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
 		if(new_name) {
