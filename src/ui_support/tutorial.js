@@ -48,8 +48,8 @@ $(function() {
 				if(!window.user_logged_in)
 					message += "<BR><BR><div style='font-size:11px;'>Already a user?  <a href='#' style='color:white;' onclick='window.forceLoadTutorial=false;window.closeScreenExplanation();window.loadSigninBox();return false;'>Login to your account</a></div>";
 				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">' + message + '</div>',{top: '100px', left: '0px', right: '0px', 'text-align':'center'},true);
-				setContent('[fa=right]',{right: '110px',bottom:'25px'});
-				setContent('<div style="border:3px solid white;border-right-width:0px;padding:5px 20px 5px 5px;">Click the <i>New Worksheet</i> button to get started</div>',{right: '153px',bottom:'45px'}, false, 'arrow');
+				setContent('[fa=right]',{right: '85px',bottom:'25px'});
+				setContent('<div style="border:3px solid white;border-right-width:0px;padding:5px 20px 5px 5px;">Click the <i>New Worksheet</i> button to get started</div>',{right: '128px',bottom:'45px'}, false, 'arrow');
 				highlight('.new_bubble.new_worksheet');
 				break;
 			case 2:
@@ -83,7 +83,7 @@ $(function() {
 			case 4:
 				load_blackout();
 				load_whiteout();
-				setContent('[We\'re Just Getting Warmed Up]Use the expandable toolbox on the screen\'s right edge to add text, plots, videos, solvers, and more to your Worksheet.<BR><BR>[Ready to Jump In?]We\'ve just scratched the surface of the power and flexibility of Swift Calcs.  Now it\'s your turn to dive in.<BR>[next=5]',{right: (window.matchMedia("only screen and (max-device-width: 480px)").matches ? '110px' : '360px'), top: '100px', 'text-align':'right', 'max-width':'500px'}, true);
+				setContent('[We\'re Just Getting Warmed Up]Use the expandable toolbox on the screen\'s left edge to add text, plots, videos, solvers, and more to your Worksheet.<BR><BR>[Ready to Jump In?]We\'ve just scratched the surface of the power and flexibility of Swift Calcs.  Now it\'s your turn to dive in.<BR>[next=5]',{right: (window.matchMedia("only screen and (max-device-width: 480px)").matches ? '110px' : '360px'), top: '100px', 'text-align':'right', 'max-width':'500px'}, true);
 				setContent('[fa=right]',{right: (window.matchMedia("only screen and (max-device-width: 480px)").matches ? '30px' : '280px'),top: '120px'});
 				highlight('div.sidebar');
 				if(!window.matchMedia("only screen and (max-device-width: 480px)").matches) window.setTimeout(function() { $('div.sidebar').animate({width: 275}, {duration: 450, easing: 'easeOutQuad'}); }, 250);
@@ -92,7 +92,7 @@ $(function() {
 			case 5:
       	window.forceLoadTutorial = false;
 				window.closeScreenExplanation();
-				window.setTimeout(function() { SwiftCalcs.active_worksheet.ends[1].focus(1); window.closeSidebar(); });
+				window.setTimeout(function() { SwiftCalcs.active_worksheet.ends[1].focus(1); });
 				window.setTimeout(function() { SwiftCalcs.createTooltip("<<Help is Always Here>>\nRemember, if you run in to trouble or need a hint, click this icon and send us a note.", $('nav.accounts li.icon.help'), $('nav.accounts li.icon.help i'), true)}, 1000);
 				break;
 		}

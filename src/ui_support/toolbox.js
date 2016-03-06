@@ -141,14 +141,13 @@ $(function() {
         showNotice('This feature is not yet available');
         return;
       }
-      window.closeSidebar();
       // Handle full click events as mousedown and then mouseup
       if(SwiftCalcs.active_worksheet)
         var el = SwiftCalcs.active_worksheet.lastActive;
       else
         return showNotice('Create or open a worksheet to insert this item');
       var check_for_storeAsVariable = true;
-      window.trackEvent("Block", "Sidebar Click", _this.attr('data-el'));
+      window.trackEvent("Block", "Toolbox Click", _this.attr('data-el'));
       if(el === 0) {
         el = SwiftCalcs.active_worksheet.ends[1];
         check_for_storeAsVariable = false;
@@ -212,7 +211,7 @@ $(function() {
       }
   		// Begin moving the selected elements to the new target
       SwiftCalcs.active_worksheet.startUndoStream();
-      window.trackEvent("Block", "Sidebar Drag", _this.attr('data-el'));
+      window.trackEvent("Block", "Toolbox Drag", _this.attr('data-el'));
   		var to_create = SwiftCalcs.elements[_this.attr('data-el')];
   		if(_this.attr('data-option'))
   			to_create = to_create(_this.attr('data-option'));
@@ -232,24 +231,9 @@ $(function() {
     else
       showNotice('Create or open a worksheet to insert this item');
 	};
-  window.closeSidebar = function() {
-    $('div.sidebar').animate({width: 25}, {duration: 250, easing: 'easeOutQuad', always: function() { $('div.sidebar div.toolbox_icon').addClass('closed') }});
-    $('div.sidebar_close').remove();
-    $(window).off('blur', window.closeSidebar);
-  }
-  $('body').on('mousedown', 'div.sidebar .tool', mouseDown);
+  $('body').on('mousedown', 'div.toolbox .tool', mouseDown);
   $('body').on('click', '#account_bar .insert_menu a.tool', function(e) { var _this = $(this); click_handler(_this)(e); _this.closest('ul.insert_menu').hide(); window.setTimeout(function() { _this.closest('ul.insert_menu').css('display',''); },500); return false; });
-  $('body').on('mouseover', 'div.sidebar div.toolbox_icon.closed', function(e) {
-    $(this).removeClass('closed');
-    $(window).on('blur', window.closeSidebar);
-    $('div.sidebar').animate({width: 275}, {duration: 250, easing: 'easeOutQuad', always: function() {
-      $('<div/>').addClass('sidebar_close').appendTo('.base_layout').on('mouseover', function() {
-        window.closeSidebar();
-      }).on('dragover', function() {
-        window.closeSidebar();
-      });
-    }});
-  });
+
   // Toolbox headers
   $('body').on('click', 'div.content.tools div.section', function(e) {
     var arrow = $(this).find('span').first();

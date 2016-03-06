@@ -44,18 +44,36 @@ $(function() {
 	$('body').on('click', '#account_bar .hide_vaporware', function(e) { $(this).parent().hide(); $(this).parent().next().show(); $('body').removeClass('show_vaporware'); return false; });
 	$('body').on('click', '#account_bar .show_vaporware', function(e) { $(this).parent().hide(); $(this).parent().prev().show(); $('body').addClass('show_vaporware'); return false; });
 
-  $('body').on('click', '.leftbar .top_title', function(e) { 
-  	$('.base_layout').addClass('leftbar_hidden');
+  $('body').on('click', '.toolbox .top_title .tab', function(e) { 
+  	if($(this).hasClass('active')) {
+  		$(this).closest('.toolbox').find('.active').removeClass('active');
+  		$(this).removeClass('active');
+	  	$('.base_layout').addClass('toolbox_hidden');
+	  	window.resizeResults();
+			if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
+	    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
+  	} else {
+  		$(this).closest('.toolbox').find('.active').removeClass('active');
+  		$(this).addClass('active');
+  		$(this).closest('.toolbox').find('.' + $(this).attr('data-tab')).addClass('active');
+  	}
+  });
+  $('body').on('click', '.toolbox_top .top_title .tab', function(e) { 
+  	$('.base_layout').removeClass('toolbox_hidden');
   	window.resizeResults();
 		if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
     if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
+    window.selectToolboxTab($(this).attr('data-tab'));
   });
-  $('body').on('click', '.leftbar_top .top_title', function(e) { 
-  	$('.base_layout').removeClass('leftbar_hidden');
-  	window.resizeResults();
-		if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
-    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
-  });
+  window.selectToolboxTab = function(tab) {
+  	$('.toolbox').find('.active').removeClass('active');
+		$('.toolbox').find('.tab').each(function() {
+			if(tab == $(this).attr('data-tab'))
+				$(this).addClass('active');
+		});
+		$('.toolbox').find('.' + tab).addClass('active');
+  }
+
   $('body').on('click', '#account_bar .star_select', function(e) {
   	if($(this).hasClass('on')) {
   		$(this).removeClass('on');

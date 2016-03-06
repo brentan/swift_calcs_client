@@ -135,6 +135,7 @@ $(function() {
 	}
 	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html, onshape) {
 		clear_batch();
+		window.selectToolboxTab('projects_list');
 		// Assumes worksheets already sorted by date from latest to earliest
 		$('.worksheet_holder').html('');
 		$('<div/>').addClass('active_path').html(path_html).appendTo('.worksheet_holder');
@@ -349,7 +350,7 @@ $(function() {
 		parent.children('.worksheet_item').slideUp({duration: 250, always: function() { $(this).remove(); }});
 		parent.siblings('div').slideUp({duration: 250, always: function() { $(this).remove(); }});
 
-		$('.base_layout').addClass('leftbar_hidden');
+		$('.base_layout').addClass('toolbox_hidden');
 		$(window).scrollTop(0);
 		e.preventDefault();
 		e.stopPropagation();
@@ -436,7 +437,7 @@ $(function() {
 		if(items.length == 0) return;
 		showLoadingOnTop();
 		if(command == 'Invite') {
-			var count = $('.leftbar .invite_count');
+			var count = $('.projects_list .invite_count');
 			var new_count = count.html()*1 - items.length;
 			if(new_count > 0)
 				count.html(new_count);
@@ -665,7 +666,7 @@ $(function() {
       window.hidePopupOnTop();
   		showNotice('Project Created', 'green');
   		var found = false;
-  		$('.leftbar .left_item.projects .explain').remove();
+  		$('.projects_list .left_item.projects .explain').remove();
   		$('.project_list').find('.item').each(function() {
   			if($(this).attr('data-id') == response.parent_project_id) {
   				$(response.html).appendTo($(this).children('.expand'));
@@ -686,7 +687,7 @@ $(function() {
 		}
 		window.ajaxRequest('/projects/new', post_data, success, fail);
 	}
-	$('body').on('click', '.leftbar span.fa-plus-circle', function(e) {
+	$('body').on('click', '.projects_list span.fa-plus-circle', function(e) {
 		if($(this).attr('data-type') == 'project') window.newProject(null);
 		if($(this).attr('data-type') == 'label') {
   		window.showPopupOnTop();
@@ -906,6 +907,7 @@ $(function() {
 		window.ajaxRequest("/projects/onshape_tree", { }, function(response) { $('.onshape_tree').html(response.onshape_html).removeClass('onshape_tree'); }, function() { $('.onshape_tree').html('An error occurred').removeClass('onshape_tree').closest('.left_item').addClass('onshape_not_loaded'); });
 	});
 	var closeActive = window.closeActive = function(el, clear_url) { 
+		window.selectToolboxTab('projects_list');
 		$('.base_layout').removeClass('worksheet_open');
 		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
 		if(clear_url !== false) {
@@ -932,6 +934,7 @@ $(function() {
 	var openActive = window.openActive = function(el, set_url) {
 		beginLoad = false;
 		closeActive($('.active_worksheet'), false);
+		window.selectToolboxTab('toolbox_holder');
 		var name = el.attr('data-name');
 		$(document).prop('title', name);
 		var hash_string = el.attr('data-hash');
@@ -1255,7 +1258,7 @@ $(function() {
 			position: 'fixed',
 			top: 0,
 			left: 0,
-			right: 100,
+			right: 75,
 			bottom: 0,
 			"z-index": 100000
 		}).appendTo('body').on('mouseover', closeBubble);
@@ -1270,7 +1273,7 @@ $(function() {
 		$('<div/>').addClass('new_bubble_mouseover').css({
 			position: 'fixed',
 			top: 0,
-			width: 40,
+			width: 15,
 			right: 0,
 			bottom: 0,
 			"z-index": 100000
@@ -1279,7 +1282,7 @@ $(function() {
 			position: 'fixed',
 			height: 35,
 			width: 60,
-			right: 40,
+			right: 15,
 			bottom: 0,
 			"z-index": 100000
 		}).appendTo('body').on('mouseover', closeBubble);
@@ -1305,7 +1308,7 @@ $(function() {
 		SwiftCalcs.labelList = [];
 		SwiftCalcs.labelIds = {};
 		// Label List
-		$('.leftbar .left_item.labels .item').each(function() {
+		$('.projects_list .left_item.labels .item').each(function() {
 			SwiftCalcs.labelList.push({
 				id: $(this).attr('data-id'),
 				name: $(this).attr('data-name'),
@@ -1329,7 +1332,7 @@ $(function() {
 			if(el.hasClass('left_item')) return kids;
 			return out;
 		}
-		SwiftCalcs.projectList = projectListIterator($('.leftbar .left_item.projects'));
+		SwiftCalcs.projectList = projectListIterator($('.projects_list .left_item.projects'));
 	}
 	$('body').on('click', '.label_title', function(e) {
 		var $container = $(this).closest('div.item');
@@ -1430,20 +1433,20 @@ $(function() {
 		e.stopPropagation();
 	});
 	var window_touch = function(e) {
-		if($(e.target).closest('.leftbar').length == 0) {
-			closeMobileLeftbar();
+		if($(e.target).closest('.projects_list').length == 0) {
+			closeMobileprojects_list();
 		}
 	}
-	var closeMobileLeftbar = function() {
-		$('.leftbar').removeClass('show');
+	var closeMobileprojects_list = function() {
+		$('.projects_list').removeClass('show');
 		$('.mobile_menu').removeClass('show');
 		$(window).off('touchstart', window_touch);
 	}
 	$('.base_layout').on('click', '.mobile_menu', function(e) {
 		if($(this).hasClass('show')) {
-			closeMobileLeftbar();
+			closeMobileprojects_list();
 		} else {
-			$('.leftbar').addClass('show');
+			$('.projects_list').addClass('show');
 			$(this).addClass('show');
 			$(window).on('touchstart', window_touch);
 		}
@@ -1451,7 +1454,7 @@ $(function() {
 		e.stopPropagation();
 	});
 	$('.base_layout').on('click', '.top_title.mobile', function(e) {
-		closeMobileLeftbar();
+		closeMobileprojects_list();
 		e.preventDefault();
 		e.stopPropagation();
 	});

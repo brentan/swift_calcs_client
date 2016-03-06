@@ -475,8 +475,8 @@ var Worksheet = P(function(_) {
 						name: response.labels[i].name,
 						hash: response.labels[i].labels_hash
 					});
-					$("<div/>").addClass('item').append($("<div/>").addClass('label_title').html("<span class='fa fa-trash'></span>" + response.labels[i].name)).attr('data-id', response.labels[i].id).attr('data-name',response.labels[i].name).attr('data-hash',response.labels[i].labels_hash).appendTo($('.leftbar .left_item.labels .expand'));
-					$('.leftbar .left_item.labels .explain').remove();
+					$("<div/>").addClass('item').append($("<div/>").addClass('label_title').html("<span class='fa fa-trash'></span>" + response.labels[i].name)).attr('data-id', response.labels[i].id).attr('data-name',response.labels[i].name).attr('data-hash',response.labels[i].labels_hash).appendTo($('.projects_list .left_item.labels .expand'));
+					$('.projects_list .left_item.labels .explain').remove();
 				}
 			}
 		});

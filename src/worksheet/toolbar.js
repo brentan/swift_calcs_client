@@ -59,9 +59,9 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		if(!window.matchMedia("only screen and (max-device-width: 480px)").matches)
 			this.toolbar_holder.css('top', top + 'px');
 		$('div.sidebar').css('top', bot + 'px');
-		$('div.leftbar').css('top', top + 'px');
+		$('div.projects_list').css('top', top + 'px');
 		$('div.anonymous_message').css('top', bot + 'px');
-		$('div.leftbar_top').css('height', toolbar_height + 'px');
+		$('div.toolbox_top').css('height', toolbar_height + 'px');
 	}
 	var current_toolbar_target = 0;
 	_.attachToolbar = function(el, options) {
