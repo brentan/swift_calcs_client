@@ -141,6 +141,7 @@ $(function() {
         showNotice('This feature is not yet available');
         return;
       }
+      window.closeMobileprojects_list();
       // Handle full click events as mousedown and then mouseup
       if(SwiftCalcs.active_worksheet)
         var el = SwiftCalcs.active_worksheet.lastActive;
@@ -209,6 +210,7 @@ $(function() {
         showNotice('This feature is not yet available');
         return;
       }
+      window.closeMobileprojects_list();
   		// Begin moving the selected elements to the new target
       SwiftCalcs.active_worksheet.startUndoStream();
       window.trackEvent("Block", "Toolbox Drag", _this.attr('data-el'));
@@ -228,8 +230,10 @@ $(function() {
 		}
     if(SwiftCalcs.active_worksheet)
       SwiftCalcs.active_worksheet.bindDragging(e, $(this), click_handler(_this), drag_done_handler)
-    else
+    else {
+      window.closeMobileprojects_list();
       showNotice('Create or open a worksheet to insert this item');
+    }
 	};
   $('body').on('mousedown', 'div.toolbox .tool', mouseDown);
   $('body').on('click', '#account_bar .insert_menu a.tool', function(e) { var _this = $(this); click_handler(_this)(e); _this.closest('ul.insert_menu').hide(); window.setTimeout(function() { _this.closest('ul.insert_menu').css('display',''); },500); return false; });

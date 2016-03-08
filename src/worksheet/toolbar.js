@@ -49,6 +49,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		if(window.matchMedia("only screen and (max-device-width: 480px)").matches) {
 			var toolbar_height = 0;
 			var extra_padding = 2;
+			if($('div.anonymous_message').length) extra_padding += $('div.anonymous_message').height();
 		} else {
 			var toolbar_height = this.toolbar_holder.height();
 			var extra_padding = 20;

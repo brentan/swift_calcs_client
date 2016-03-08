@@ -48,8 +48,13 @@ $(function() {
 				if(!window.user_logged_in)
 					message += "<BR><BR><div style='font-size:11px;'>Already a user?  <a href='#' style='color:white;' onclick='window.forceLoadTutorial=false;window.closeScreenExplanation();window.loadSigninBox();return false;'>Login to your account</a></div>";
 				setContent('[Welcome to Swift Calcs]<div style="max-width:530px;margin: 0px auto;">' + message + '</div>',{top: '100px', left: '0px', right: '0px', 'text-align':'center'},true);
-				setContent('[fa=right]',{right: '85px',bottom:'25px'});
-				setContent('<div style="border:3px solid white;border-right-width:0px;padding:5px 20px 5px 5px;">Click the <i>New Worksheet</i> button to get started</div>',{right: '128px',bottom:'45px'}, false, 'arrow');
+				if (window.matchMedia("only screen and (max-device-width: 768px)").matches) {
+					setContent('[fa=right]',{right: '60px',bottom:'10px'});
+					setContent('<div style="border:3px solid white;border-right-width:0px;padding:5px 20px 5px 5px;">Click the <i>New Worksheet</i> button to get started</div>',{right: '103px',bottom:'30px'}, false, 'arrow');
+				} else {
+					setContent('[fa=right]',{right: '85px',bottom:'25px'});
+					setContent('<div style="border:3px solid white;border-right-width:0px;padding:5px 20px 5px 5px;">Click the <i>New Worksheet</i> button to get started</div>',{right: '128px',bottom:'45px'}, false, 'arrow');
+				}
 				highlight('.new_bubble.new_worksheet');
 				break;
 			case 2:
@@ -70,7 +75,7 @@ $(function() {
 				$.each(examples, function(k, v) { commands.push(k + (window.matchMedia("only screen and (max-device-width: 480px)").matches ? "<BR>" : "</td><td>") + v.replace(/ /g,'<span class="spacer"></span>')); });
 				$div = setContent('<div style="text-align:right;">[next=4]</div><div>[Sample Commands]<table class="help_table"><tbody><tr><td style="width:250px;">' + commands.join("</td></tr><tr><td>") + '</td></tr></tbody></table></div>', {'text-align':'left'}, true);
 				$div.detach().insertAfter('.active_holder').css({position: 'relative', margin: '10px 0px 0px 0px;'});
-				$div = setContent('<table><tbody><tr><td valign=top style="vertical-align:bottom;"><i class="fa fa-chevron-down"></i></td><td style="padding-left:20px;">[Get Calculating]Enter commands and get answers.  Swift Calcs is designed to make equation entry fast and simple.  Need inspiration?  Look to the sample commands below.</td></tr></tbody></table>', {'text-align':'left'});
+				$div = setContent('<table><tbody><tr><td valign=top style="vertical-align:bottom;"><i class="fa fa-chevron-down"></i></td><td style="padding-left:20px;">[Get Calculating]Enter commands and get answers.  Swift Calcs makes equation entry fast and simple.  Need inspiration?  Look to the samples below.  Special commands are in the toolbar above.</td></tr></tbody></table>', {'text-align':'left'});
 				$div.detach().insertBefore('.active_holder .content').css({position: 'relative', height: '0px', top: (window.matchMedia("only screen and (max-device-width: 480px)").matches  ? '-160px' : '-110px'), color: 'white'});
 				setContent('<div style="background-color: #184869;height:' + (40 + $('div.toolbar').height()) + 'px;">&nbsp;</div>', {left: '0px', right: '0px', top: '0px'});
 				setContent('<i class="fa fa-chevron-down" style="font-size:26px;margin-right:10px;"></i>Use the toolbar to insert special characters or mathematical commands',{left: (window.matchMedia("only screen and (max-device-width: 480px)").matches ? '3px' : '230px'),top: '5px'});
@@ -83,10 +88,14 @@ $(function() {
 			case 4:
 				load_blackout();
 				load_whiteout();
-				setContent('[We\'re Just Getting Warmed Up]Use the expandable toolbox on the screen\'s left edge to add text, plots, videos, solvers, and more to your Worksheet.<BR><BR>[Ready to Jump In?]We\'ve just scratched the surface of the power and flexibility of Swift Calcs.  Now it\'s your turn to dive in.<BR>[next=5]',{right: (window.matchMedia("only screen and (max-device-width: 480px)").matches ? '110px' : '360px'), top: '100px', 'text-align':'right', 'max-width':'500px'}, true);
-				setContent('[fa=right]',{right: (window.matchMedia("only screen and (max-device-width: 480px)").matches ? '30px' : '280px'),top: '120px'});
-				highlight('div.sidebar');
-				if(!window.matchMedia("only screen and (max-device-width: 480px)").matches) window.setTimeout(function() { $('div.sidebar').animate({width: 275}, {duration: 450, easing: 'easeOutQuad'}); }, 250);
+				var where = (window.matchMedia("only screen and (max-device-width: 768px)").matches) ? 'from the icon at the top left <span style="display:inline-block;width:34px;height:30px;padding-top:4px;border-radius:17px;font-weight:bold;text-align:center;background-color:#386889"><i class="fa fa-bars" style="font-size:22px;"></i></span>' : "on the screen's left edge";
+				setContent('[We\'re Just Getting Warmed Up]Use the toolbox ' + where + ' to add text, plots, videos, solvers, and more to your Worksheet.<BR><BR>[Ready to Jump In?]We\'ve just scratched the surface of the power and flexibility of Swift Calcs.  Now it\'s your turn to dive in.<BR>[next=5]',{left: (window.matchMedia("only screen and (max-device-width: 768px)").matches ? '20px' : '360px'), top: '100px', 'text-align':'left', 'max-width':'500px'}, true);
+				if (window.matchMedia("only screen and (max-device-width: 768px)").matches) {
+					setContent('[fa=up]',{left: '-15px',top: '30px'});
+				} else {
+					setContent('[fa=left]',{left: '280px',top: '120px'});
+					highlight('div.toolbox');
+				}
 				$('.next.button').html('Close Tutorial');
 				break;
 			case 5:
