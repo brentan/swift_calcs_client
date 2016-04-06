@@ -27,6 +27,8 @@ obj.onreadystatechange = function(input_module) { return function() {
 obj.onprogress = function(input_module) { return function(e){ 
 	if(e.lengthComputable) 
 		input_module.updateProgress((e.loaded / e.total)*0.5);
+	else
+		console.log('NO COMPUTABLE');
 }; }(Module);
 var loadGiac = function(v) {
 	var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
