@@ -299,7 +299,19 @@ var Module = {
     }*/
   },
   updateProgress: function(percent) {
+    if(Module.progressTimeout !== false) clearTimeout(Module.progressTimeout);
   	sendMessage({command: 'updateProgress', value: percent});
+  },
+  noProgressInfo: function() {
+    if(Module.progressTimeout !== false) return;
+    Module.start_timer = Date.now();
+    Module.progressTimeout = setTimeout(Module.nextProgress, 250);
+  },
+  progressPercentage: 0,
+  progressTimeout: false,
+  nextProgress: function() {
+    Module.updateProgress(Math.min(.15 * Math.log(1+(Date.now() - Module.start_timer)/1000),0.49));
+    Module.progressTimeout = setTimeout(Module.nextProgress, 250);
   },
   setUpdateTimeout: function(start_val, end_val, total_time) {
   	sendMessage({command: 'setUpdateTimeout', start_val: start_val, end_val:end_val, value: total_time});
