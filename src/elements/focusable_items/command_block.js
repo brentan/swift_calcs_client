@@ -331,6 +331,10 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 	_.mouseDown = function(e) {
 		this.placeCursor(this.findTarget(e));
 	}
+	_.mouseUpShift = function(e) {
+		this.anchor = this.findTarget(e);
+		this.updateHighlight();
+	}
 	_.updateHighlight = function() {
 		this.clearCursor();
 		if(this.anchor == this.location) 

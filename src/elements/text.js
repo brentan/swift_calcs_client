@@ -218,6 +218,21 @@ var text = P(EditableBlock, function(_, super_) {
     } else  //We clicked in one area and dragged to another, just select the whole element
       return true;
   }
+  _.mouseUpShift = function(e) {
+    return this.mouseDownShift(e);
+  }
+  _.mouseDownShift = function(e) {
+    var text_field = $(e.target).closest('div.' + css_prefix + 'wysiwyg');
+    if(text_field.length) 
+      var new_target = this.textField;
+    else
+      var new_target = -1;
+    // Are we clicking within the same textarea?
+    if((this.start_target == new_target) && (this.start_target !== -1))
+      return false;
+    else 
+      return true;
+  }
   _.mouseOut = function(e) {
     this.worksheet.blurToolbar();
   }

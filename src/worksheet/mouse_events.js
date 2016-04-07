@@ -237,6 +237,7 @@ Worksheet.open(function(_) {
       // docmousemove and mouseup share a lot, so combine them here:
       function mousemoveup(e, command) {
         var selectFromTargets = function(start_target, end_target) {
+          if((selection.length == 0) && (start_target == end_target) && !start_target.mouseUpShift(e)) return; // Try to let element handle it if same as last target
           start_target.mouseOut(e);
           //Journey to common generation for start/end targets
           while(start_target.depth > end_target.depth) { start_target = start_target.parent; }
@@ -401,8 +402,9 @@ Worksheet.open(function(_) {
   		      target.focus();
   		      e.preventDefault(); 
   		    }
-        } else
-          e.preventDefault(); 
+        } else {
+          if((target != last_target) || !(target instanceof text) || target.mouseDownShift(e)) e.preventDefault(); 
+        }
 	      _this.jQ.mousemove(mousemove);
 	      $(e.target.ownerDocument).on('mousemove', docmousemove).on('mouseup dragend', mouseup);
 	      // listen on document not just body to not only hear about mousemove and

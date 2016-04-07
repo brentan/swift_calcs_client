@@ -853,6 +853,24 @@ var Element = P(function(_) {
     } else  //We clicked in one area and dragged to another, just select the whole element
     	return true;
 	}
+	// Called when the mouse is clicked with shift held down.  If we are doing that in the same focusable item, pass selection to its handler.  Otherwise, return false (which causes block to be selected)
+	_.mouseUpShift = function(e) {
+		var math_field = $(e.target).closest('span.' + css_prefix + 'math');
+		var answer_field = $(e.target).closest('div.answer');
+		var focusable_field = $(e.target).closest('span.' + css_prefix + 'focusable');
+    if(math_field.length) 
+    	var new_target = MathQuill(math_field[0]);
+    else if(answer_field.length) 
+    	var new_target = MathQuill(answer_field[0]);
+    else if(focusable_field.length) 
+    	var new_target = aFocusableItem.byId[focusable_field.attr('data-focusable-id')*1];
+    else
+    	var new_target = -1;
+    if((this.start_target == new_target) && (new_target !== -1) && (typeof new_target.mouseUpShift !== "undefined"))
+    	return this.start_target.mouseUpShift(e);
+    else 
+    	return true; // highlight the whole element
+	}
 	_.mouseOut = function(e) {
 		if(this.focusedItem) this.focusedItem.mouseOut(e);
 	}
