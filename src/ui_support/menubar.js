@@ -74,7 +74,7 @@ $(function() {
 		$('.toolbox').find('.' + tab).addClass('active');
   }
 
-  $('body').on('click', '#account_bar .star_select', function(e) {
+  $('body').on('click', '.toolbox .star_select', function(e) {
   	if($(this).hasClass('on')) {
   		$(this).removeClass('on');
 			SwiftCalcs.pushState.refresh(true);

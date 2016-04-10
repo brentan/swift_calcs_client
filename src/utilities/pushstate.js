@@ -115,6 +115,13 @@ var PushState = P(function(_) {
       else
         window.openFileDialog(hash_string, true);
       return true;
+    } else if(fragment.match(/starred_projects\//i)) {
+      var hash_string = fragment.replace(/starred_projects\/([a-z0-9\-]*).*$/i,"$1");
+      if(hash_string.length == 0)
+        window.openFileDialog('active', false, true);
+      else
+        window.openFileDialog(hash_string, false, true);
+      return true;
     } else if(fragment.match(/projects\//i)) {
       var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1");
       if(hash_string.length == 0)
@@ -122,7 +129,7 @@ var PushState = P(function(_) {
       else
         window.openFileDialog(hash_string);
       return true;
-    } else if(fragment.match(/labels\//i)) {
+    /*} else if(fragment.match(/labels\//i)) {
       var labels_hash = fragment.replace(/labels\/([a-z0-9\-]*).*$/i,"$1");
       if(labels_hash.length == 0)
         window.openFileDialog('active');
@@ -136,7 +143,7 @@ var PushState = P(function(_) {
         window.openFileDialog('active');
       else
         window.openFileDialog(hash_string, false, labels_hash);
-      return true;
+      return true;*/
     } else if(fragment.match(/active/i)) {
       window.openFileDialog('active');
       return true;
@@ -145,6 +152,9 @@ var PushState = P(function(_) {
       return true;
     } else if(fragment.match(/invites/i)) {
       window.openFileDialog('invites');
+      return true;
+    } else if(fragment.match(/starred/i)) {
+      window.openFileDialog('active', false, true);
       return true;
     } 
 		return false;

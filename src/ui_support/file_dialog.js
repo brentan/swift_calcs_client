@@ -14,13 +14,13 @@ $(function() {
 		$('.feedback_link').css('left', '25px');
 	}
 	var allowNewProject = true;
-	var openFileDialog = window.openFileDialog = function(hash_string, archive, labels_hash) {
+	var openFileDialog = window.openFileDialog = function(hash_string, archive, starred) {
     if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
     $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
     data = { hash_string: hash_string };
     if(archive) data.show_archived = true;
-    if(labels_hash) data.labels_hash = labels_hash;
-    if($('.star_select').hasClass('on')) data.star = true;
+    //if(labels_hash) data.labels_hash = labels_hash;
+    if(starred) data.star = true;
     if($('div.search_bar input').val().trim().length > 0) data.search_term = $('div.search_bar input').val().trim();
 		$.ajax({
       type: "POST",
@@ -52,10 +52,14 @@ $(function() {
 		current_project_onshape = onshape;
 		current_project_navigable_url = url;
 	}
-	var loadProject = window.loadProject = function(hash_string, name, archive, labels_hash, label_name) {
+	var loadProject = window.loadProject = function(hash_string, name, archive, starred) {
 		if(hash_string && (hash_string == 'active')) {
 			window.trackEvent("Project", "Load", "Active");
 			SwiftCalcs.pushState.navigate('/active/', {trigger: true});
+		}
+		else if(hash_string && (hash_string == 'starred')) {
+			window.trackEvent("Stars", "Load");
+			SwiftCalcs.pushState.navigate('/starred/', {trigger: true});
 		}
 		else if(hash_string && (hash_string == 'invites')) {
 			window.trackEvent("Invite", "Load");
@@ -69,17 +73,13 @@ $(function() {
 			window.trackEvent("Project", "Load", "Archive: " + hash_string);
 			SwiftCalcs.pushState.navigate('/archive_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 		}
-		else if(hash_string && labels_hash) {
-			window.trackEvent("Project", "Load", "Label: " + hash_string + '/' + labels_hash);
-			SwiftCalcs.pushState.navigate('/project_label/' + hash_string + '/' + labels_hash + '/' + encodeURIComponent(name.replace(/ /g,'_')) + '/' + encodeURIComponent(label_name.replace(/ /g,'_')), {trigger: true});
+		else if(hash_string && starred) {
+			window.trackEvent("Project", "Load", "Stars: " + hash_string);
+			SwiftCalcs.pushState.navigate('/starred_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 		}
 		else if(hash_string) {
 			window.trackEvent("Project", "Load", hash_string);
 			SwiftCalcs.pushState.navigate('/projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
-		}
-		else if(labels_hash) {
-			window.trackEvent("Label", "Load", labels_hash);
-			SwiftCalcs.pushState.navigate('/labels/' + labels_hash + '/' + encodeURIComponent(label_name.replace(/ /g,'_')), {trigger: true});
 		}
 		else if(current_project_navigable_url) {
 			window.trackEvent("Project", "Load", "Current Project");
@@ -187,17 +187,17 @@ $(function() {
 			}
 			if(in_box) box.appendTo('.worksheet_holder')
 		} else {
-			var star = $('.star_select').hasClass('on');
 	    var search_term = $('div.search_bar input').val().trim().length > 0;
     	var fragment = SwiftCalcs.pushState.fragment || '';
+	    var star = fragment.match(/^starred_projects\//i) || fragment.match(/^starred\//i);
 	    var archive = fragment.match(/^archive_projects\//i) || fragment.match(/^archive/i);
-	    var project = fragment.match(/^project_label\//i) || fragment.match(/^archive_projects\//i) || fragment.match(/^projects\//i);
-	    var label = fragment.match(/^project_label\//i) || fragment.match(/^labels\//i);
+	    var project = fragment.match(/^starred_projects\//i) || fragment.match(/^archive_projects\//i) || fragment.match(/^projects\//i);
+	    //var label = fragment.match(/^project_label\//i) || fragment.match(/^labels\//i);
 	    if(fragment.match(/^invites/i)) {
 	    	var $div = $('<div/>').addClass('no_results');
 	    	$('<div/>').addClass('title').html('No pending invitations').appendTo($div);
 	    	$('<div/>').addClass('explain').html('New items will appear here as others invite you to projects or worksheets.').appendTo($div);
-	    } else if(!star && !search_term && !archive && !label) {
+	    } else if(!star && !search_term && !archive) {
 	    	// No active sheets (or sheets in a project), give 'welcome' message here, push them to create a new sheet
 	    	var $div = $('<div/>').addClass('no_results');
 	    	if(project) {
@@ -238,8 +238,12 @@ $(function() {
 	    	$('<div/>').addClass('explain').html('Consider loosening your search criteria:').appendTo($div);
 	    	var $ul = $('<ul/>')
 	    	if(star) $('<li/>').html('Include non-starred worksheets in your results').on('click', function(e) {
-		    		$('.star_select').removeClass('on');
-		    		SwiftCalcs.pushState.refresh(true);
+		    		if(project) {
+      				var hash_string = fragment.replace(/starred_projects\/([a-z0-9\-]*).*$/i,"$1");
+      				var name = fragment.replace(/starred_projects\/([a-z0-9\-]*)\/(.*)$/i,"$2");
+		    			window.loadProject(hash_string, name);
+		    		}	else
+		    			window.loadProject('active');
 		    	}).appendTo($ul);
 	    	if(search_term) $('<li/>').html('Remove your search term (' + $('div.search_bar input').val().trim() + ')').on('click', function(e) {
 		    		$('div.search_bar input').val('');
@@ -249,27 +253,27 @@ $(function() {
 		    		if(project) {
       				var hash_string = fragment.replace(/archive_projects\/([a-z0-9\-]*).*$/i,"$1");
       				var name = fragment.replace(/archive_projects\/([a-z0-9\-]*)\/(.*)$/i,"$2");
-		    			window.loadProject(hash_string, name);
+		    			window.loadProject(hash_string, name, false, star);
 		    		}	else
-		    			window.loadProject('active');
+		    			window.loadProject(star ? 'starred' : 'active');
 		    	}).appendTo($ul);
-		    else if(!label) $('<li/>').html('Search in archived sheets instead of in active sheets').on('click', function(e) {
+		    else $('<li/>').html('Search in archived sheets instead of in active sheets').on('click', function(e) {
 		    		if(project) {
-      				var hash_string = fragment.replace(/projects\/([a-z0-9\-]*).*$/i,"$1");
-      				var name = fragment.replace(/projects\/([a-z0-9\-]*)\/(.*)$/i,"$2");
+      				var hash_string = fragment.replace(/(starred_)?projects\/([a-z0-9\-]*).*$/i,"$2");
+      				var name = fragment.replace(/(starred_)?projects\/([a-z0-9\-]*)\/(.*)$/i,"$3");
 		    			window.loadProject(hash_string, name, true);
 		    		}	else
 		    			window.loadProject('archive');
 		    	}).appendTo($ul);
 		    if(project) $('<li/>').html('Search all sheets, not just in this project').on('click', function(e) {
-		    		if(label) {
-      				var labels_hash = fragment.replace(/project_label\/([a-z0-9\-]*)\/([a-z0-9\-]*).*$/i,"$2");
-		    			window.loadProject('active', '', false, labels_hash, '');
-		    		}	else if(archive)
+		    		if(star)
+		    			window.loadProject('starred');
+		    		else if(archive)
 		    			window.loadProject('archive');
 		    		else
 		    			window.loadProject('active');
 		    	}).appendTo($ul);
+		    /*
 		    if(label) $('<li/>').html('Search all sheets, not just with this label').on('click', function(e) {
 		    		if(project) {
       				var hash_string = fragment.replace(/project_label\/([a-z0-9\-]*)\/([a-z0-9\-]*).*$/i,"$1");
@@ -279,6 +283,7 @@ $(function() {
 		    		else
 		    			window.loadProject('active');
 		    	}).appendTo($ul);
+		    */
 	    	$ul.appendTo($div);
 	    }
 	    $div.appendTo('.worksheet_holder')
@@ -691,12 +696,14 @@ $(function() {
 	}
 	$('body').on('click', '.projects_list span.fa-plus-circle', function(e) {
 		if($(this).attr('data-type') == 'project') window.newProject(null);
+		/*
 		if($(this).attr('data-type') == 'label') {
   		window.showPopupOnTop();
   		$('.popup_dialog .full').html("<div class='title'>Add a new label</div><div>Labels allow you to keep track of worksheets across projects and time.  Creating a new label is easy: when viewing a worksheet, look for the labels icon <i class='fa fa-fw fa-tags'></i> at the top of the sheet and the list of labels (or the message 'add labels to this worksheet').  Simply click on the list of labels (or the 'add labels to this worksheet message') and begin typing the labels you want to add, seperated by commas.  All the labels you create will automatically be populated in the menubar on the left of the page.</div>");
       $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
       window.resizePopup(true);
 		}
+		*/
 		if($(this).attr('data-type') == 'onshape') {
   		window.showPopupOnTop();
   		$('.popup_dialog .full').html("<div class='title'>Add a new Sub-Project</div><div>Sub-Projects help you organize the Swift Calcs worksheets in your Onshape document.  To create a new sub-project, simply click the '+' icon in the bottom left of the screen and select 'Swift Calcs' from the 'Add a Application' menu.</div>");
@@ -1306,6 +1313,7 @@ $(function() {
 		$('.new_bubble_mouseover').remove();
 		$('.new_bubble.new_project').fadeOut(150);
 	});
+	/*
 	var createLabelList = window.createLabelList = function() {
 		SwiftCalcs.labelList = [];
 		SwiftCalcs.labelIds = {};
@@ -1319,6 +1327,7 @@ $(function() {
 			SwiftCalcs.labelIds[$(this).attr('data-id')*1] = true;
 		});
 	}
+	*/
 	var createProjectList = window.createProjectList = function() {
 		// Project List
 		var projectListIterator = function(el) {
@@ -1336,6 +1345,15 @@ $(function() {
 		}
 		SwiftCalcs.projectList = projectListIterator($('.projects_list .left_item.projects'));
 	}
+	$('body').on('click', '.star_title', function(e) {
+		var $container = $(this);
+		if($container.closest('.project_list').length > 0) {
+			$project = $container.closest('.expand').closest('div.item');
+			window.loadProject($project.attr('data-hash'), $project.attr('data-name'), false, true);
+		} else
+			window.loadProject('starred');
+	});
+	/*
 	$('body').on('click', '.label_title', function(e) {
 		var $container = $(this).closest('div.item');
 		if($container.closest('.project_list').length > 0) {
@@ -1366,6 +1384,7 @@ $(function() {
 		e.preventDefault();
 		e.stopPropagation();
 	});
+	*/
 	var resizeResults = window.resizeResults = function() {
 		if(window.matchMedia("only screen and (max-device-width: 480px)").matches)
 			var width = Math.min(842, Math.max($('.worksheet_holder_outer_box').width(),250));

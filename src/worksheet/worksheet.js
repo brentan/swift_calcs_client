@@ -169,6 +169,7 @@ var Worksheet = P(function(_) {
 				this.save();
 		}
 	}
+	/*
 	var labelInput = function(el, _this) {
     // create ul to hold labels once entered
     $list = $('<ul />');
@@ -276,6 +277,7 @@ var Worksheet = P(function(_) {
     el.hide();
     scanInput();
   }
+  */
   var rename = function(_this, name_span, e) {
   	name_span.hide();
   	var input_div = $('<span/>').addClass('name_change').html('<input type="text">').insertAfter(name_span).on('click', function(e) {
@@ -308,11 +310,11 @@ var Worksheet = P(function(_) {
 		var to_parse = response.data;
 		// Load the details section
 		var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody>'
-			+ '<tr><td class="left"><i class="fa fa-users"></i></td><td class="collaborators right"></td></tr>'
-			+ '<tr><td class="left"><i class="fa fa-tags"></i></td><td class="labels right"></td></tr>'
+			+ '<tr><td class="left"><i class="fa fa-users"></i></td><td class="collaborators right"></td></tr>' //+ '<tr><td class="left"><i class="fa fa-tags"></i></td><td class="labels right"></td></tr>'
 			+ '<tr><td class="left"><i class="fa fa-info-circle"></i></td><td class="info right"></td></tr>'
 			+ '</tbody></table>');
 		// Labels:
+		/*
 		if(this.rights >= 3)
 			labelInput($('<span/>').attr('data-list', response.labels).appendTo(det_div.find('.labels')), this);
 		else {
@@ -325,6 +327,7 @@ var Worksheet = P(function(_) {
       });
       if(add_message) $('<span/>').addClass('placeholder').html('This worksheet has no labels').insertBefore($list);
 		}
+		*/
 		// Project
 		if(response.project_path) 
 			det_div.find('td.info').append($('<div/>').html('Project: ' + response.project_path));
@@ -465,6 +468,7 @@ var Worksheet = P(function(_) {
 			start = child.numberBlock(start);
 		});
 	}
+	/*
 	_.updateLabels = function(list) {
 		window.silentRequest('/worksheet_commands', {command: 'update_labels', data: { id: this.server_id, labels: list } }, function(response) {
 			for(var i = 0; i < response.labels.length; i++) {
@@ -481,6 +485,7 @@ var Worksheet = P(function(_) {
 			}
 		});
 	}
+	*/
   _.updateUploads = function() {
     var uploads = this.insertJQ.find('.' + css_prefix + 'uploadedData');
     var ids = [];
