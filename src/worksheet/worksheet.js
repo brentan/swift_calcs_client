@@ -83,6 +83,7 @@ var Worksheet = P(function(_) {
 		this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash', this.hash_string);
 		SwiftCalcs.active_worksheet = this;
     $('.fatal_div').hide();
+    $('nav.menu').removeClass('noWorksheet');
     ajaxQueue.suppress = false;
     ajaxQueue.ignore_errors[this.server_id] = false;
 		this.bound = true;
@@ -346,7 +347,8 @@ var Worksheet = P(function(_) {
 		var name_span = this.jQ.closest('.active_holder').find('.worksheet_item span.name');
 		if(this.rights >= 3) 
 			name_span.addClass('change').children('span').on('click', function(_this, name_span) { return function(e) { rename(_this, name_span, e); }; }(this, name_span));
-		ajaxQueue.save_div = $('<span/>').addClass('save_span').insertAfter(name_span);
+		$('nav.menu .save_message span').remove();
+		ajaxQueue.save_div = $('<span/>').addClass('save_span').insertAfter(name_span).add($('<span/>').addClass('save_span').appendTo('nav.menu .save_message'));
 		var auto_evaluation = giac.auto_evaluation;
 		ajaxQueue.suppress = true;
 		giac.auto_evaluation = false;
@@ -390,6 +392,7 @@ var Worksheet = P(function(_) {
 	}
 	// Detach method (remove from the DOM)
 	_.unbind = function() {
+    $('nav.menu').addClass('noWorksheet');
 		this.clearUndoStack();
 		this.unbindUploads();
 		this.unbindMouse();
@@ -397,6 +400,7 @@ var Worksheet = P(function(_) {
 		this.unbindSettings();
 		ajaxQueue.save_div.remove();
 		ajaxQueue.save_div = $('<span/>');
+		$('<span/>').addClass('save_span').html('Files are up to date').appendTo('nav.menu .save_message');
 		this.jQ.closest('.active_holder').find('.name.change').removeClass('change').children('.hover').off('click');
 		this.toolbar.blurToolbar();
 		this.toolbar = false;

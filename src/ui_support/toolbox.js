@@ -145,7 +145,7 @@ $(function() {
       // Handle full click events as mousedown and then mouseup
       if(SwiftCalcs.active_worksheet)
         var el = SwiftCalcs.active_worksheet.lastActive;
-      else
+      else 
         return showNotice('Create or open a worksheet to insert this item');
       var check_for_storeAsVariable = true;
       window.trackEvent("Block", "Toolbox Click", _this.attr('data-el'));
@@ -236,7 +236,7 @@ $(function() {
     }
 	};
   $('body').on('mousedown', 'div.toolbox .tool', mouseDown);
-  $('body').on('click', '#account_bar .insert_menu a.tool', function(e) { var _this = $(this); click_handler(_this)(e); _this.closest('ul.insert_menu').hide(); window.setTimeout(function() { _this.closest('ul.insert_menu').css('display',''); },500); return false; });
+  $('body').on('click', '#account_bar .insert_menu a.tool', function(e) { if($(this).closest('nav.menu').hasClass('noWorksheet')) return false; var _this = $(this); click_handler(_this)(e); _this.closest('ul.insert_menu').hide(); window.setTimeout(function() { _this.closest('ul.insert_menu').css('display',''); },500); return false; });
 
   // Toolbox headers
   $('body').on('click', 'div.content.tools div.section', function(e) {

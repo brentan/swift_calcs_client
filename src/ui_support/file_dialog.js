@@ -1054,6 +1054,60 @@ $(function() {
     window.trackEvent("Worksheet", "Sharing Dialog","From Header");
 		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), 'Worksheet');
 	});
+	$('body').on('click', 'nav.menu .share_dialog', function(e) {
+		window.trackEvent("Worksheet", "Sharing Dialog","From Menu");
+		if(SwiftCalcs.active_worksheet)
+			window.openSharingDialog(SwiftCalcs.active_worksheet.server_id, 'Worksheet');
+		else if(current_project_id)
+			window.openSharingDialog(current_project_id, 'Project');
+		else 
+			window.showNotice("Open a worksheet or Project to Share", "red");
+		e.preventDefault();
+		return false;
+	});
+
+	$('body').on('click', 'nav.menu .fileopen', function(e) {
+		window.loadProject($(this).attr('data-cmd'));
+		e.preventDefault();
+		return false;
+	});
+
+	$('body').on('click', 'nav.menu .save', function(e) {
+		if($(this).closest('nav.menu').hasClass('noWorksheet')) return false;
+		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.save();
+		e.preventDefault();
+		return false;
+	});
+
+	$('body').on('click', 'nav.menu .closeActive', function(e) {
+		if($(this).closest('nav.menu').hasClass('noWorksheet')) return false;
+		window.closeActive($('.active_worksheet'));
+		e.preventDefault();
+		return false;
+	});
+	$('body').on('click', 'nav.menu .print', function(e) {
+		if(SwiftCalcs.active_worksheet) {
+    	window.trackEvent("Worksheet", "Print");
+			window.showLoadingPopup();
+			$('.loading_box .name').html('Preparing to Print: Calculating...');
+			var doPrint = function() {
+				if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded && (SwiftCalcs.active_worksheet.ready_to_print || !SwiftCalcs.giac.auto_evaluation)) {
+					SwiftCalcs.active_worksheet.blur();
+					window.setTimeout(function() { // Delay to allow animations to finish, SVG plots to be generated, etc
+						window.hidePopupOnTop();
+						$('.loading_box .name').html('Loading');
+						window.print();
+					}, 400);
+				} else
+					window.setTimeout(doPrint, 250);
+			}
+			doPrint();
+		} else window.print();
+		e.preventDefault();
+		return false;
+	});
+
+
 	$('body').on('click', '.worksheet_item i.fa-ellipsis-v', function(e) {
 		var archived = $(this).closest('.archive').length > 0;
 		var offset = $(this).offset();
