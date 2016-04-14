@@ -767,6 +767,7 @@ var Element = P(function(_) {
 	mouseOut is called when a click/drag starts in this element, but then the end target moves outside of it.  Used to take care of internal 'selection' highlighting changes
 	mouseClick gets called by mouseUp when the user clicks and releases within the same non-math portion of the element (aka just a click, not click/drag).  This is usually
 		what is overwitten by an element to handle click events.
+    mouseUpShift gets called when a mouseUp occurs while shift is being held down, and the mouseUp event occurs in the same element as the mouseDown event.  This element checks if the mouseUp and mouseDown are in the same focusable item, and if so passes control to that item.  Return true to highlight the whole element.
 	*/
 	_.contextMenu = function(e) {
 		// See if the click is within a math field, and if so, pass the event to it
