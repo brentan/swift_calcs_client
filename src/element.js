@@ -84,7 +84,7 @@ var Element = P(function(_) {
 	preRemoveHandler is called on this block immediately before the elements are removed from the DOM
 	*/
 	_.regenerateHtml = function() {
-		if(this.worksheet && this.worksheet.activeUndo) return this;
+		if(this.worksheet && this.worksheet.activeUndo && this.jQ) return this;
 		this.jQ = $('<div style="display:none;" ' + css_prefix + 'element_id=' + this.id + ' class="' + css_prefix + 'element '
 			+ jQuery.map(this.klass, function(k) { return (css_prefix + k) }).join(' ') + '">'
 			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"><i class="fa fa-exclamation-triangle"></i><span></span><div class="' + css_prefix + 'element_collapse">'
@@ -624,9 +624,11 @@ var Element = P(function(_) {
 	}
 	_.blurOutputBox = function() {
 		if(this.outputBox) this.outputBox.calculating();
-		this.jQ.find('i.fa-spinner').remove();
-		this.jQ.find('div.' + css_prefix + 'element.error').removeClass('error');
-		this.jQ.find('div.' + css_prefix + 'element.warn').removeClass('warn');
+		if(this.jQ && (typeof this.jQ.find === 'function')) {
+			this.jQ.find('i.fa-spinner').remove();
+			this.jQ.find('div.' + css_prefix + 'element.error').removeClass('error');
+			this.jQ.find('div.' + css_prefix + 'element.warn').removeClass('warn');
+		}
 		if(this.hasChildren) {
 			var children = this.children();
 			for(var i = 0; i < children.length; i++) window.setTimeout(function(i) { return function() { children[i].blurOutputBox(); }; }(i));
@@ -656,7 +658,7 @@ var Element = P(function(_) {
 		return true;
 	}
 	_.addSpinner = function(eval_id) {
-		if(this.allowOutput()) {
+		if(this.allowOutput() && this.leftJQ) {
 			this.leftJQ.find('i.fa-spinner').remove();
 			if((typeof eval_id !== 'undefined') && giac.manual_evaluation[eval_id])
 				this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>'); // Manual mode spinner should not be hidden
