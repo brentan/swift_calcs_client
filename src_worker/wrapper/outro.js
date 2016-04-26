@@ -37,7 +37,7 @@ var loadGiac = function(v) {
 		chrome_version = navigator.userAgent.toLowerCase().replace(/.*chrome\/([0-9]+)\..*/,"$1")*1;
 	if((chrome_version > 46) && (chrome_version < 49)) {
 		sendMessage({command: 'chrome_workaround_enabled'});
-		obj.open('GET','/libraries/chrome_giac' + v + '.js',true);
+		obj.open('GET','/libraries/chrome_giac1_46.js',true);
 	} else
 		obj.open('GET','/libraries/giac' + v + '.js',true);
 	obj.send(null);
