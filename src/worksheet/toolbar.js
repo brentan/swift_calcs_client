@@ -1584,12 +1584,12 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			var ul = $(this).next('ul');
 			window.setTimeout(function() {
 				ul.css({top: '0px', left: '100%'});
-				var move_up = min(0, $( window ).height() - (ul.offset().top + ul.height()));
-				var move_left = min(0, $( window ).width() - (ul.offset().left + ul.width()));
+				var move_up = $( window ).height() - 25 - ((ul.offset().top - $(window).scrollTop()) + ul.height());
+				var move_left = $( window ).width() - ((ul.offset().left - $(window).scrollLeft()) + ul.width());
 				if(move_up < 0)
 					ul.css('top', move_up + 'px');
 				if(move_left < 0)
-					ul.css('left', move_left + 'px');
+					ul.css('left', (move_left + ul.closest('li').width()) + 'px');
 			});
 		});
 		out_box.find('.command').on('mousedown', function(e) {
