@@ -39,7 +39,7 @@ var loadGiac = function(v) {
 		sendMessage({command: 'chrome_workaround_enabled'});
 		obj.open('GET','/libraries/chrome_giac1_48.js',true);
 	} else
-		obj.open('GET','/libraries/giac' + v + '.js',true);
+		//obj.open('GET','/libraries/giac' + v + '.js',true);
 	obj.send(null);
 }
 sendMessage({command: 'giac_version'});

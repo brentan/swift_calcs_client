@@ -55,7 +55,6 @@ var math = P(MathOutput, function(_, super_) {
 		}
 	}
 	_.changeToText = function(to_text) {
-		console.log("CHANGE TO TEXT: " + to_text);
 		if(to_text.match(/^[^=]* := [a-z0-9\.-]+$/i)) {
 			// Case of var_name = command.  See if command accepts this type of format (has to allow scoped basically)
       var command = to_text.replace(/^[^=]* := ([a-z0-9\.-]*)$/i,"$1");

@@ -628,8 +628,13 @@ div.sc_element_container {
   }
   .sc_element.sc_math {
     cursor: text;
+  }
+  .sc_element {
     .sc_math.mq-math-mode.mq-editable-field {
-      border-width: 0px;
+      border-color: #ffffff;
+      &:hover, &.mq-focused {
+        border-color: #bbddff;
+      }
     }
   }
   .sc_output_box .mq-math-mode.mq-editable-field {
