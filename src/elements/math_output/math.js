@@ -55,6 +55,7 @@ var math = P(MathOutput, function(_, super_) {
 		}
 	}
 	_.changeToText = function(to_text) {
+		console.log("CHANGE TO TEXT: " + to_text);
 		if(to_text.match(/^[^=]* := [a-z0-9\.-]+$/i)) {
 			// Case of var_name = command.  See if command accepts this type of format (has to allow scoped basically)
       var command = to_text.replace(/^[^=]* := ([a-z0-9\.-]*)$/i,"$1");
@@ -77,6 +78,21 @@ var math = P(MathOutput, function(_, super_) {
       		return false;
       } else
       	return false;
+		} else if(to_text.match(/^[a-z][a-z0-9_]*(\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\))? := {[ ]*$/i)) {
+			// Turn in to a conditional statement
+			var varName = to_text.replace(/^([a-z][a-z0-9_]*(\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\))?) := .*$/i,"$1");
+			var stream = this.worksheet.trackingStream;
+			if(!stream) this.worksheet.startUndoStream();
+  		// Good to go
+			this.mark_for_deletion = true;
+			this.needsEvaluation = false;
+			var new_el = conditional_assignment();
+			new_el.insertAfter(this).show().focus(0);
+			new_el.varField.paste(varName);
+			new_el.eqFields[0].focus(0);
+			this.remove(0);
+			if(!stream) this.worksheet.endUndoStream();
+			return true;
 		}
 		this.mark_for_deletion = true;
 		var stream = this.worksheet.trackingStream;

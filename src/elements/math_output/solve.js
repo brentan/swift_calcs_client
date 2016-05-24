@@ -127,7 +127,7 @@ var solve = P(GiacGeneric, function(_, super_) {
 				if(_this.ask_initial_guess && !_this.guessField.empty() && (_this.guessField.text().split(',').length !== _this.varField.text().split(',').length))
 					errors.push('Invalid guesses.  Please ensure you provide 1 guess for each variable you are solving for (enter as a comma-seperated list)');
 				for(var i = 0; i < _this.eqFields.length; i++)
-					if(_this.eqFields[i].empty()) errors.push('Equation ' + (y+1) + ' is currently empty.  Please add an equation.');
+					if(_this.eqFields[i].empty()) errors.push('Equation ' + (i+1) + ' is currently empty.  Please add an equation.');
 				if(errors.length && _this.outputMathBox) {
 					_this.worksheet.save();
 					_this.outputMathBox.clear();

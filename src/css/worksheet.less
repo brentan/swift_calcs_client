@@ -272,11 +272,7 @@ div.sc_element_container {
         }
       }
     }
-    table.sc_giac_element {
-      width: 100%;
-      & > tbody > tr > td {
-        vertical-align: top;
-      }
+    table.sc_conditional_assignment, table.sc_giac_element {
       span.equality { 
         display: inline-block;
         margin: 0px 3px;
@@ -286,17 +282,6 @@ div.sc_element_container {
       span.eqnum, span.eqinit {
         .mq-math-mode.mq-editable-field {
           border-width: 0px;
-        }
-      }
-      td.sc_var_store {
-        width: 1px;
-        white-space: nowrap;
-        span.sc_var_store {
-          display: none;
-          span.sc_var_store {
-            display: inline-block;
-            width: auto;
-          }
         }
       }
       div.sc_add_equation {
@@ -315,6 +300,69 @@ div.sc_element_container {
         cursor: pointer;
         &:hover {
           color: #444444;
+        }
+      }
+    }
+    table.sc_conditional_assignment {
+      td.sc_conditional {
+        width:12px;
+        text-align: left;
+        div:nth-child(1) {
+          border-left: 2px solid black;
+          margin-left: 6px;
+          border-top-left-radius: 6px;
+          width: 6px;
+          height: 6px;
+        }
+        div:nth-child(2) {
+          border-right: 2px solid black;
+          border-bottom-right-radius: 6px;
+          width: 6px;
+          height: 6px;
+        }
+        div:nth-child(3) {
+          border-right: 2px solid black;
+          border-top-right-radius: 6px;
+          width: 6px;
+          height: 6px;
+        }
+        div:nth-child(4) {
+          border-left: 2px solid black;
+          border-bottom-left-radius: 6px;
+          width: 6px;
+          height: 6px;
+          margin-left: 6px;
+        }
+      }
+      td.sc_content > div {
+        display: table;
+        & > div {
+          display: table-row;
+          & > div {
+            display: table-cell;
+            padding: 2px 1px;
+            &.sc_add_here {
+              position: relative;
+              left: -26px;
+            }
+          }
+        }
+      }
+    }
+    table.sc_giac_element {
+      width: 100%;
+      & > tbody > tr > td {
+        vertical-align: top;
+      }
+      td.sc_var_store {
+        width: 1px;
+        white-space: nowrap;
+        span.sc_var_store {
+          display: none;
+          span.sc_var_store {
+            display: inline-block;
+            width: auto;
+          }
         }
       }
     }
