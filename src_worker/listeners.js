@@ -24,6 +24,7 @@ var eval_method = function(method_name, inputs) {
   If the evaluation is successful, return the results as a string
   If no function of this name is found, return an empty string ''
   */
+  if(method_name === 'revert__units') return inputs.replace(/u__/g,'_');  // Used to revert special units
   if(method_name === 'testf') {
     if(inputs.match(','))
       return 'ERROR: Invalid input to ' + method_name;
@@ -31,6 +32,16 @@ var eval_method = function(method_name, inputs) {
       return '23_mm';
   }
   return '';
+}
+check_method = function(method_name) {
+  /* 
+  Will receive a string, method_name, that is asking if this is a valid
+  method_name.  We simply do a regex now and return 1 or 0 (expecting int response)
+  */
+  if(method_name.trim().match(/^[a-z][a-z0-9_]*$/i)) 
+    return 1; 
+   else 
+    return 0; 
 }
 var sendMessage = function(json) {
   postMessage(JSON.stringify(json));
@@ -265,13 +276,13 @@ var Module = {
     if (Module.setStatus.interval) clearInterval(Module.setStatus.interval);
     sendMessage({command: 'setStatus', value: text});
     if(text === '') {
-  		Module.caseval = Module.cwrap('caseval', 'string', ['string']);    
+  		Module.caseval2 = Module.cwrap('caseval', 'string', ['string']);    
       // Initialize timeout
       // Module.caseval('timeout ' + timeout_length);
       // Module.caseval('ckevery 10000');
     }
   },
-  caseval2: function(text) {
+  caseval: function(text) {
     console.log("IN: " + text);
     var out = Module.caseval2(text);
     console.log("OUT: " + out);

@@ -245,6 +245,11 @@ var continue_block = P(Element, function(_, super_) {
   _.toString = function() {
   	return '{' + this.command_name + '}{}';
   }
+	_.validateParent = function(parent) {
+		for(parent; !(parent instanceof Worksheet); parent = parent.parent)
+			if (parent instanceof Loop) return true;
+		return false;
+	}
 });
 var break_block = P(continue_block, function(_, super_) {
 	_.command_name = 'break';

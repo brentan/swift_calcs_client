@@ -2,6 +2,8 @@
 /* object that deals with evaluations, and setting the evaluation queue */
 var GiacHandler = P(function(_) {
 	_.auto_evaluation = true;
+	_.compile_mode = false;
+	_.compile_callback = false;
 	// Evaluation handling functions.  Each array element keeps track of which first Gen element, by id, is currently being evaluated.  Set to false to stop evaluation or when complete
 	_.init = function() {
 		this.evaluations = [];
@@ -20,6 +22,7 @@ var GiacHandler = P(function(_) {
 		this.manual_evaluation.push(!full); //We allow single line evaluations, even in manual mode
 		this.evaluation_full.push(full);
 		this.errors_encountered = false;
+		this.setCompileMode(false, false);
 		return (this.evaluations.length-1);
 	}
 	_.setEvaluationElement = function(eval_id, el) {
@@ -35,6 +38,11 @@ var GiacHandler = P(function(_) {
 			if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) setProgress(me/total);
 		} 
 		return this;
+	}
+	_.setCompileMode = function(val, el) {
+		this.compile_mode = val;
+		if(val) this.compile_callback = el;
+		else this.compile_callback = false;
 	}
 	_.shouldEvaluate = function(eval_id) {
 		if(this.errors_encountered) return false;
@@ -206,7 +214,10 @@ var GiacHandler = P(function(_) {
 		if(this.giac_ready && ((typeof hash_string.eval_id === 'undefined') || this.auto_evaluation || this.manual_evaluation[hash_string.eval_id])) {
 			//if(typeof window.start_time === 'undefined')
 	  	//	window.start_time = new Date().getTime();
-			this.worker.postMessage(JSON.stringify(hash_string));
+			if(this.compile_mode)
+				this.compile_callback.compile_line(hash_string.commands, el, hash_string.eval_id, hash_string.move_to_next);
+			else
+				this.worker.postMessage(JSON.stringify(hash_string));
 		}	else {
 			if(this.giac_ready && ((SwiftCalcs.active_worksheet == null) || (SwiftCalcs.active_worksheet == undefined) || (SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded))) 
 				setManual('Auto-Evaluation is disabled.  <a href="#" onclick="SwiftCalcs.giac.manualEvaluation();$(this).html(\'Starting...\');return false;">Recalculate Now</a> &nbsp; <a href="#" onclick="SwiftCalcs.giac.manual_mode(false);$(this).html(\'Working...\');return false;">Re-enable Auto-Evaluation</a>');

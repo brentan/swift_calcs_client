@@ -570,7 +570,7 @@ var Element = P(function(_) {
 		if(this.mark_for_deletion) return;
 		if(!this.needsEvaluation && !force) return this;
 		if(this.needsEvaluation) this.worksheet.save();
-		var fullEvaluation = force_full || this.fullEvaluation || this.forceFullEvaluation;
+		var fullEvaluation = force_full || this.fullEvaluation || this.forceFullEvaluation || (this.firstGenAncestor() instanceof programmatic_function);
 
 	  // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue
 		var current_evaluations = giac.current_evaluations();
@@ -636,6 +636,7 @@ var Element = P(function(_) {
 	}
 	_.shouldBeEvaluated = function(evaluation_id) {
 		if(!this.evaluatable || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;
+		if(giac.compile_mode && !this.scoped) return false; // In compile mode, we only care about scoped lines
 		// Logic Blocks: Make sure I'm not a children of any block that is not currently activated
 		for(var el = this; el instanceof Element; el = el.parent) {
 			if(el.parent instanceof LogicBlock) {
@@ -892,9 +893,13 @@ var Element = P(function(_) {
 		if(immediately) {
 			this.insertJQ.hide();
 			expand.show();
+			if(this.focusableItems[this.focusableItems.length - 1][0] && this.focusableItems[this.focusableItems.length - 1][0].toString && (this.focusableItems[this.focusableItems.length - 1][0].toString() == 'end'))
+				this.focusableItems[this.focusableItems.length - 1][0].jQ.closest('.' + css_prefix + 'focusableItems').hide();
 		} else {
 			this.insertJQ.slideUp({duration: 500});
 			expand.slideDown({duration: 500});
+			if(this.focusableItems[this.focusableItems.length - 1][0] && this.focusableItems[this.focusableItems.length - 1][0].toString && (this.focusableItems[this.focusableItems.length - 1][0].toString() == 'end'))
+				this.focusableItems[this.focusableItems.length - 1][0].jQ.closest('.' + css_prefix + 'focusableItems').slideUp({duration: 500});
 		}
 		if(!immediately) this.worksheet.save();
 		return this;
@@ -907,9 +912,13 @@ var Element = P(function(_) {
 		if(immediately) {
 			this.insertJQ.show();
 			this.insertJQ.next('.' + css_prefix + 'expand').remove();
+			if(this.focusableItems[this.focusableItems.length - 1][0] && this.focusableItems[this.focusableItems.length - 1][0].toString && (this.focusableItems[this.focusableItems.length - 1][0].toString() == 'end'))
+				this.focusableItems[this.focusableItems.length - 1][0].jQ.closest('.' + css_prefix + 'focusableItems').show();
 		}	else {
 			this.insertJQ.slideDown({duration: 500});
 			this.insertJQ.next('.' + css_prefix + 'expand').slideUp({duration: 500, always: function() { $(this).remove(); } });
+			if(this.focusableItems[this.focusableItems.length - 1][0] && this.focusableItems[this.focusableItems.length - 1][0].toString && (this.focusableItems[this.focusableItems.length - 1][0].toString() == 'end'))
+				this.focusableItems[this.focusableItems.length - 1][0].jQ.closest('.' + css_prefix + 'focusableItems').slideDown({duration: 500});
 		}
 		this.reflow();
 		if(!immediately) this.worksheet.save();
@@ -1027,6 +1036,7 @@ var Element = P(function(_) {
 			return (x_location ? this.moveOutUpDown(undefined, -dir, x_location) : this.moveOutLeftRight(undefined, -dir));
 		this.focus(dir);
 		// BRENTAN: BELOW SHOULD BE IN FOCUS IF/WHEN dir/x_location is set?
+		if(this.hasChildren) this.expand();
 		if(x_location) {
 			// up/down entry
 			var next = this.getFocusableByX(dir === L ? 0 : (this.focusableItems.length-1), x_location);
@@ -1038,7 +1048,6 @@ var Element = P(function(_) {
 			var next = this.focusableItems[this.focusableItems.length - 1][this.focusableItems[this.focusableItems.length - 1].length - 1];
 		}
 		if(next === -1) {
-			this.expand();
 			if(this.ends[dir] && this.ends[dir].moveInFrom(dir, x_location)) return true;
 			else if(this.ends[dir] === 0) {
 				var to_insert = (this.implicitType) ? this.implicitType() : math().setImplicit();

@@ -31,7 +31,9 @@
 		'csvBlock': csvBlock,
 		'video': video,
 		'videoBlock': videoBlock,
-		'conditional_assignment' : conditional_assignment
+		'conditional_assignment': conditional_assignment,
+		'function': programmatic_function,
+		'return': return_block
 	}
 	for(var i = 0; i < giac_elements_to_add.length; i++) 
 		elements[giac_elements_to_add[i].key] = SwiftCalcs.elements[giac_elements_to_add[i].key] = giac_elements_to_add[i].el;
