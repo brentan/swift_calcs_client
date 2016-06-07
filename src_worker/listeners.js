@@ -188,12 +188,16 @@ var receiveMessage = function(command) {
         var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : '';
       else
         var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : 'factor';
+      if(simplify_command != '')
+        simplify_command = simplify_command + '(usimplify_base';
+      else
+        simplify_command = '(';
       if(command.commands[ii].approx)
         simplify_command = 'evalf(' + simplify_command;
       else
         simplify_command = '(' + simplify_command;
       if(command.commands[ii].unit) { // If provided, this is a 2 element array.  The first is the unit in evaluatable text, the second is an HTML representation
-        output.push({ success: true, returned: Module.casevalWithTimeout('latex(' + simplify_command + '(ufactor(' + to_send + ',' + command.commands[ii].unit[0] + '))))') });
+        output.push({ success: true, returned: Module.casevalWithTimeout('latex(ufactor(' + simplify_command + '(' + to_send + ')),' + command.commands[ii].unit[0] + ')))') });
         /*if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
           // Perhaps the auto-unit conversion messed this up...remove it
           // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...
@@ -204,7 +208,7 @@ var receiveMessage = function(command) {
             warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit[1]);  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
         } */
       } else 
-        output.push({ success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + '))))') });
+        output.push({ success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + ')))))') });
       // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
       var test_output = testError(output[ii],ii, to_send);
 			if(!test_output.success)
@@ -276,13 +280,13 @@ var Module = {
     if (Module.setStatus.interval) clearInterval(Module.setStatus.interval);
     sendMessage({command: 'setStatus', value: text});
     if(text === '') {
-  		Module.caseval2 = Module.cwrap('caseval', 'string', ['string']);    
+  		Module.caseval = Module.cwrap('caseval', 'string', ['string']);    
       // Initialize timeout
       // Module.caseval('timeout ' + timeout_length);
       // Module.caseval('ckevery 10000');
     }
   },
-  caseval: function(text) {
+  caseval2: function(text) {
     console.log("IN: " + text);
     var out = Module.caseval2(text);
     console.log("OUT: " + out);
