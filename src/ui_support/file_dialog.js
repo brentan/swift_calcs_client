@@ -392,6 +392,21 @@ $(function() {
 		e.preventDefault();
 		e.stopPropagation();
 	});
+	// Firefox doesn't call window.resize for some reason on print, unlike all other major browsers...so deal with it here:
+	window.onbeforeprint = function() {
+		if(navigator.userAgent.toLowerCase().indexOf('firefox') > -1){
+			$('.worksheet_holder').width(670);
+	    if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
+	    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
+		}
+	}
+	window.onafterprint = function() {
+		if(navigator.userAgent.toLowerCase().indexOf('firefox') > -1){
+    	window.resizeResults();
+	    if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
+	    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
+		}
+	}
 	// Batch (multiple select)
 	var batch_toolbar = function(tot) {
 		var tempBar = SwiftCalcs.toolbar($('#toolbar_holder'));
