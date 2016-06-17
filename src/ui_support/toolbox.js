@@ -11,7 +11,7 @@ $(function() {
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
       {left: 'fa-table', text: 'Table', vaporware: true},
       {left: 'fa-paint-brush', text: 'Drawing', vaporware: true},
-      {left: 'test', text: 'Program Function', el: 'function'}
+      {left: 'test', text: 'Program Function', el: 'function', vaporware: true}
     ],
     Data: [
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
