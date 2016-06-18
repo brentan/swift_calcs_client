@@ -19,6 +19,7 @@ var SelectBox = P(aFocusableItem, function(_, super_) {
 			this.allow_blank = true;
 			this.blank_message = options.blank_message;
 			this.needs_touch = true;
+			this.blank_css = options.dont_grey_blank ? "" : "blank";
 		}
 		this.fillBox(options.options);
 	}
@@ -174,7 +175,7 @@ var SelectBox = P(aFocusableItem, function(_, super_) {
 	_.clear = function() {
 		if(this.allow_blank) {
 			this.position = -1;
-			this.closedJQ.html('<span class="blank">' + this.blank_message + '</span><i class="fa fa-caret-down"></i>');
+			this.closedJQ.html('<span class="'+this.blank_css+'">' + this.blank_message + '</span><i class="fa fa-caret-down"></i>');
 		} else 
 			this.select(0);
 		return this;

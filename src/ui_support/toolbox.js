@@ -17,6 +17,10 @@ $(function() {
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
       {left: 'fa-magic', text: 'Regression / fit line', el: 'regression'},
     ],
+    Onshape: [
+      {left: 'get', text: 'Read Variable', el: 'getOnshape'},
+      {left: 'set', text: 'Store to Variable', el: 'getOnshape'}
+    ],
     Expansions: [
       { left: '&#8497;a<sub>n</sub>', text: 'Fourier Series a<sub>n</sub>', el: 'fouriera' },
       { left: '&#8497;b<sub>n</sub>', text: 'Fourier Series b<sub>n</sub>', el: 'fourierb' },
