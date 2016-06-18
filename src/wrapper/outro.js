@@ -34,11 +34,14 @@
 		'conditional_assignment': conditional_assignment,
 		'function': programmatic_function,
 		'return': return_block,
-		'getOnshape': getOnshape,
-		'getOnshape_2': getOnshape_2,
-		'getOnshape_3': getOnshape_3,
-		'getOnshape_4': getOnshape_4,
-		'loadOnshapeVariable': loadOnshapeVariable
+		'onshape_get': getOnshape,
+		'onshape_set': setOnshape,
+		'connectOnshape': connectOnshape,
+		'connectOnshape_2': connectOnshape_2,
+		'connectOnshape_3': connectOnshape_3,
+		'connectOnshape_4': connectOnshape_4,
+		'loadOnshapeVariable': loadOnshapeVariable,
+		'setOnshapeVariable': setOnshapeVariable
 	}
 	for(var i = 0; i < giac_elements_to_add.length; i++) 
 		elements[giac_elements_to_add[i].key] = SwiftCalcs.elements[giac_elements_to_add[i].key] = giac_elements_to_add[i].el;

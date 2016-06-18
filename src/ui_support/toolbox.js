@@ -18,8 +18,8 @@ $(function() {
       {left: 'fa-magic', text: 'Regression / fit line', el: 'regression'},
     ],
     Onshape: [
-      {left: 'get', text: 'Read Variable', el: 'getOnshape'},
-      {left: 'set', text: 'Store to Variable', el: 'getOnshape'}
+      {left: 'get', text: 'Read Variable', el: 'connectOnshape', option: true},
+      {left: 'set', text: 'Store to Variable', el: 'connectOnshape', option: false}
     ],
     Expansions: [
       { left: '&#8497;a<sub>n</sub>', text: 'Fourier Series a<sub>n</sub>', el: 'fouriera' },
@@ -75,15 +75,16 @@ $(function() {
   var $menu = $('#account_bar .insert_menu');
   var options = ['el', 'option', 'prepend', 'highlight', 'append'];
   $.each(sidebar, function(k, v) {
-    if(k == 'Onshape') return;
     // Add to menubar
     var $li = $('<li/>').append($('<a><span class="fa fa-caret-right" style="float:right;"></span>' + k.replace(/_/g,' ') + '&nbsp;&nbsp;&nbsp;</a>'));
     var $ul = $('<ul/>').appendTo($li);
+    if(k == 'Onshape') $li.addClass('onshape_only');
     // Add to toolbox in sidebar
     if(first)
       var $section = $('<div/>').addClass('section').addClass('selected').html(k.replace(/_/g,' ') + " <span class='fa fa-caret-down'></span>");
     else
       var $section = $('<div/>').addClass('section').html(k.replace(/_/g,' ') + " <span class='fa fa-caret-right'></span>");
+    if(k == 'Onshape') $section.addClass('onshape_only');
     $box.append($section);
     var $holder = $('<div/>').addClass('box');
     if(first)

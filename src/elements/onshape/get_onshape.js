@@ -1,134 +1,19 @@
 var getOnshape = P(Element, function(_, super_) {
-	_.klass = ['getOnshape'];
 	_.lineNumber = true;
 
-	_.innerHtml = function() {
-		return '<span class="fa fa-spinner fa-pulse"></span>&nbsp;<i>Connecting to Onshape</i>';
-	}
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
-		window.ajaxRequest("onshape/get_elements", {id: this.worksheet.server_id}, function(_this) { return function(response) { _this.ajaxCallback(true, response); } }(this), function(_this) { return function(response) { _this.ajaxCallback(false, response); } }(this));
+		connectOnshape(true).insertAfter(this).show(0).focus(L);
+		window.setTimeout(function(_this) { return function() { _this.remove(0); } }(this));
 		return this;
 	}
-	_.ajaxCallback = function(success, response) {
-		if(success) {
-			if(response.part_list.length == 1)
-				getOnshape_3(response.part_list[0]["name"], response.part_list[0]["id"]).insertAfter(this).show(0).focus(R);
-			else
-				getOnshape_2(response.part_list).insertAfter(this).show(0).focus(R);
-		}
-		this.remove(0);
-	}
   _.toString = function() {
-  	return '{getOnshape}{{' + this.argumentList().join('}{') + '}}';
+  	return '{onshape_get}{{' + this.argumentList().join('}{') + '}}';
   }
 });
-
-var getOnshape_2 = P(Element, function(_, super_) {
-	_.klass = ['getOnshape'];
-	_.lineNumber = true;
-	_.init = function(response) {
-		super_.init.call(this);
-		this.parts = response; 
-		this.parts_list = {};
-		for(var i = 0; i < response.length; i++)
-			this.parts_list["" + i] = response[i]['name'];
-	}
-	_.innerHtml = function() {
-	 	return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'Read Onshape Variable') + '&nbsp;' + focusableHTML('SelectBox', 'part') + '</div>';
-	}
-	_.postInsertHandler = function() {
-		this.part_select = registerFocusable(SelectBox, this, 'part', { blank_message: 'Choose an Onshape part', dont_grey_blank: true, options: this.parts_list});
-		this.focusableItems = [[registerFocusable(CodeBlock, this, 'Read Onshape Variable', { }), this.part_select]];
-		super_.postInsertHandler.call(this);
-		return this;
-	}
-	_.changed = function(el) {
-		item = this.parts[el.text()*1];
-		getOnshape_3(item["name"], item["id"]).insertAfter(this).show(0).focus(R);
-		this.remove(0);
-	}
-  _.toString = function() {
-  	return '{getOnshape}{{' + this.argumentList().join('}{') + '}}';
-  }
-});
-
-var getOnshape_3 = P(Element, function(_, super_) {
-	_.klass = ['getOnshape'];
-	_.lineNumber = true;
-	_.part_name = "";
-	_.part_id = "";
-	_.savedProperties = ['part_name','part_id'];
-	_.init = function(name, id) {
-		super_.init.call(this);
-		this.part_name = name;
-		this.part_id = id;
-	}
-
-	_.innerHtml = function() {
-	 	return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'Read Onshape Variable') + '&nbsp;from&nbsp;' + this.part_name + '</div>'
-		+ '<div class="' + css_prefix + 'left_indent"><span class="fa fa-spinner fa-pulse"></span>&nbsp;<i>Connecting to Onshape</i></div>';
-	}
-	_.postInsertHandler = function() {
-		this.focusableItems = [[registerFocusable(CodeBlock, this, 'Read Onshape Variable', { })]];
-		super_.postInsertHandler.call(this);
-		window.ajaxRequest("onshape/get_variables", {id: this.worksheet.server_id, eid: this.part_id}, function(_this) { return function(response) { _this.ajaxCallback(true, response); } }(this), function(_this) { return function(response) { _this.ajaxCallback(false, response); } }(this));
-		return this;
-	}
-	_.ajaxCallback = function(success, response) {
-		if(success) {
-			if(response.var_list.length == 0) {
-				getOnshape().insertAfter(this).show(0).focus(R);
-				showNotice('This part has no variables.  Create a variable in the part and try again.','red');
-			} else
-				getOnshape_4(this.part_name, this.part_id, response.var_list).insertAfter(this).show(0).focus(R);
-		}
-		this.remove(0);
-	}
-  _.toString = function() {
-  	return '{getOnshape_3}{{' + this.argumentList().join('}{') + '}}';
-  }
-});
-
-var getOnshape_4 = P(Element, function(_, super_) {
-	_.klass = ['getOnshape'];
-	_.lineNumber = true;
-	_.part_name = "";
-	_.part_id = "";
-	_.savedProperties = ['part_name','part_id'];
-	_.init = function(name, id, var_list) {
-		super_.init.call(this);
-		this.part_name = name;
-		this.part_id = id;
-		this.vars = var_list; 
-		this.var_list = {};
-		for(var i = 0; i < var_list.length; i++)
-			this.var_list["" + i] = var_list[i]['name'];
-	}
-	_.innerHtml = function() {
-	 	return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'Read Onshape Variable') + '&nbsp;from&nbsp;' + this.part_name + '</div>'
-	 	+ '<div class="' + css_prefix + 'focusableItems ' + css_prefix + 'left_indent" data-id="1">' + focusableHTML('SelectBox', 'var') + "</div>";
-	}
-	_.postInsertHandler = function() {
-		this.var_select = registerFocusable(SelectBox, this, 'var', { blank_message: 'Choose a Variable', dont_grey_blank: true, options: this.var_list});
-		this.focusableItems = [[registerFocusable(CodeBlock, this, 'Read Onshape Variable', { })],[this.var_select]];
-		super_.postInsertHandler.call(this);
-		return this;
-	}
-	_.changed = function(el) {
-		item = this.vars[el.text()*1];
-		loadOnshapeVariable(this.part_name, this.part_id, item["name"], item["id"]).insertAfter(this).show(0).focus(0);
-		this.remove(0);
-	}
-  _.toString = function() {
-  	return '{getOnshape_3}{{' + this.argumentList().join('}{') + '}}';
-  }
-});
-
-
 
 var loadOnshapeVariable = P(MathOutput, function(_, super_) {
-	_.klass = ['loadOnshapeVariable'];
+	_.klass = ['connectOnshape'];
 	_.part_name = "";
 	_.part_id = "";
 	_.var_name = "";
@@ -208,8 +93,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
-			window.ajaxRequest("onshape/get_variable", {id: this.worksheet.server_id, eid: this.part_id, fid: this.var_id}, function(_this) { return function(response) { 
-				console.log(response);
+			window.ajaxRequest("/onshape/get_variable", {id: this.worksheet.server_id, eid: this.part_id, fid: this.var_id}, function(_this) { return function(response) { 
 				if(response.var["name"]) {
 					_this.jQ.find(".var_name").html(response.var["name"]);
 					_this.commands = _this.genCommand(_this.varField.text() + ' := ' + response.var["value"].trim().replace(/  /g,' ').replace(/ /g,'_'));
