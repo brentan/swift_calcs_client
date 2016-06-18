@@ -75,6 +75,7 @@ $(function() {
   var $menu = $('#account_bar .insert_menu');
   var options = ['el', 'option', 'prepend', 'highlight', 'append'];
   $.each(sidebar, function(k, v) {
+    if(k == 'Onshape') return;
     // Add to menubar
     var $li = $('<li/>').append($('<a><span class="fa fa-caret-right" style="float:right;"></span>' + k.replace(/_/g,' ') + '&nbsp;&nbsp;&nbsp;</a>'));
     var $ul = $('<ul/>').appendTo($li);
