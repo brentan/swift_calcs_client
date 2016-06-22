@@ -55,10 +55,13 @@ var setOnshapeVariable = P(MathOutput, function(_, super_) {
 				if(_this.varField.empty())
 					errors.push('Please enter a value to store.');
 				if(errors.length) {
-					_this.worksheet.save();
-					_this.outputMathBox.clear();
-					_this.setError(errors.join('<BR>'));
+					if(_this.outputMathBox) {
+						_this.worksheet.save();
+						_this.outputMathBox.clear();
+						_this.setError(errors.join('<BR>'));
+					}
 				} else {
+					if(_this.jQ) _this.jQ.removeClass('warn error');
 					_this.commands = _this.genCommand(_this.varField.text());
 					_this.commands.push({command: "evalf(" + _this.varField.text() + ")", nomarkup: true});
 					_this.evaluate();

@@ -21,6 +21,9 @@ $(function() {
       {left: 'get', text: 'Read Variable', el: 'connectOnshape', option: true},
       {left: 'set', text: 'Store to Variable', el: 'connectOnshape', option: false}
     ],
+    'Fusion 360': [
+      {left: 'set', text: 'Set User Parameter', el: 'fusion'}
+    ],
     Expansions: [
       { left: '&#8497;a<sub>n</sub>', text: 'Fourier Series a<sub>n</sub>', el: 'fouriera' },
       { left: '&#8497;b<sub>n</sub>', text: 'Fourier Series b<sub>n</sub>', el: 'fourierb' },
@@ -79,12 +82,14 @@ $(function() {
     var $li = $('<li/>').append($('<a><span class="fa fa-caret-right" style="float:right;"></span>' + k.replace(/_/g,' ') + '&nbsp;&nbsp;&nbsp;</a>'));
     var $ul = $('<ul/>').appendTo($li);
     if(k == 'Onshape') $li.addClass('onshape_only');
+    if(k == 'Fusion 360') $li.addClass('fusion_only');
     // Add to toolbox in sidebar
     if(first)
       var $section = $('<div/>').addClass('section').addClass('selected').html(k.replace(/_/g,' ') + " <span class='fa fa-caret-down'></span>");
     else
       var $section = $('<div/>').addClass('section').html(k.replace(/_/g,' ') + " <span class='fa fa-caret-right'></span>");
     if(k == 'Onshape') $section.addClass('onshape_only');
+    if(k == 'Fusion 360') $section.addClass('fusion_only');
     $box.append($section);
     var $holder = $('<div/>').addClass('box');
     if(first)

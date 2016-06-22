@@ -930,6 +930,11 @@ $(function() {
 		$(this).removeClass('onshape_not_loaded');
 		window.ajaxRequest("/projects/onshape_tree", { }, function(response) { $('.onshape_tree').html(response.onshape_html).removeClass('onshape_tree'); }, function() { $('.onshape_tree').html('An error occurred').removeClass('onshape_tree').closest('.left_item').addClass('onshape_not_loaded'); });
 	});
+	$('body').on('click', '.fusion_not_loaded', function(e) {
+		$(this).children('.project_list').html('<i class="fa fa-spinner fa-pulse"></i>').addClass('fusion_tree');
+		$(this).removeClass('fusion_not_loaded');
+		window.ajaxRequest("/projects/fusion_tree", { }, function(response) { $('.fusion_tree').html(response.fusion_html).removeClass('fusion_tree'); }, function() { $('.fusion_tree').html('An error occurred').removeClass('fusion_tree').closest('.left_item').addClass('fusion_not_loaded'); });
+	});
 	var closeActive = window.closeActive = function(el, clear_url) { 
 		window.selectToolboxTab('projects_list');
 		$('.base_layout').removeClass('worksheet_open');

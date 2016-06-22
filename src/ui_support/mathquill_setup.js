@@ -33,7 +33,7 @@ window.MathquillSetup = function() {
 			{ name: 'ohm', symbol: 'Ohm', prefix: true, mksa: [1,2,1,-3,-2,0,0,0,0]},
 			{ name: 'pascal', symbol: 'Pa', prefix: true, mksa: [1,-1,1,-2,0,0,0,0,0]},
 			{ name: 'radian', symbol: 'rad', prefix: false, mksa: [1,0,0,0,0,0,0,0,0]},
-			{ name: 'degree', symbol: 'rad', prefix: false, mksa: [1,0,0,0,0,0,0,0,0]},
+			{ name: 'degree', symbol: 'deg', prefix: false, mksa: [1,0,0,0,0,0,0,0,0]},
 			{ name: 'sievert', symbol: 'Sv', prefix: true, mksa: [1,2,0,-2,0,0,0,0,0]},
 			{ name: 'tesla', symbol: 'T', prefix: true, mksa: [1,0,1,-2,-1,0,0,0,0]},
 			{ name: 'volt', symbol: 'V', prefix: true, mksa: [1,2,1,-3,-1,0,0,0,0]},

@@ -41,7 +41,9 @@
 		'connectOnshape_3': connectOnshape_3,
 		'connectOnshape_4': connectOnshape_4,
 		'loadOnshapeVariable': loadOnshapeVariable,
-		'setOnshapeVariable': setOnshapeVariable
+		'setOnshapeVariable': setOnshapeVariable,
+		'fusion': fusion,
+		'fusion_var': fusion_var
 	}
 	for(var i = 0; i < giac_elements_to_add.length; i++) 
 		elements[giac_elements_to_add[i].key] = SwiftCalcs.elements[giac_elements_to_add[i].key] = giac_elements_to_add[i].el;
