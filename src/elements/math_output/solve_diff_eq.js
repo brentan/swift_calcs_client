@@ -123,7 +123,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
   	var _this = this;
   	this.jQ.find('.' + css_prefix + 'content').find('.' + css_prefix + 'focusableItems').each(function() {
   		if(num >= _this.varFields.length) return;
-  		$(this).find('.eqnum').html("'=");//$(this).find('.eqnum').html(_this.worksheet.latexToHtml(pre_syntax[0] + var_name + pre_syntax[1]));
+  		$(this).find('.eqnum').html(_this.worksheet.latexToHtml(pre_syntax[0] + var_name + pre_syntax[1]));
   		$(this).find('.eqinit').html(_this.worksheet.latexToHtml(init_syntax[0] + _this.varFields[num].latex() + init_syntax[1] + init_cond + init_syntax[2]));
   		num++;
   	});
