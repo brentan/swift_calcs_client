@@ -4,7 +4,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 	_.number_of_equations = 1;
 	_.numeric_mode = false;
 	_.helpTextSymbolic = "<<solve differential equation <[EXPR]> for <[FUNC]>>>\nSolve the differential equation(s) and condition(s) given (EXPR) for the function specified in FUNC.  Use apostrophes in EXPR to indicate a derivative.  Use the 'add another equation' link to add more equations or conditions.\nExample: Solve differential equation f'' + f = cos(x), f(0) = 1, f'(0) = 0 for f(x)";
-	_.helpTextNumeric = "<<solve differential equation <[EXPR]> for y'=<[FUNC]> and y(0)=<INIT> for <x> from <0> to <end>>>\nSolve the differential equation(s) given (EXPR) numerically.  Each equation is the derivative of a value y.  Initial conditions for each y must also be provided, as well as the end value for the dependant variable to which the solution should solve.  The solver will return a matrix with value from the intial condition to the final value, with values for y in between.\nExample: Solve differential equation y' = y * cos(x), y(0) = 1, for x from 0 to 1";
+	_.helpTextNumeric = "<<solve differential equation y'=<[EXPR]> and y(0)=<[INIT]> for <[x]> from <[0]> to <[end]>>>\nSolve the differential equation(s) given (EXPR) numerically.  Each equation is the derivative of a value y.  Initial conditions for each y must also be provided, as well as the end value for the dependant variable to which the solution should solve.  The solver will return a matrix with value from the intial condition to the final value, with values for y in between.\nExample: Solve differential equation y' = y * cos(x), y(0) = 1, for x from 0 to 1";
 	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','number_of_equations', 'scoped', 'numeric_mode'];
 
 	_.init = function() {
@@ -123,7 +123,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
   	var _this = this;
   	this.jQ.find('.' + css_prefix + 'content').find('.' + css_prefix + 'focusableItems').each(function() {
   		if(num >= _this.varFields.length) return;
-  		$(this).find('.eqnum').html("'");//$(this).find('.eqnum').html(_this.worksheet.latexToHtml(pre_syntax[0] + var_name + pre_syntax[1]));
+  		$(this).find('.eqnum').html("'=");//$(this).find('.eqnum').html(_this.worksheet.latexToHtml(pre_syntax[0] + var_name + pre_syntax[1]));
   		$(this).find('.eqinit').html(_this.worksheet.latexToHtml(init_syntax[0] + _this.varFields[num].latex() + init_syntax[1] + init_cond + init_syntax[2]));
   		num++;
   	});
@@ -208,7 +208,13 @@ var desolve = P(GiacGeneric, function(_, super_) {
 							errors.push("Invalid variable name (" + _this.worksheet.latexToHtml(v.latex()) + ").  Please correct this error to continue.");
 						eq_vars.push(to_add);
 					}
-					var var_command = _this.varField.text() + '=' + _this.startField.text() + '..' + _this.endField.text() + ',';
+					var step_var = _this.varField.text();
+					// if they entered y(x) instead of y in the expression field, convert it:
+					for(var i = 0; i < eq_vars.length; i++) {
+						for(var j=0; j < eqs.length; j++) 
+							eqs[j] = eqs[j].replace(new RegExp("([^a-zA-Z0-9])" + eq_vars[i] + "\\(" + step_var + "\\)",'g'),"$1" + eq_vars[i]).replace(new RegExp("^" + eq_vars[i] + "\\(" + step_var + "\\)",'g'),eq_vars[i]);
+					}
+					var var_command = step_var + '=' + _this.startField.text() + '..' + _this.endField.text() + ',';
 					var step_command = _this.stepField.text() == '0' ? '' : (',tstep=' + _this.stepField.text());
 					if(eqs.length > 1)
 						var command = 'odesolve([' + eqs.join(', ') + '], ' + var_command + '[' + eq_vars.join(', ') + '],[' + init_conditions.join(', ') + ']' + step_command + ',curve)';

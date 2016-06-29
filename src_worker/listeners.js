@@ -33,7 +33,7 @@ var eval_method = function(method_name, inputs) {
   }
   return '';
 }
-check_method = function(method_name) {
+var check_method = function(method_name) {
   /* 
   Will receive a string, method_name, that is asking if this is a valid
   method_name.  We simply do a regex now and return 1 or 0 (expecting int response)
@@ -209,10 +209,10 @@ var receiveMessage = function(command) {
         } */
       } else 
         output.push({ success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + ')))))') });
-      // If evaluation resulted in an error, drop all of our additions (latex, simplify, etc) and make sure that wasn't the problem
+      // If evaluation resulted in an error, drop all of our additions (simplify, etc) and make sure that wasn't the problem
       var test_output = testError(output[ii],ii, to_send);
 			if(!test_output.success)
-				output[ii] = { success: true, returned: Module.casevalWithTimeout(to_send) }
+				output[ii] = { success: true, returned: Module.casevalWithTimeout('latex(' + to_send + ')') }
       // Change 1e-4 scientific notation to latex form
       output[ii].returned = output[ii].returned.replace(/([0-9\.]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
     } else {
@@ -268,6 +268,7 @@ var Module = {
   preRun: [],
   postRun: [],
   print: function(text) {
+    if(!text || !text.match) return;
   	if(text.match(/error/) && !text.match(/Warning/))
   		errors[ii] = fix_message(text);
   	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1) && !text.match(/declared as global/) && !text.match(/No check were made for singular points/))
