@@ -198,7 +198,7 @@ Worksheet.open(function(_) {
 		$('.popup_dialog .bottom_links button.submit').on('click', function(_this) { return function(e) { 
 			$('.popup_dialog .settings').remove();
 			window.hideDialogs();
-			_this.jQ.closest('.active_holder').find('td.settings .message').html(_this.setSettingsText())
+			_this.jQ.closest('.active_holder').find('div.settings').html(_this.setSettingsText())
 			_this.settingsToGiac(true); 
 		}; }(this));
 		setUnitSidebar(this);
