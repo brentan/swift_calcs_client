@@ -193,7 +193,7 @@ var receiveMessage = function(command) {
       else
         simplify_command = '(';
       if(command.commands[ii].approx)
-        simplify_command = 'evalf(' + simplify_command;
+        simplify_command = 'evalf((';
       else
         simplify_command = '(' + simplify_command;
       if(command.commands[ii].unit) { // If provided, this is a 2 element array.  The first is the unit in evaluatable text, the second is an HTML representation
@@ -241,8 +241,10 @@ var testError = function(output, ii, to_send) {
   // Also check for an undefined result, which returns a bit of a complex result from giac
   if(errors[ii]) 
     output = {success: false, returned: errors[ii] };
+  else if(output.returned.indexOf("Incompatible units:") > -1)
+    output = {success: false, returned: (output.returned.replace('GIAC_ERROR:','').replace(/_/g,'').replace(" Error: Bad Argument Value",""))};
   else if(output.returned.indexOf("Incompatible units") > -1)
-    output = {success: false, returned: fix_message("Incompatible units Error: Please check your equation to ensure units balance")};
+    output = {success: false, returned: fix_message("Incompatible units error: Please check your equation to ensure units balance")};
   else if(output.returned.indexOf("GIAC_ERROR") > -1)
     output = {success: false, returned: fix_message(output.returned.replace('GIAC_ERROR:',''))};
   else if((output.returned == '"\\,\\mathrm{undef}\\,"') || (output.returned == '"\\begin{bmatrix0}\\,\\mathrm{undef}\\,\\end{bmatrix0} "')) {

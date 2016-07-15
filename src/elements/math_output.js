@@ -28,7 +28,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		return this;
 	}
 	_.genCommand = function(to_compute) {
-		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, simplify: this.factor_expand, nomarkup: this.nomarkup}];
+		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, simplify: (this.factor_expand === 'expand' ? 'expand' : false), nomarkup: this.nomarkup}];
 		if(this.pre_command)
 			to_send.pre_command = this.pre_command;
 		return to_send;
@@ -87,21 +87,26 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 						this.outputBox.jQ.addClass('hide_pulldown');
 					} else {
 						// Create the pulldown menu
-						menu.append('<div class="pulldown_item" data-action="copyAnswer"><i class="fa fa-fw"></i>&nbsp; Copy to new line</div>');
+						menu.append('<div class="pulldown_item" data-action="copyAnswer">Copy to new line</div>');
 						if(!this.scoped && this.storeAsVariable)
-							menu.append('<div class="pulldown_item" data-action="storeAsVariable"><i class="fa fa-fw"></i>&nbsp; Assign to variable</div>');
+							menu.append('<div class="pulldown_item" data-action="storeAsVariable">Assign to variable</div>');
 						if(result[0].returned.indexOf('\\Unit') > -1)
-							menu.append('<div class="pulldown_item" data-action="enableUnitMode"><i class="fa fa-fw"></i>&nbsp; Change units</div>');
-						menu.append('<div class="pulldown_item" data-action="toggleApprox"><i class="fa fa-toggle-' + (this.approx ? 'on' : 'off') + ' fa-fw"></i>&nbsp; Approximate mode (1/2 &#8594; 0.5)</div>');
-						var factor = 'off';
-						var expand = 'off';
-						var simplify = 'off';
-						if(this.factor_expand === 'factor') factor = 'on';
-						if(this.factor_expand === 'expand') expand = 'on';
-						if(this.factor_expand === 'simplify') simplify = 'on';
-						menu.append('<div class="pulldown_item" data-action="toggleExpand"><i class="fa fa-toggle-' + expand + ' fa-fw"></i>&nbsp; Expand</div>');
-						//menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
-						menu.append('<div class="pulldown_item" data-action="toggleSimplify"><i class="fa fa-toggle-' + simplify + ' fa-fw"></i>&nbsp; Simplify</div>');
+							menu.append('<div class="pulldown_item" data-action="enableUnitMode">Change units</div>');
+						if(this.approx)
+							menu.append('<div class="pulldown_item" data-action="toggleApprox">Disable Approximation: 0.333 &#8594; 1/3</div>');
+						else {
+							menu.append('<div class="pulldown_item" data-action="toggleApprox">Enable Approximation: 1/3 &#8594; 0.333</div>');
+							//var factor = 'off';
+							//var simplify = 'off';
+							if(this.factor_expand === 'expand') 
+								menu.append('<div class="pulldown_item" data-action="toggleExpand">Factor Result: 2x+2 &#8594; 2(x+1)</div>');
+							else 
+								menu.append('<div class="pulldown_item" data-action="toggleExpand">Expand Result: 2(x+1) &#8594; 2x+2</div>');
+							//if(this.factor_expand === 'factor') factor = 'on';
+							//if(this.factor_expand === 'simplify') simplify = 'on';
+							//menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
+							//menu.append('<div class="pulldown_item" data-action="toggleSimplify"><i class="fa fa-toggle-' + simplify + ' fa-fw"></i>&nbsp; Simplify</div>');
+						}
 					}
 				}
 			}
