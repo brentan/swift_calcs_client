@@ -3,7 +3,7 @@
  ************************************************************************/
 
 Worksheet.open(function(_) {
-	var default_settings = { angle: 'rad', complex: 'on', units: 'mks', digits: '9', custom_units: false, base_units: ['m','kg','s','K'], derived_units: ['A','mol','cd','E','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'] };
+	var default_settings = { angle: 'rad', complex: 'on', approx: 'off', units: 'mks', digits: '9', custom_units: false, base_units: ['m','kg','s','K'], derived_units: ['A','mol','cd','E','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'] };
 	var showApplyNow = function() {
 		$('.popup_dialog .bottom_links button.submit').show();
 	}
@@ -11,8 +11,10 @@ Worksheet.open(function(_) {
 		var out = "";
 		out += this.settings.angle == 'rad' ? 'Rad' : 'Deg';
 		out += ", ";
-		out += this.settings.complex == 'on' ? 'Complex' : 'Real';
-		out += ", ";
+    out += this.settings.complex == 'on' ? 'Complex' : 'Real';
+    out += ", ";
+    out += this.settings.approx == 'on' ? 'Approx' : 'Exact';
+    out += ", ";
 		out += this.settings.digits;
 		out += " digits, " + this.settings.base_units[0] + ', ' + this.settings.base_units[1] + ', ' + this.settings.base_units[2] + ', ' + this.settings.base_units[3];
 		return out;
@@ -26,13 +28,20 @@ Worksheet.open(function(_) {
 			+ "<option value='deg'>Degrees</option>"
 			+ "</select></div>"
 			+ "</div>"
-			+ "<div class='section'>"
-			+ "Complex Mode: "
-			+ "<div class='select'><select class='complex_mode' data-type='complex_mode'>"
-			+ "<option value='on'>Enabled</option>"
-			+ "<option value='off'>Disabled</option>"
-			+ "</select></div>"
-			+ "</div>"
+      + "<div class='section'>"
+      + "Computational Mode: "
+      + "<div class='select'><select class='approx_mode' data-type='approx_mode'>"
+      + "<option value='off'>Exact/Symbolic Mode</option>"
+      + "<option value='on'>Approximate/Numeric Mode</option>"
+      + "</select></div>"
+      + "</div>"
+      + "<div class='section'>"
+      + "Complex Mode: "
+      + "<div class='select'><select class='complex_mode' data-type='complex_mode'>"
+      + "<option value='on'>Enabled</option>"
+      + "<option value='off'>Disabled</option>"
+      + "</select></div>"
+      + "</div>"
 			+ "<div class='section'>"
 			+ "Significant Digits: "
 			+ "<div class='select'><select class='digits_select' data-type='digits_select'>"
@@ -153,9 +162,12 @@ Worksheet.open(function(_) {
 			case 'angle_mode':
 				SwiftCalcs.active_worksheet.settings.angle = $(this).val();
 				break;
-			case 'complex_mode':
-				SwiftCalcs.active_worksheet.settings.complex = $(this).val();
-				break;
+      case 'complex_mode':
+        SwiftCalcs.active_worksheet.settings.complex = $(this).val();
+        break;
+      case 'approx_mode':
+        SwiftCalcs.active_worksheet.settings.approx = $(this).val();
+        break;
 			case 'digits_select':
 				SwiftCalcs.active_worksheet.settings.digits = $(this).val();
 				break;
@@ -182,13 +194,16 @@ Worksheet.open(function(_) {
 		}
 		showApplyNow();
 	}
+  var start_approx_mode = false;
 	_.loadSettingsPane = function() {
+    start_approx_mode = this.settings.approx;
 		window.showPopupOnTop();
 		$('.popup_dialog .full').html(settingsHTML);
     $('.popup_dialog .bottom_links').html('<button class="submit" style="display:none;">Save Settings and Recalculate</button><button class="close grey">Close</button>');
     window.resizePopup(false);
 		$('select.angle_mode').val(this.settings.angle).on('change', handleSelectChange);
-		$('select.complex_mode').val(this.settings.complex).on('change', handleSelectChange);
+    $('select.complex_mode').val(this.settings.complex).on('change', handleSelectChange);
+    $('select.approx_mode').val(this.settings.approx).on('change', handleSelectChange);
 		$('select.unit_mode').val(this.settings.units).on('change', handleSelectChange);
 		$('select.digits_select').val(this.settings.digits).on('change', handleSelectChange);
 		$('.popup_dialog .bottom_links button.close').on('click', function(e) { 
@@ -199,6 +214,17 @@ Worksheet.open(function(_) {
 			$('.popup_dialog .settings').remove();
 			window.hideDialogs();
 			_this.jQ.closest('.active_holder').find('div.settings').html(_this.setSettingsText())
+      if(start_approx_mode != _this.settings.approx) {
+        //Approx mode changed...need to go through and reset approx mode on all items in worksheet
+        _this.commandChildren(function(approx_mode) { return function(el) {
+          if(el instanceof MathOutput) {
+            el.approx = approx_mode;
+            for(var i = 0; i < el.commands.length; i++)
+              el.commands[i].approx = approx_mode;
+          }
+        }; }(_this.settings.approx === 'on'));
+        _this.save();
+      }
 			_this.settingsToGiac(true); 
 		}; }(this));
 		setUnitSidebar(this);
@@ -217,7 +243,8 @@ Worksheet.open(function(_) {
 		if(!(this.settings.saved == "true") && !(this.settings.saved ===true)) 
 			this.settings = default_settings;
 		// Add new settings that aren't in all files
-		if(typeof this.settings.digits === 'undefined') this.settings.digits = default_settings.digits;
+    if(typeof this.settings.digits === 'undefined') this.settings.digits = default_settings.digits;
+    if(typeof this.settings.approx === 'undefined') this.settings.approx = default_settings.approx;
 		this.settingsToGiac(false);
 		return this;
 	}

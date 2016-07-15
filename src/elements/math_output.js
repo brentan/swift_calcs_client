@@ -6,9 +6,10 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
 	_.unitMode = false;
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode'];
+	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','approx_set'];
 	_.expectedUnits = false;
 	_.approx = false;
+  _.approx_set = false;
 	_.factor_expand = false;
 	_.pre_command = false;
 	_.nomarkup = false;
@@ -16,13 +17,13 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 	// Output mode has three values: 0 is auto, 1 is force hide, 2 is force show
 	_.outputMode = 0
 
-
   _.uniqueAnsId = function() { return ans_id += 1; }
   _.setAnswerIdCounter = function(val) {
   	ans_id = max(ans_id, val);
   }
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
+    if(!this.approx_set) this.approx = (this.worksheet.settings.approx == 'on');
 		this.outputMathBox = MathQuill.MathField(this.outputBox.jQ.find('div.answer')[0]);
 		this.outputMathBox.setElement(this).setStaticMode(this);
 		return this;
@@ -169,6 +170,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		math().insertAfter(this).show(450).focus(L).write(latex !== '' ? latex : this.answerLatex).closePopup();
 	}
 	_.toggleApprox = function() {
+    this.approx_set = true;
 		this.approx = !this.approx;
 		this.needsEvaluation = true;
 		this.submissionHandler(this)();
