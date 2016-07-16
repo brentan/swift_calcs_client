@@ -20,6 +20,10 @@ $(function() {
 	$('body').on('click', '#account_bar .calc_now', function(e) { if($(this).closest('nav.menu').hasClass('noWorksheet')) return false; SwiftCalcs.giac.manualEvaluation(); return false; });
 	$('body').on('click', '#account_bar .full_calc', function(e) { if($(this).closest('nav.menu').hasClass('noWorksheet')) return false; if(SwiftCalcs.active_worksheet) { window.start_time = undefined; SwiftCalcs.active_worksheet.ends[-1].evaluate(true, true); if(!SwiftCalcs.giac.auto_evaluation) { SwiftCalcs.giac.manualEvaluation(); } } return false; });
 
+  $('body').on('click', '#account_bar .syntax_highlight_on', function(e) { window.trackEvent("Syntax Highlighting", "On"); $('body').addClass('syntax_highlighting'); $(this).parent().hide(); $(this).parent().next().show(); return false; });
+  $('body').on('click', '#account_bar .syntax_highlight_off', function(e) { window.trackEvent("Syntax Highlighting", "Off"); $('body').removeClass('syntax_highlighting'); $(this).parent().hide(); $(this).parent().prev().show(); return false; });
+
+
 	var createBlock = function(el_type, options) {
   	var el = SwiftCalcs.active_worksheet.lastActive;
   	if(el === 0) el = SwiftCalcs.active_worksheet.ends[1];
