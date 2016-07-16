@@ -247,6 +247,8 @@ var testError = function(output, ii, to_send) {
     output = {success: false, returned: fix_message("Incompatible units error: Please check your equation to ensure units balance")};
   else if(output.returned.indexOf("GIAC_ERROR") > -1)
     output = {success: false, returned: fix_message(output.returned.replace('GIAC_ERROR:',''))};
+  else if(output.returned.indexOf("Bad Argument Type") > -1)
+    output = {success: false, returned: "Error: Bad Argument Type"};
   else if((output.returned == '"\\,\\mathrm{undef}\\,"') || (output.returned == '"\\begin{bmatrix0}\\,\\mathrm{undef}\\,\\end{bmatrix0} "')) {
     output = {success: true, returned: ''}
     warnings[ii].push('Undefined result - Check for division by zero or inconsistent units');
