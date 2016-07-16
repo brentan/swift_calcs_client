@@ -5,8 +5,8 @@ $(function() {
     General: [
       {left: 'fa-calculator', text: 'Math Mode', el: 'math' },
       {left: 'fa-font', text: 'Text Mode', el: 'text' },
-      {left: 'x&#8801;', text: 'Define a Variable', el: 'math', option: 'latex{x=}', prepend: true, highlight: "Shift-Right"},
-      {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;', text: 'Define a Function', el: 'math', option: 'latex{\\operatorname{f}\\left({}\\right)=}', prepend: true, highlight: "Right Shift-Right"},
+      {left: 'x&#8801;', text: 'Define a Variable', el: 'math', focus_right: true, option: 'latex{x=}', prepend: true, highlight: "Shift-Right"},
+      {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;', text: 'Define a Function', el: 'math', focus_right: true, option: 'latex{\\operatorname{f}\\left({}\\right)=}', prepend: true, highlight: "Right Shift-Right Shift-Right"},
       {left: 'fa-line-chart', text: 'Plot Function', el: 'plot'},
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
       {left: 'fa-table', text: 'Table', vaporware: true},
@@ -18,8 +18,8 @@ $(function() {
       {left: 'fa-magic', text: 'Regression / fit line', el: 'regression'},
     ],
     Onshape: [
-      {left: 'get', text: 'Read Variable', el: 'connectOnshape', option: true},
-      {left: 'set', text: 'Store to Variable', el: 'connectOnshape', option: false}
+      {left: 'get', text: 'Read Variable', el: 'connectOnshape', focus_right: true, option: true},
+      {left: 'set', text: 'Store to Variable', el: 'connectOnshape', focus_right: true, option: false}
     ],
     'Fusion 360': [
       {left: 'set', text: 'Set User Parameter', el: 'fusion'}
@@ -46,11 +46,11 @@ $(function() {
     ],
     Plots_and_Charts: [
       {left: 'fa-line-chart', text: 'Plot Function', el: 'plot'},
-      {left: 'fa-area-chart', text: 'Line Plot', el: 'plot', option: 'plot_line'},
-      {left: 'fa-area-chart', text: 'Area Plot', el: 'plot', option: 'plot_area'},
-      {left: 'fa-area-chart', text: 'Scatter Plot', el: 'plot', option: 'plot_scatter'},
-      {left: 'fa-bar-chart', text: 'Bar Chart', el: 'plot', option: 'plot_bar'},
-      {left: 'fa-bar-chart', text: 'Histogram', el: 'plot', option: 'plot_histogram'},
+      {left: 'fa-area-chart', text: 'Line Plot', el: 'plot', focus_right: true, option: 'plot_line'},
+      {left: 'fa-area-chart', text: 'Area Plot', el: 'plot', focus_right: true, option: 'plot_area'},
+      {left: 'fa-area-chart', text: 'Scatter Plot', el: 'plot', focus_right: true, option: 'plot_scatter'},
+      {left: 'fa-bar-chart', text: 'Bar Chart', el: 'plot', focus_right: true, option: 'plot_bar'},
+      {left: 'fa-bar-chart', text: 'Histogram', el: 'plot', focus_right: true, option: 'plot_histogram'},
     ],
     Solvers: [
       {left: 'x=?', text: 'Solver', el: 'solve'},
@@ -67,8 +67,10 @@ $(function() {
       { left: '&Zeta;<sup>-1</sup>', text: 'Inverse Z Transform', el: 'iztrans' },
     ],
     Variables: [
-      {left: 'x&#8801;', text: 'Define a Variable', el: 'math', option: 'latex{x=}', prepend: true, highlight: "Shift-Right"},
-      {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;', text: 'Define a Function', el: 'math', option: 'latex{\\operatorname{f}\\left({}\\right)=}', prepend: true, highlight: "Right Shift-Right"},
+      {left: 'x&#8801;', text: 'Define a Variable', el: 'math', focus_right: true, option: 'latex{x=}', prepend: true, highlight: "Shift-Right"},
+      {left: 'x&#8801;{', text: 'Conditional Variable', el: 'conditional_assignment'},
+      {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;', text: 'Define a Function', el: 'math', focus_right: true, option: 'latex{\\operatorname{f}\\left({}\\right)=}', prepend: true, highlight: "Right Shift-Right Shift-Right"},
+      {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;{', text: 'Conditional Function', el: 'conditional_assignment', focus_right: false, option: 'latex{\\operatorname{f}\\left({}\\right)}', highlight_always: "Right Shift-Right Shift-Right"},
       {left: 'fa-trash', text: 'Purge Variable', el: 'purge' },
       {left: 'fa-sliders', text: 'Input Slider', el: 'slider' },
     ],
@@ -76,7 +78,7 @@ $(function() {
   var first = true;
   var $box = $('div.content.tools');
   var $menu = $('#account_bar .insert_menu');
-  var options = ['el', 'option', 'prepend', 'highlight', 'append'];
+  var options = ['el', 'option', 'prepend', 'highlight', 'highlight_always', 'append', 'focus_right'];
   $.each(sidebar, function(k, v) {
     // Add to menubar
     var $li = $('<li/>').append($('<a><span class="fa fa-caret-right" style="float:right;"></span>' + k.replace(/_/g,' ') + '&nbsp;&nbsp;&nbsp;</a>'));
@@ -105,7 +107,7 @@ $(function() {
       for(var j = 0; j < options.length; j++)
         if(v[i][options[j]]) $a.attr('data-' + options[j], v[i][options[j]]);
       if(v[i].giac_func) 
-        $a.attr('data-el','math').attr('data-option','latex{\\operatorname{' + v[i].giac_func.replace(/^([^_])*_(.*)$/,"$1_{$2}") + '}\\left({}\\right)}').attr('data-highlight','Left').attr('data-append',true);
+        $a.attr('data-el','math').attr('data-option','latex{\\operatorname{' + v[i].giac_func.replace(/^([^_])*_(.*)$/,"$1_{$2}") + '}\\left({}\\right)}').attr('data-focus_right','1').attr('data-highlight','Left').attr('data-append',true);
       if(v[i].left.match(/^fa-[a-zA-Z_\-]+$/))
         $a.prepend('<i class="fa fa-fw ' + v[i].left + '"></i>');
       else
@@ -117,7 +119,7 @@ $(function() {
       for(var j = 0; j < options.length; j++)
         if(v[i][options[j]]) $item.attr('data-' + options[j], v[i][options[j]]);
       if(v[i].giac_func) 
-        $item.attr('data-el','math').attr('data-option','latex{\\operatorname{' + v[i].giac_func.replace(/^([^_])*_(.*)$/,"$1_{$2}") + '}\\left({}\\right)}').attr('data-highlight','Left').attr('data-append',true);
+        $item.attr('data-el','math').attr('data-option','latex{\\operatorname{' + v[i].giac_func.replace(/^([^_])*_(.*)$/,"$1_{$2}") + '}\\left({}\\right)}').attr('data-focus_right','1').attr('data-highlight','Left').attr('data-append',true);
       var $centered = $('<div/>').addClass('centered').appendTo($item);
       if(!v[i].left)
         $('<div/>').addClass('left').html('<i class="fa fa-minus"></i>').appendTo($centered);
@@ -202,15 +204,20 @@ $(function() {
         el.mark_for_deletion = true;
         var var_name = el.mathField.text().replace(/^([^=]*) :=.*$/i,"$1");
         el.needsEvaluation = false;
-        to_create.insertAfter(el).show().focus(_this.attr('data-option') ? 1 : 0);
+        to_create.insertAfter(el).show().focus(_this.attr('data-focus_right') ? 1 : 0);
         to_create.storeAsVariable(var_name);
         el.remove(0);
       } else {
-        to_create.insertAfter(el).show(150).focus(_this.attr('data-option') ? 1 : 0);
+        to_create.insertAfter(el).show(150).focus(_this.attr('data-focus_right') ? 1 : 0);
         if(replace) 
           el.remove();
         if(_this.attr('data-el') == 'text')
           to_create.textField.magicCommands();
+      }
+      if(_this.attr('data-highlight_always')) {
+        var commands = _this.attr('data-highlight_always').split(' ');
+        for(var i = 0; i < commands.length; i++)
+          to_create.keystroke(commands[i], { preventDefault: function() { } });
       }
       SwiftCalcs.active_worksheet.endUndoStream();
     }
@@ -232,11 +239,16 @@ $(function() {
   		else
   			to_create = to_create();
   		if(into) 
-  			to_create.insertInto(el, dir).show(150).focus(_this.attr('data-option') ? 1 : 0);
+  			to_create.insertInto(el, dir).show(150).focus(_this.attr('data-focus_right') ? 1 : 0);
   		else
-  			to_create.insertNextTo(el, dir).show(150).focus(_this.attr('data-option') ? 1 : 0);
+  			to_create.insertNextTo(el, dir).show(150).focus(_this.attr('data-focus_right') ? 1 : 0);
   		if(_this.attr('data-el') == 'text')
   			to_create.textField.magicCommands();
+      if(_this.attr('data-highlight_always')) {
+        var commands = _this.attr('data-highlight_always').split(' ');
+        for(var i = 0; i < commands.length; i++)
+          to_create.keystroke(commands[i], { preventDefault: function() { } });
+      }
       SwiftCalcs.active_worksheet.endUndoStream();
   		return;
 		}

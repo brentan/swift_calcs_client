@@ -10,10 +10,11 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 
 	_.helpText = "<<if <[TEST]>>>\nIf the result of TEST is true (or non-zero), the block will be evaluated.  Otherwise, the block is skipped.  Examples: if x = 2, if x > 4";
 
-	_.init = function() {
+	_.init = function(latex) {
 		this.eqFields = [];
 		this.condFields = [];
 		super_.init.call(this);
+    this.latex = latex || '';
 	}
 	_.innerHtml = function() {
 		return '<table class="' + css_prefix + 'conditional_assignment"><tbody><tr><td>'
@@ -46,6 +47,8 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 		this.condFields[0].setExpressionMode(true);
 		this.focusableItems = [[this.varField, this.eqFields[0], this.condFields[0]] , [this.eqFields[1]]];
 		this.needsEvaluation = false;
+    if(this.latex.trim().length > 0)
+      this.varField.write(this.latex);
 		super_.postInsertHandler.call(this);
 		return this;
 	}
@@ -230,5 +233,12 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 	}
   _.toString = function() {
   	return '{conditional_assignment}{{' + this.argumentList().join('}{') + '}}';
+  }
+  _.focus = function(dir) {
+    if(!this.inTree) return this;
+    super_.focus.call(this, dir);
+    if(dir === R) this.eqFields[this.eqFields.length - 1].focus(R);
+    else if((dir === 0) || (dir === L)) this.varField.focus(L);
+    return this;
   }
 });
