@@ -96,6 +96,13 @@ var receiveMessage = function(command) {
 		Module.caseval('unarchive("' + command.previous_scope + '");srand;');
   // Iterate over the command list
 	for(ii = 0; ii < command.commands.length; ii++) {
+    if(command.commands[ii].genError) {
+      // Prechecks on compilation can generate errors, but we still send here so that they are caught in the natural evaluation chain.  Otherwise we would have to hijack that chain
+      // during the compilation step
+      output.push({success: false, returned: command.commands[ii].genError, error_index: command.commands[ii].error_index ? command.commands[ii].error_index : -1});
+      continue;
+    }
+
     if(command.commands[ii].pre_command)
       Module.caseval(command.commands[ii].pre_command);
 		var to_send = command.commands[ii].command.trim();

@@ -29,6 +29,16 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		return this;
 	}
 	_.genCommand = function(to_compute) {
+		//Perform unit check
+		reg = /([^a-zA-Z0-9_]|^)_([a-zA-Zµ2]+)/g;
+		var result;
+		while((result = reg.exec(to_compute)) !== null) {
+    	if(!window.checkForValidUnit(result[2])) {
+    		// Invalid unit in entry
+    		return [{command: to_compute, genError: "Error: Unknown unit in input (" + result[2] + ").  This is not a built-in unit.  Please express as a function of built-in units (use the 'm/s' dropdown from the menubar for a full list).", error_index: result.index}];
+    	}
+		}
+
 		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, simplify: (this.factor_expand === 'expand' ? 'expand' : false), nomarkup: this.nomarkup}];
 		if(this.pre_command)
 			to_send.pre_command = this.pre_command;
