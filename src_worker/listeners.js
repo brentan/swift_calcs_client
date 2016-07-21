@@ -177,6 +177,8 @@ var receiveMessage = function(command) {
       }
       test_output = testError(test_output, ii, to_send);
       if(test_output.success) {
+        if(to_send.match(/^[\s]*[a-z][a-z0-9_]*\([a-z0-9_,]+\)[\s]*:=/i)) // Factor/expand breaks function definitions (for some reason, it loads function vars as globals) so we dont want to use it
+          command.commands[ii].simplify = ' ';
         to_send = to_send.replace(/^[\s]*([a-zA-Z0-9_]+).*$/,'$1');
       } else {
         // Correct the error index based on whether we added evalf or not
