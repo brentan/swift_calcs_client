@@ -35,7 +35,7 @@ var fusion = P(Element, function(_, super_) {
 			}
 			_this.varList["new+"]="Create new user parameter";
 			_this.vars_loaded = true;
-			_this.jQ.find('div.sync').html('<a href="#" onclick="window.open(\'fusion360://command=insert&file=na&privateInfo=SwiftCalcs_load_' + response.id + '_' + Math.floor(Math.random() * (1000000001)) + '\',\'_blank\');$(this).addClass(\'grey\');return true;" class="button grey">Sync to Fusion 360</a> <span class="explain">Make sure Fusion 360 is open on your machine</span>')
+			_this.jQ.find('div.sync').html('<a href="#" onclick="window.open(\'fusion360://command=insert&file=na&privateInfo=SwiftCalcs_load_' + response.id + '_\' + Math.floor(Math.random() * (1000000001)),\'_blank\');$(this).addClass(\'grey\');return false;" class="button grey">Sync to Fusion 360</a> <span class="explain">Make sure Fusion 360 is open on your machine</span>')
 			var children = _this.children();
 			for(var i = 0; i < children.length; i++)
 				if(children[i] instanceof choose_fusion_var) children[i].loadVars(_this.varList);
