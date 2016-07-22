@@ -343,12 +343,16 @@ var Worksheet = P(function(_) {
 		$('<div/>').addClass('settings').html(this.setSettingsText()).appendTo(det_div.find('td.info')).on('click', function(_this) { return function(e) {
 			_this.loadSettingsPane();
 		}; }(this));
-		det_div.insertBefore(this.jQ).slideDown({duration: 200});
+    if(typeof window.embedded === 'undefined') 
+		  det_div.insertBefore(this.jQ).slideDown({duration: 200});
 		var name_span = this.jQ.closest('.active_holder').find('.worksheet_item span.name');
-		if(this.rights >= 3) 
+		if((this.rights >= 3))
 			name_span.addClass('change').children('span').on('click', function(_this, name_span) { return function(e) { rename(_this, name_span, e); }; }(this, name_span));
 		$('nav.menu .save_message span').remove();
-		ajaxQueue.save_div = $('<span/>').addClass('save_span').insertAfter(name_span).add($('<span/>').addClass('save_span').appendTo('nav.menu .save_message'));
+    if(window.embedded && window.allow_save) 
+      ajaxQueue.save_div = $('<span/>').addClass('save_span').appendTo($('div.header'));
+    else
+		  ajaxQueue.save_div = $('<span/>').addClass('save_span').insertAfter(name_span).add($('<span/>').addClass('save_span').appendTo('nav.menu .save_message'));
 		var auto_evaluation = giac.auto_evaluation;
 		ajaxQueue.suppress = true;
 		giac.auto_evaluation = false;
@@ -501,6 +505,7 @@ var Worksheet = P(function(_) {
     this.uploads = ids.join(',');
   }
   _.save = function(force) {
+    if(window.embedded && window.no_save) return;
   	if(this.rights >= 3)
   		ajaxQueue.saveNeeded(this, force);
   	else if(this.rights == 2)

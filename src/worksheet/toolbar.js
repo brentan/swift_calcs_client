@@ -44,6 +44,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		this.toolbar_holder = toolbar_holder;
 	}
 	_.reshapeToolbar = function() {
+		if(window.embedded) return;
     var menu_height = max(max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height());
     $('#account_bar').height(menu_height);
 		if(window.matchMedia("only screen and (max-device-width: 480px)").matches) {

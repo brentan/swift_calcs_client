@@ -64,7 +64,7 @@ var GiacHandler = P(function(_) {
 		this.worker = false;
 		this.init();
 		setError('Math Engine Terminated.  All calculations are frozen.  <a href="#">Restart Math Engine and Recalculate Sheet</a>');
-		$('.status_bar').find('a').on('click', function() {
+		$(window.embedded ? '.status_bar_embed' : '.status_bar').find('a').on('click', function() {
 			$(this).hide();
 			SwiftCalcs.giac.restart();
 		})

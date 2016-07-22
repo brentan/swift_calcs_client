@@ -117,7 +117,7 @@ $(function() {
 		$('.screen_explanation').remove(); 
 	}
 	window.loadNextScreenExplanation = function(step) { loadStep(step); }
-	window.loadTutorial = function() { loadStep(0); };
+	window.loadTutorial = function() { if(window.embedded) { return; } loadStep(0); };
 	$('body').on('click', '#account_bar .load_tutorial', function(e) { window.loadTutorial(); return false; });
 
 	if(window.returning_user) {

@@ -55,6 +55,10 @@ $(function() {
     i.closest(".collapsable_item").find("i.fa-dot-circle-o").removeClass('fa-dot-circle-o').addClass('fa-circle-o');
     i.find("i.fa-circle-o").addClass('fa-dot-circle-o').removeClass('fa-circle-o');
     i.closest(".collapsable_item").find("input.public_rights").val(i.attr('data-type'));
+    if(i.attr('data-type')*1 > 0) 
+      i.closest(".rights_form").find(".hide_on_public").hide();
+    else if(i.attr('data-type')*1 == 0)
+      i.closest(".rights_form").find(".hide_on_public").show();
   }
   var createRightsDropdown = window.createUserRightsDropdown = function(span) {
     var id = span.attr('data-id');
@@ -177,6 +181,34 @@ $(function() {
     });
   }
 
+  var createEmbedCode = function() {
+    var el = $('.embed_span');
+    var height = el.find('.embed_height').val();
+    if(height == "-1") {
+      var new_height = prompt("Please enter a height for the embedded document","")*1;
+      el.find('.embed_height').append("<option value='" + new_height + "'>" + new_height + "</option>");
+      el.find('.embed_height').val(new_height);
+      height = new_height;
+    }
+    var autosave = el.find('.embed_autosave').val() === '1' ? 'true' : 'false';
+    var interaction = el.find('.embed_interaction').val();
+    var worksheet = el.attr('data-worksheet') === '1' ? 'w' : 'p';
+    var hash_string = el.attr('data-hash');
+    var dev = el.attr('data-dev') === '1' ? 'true' : 'false';
+    // First code should inject a div to house the iframe, and put 'loading' inside it
+    var code = "<script language='javascript'>(function() { document.write('<div style=\"border-width:0px;padding:0px;margin:3px;\" id=\"SwiftCalcs_" + worksheet + "_" + hash_string + "\"><div style=\"height:" + (height > 0 ? height : '600') + "px;text-align:center;font-size:24px;color:black;margin-top:50px;\">Loading...</div></div>');";
+    // Next code should create the loading function for when we have the client library ready
+    code += "var l=function(){window.SwiftCalcs_Embed_Iframe_" + window.sc_embed_version + "({dev:" + dev + ",hash_string:'" + hash_string + ",worksheet:" + (worksheet == 'w' ? 'true' : 'false') + ",height:" + height + ",autosave:" + autosave + ",interaction:" + interaction + "});};";
+    // Check if we already have the script loaded, and if so, evaluate l...if not, load the library
+    code += "if(window.SwiftCalcs_Embed_Iframe_" + window.sc_embed_version + "){l();}else{";
+    code += "var f=document.createElement('script');f.setAttribute('type','text/javascript');f.setAttribute('src','" + (dev == 'true' ? 'http://dev.swiftcalcs.com:3000' : 'https://www.swiftcalcs.com') + "/libraries/embed/sc_client_embed" + window.sc_embed_version + ".js');document.getElementsByTagName('head')[0].appendChild(f);";
+    // do timeouts to run l when we are loaded
+    code += "var t=function(){if(window.SwiftCalcs_Embed_Iframe_" + window.sc_embed_version + "){l();}else{window.setTimeout(t,250);}};t();}}());</script>";
+    var iframe_src = (dev == 'true' ? 'http://dev.swiftcalcs.com:3000' : 'https://www.swiftcalcs.com') + "/embed/" + worksheet + "/" + hash_string + "?height=" + height + "&autosave=" + autosave + "&interaction=" + interaction;
+    el.find('.embed_code').val(code);
+    el.find('.iframe_embed input').val("<iframe width='100%' height='" + (height > 0 ? height : '600') + "' frameborder='0' scrolling='no' src='" + iframe_src + "'></iframe>");
+  }
+
 	var openSharingDialog = window.openSharingDialog = function(item_id, item_type) {
     if(item_id == -1) {
       if(window.user_logged_in) {
@@ -283,6 +315,11 @@ $(function() {
           buttons.find('button.submit').on('click', function() {
             submitRights($('form.rights_form'));
           });
+          // Populate embed boxes
+          createEmbedCode();
+          // Listen for changes to embed options
+          el.find('.embed_span select').on('change', function(e) { createEmbedCode(); });
+          el.find('.embed_span .iframe_code').on('click', function(e) { $(this).hide(); $(this).closest('.embed_span').find('.iframe_embed').show(); });
           window.resizePopup();
       	}	else {
           window.hidePopupOnTop();

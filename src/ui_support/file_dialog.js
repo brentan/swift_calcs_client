@@ -975,12 +975,14 @@ $(function() {
 		var wrapper_box = $('<div/>').addClass('active_worksheet').insertAfter(el);
 		var wrapper = $('<div/>').addClass('active_holder').appendTo(wrapper_box);
 		el.detach().appendTo(wrapper);
-		if(before_item.length) 
-			before_item.addClass('add_bottom_border');
-		else 
-			wrapper_box.css({'margin-top': '-10px', 'padding-top': '10px'});
-		if(after_item.length == 0)
-			wrapper_box.css({'margin-bottom': '-10px', 'padding-bottom': '10px'});
+		if(typeof window.embedded === 'undefined') {
+			if(before_item.length) 
+				before_item.addClass('add_bottom_border');
+			else 
+				wrapper_box.css({'margin-top': '-10px', 'padding-top': '10px'});
+			if(after_item.length == 0)
+				wrapper_box.css({'margin-bottom': '-10px', 'padding-bottom': '10px'});
+		}
 		$content = $('<div class="content"></div>').hide();
     var menu_height = Math.max(Math.max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height()) + $('#toolbar_holder').height();
 		$content.appendTo(wrapper);
@@ -989,10 +991,12 @@ $(function() {
 			var to_scroll = Math.max(0, $(window).scrollTop() - offset.top + menu_height);
 			if(to_scroll > 0) $(window).scrollTop($(window).scrollTop() - to_scroll);
 		}, always: function() { beginLoad = true; }});
-		if(window.matchMedia("only screen and (max-device-width: 480px)").matches)
-			wrapper_box.animate({'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
-		else
-			wrapper_box.animate({'margin-left':-30, 'margin-right': -30, 'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
+		if(typeof window.embedded === 'undefined') {
+			if(window.matchMedia("only screen and (max-device-width: 480px)").matches)
+				wrapper_box.animate({'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
+			else
+				wrapper_box.animate({'margin-left':-30, 'margin-right': -30, 'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
+		}
 	}
 	$('body').on('click', '.worksheet_item, .invitation_item', function(e) {
 		if($(this).hasClass('worksheet_loading')) return;
@@ -1460,13 +1464,19 @@ $(function() {
 	});
 	*/
 	var resizeResults = window.resizeResults = function() {
-		if(window.matchMedia("only screen and (max-device-width: 480px)").matches)
+		if(window.embedded) {
+			$('.embed_container').css('width','auto');
 			var width = Math.min(842, Math.max($('.worksheet_holder_outer_box').width(),250));
-		else if(window.matchMedia("only screen and (max-device-width: 768px)").matches)
-			var width = Math.min(842, Math.max($('.worksheet_holder_outer_box').width() - 90,250));
-		else
-			var width = Math.min(842, Math.max($('.worksheet_holder_outer_box').width() - 140,250));
-		$('.worksheet_holder').width(width);
+			$('.embed_container').width(width);
+		} else { 
+			if(window.matchMedia("only screen and (max-device-width: 480px)").matches)
+				var width = Math.min(842, Math.max($('.worksheet_holder_outer_box').width(),250));
+			else if(window.matchMedia("only screen and (max-device-width: 768px)").matches)
+				var width = Math.min(842, Math.max($('.worksheet_holder_outer_box').width() - 90,250));
+			else
+				var width = Math.min(842, Math.max($('.worksheet_holder_outer_box').width() - 140,250));
+			$('.worksheet_holder').width(width);
+		}
 	}
 	window.resizeResults();
  	$('body').on('click', 'div.search_bar .fa-times-circle', function(e) {

@@ -81,7 +81,7 @@ var SwiftCalcs = {};
     }
     return [text(output)];
   }
-  var status_bar = $('.status_bar');
+  var status_bar = $(window.embedded ? '.status_bar_embed' : '.status_bar');
   // Status bar helper functions
   var clearBar = function() {
     status_bar.removeClass(css_prefix + 'clear ' + css_prefix + 'complete ' + css_prefix + 'error ' + css_prefix + 'warn ' + css_prefix + 'manual');
