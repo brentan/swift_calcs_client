@@ -19,6 +19,7 @@ Most methods are chainable
 var Element = P(function(_) {
   _[L] = 0;
   _[R] = 0;
+  _.interaction_level = INTERACTION_LEVELS.FULL; // For embed mode, what 'level' do we need to be at in order to play with this element?
   _.worksheet = 0;
   _.undo_count = 0; // Number of times this appears in the undo stack.  Used to make sure we don't destroy the element when we might want to get it back later through an undo method
   _.parent = 0;
@@ -85,7 +86,7 @@ var Element = P(function(_) {
 	*/
 	_.regenerateHtml = function() {
 		if(this.worksheet && this.worksheet.activeUndo && this.jQ) return this;
-		this.jQ = $('<div style="display:none;" ' + css_prefix + 'element_id=' + this.id + ' class="' + css_prefix + 'element '
+		this.jQ = $('<div style="display:none;" ' + css_prefix + 'element_id=' + this.id + ' class="' + css_prefix + 'element ' + (!this.allow_interaction() ? (css_prefix + 'no_interaction ') : '')
 			+ jQuery.map(this.klass, function(k) { return (css_prefix + k) }).join(' ') + '">'
 			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"><i class="fa fa-exclamation-triangle"></i><span></span><div class="' + css_prefix + 'element_collapse">'
 			+ '<div class="' + css_prefix + 'expand"><i class="fa fa-caret-right"></i></div><div class="' + css_prefix + 'collapse"><i class="fa fa-caret-down"></i></div></div></td>'
@@ -876,7 +877,7 @@ var Element = P(function(_) {
 			this.collapse();
 		else if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'expand').length) 
 			this.expand();
-		else if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'focusableItems').length) {
+		else if(this.allow_interaction() && (this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'focusableItems').length) {
 			var focusable = this.getFocusableByX($(e.target).closest('div.' + css_prefix + 'focusableItems').attr('data-id')*1, e.originalEvent.pageX);
 			focusable.focus(e.originalEvent.pageX);
 		}
@@ -955,6 +956,7 @@ var Element = P(function(_) {
 			if(this.depth === 0) {
 				// No parent.  
 				if((dir === R) && (!(this instanceof EditableBlock) || !this.empty())) {
+					if(!this.parent.allow_interaction()) return false;
 					var to_insert = (this.parent.implicitType) ? this.parent.implicitType() : math().setImplicit();
 					to_insert.insertAfter(this).show(0).focus(L);
 					return true;
@@ -974,7 +976,7 @@ var Element = P(function(_) {
 			this.expand();
 			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir, x_location)) 
 				return true;
-			else if(this.ends[-dir] === 0) {
+			else if((this.ends[-dir] === 0) && this.allow_interaction()) {
 				var to_insert = (this.implicitType) ? this.implicitType() : math().setImplicit();
 				to_insert.appendTo(this).show().focus();
 				return true;
@@ -1000,6 +1002,7 @@ var Element = P(function(_) {
 			if(this.depth === 0) {
 				// No parent.  
 				if((dir === R) && (!(this instanceof EditableBlock) || !this.empty())) {
+					if(!this.parent.allow_interaction()) return false;
 					var to_insert = (this.parent.implicitType) ? this.parent.implicitType() : math().setImplicit();
 					to_insert.insertAfter(this).show(0).focus(L);
 					return true;
@@ -1022,7 +1025,7 @@ var Element = P(function(_) {
 			this.expand();
 			if(this.ends[-dir] && this.ends[-dir].moveInFrom(-dir)) 
 				return true;
-			else if(this.ends[-dir] === 0) {
+			else if((this.ends[-dir] === 0) && this.allow_interaction()) {
 				var to_insert = (this.implicitType) ? this.implicitType() : math().setImplicit();
 				to_insert.appendTo(this).show().focus();
 				return true;
@@ -1032,7 +1035,7 @@ var Element = P(function(_) {
 	}
 	// Will attempt to move into this element from another from the passed direction.  If x_location is passed, assume we are coming from Up/Down and need to place cursor based on this location
 	_.moveInFrom = function(dir, x_location) {
-		if(this.focusableItems.length == 0) //nothing to focus on, jump past me
+		if((this.focusableItems.length == 0) || !this.allow_interaction()) //nothing to focus on, jump past me
 			return (x_location ? this.moveOutUpDown(undefined, -dir, x_location) : this.moveOutLeftRight(undefined, -dir));
 		this.focus(dir);
 		// BRENTAN: BELOW SHOULD BE IN FOCUS IF/WHEN dir/x_location is set?
@@ -1281,6 +1284,11 @@ var Element = P(function(_) {
   }
   _.toString = function() {
   	throw("toString called on 'Element' type.  Element is an abtract class that should never be initialized on its own.  Only classes that extend this should ever be created.");
+  }
+
+  // Can I interact with this element?
+  _.allow_interaction = function() {
+  	return this.interaction_level <= INTERACTION_LEVEL;
   }
 
 	// Debug.  Print entire worksheet tree

@@ -57,8 +57,13 @@ var Worksheet = P(function(_) {
 		this.jQ.html(""); // Clear the target
 		this.insertJQ = $('<div/>', {"class": (css_prefix + "element_container")});
 		this.jQ.append(this.insertJQ);
-		this.insertJQ.append('<div class="' + css_prefix + 'element_top_spacer"></div>');
-		this.insertJQ.append('<div class="' + css_prefix + 'element_bot_spacer"></div>');
+    if(this.allow_interaction()) {
+  		this.insertJQ.append('<div class="' + css_prefix + 'element_top_spacer"></div>');
+  		this.insertJQ.append('<div class="' + css_prefix + 'element_bot_spacer"></div>');
+    } else {
+      this.insertJQ.append('<div class="' + css_prefix + 'element_top_spacer ' + css_prefix + 'no_interaction"></div>');
+      this.insertJQ.append('<div class="' + css_prefix + 'element_bot_spacer ' + css_prefix + 'no_interaction"></div>');
+    }
 		$('#account_bar .content').html('<div class="' + css_prefix + 'worksheet_name"><input type=text class="' + css_prefix + 'worksheet_name"></div>');
 		$('#account_bar input.' + css_prefix + 'worksheet_name').val(this.name);
 		var _this = this;
@@ -520,6 +525,9 @@ var Worksheet = P(function(_) {
 			out.push(child.toString());
 		});
 		return out.join("\n");
+  }
+  _.allow_interaction = function () {
+    return (INTERACTION_LEVEL >= INTERACTION_LEVELS.FULL);
   }
 	// Debug.  Print entire worksheet tree
 	_.printTree = function() {

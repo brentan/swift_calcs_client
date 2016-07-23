@@ -172,7 +172,7 @@ Worksheet.open(function(_) {
       dragOver(e_drag);
       e_drag.preventDefault();
     }
-    this.jQ.on('dragenter', outside_dragEnter);
+    if(this.allow_interaction()) this.jQ.on('dragenter', outside_dragEnter);
     //context-menu event handling
     var contextMenu = function(e) {
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id')];
@@ -270,10 +270,15 @@ Worksheet.open(function(_) {
         } else if(e.shiftKey && last_target) { // Holding shift should highlight from last active to current target
           selectFromTargets(last_target, new_target);
       	} else if(target.id === new_target.id) { // If start/end target are the same, we pass to that target
-        	if(target[command](e)) {
-        		selected_elements = selected_elements.add(target.jQ);
-        		selection.push(target);
-        	} else if(target instanceof text) return true; // Let text objects deal with their own mouse events
+          if(target.allow_interaction()) {
+          	if(target[command](e)) {
+          		selected_elements = selected_elements.add(target.jQ);
+          		selection.push(target);
+          	} else if(target instanceof text) return true; // Let text objects deal with their own mouse events
+          } else if(command == 'mouseUp') { // Check for collapse/expand
+            if($(e.target).closest('div.' + css_prefix + 'collapse').length) target.collapse();
+            else if($(e.target).closest('div.' + css_prefix + 'expand').length) target.expand();
+          }
       	} else { //Start and target are different elements
           selectFromTargets(target, new_target);
       	}
@@ -281,7 +286,7 @@ Worksheet.open(function(_) {
       	_this.selection = selection;
       	_this.selectionChanged();
       }
-    	if(force_select || (selected_target.length && _this.selection.length && !(target instanceof text) && !(e.shiftKey))) {
+    	if(_this.allow_interaction() && (force_select || (selected_target.length && _this.selection.length && !(target instanceof text) && !(e.shiftKey)))) {
     		// Clicking/dragging on selection
     		function click_handler(e_up) {
 		    	// Handle full click events as mousedown and then mouseup
@@ -395,13 +400,15 @@ Worksheet.open(function(_) {
 	        $(e.target.ownerDocument).off('mousemove', docmousemove).off('mouseup dragend', mouseup);
 	      }
         if(!(e.shiftKey && last_target)) {
-		      target.mouseDown(e);
-  	      if(!(target instanceof text)) {
-  	      	// text elements handle their own mouse events, so we allow bubbling for them, and dont throw mouse events
-  		      _this.focus();
-  		      target.focus();
-  		      e.preventDefault(); 
-  		    }
+		      if(target.allow_interaction()) {
+            target.mouseDown(e);
+    	      if(!(target instanceof text)) {
+    	      	// text elements handle their own mouse events, so we allow bubbling for them, and dont throw mouse events
+    		      _this.focus();
+    		      target.focus();
+    		      e.preventDefault(); 
+    		    }
+          } else { e.preventDefault(); }
         } else {
           if((target != last_target) || !(target instanceof text) || target.mouseDownShift(e)) e.preventDefault(); 
         }

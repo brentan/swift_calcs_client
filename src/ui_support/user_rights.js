@@ -190,6 +190,7 @@ $(function() {
       el.find('.embed_height').val(new_height);
       height = new_height;
     }
+    height = height * 1;
     var autosave = el.find('.embed_autosave').val() === '1' ? 'true' : 'false';
     var interaction = el.find('.embed_interaction').val();
     var worksheet = el.attr('data-worksheet') === '1' ? 'w' : 'p';
@@ -198,15 +199,15 @@ $(function() {
     // First code should inject a div to house the iframe, and put 'loading' inside it
     var code = "<script language='javascript'>(function() { document.write('<div style=\"border-width:0px;padding:0px;margin:3px;\" id=\"SwiftCalcs_" + worksheet + "_" + hash_string + "\"><div style=\"height:" + (height > 0 ? height : '600') + "px;text-align:center;font-size:24px;color:black;margin-top:50px;\">Loading...</div></div>');";
     // Next code should create the loading function for when we have the client library ready
-    code += "var l=function(){window.SwiftCalcs_Embed_Iframe_" + window.sc_embed_version + "({dev:" + dev + ",hash_string:'" + hash_string + ",worksheet:" + (worksheet == 'w' ? 'true' : 'false') + ",height:" + height + ",autosave:" + autosave + ",interaction:" + interaction + "});};";
+    code += "var l=function(){window.SwiftCalcs_Embed_Iframe_" + window.sc_embed_version + "({dev:" + dev + ",hash_string:'" + hash_string + "',worksheet:" + (worksheet == 'w' ? 'true' : 'false') + ",height:" + height + ",autosave:" + autosave + ",interaction:" + interaction + "});};";
     // Check if we already have the script loaded, and if so, evaluate l...if not, load the library
     code += "if(window.SwiftCalcs_Embed_Iframe_" + window.sc_embed_version + "){l();}else{";
     code += "var f=document.createElement('script');f.setAttribute('type','text/javascript');f.setAttribute('src','" + (dev == 'true' ? 'http://dev.swiftcalcs.com:3000' : 'https://www.swiftcalcs.com') + "/libraries/embed/sc_client_embed" + window.sc_embed_version + ".js');document.getElementsByTagName('head')[0].appendChild(f);";
     // do timeouts to run l when we are loaded
     code += "var t=function(){if(window.SwiftCalcs_Embed_Iframe_" + window.sc_embed_version + "){l();}else{window.setTimeout(t,250);}};t();}}());</script>";
-    var iframe_src = (dev == 'true' ? 'http://dev.swiftcalcs.com:3000' : 'https://www.swiftcalcs.com') + "/embed/" + worksheet + "/" + hash_string + "?height=" + height + "&autosave=" + autosave + "&interaction=" + interaction;
+    var iframe_src = (dev == 'true' ? 'http://dev.swiftcalcs.com:3000' : 'https://www.swiftcalcs.com') + "/embed/" + worksheet + "/" + hash_string + "?height=" + (height > 0 ? height : '600') + "&autosave=" + autosave + "&interaction=" + interaction;
     el.find('.embed_code').val(code);
-    el.find('.iframe_embed input').val("<iframe width='100%' height='" + (height > 0 ? height : '600') + "' frameborder='0' scrolling='no' src='" + iframe_src + "'></iframe>");
+    el.find('.iframe_embed input').val("<iframe width='100%' height='" + (height > 0 ? height : '600') + "' frameborder='0' allowTransparency='true' scrolling='no' style='width:100%;overflow:hidden;border-width:0px;height:" + (height > 0 ? height : '600') + "px;background-color:transparent;' src='" + iframe_src + "'></iframe>");
   }
 
 	var openSharingDialog = window.openSharingDialog = function(item_id, item_type) {

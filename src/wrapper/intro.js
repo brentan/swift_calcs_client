@@ -161,3 +161,7 @@ var SwiftCalcs = {};
 
 
   RIGHTS = { NO_RIGHTS: 0, READ_ONLY: 1, READ_ONLY_WITH_DUPLICATION: 2, EDIT_RIGHTS: 3,  ADMIN_RIGHTS: 4 };
+  INTERACTION_LEVELS = { NONE: 0, FORM_ELEMENTS: 1, FULL: 2}
+  if(typeof window.interaction_level === 'undefined') INTERACTION_LEVEL = INTERACTION_LEVELS.FULL;
+  else INTERACTION_LEVEL = window.interaction_level;
+

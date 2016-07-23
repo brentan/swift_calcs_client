@@ -196,7 +196,7 @@ var receiveMessage = function(command) {
       if(to_send.match(/(==|>|<|!=|<=|>=)/))
         var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : '';
       else
-        var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : 'factor';
+        var simplify_command = command.commands[ii].force_simplify ? command.commands[ii].force_simplify : (command.commands[ii].simplify ? command.commands[ii].simplify : 'factor');
       if(simplify_command != '')
         simplify_command = simplify_command + '(usimplify_base';
       else

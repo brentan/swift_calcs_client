@@ -100,9 +100,10 @@ Worksheet.open(function(_) {
         return;
       case 'Ctrl-O':
       case 'Meta-O':
+        evt.preventDefault();
+        if(window.embedded) break;
         window.loadFolder();
         SwiftCalcs.giac.cancelEvaluations(); 
-        evt.preventDefault();
         break;
       case 'Ctrl-S':
       case 'Meta-S':
@@ -126,29 +127,29 @@ Worksheet.open(function(_) {
         case 'Shift-Backspace':
         case 'Backspace':
           // Delete.  If nothing is left, add an implicit block
-          this.deleteSelection(true, R);
+          if(this.allow_interaction()) this.deleteSelection(true, R);
           break;
         case 'Ctrl-Shift-Del':
         case 'Ctrl-Del':
         case 'Shift-Del':
         case 'Del':
           // Delete.  If nothing is left, add an implicit block
-          this.deleteSelection(true, R);
+          if(this.allow_interaction()) this.deleteSelection(true, R);
           break;
         case 'Enter':
           // Replace with new line
-          this.replaceSelection(math(), true);
+          if(this.allow_interaction()) this.replaceSelection(math(), true);
           break;
         case 'End':
         case 'Ctrl-End':
           // Move to end
-          this.selection[this.selection.length - 1].focus(R);
+          if(this.allow_interaction()) this.selection[this.selection.length - 1].focus(R);
           this.clearSelection();
           break;
         case 'Home':
         case 'Ctrl-Home':
           // Move to start
-          this.selection[0].focus(L);
+          if(this.allow_interaction()) this.selection[0].focus(L);
           this.clearSelection();
           break;
         case 'Shift-End':
@@ -165,22 +166,22 @@ Worksheet.open(function(_) {
           break;
         case 'Left':
           // move to start
-          this.selection[0].focus(L);
+          if(this.allow_interaction()) this.selection[0].focus(L);
           this.clearSelection();
           break;
         case 'Up':
           // move to start - 1
-          this.selection[0].focus(L).moveOutLeftRight(false,L);
+          if(this.allow_interaction()) this.selection[0].focus(L).moveOutLeftRight(false,L);
           this.clearSelection();
           break;
         case 'Right':
           // move to end
-          this.selection[this.selection.length - 1].focus(R);
+          if(this.allow_interaction()) this.selection[this.selection.length - 1].focus(R);
           this.clearSelection();
           break;
         case 'Down':
           // move to end + 1
-          this.selection[this.selection.length - 1].focus(R).moveOutLeftRight(false,R);
+          if(this.allow_interaction()) this.selection[this.selection.length - 1].focus(R).moveOutLeftRight(false,R);
           this.clearSelection();
           break;
         case 'Shift-Left':
@@ -204,7 +205,7 @@ Worksheet.open(function(_) {
   _.typedText = function(text) {
     if(this.selection.length == 0) {
       if(this.activeElement) this.activeElement.typedText(text);
-    } else 
+    } else if(this.allow_interaction()) 
       this.replaceSelection(math(text), true);
   }
   var toClipboard = function(to_store, e) {
@@ -228,7 +229,7 @@ Worksheet.open(function(_) {
     } else {
       toClipboard('SWIFTCALCS:'+this.clipboard, e);
       e.preventDefault();
-      this.deleteSelection(true, R);
+      if(this.allow_interaction()) this.deleteSelection(true, R);
     }
   }
   _.copy = function(e) {
@@ -262,7 +263,7 @@ Worksheet.open(function(_) {
         // This was a cut/copy -> paste from within a mathquill block, or is numeric in nature.  We should insert it into the current block, if possible, or insert it afterwards
         if(this.activeElement.focusedItem && this.activeElement.focusedItem.mathquill)
           return this.activeElement.write(to_paste);
-        else {
+        else if(this.allow_interaction()) {
           this.startUndoStream();
           var el = math().insertAfter(this.activeElement).show(0).focus(R).write(to_paste);
           this.endUndoStream();
@@ -273,17 +274,19 @@ Worksheet.open(function(_) {
       else {
         var blocks = sanitize(html ? html : to_paste); 
       }
-      this.startUndoStream();
-      var after = this.activeElement;
-      for(var i = 0; i < blocks.length; i++) {
-        blocks[i].insertAfter(after).show(0);
-        after = blocks[i];
+      if(this.allow_interaction()) {
+        this.startUndoStream();
+        var after = this.activeElement;
+        for(var i = 0; i < blocks.length; i++) {
+          blocks[i].insertAfter(after).show(0);
+          after = blocks[i];
+        }
+        if((this.activeElement instanceof math) && (this.activeElement.mathField.text() == '')) this.activeElement.remove(0);
+        if(i > 0)
+          blocks[i-1].moveInFrom(R);
+        this.endUndoStream();
       }
-      if((this.activeElement instanceof math) && (this.activeElement.mathField.text() == '')) this.activeElement.remove(0);
-      if(i > 0)
-        blocks[i-1].moveInFrom(R);
-      this.endUndoStream();
-    } else {
+    } else if(this.allow_interaction()) {
       // Something was selected at paste at the element level or above...so we have to overwrite it
       if(to_paste.slice(0,6) === 'latex{' && to_paste.slice(-1) === '}') // This was a cut/copy -> paste from within a mathquill block.  We need to convert to a mathblock
         var blocks = [math(to_paste)];

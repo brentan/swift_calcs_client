@@ -22,6 +22,11 @@ $(function() {
     $el.html(markup(html)).append($arrow).prepend($close);
 
     $($el).appendTo(container);
+    if(window.embedded) {
+      var container_offset = container.offset();
+      leftOffset -= container_offset.left;
+      topOffset -= container_offset.top;
+    }
 
     if(leftOffset > ($(window).width()/2)) {
     	$arrow.addClass('right');

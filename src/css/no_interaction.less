@@ -1,0 +1,29 @@
+div.sc_element_container .sc_element.sc_no_interaction {
+  .sc_focusableItems, .sc_wysiwyg_holder, &.sc_math, &.sc_uploadedData div.table table .fa { cursor: not-allowed; }
+  table.sc_element_table td.sc_element_td {
+    cursor: default;
+    &:hover { background-color: #ffffff; }
+  }
+  &.sc_selected {
+    table.sc_element_table td.sc_element_td:hover {
+      background-color: #B4D5FE;
+    }
+  }
+  .sc_hide_print, .sc_help_circle { display: none; }
+  .mq-math-mode, .mq-math-mode .mq-editable-field { cursor: not-allowed; }
+}
+div.sc_element_container .sc_element.sc_minimal_interaction {
+  &.sc_slider .sc_var_store { cursor: not-allowed; }
+  table.sc_element_table td.sc_element_td {
+    cursor: default;
+    &:hover { background-color: #ffffff; }
+  }
+  &.sc_selected {
+    table.sc_element_table td.sc_element_td:hover {
+      background-color: #B4D5FE;
+    }
+  }
+}
+.base_layout .worksheet_holder_outer_box .worksheet_holder div.sc_element_container {
+  div.sc_element_bot_spacer.sc_no_interaction, div.sc_element_top_spacer.sc_no_interaction { cursor: default; }
+}

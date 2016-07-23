@@ -68,7 +68,7 @@ var plot = P(Element, function(_, super_) {
 		return super_.collapse.call(this, immediately);
 	}
 	_.expand = function(immediately) {
-		this.jQ.find('.another_link').show();
+		if(this.allow_interaction()) this.jQ.find('.another_link').show();
 		return super_.expand.call(this, immediately);
 	}
 	_.blur = function(to_focus) {
@@ -449,7 +449,7 @@ var plot = P(Element, function(_, super_) {
 			}, function() {
 				$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'none');
 			});
-			el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').on('click', function(e) { 
+			if(this.allow_interaction()) el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').on('click', function(e) { 
 				var target = $(e.target);
 				var axis = X_AXIS;
 				if(target.closest('.c3-axis-y').length) axis = Y_AXIS;

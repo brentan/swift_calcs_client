@@ -9,11 +9,12 @@ var slider = P(Element, function(_, super_) {
 	_.evaluatable = true;
 	_.fullEvaluation = true; 
 	_.scoped = true;
+  _.interaction_level = INTERACTION_LEVELS.FORM_ELEMENTS;
 	_.lineNumber = true;
 	_.helpText = "<<slider>>\nThe slider provides a user visual slider that a user can click and manipulate in order to change an input.\nClick the <i class='fa fa-wrench'></i> icon to customize the minimum, maximum, step size, and units of the slider.";
 
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span>' + focusableHTML('Slider', 'value') + "<span class='gear'><i class='fa fa-wrench'></i></span>" + helpBlock() + "</div>" + answerSpan();;
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span>' + focusableHTML('Slider', 'value') + "<span class='gear'><i class='fa fa-wrench'></i></span>" + (this.worksheet.allow_interaction() ? helpBlock() : '') + "</div>" + answerSpan();;
 	}
 	_.postInsertHandler = function() {
 		this.varStoreField = registerFocusable(MathQuill, this, 'var_store', { ghost: 'ans', noWidth: true, handlers: {
@@ -25,7 +26,11 @@ var slider = P(Element, function(_, super_) {
 		this.touched = false;
 		this.needsEvaluation = false;
 		super_.postInsertHandler.call(this);
-		this.jQ.find('span.gear').on('click', function(_this) {
+		if(!this.worksheet.allow_interaction()) {
+			this.jQ.find('span.gear').hide();
+			this.jQ.addClass(css_prefix + 'minimal_interaction');
+			this.varStoreField.setStaticMode(true);
+		} else this.jQ.find('span.gear').on('click', function(_this) {
 			return function(e) {
 				_this.setSlider();
 				e.preventDefault();

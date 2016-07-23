@@ -149,6 +149,7 @@ var regression = P(GiacGeneric, function(_, super_) {
 				}	
 				_this.commands = _this.genCommand(out_command);
 				_this.commands[0].unit_convert = true;
+				_this.commands[0].force_simplify = 'expand';
 				if(errors.length && _this.outputMathBox) {
 					_this.worksheet.save();
 					_this.outputMathBox.clear();

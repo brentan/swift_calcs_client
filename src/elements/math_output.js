@@ -89,11 +89,22 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 						window.setTimeout(function() { _this.evaluationFinished(_this.last_result); });
 					}; }(this));
 				} else {
-					this.outputMathBox.latex(result[0].returned);
+					try {
+						this.outputMathBox.latex(result[0].returned);
+					} catch(e) {
+						this.outputMathBox.clear();
+						this.outputBox.jQ.removeClass('calculating');
+						if(this.outputMode != 1) {
+							this.outputBox.setWarning("There was an error encountered while rendering this result.  This is a display error, you should be able to continue evaluations based on this result",false);
+							this.outputBox.expand();
+							this.collapseArrow();
+						}
+						return true;
+					}
 					var height = this.outputBox.jQ.find('div.answer').height();
 					this.answerLatex = result[0].returned.replace(/^.*\\Longrightarrow \\whitespace/,'');
 					menu.css({top: Math.floor(height/2-9) + 'px'});
-					if(result[0].suppress_pulldown) {
+					if(result[0].suppress_pulldown || !this.allow_interaction()) {
 						menu.remove();
 						this.outputBox.jQ.addClass('hide_pulldown');
 					} else {

@@ -6,7 +6,7 @@
  worksheet - boolean, true if hash corresponds to a worksheet, false otherwise
  height - in pixels, or '0' for auto-height to match content
  autosave - boolean, true if changes made in embed window should be saved to server (assuming viewer has rights)
- interaction - 0 means no interaction, 2 allows full interaction (leaving as int for future possibilities of partial interaction, for example)
+ interaction - 0 means no interaction, 1 is only form elements (sliders), 2 allows full interaction 
  sc_embed_version - The version number (1_00 format) of this library
 *************************************************************************************/
 
@@ -19,38 +19,46 @@ if(el == null) {
   return;
 }
 
+// Create the iframe id for listening so that we only interact with messages sent to 'me'
+if(typeof window.SC_embed_id_counter === 'undefined') window.SC_embed_id_counter=0;
+var iframe_id = window.SC_embed_id_counter++;
+
 // We have the element, create iframe
 var iframe = document.createElement('iframe');
-iframe.setAttribute("src", (dev ? "http://dev.swiftcalcs.com:3000" : "https://www.swiftcalcs.com") + "/embed/" + (worksheet ? "w" : "p") + "/" + hash_string + "?" + params + "&sc_embed_version=" + sc_embed_version);
+iframe.setAttribute("src", (dev ? "http://dev.swiftcalcs.com:3000" : "https://www.swiftcalcs.com") + "/embed/" + (worksheet ? "w" : "p") + "/" + hash_string + "?" + params + "&sc_embed_version=" + sc_embed_version + "&iframe_id=" + iframe_id);
 iframe.style.border = "none";
 iframe.style.height = (height > 0 ? (height + "px") : "600px");
 iframe.style.width = '100%';
+iframe.style.backgroundColor = 'transparent';
 iframe.frameBorder = '0';
 iframe.setAttribute("frameBorder",'0');
 iframe.scrolling = 'no';
 iframe.setAttribute("scrolling",'no');
+iframe.allowTransparency="true"
+iframe.setAttribute("allowTransparency",'true');
 
 // Create the listener for postMessage between us and the frame
 var receiveMessage = function(event) {
   // Origin check
   if(event.origin !== (dev ? "http://dev.swiftcalcs.com:3000" : "https://www.swiftcalcs.com")) return;
   var command = event.data.split("=");
-  switch(command[0]) {
+  if((command[0] != 'SCembed') || (command[1] != iframe_id)) return;
+  switch(command[2]) {
     case 'handshake':
-      if(command[1] == sc_embed_version) {
+      if(command[3] == sc_embed_version) {
         sendMessage("handshake", sc_embed_version);
         handshake_complete = true;
       }
       break;
     case 'setHeight':
-      if((height == 0) || (command[1]*1 < height)) iframe.style.height = command[1] + 'px';
+      if((height == 0) || (command[3]*1 < height)) iframe.style.height = command[3] + 'px';
   }
 }
 window.addEventListener("message", receiveMessage, false);
 
 // Function to send messages to the iframe
 var sendMessage = function(command, valu) {
-  var data = command + "=" + valu;
+  var data = "SCembed=" + iframe_id + "=" + command + "=" + valu;
   iframe.contentWindow.postMessage(data, dev ? "http://dev.swiftcalcs.com:3000" : "https://www.swiftcalcs.com");
 }
 

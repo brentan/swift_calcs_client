@@ -27,6 +27,20 @@ div.sc_element_container {
         }
       }
     }
+    &.sc_no_interaction {
+      .c3-axis-x, .c3-axis-y, .c3-axis-y2 {
+        cursor: default;
+      }
+      div.plot_title {
+        cursor: not-allowed;
+        &.no_title:hover {
+          color: #bbbbbb;
+        }
+        &:hover {
+          text-decoration: none;
+        }
+      }
+    }
   }
 }
 .c3-axis-x, .c3-axis-y, .c3-axis-y2 {

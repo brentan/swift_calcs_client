@@ -9,13 +9,32 @@
   span.sc_val {
     white-space: nowrap;
     cursor: text;
+    display: inline-block;
+    padding: 2px;
     span.error {
       font-style: italic;
       font-size: 11px;
       color: #AA0000;
     }
+    &:hover {
+      padding: 1px;
+      border: 1px solid #bbddff;
+    }
+    &.no_border {
+      padding: 0px;
+      &:hover {
+        border-width: 0px;
+      }
+    }
   }
   cursor: pointer;
+}
+.sc_no_interaction {
+  .rangeslider__handle { cursor: not-allowed; }
+  .sc_Slider {
+    span.sc_val { cursor: not-allowed; }
+    cursor: not-allowed;
+  }
 }
 .rangeslider,
 .rangeslider__fill {

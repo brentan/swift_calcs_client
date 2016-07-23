@@ -123,6 +123,7 @@ var Slider = P(aFocusableItem, function(_, super_) {
 		input.latex(latex).select();
 		this.mathquill = true;
 		this.input_open = input;
+    this.valJQ.addClass('no_border');
 	}
 	_.itemChosen = function(output) { // Since we put the box in unit mode
 		var to_execute =  "evalf(" + this.input_open.text() + ")";
@@ -215,6 +216,7 @@ var Slider = P(aFocusableItem, function(_, super_) {
 	_.setVal = function(text) {
 		if(typeof text === 'undefined') text = (this.value + this.unit_html);
 		this.valJQ.html(text);
+    this.valJQ.removeClass('no_border');
 		if(this.input_open !== false) {
 			this.input_open = false;
 			this.mathquill = false;

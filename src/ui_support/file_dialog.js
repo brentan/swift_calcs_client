@@ -1019,6 +1019,10 @@ $(function() {
 		var success = function(response) {
       if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
       var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level, response.settings);
+      if(window.embedded) {
+      	$('div.header .name').html(response.name);
+      	$('div.header .fa-external-link').attr('data-type','worksheets').attr('data-hash',response.hash_string);
+      }
       worksheet.bind(el_next);
       el_next.show();
       worksheet.load(response);
@@ -1028,7 +1032,9 @@ $(function() {
       	el.find('.name .hover').click();
       	el.find('.name_change input').select();
       	window.setTimeout( function() { window.loadNextScreenExplanation(2); }, 250);
-      } else
+      } else if(window.embedded)
+      	window.setTimeout(function() { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.blur(); } });
+      else
     		window.setTimeout(function() { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); } });
       if(response.folder_id) 
         window.setCurrentProject(response.folder_id, response.folder_url_end, response.onshape_item);
@@ -1037,10 +1043,15 @@ $(function() {
 			if(beginLoad) success(response);
 			else window.setTimeout(function() { try_success(response); }, 50);
 		}
+		var fail = function(response) {
+			if(window.embedded) 
+				$(".worksheet_holder").html("<div class='message'><h2>There was an error encountered</h2><p>" + response + "</p><p>If you are not logged in, try visiting <a href='/' target='_blank'>swiftcalcs.com</a> and logging in to resolve this problem.</p></div>");
+			return;
+		}
 		if(typeof response == 'object')
 			success(response);
 		else
-			window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {id: id, hash_string: hash_string} }, try_success);
+			window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {id: id, hash_string: hash_string} }, try_success, fail);
 	}
 	$('body').on('click', '.project_item', function(e) {
 		var archive = $(this).closest('.archived').length > 0;
