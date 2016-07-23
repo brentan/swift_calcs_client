@@ -102,7 +102,14 @@ var receiveMessage = function(command) {
       output.push({success: false, returned: command.commands[ii].genError, error_index: command.commands[ii].error_index ? command.commands[ii].error_index : -1});
       continue;
     }
-
+    if(command.commands[ii].protect_vars) {
+      // This command uses a dependant variable (like solve for x), so we want to purge 'x' so that it is treated symbolically.  We must remember to restore 'x' later...
+      var var_list = command.commands[ii].protect_vars.split(',');
+      var purge_command = '';
+      for(var i = 0; i < var_list.length; i++) 
+        purge_command += "if(" + var_list[i] + "!='" + var_list[i] + "'){" + var_list[i] + "__temp:=" + var_list[i] + ";};";
+      Module.caseval(purge_command + "purge(" + command.commands[ii].protect_vars + ");");
+    }
     if(command.commands[ii].pre_command)
       Module.caseval(command.commands[ii].pre_command);
 		var to_send = command.commands[ii].command.trim();
@@ -115,6 +122,7 @@ var receiveMessage = function(command) {
       if(!output[ii-1].success) {
         // previous item was a failure.  copy its results here and continue
         output[ii] = output[ii -1];
+        if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
         continue;
       }
       // Copy previous warnings over
@@ -132,6 +140,7 @@ var receiveMessage = function(command) {
     // and this command is in our global constants array, output its toString value directly
 		if(to_send.match(/^[a-z][a-z0-9_]*$/i) && constants[to_send]) {
 			output[ii] = {success: true, returned: constants[to_send].toString(), warnings: [], suppress_pulldown: true};
+      if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
 			continue;
 		}
     // If we are setting an object into a new variable, we do this directly through the 'clone' method.
@@ -140,6 +149,7 @@ var receiveMessage = function(command) {
 			var old_var = to_send.replace(/^[a-z][a-z0-9_]* *:= */i,'');
 			constants[new_var] = user_vars[new_var] = constants[old_var].clone();
 			output[ii] = {success: true, returned: constants[new_var].toString(), warnings: []};
+      if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
 			continue;
 		}
     // Otherwise, lets use giac for our evaluation. 
@@ -160,6 +170,7 @@ var receiveMessage = function(command) {
           output[ii] = {success: false, error_index: 0, returned: 'variable name <i>e</i> is protected and defined as 2.71828', warnings: []}
         else 
           output[ii] = {success: false, error_index: 0, returned: 'variable name <i>&pi;</i> is protected and defined as 3.14159', warnings: []}
+        if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
         continue;
       }
       // Do the assignment.  Test if there were errors, if so, report those.  If not, and output is asked for, we return the value of the stored variable
@@ -187,6 +198,7 @@ var receiveMessage = function(command) {
           test_output.error_index = test_output.error_index - 6;
         }
         output.push(test_output);
+        if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
         continue;
       }
     } 
@@ -231,6 +243,8 @@ var receiveMessage = function(command) {
     output[ii] = testError(output[ii],ii, to_send);
     // Set any warnings to the output
 		output[ii].warnings = warnings[ii];
+    // Restore previous variables, if asked
+    if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
 	}
   // If we are scoped evaluation, we should save the scope now for future retreival
 	if(command.scoped) 
@@ -244,6 +258,17 @@ var receiveMessage = function(command) {
 this.addEventListener("message", function (evt) {
   receiveMessage(JSON.parse(evt.data));
 },false);
+
+var restoreVars = function(var_list) {
+  // This command undoes the stashing of dependant variables (like solve for x), to restore 'x'
+  var restore_command = '';
+  var restore_vars = [];
+  for(var i = 0; i < var_list.length; i++) {
+    restore_command += "if(" + var_list[i] + "__temp!='" + var_list[i] + "__temp'){" + var_list[i] + ":=" + var_list[i] + "__temp;};";
+    restore_vars.push(var_list[i] + "__temp");
+  }
+  Module.caseval(restore_command + "purge(" + restore_vars.join(",") + ");");
+}
 
 var testError = function(output, ii, to_send) {
   // If there were errors, set the output to the error.  Check both the errors array and the direct output. 

@@ -39,7 +39,8 @@ createGiacElement({
 		" of <<MathQuill {ghost: 'expression'}>>",
 		"for <<MathQuill {ghost: 'variable' }>>"
 	],
-	command: "laplace($1, $2, 's')" 
+	command: "laplace($1, $2, 's')", 
+	protect_vars: 2
 });
 createGiacElement({
 	name: 'ilaplace',
@@ -50,7 +51,8 @@ createGiacElement({
 		" of <<MathQuill {ghost: 'expression'}>>",
 		"for <<MathQuill {ghost: 'variable' }>>"
 	],
-	command: "ilaplace($1, $2, 'x')" 
+	command: "ilaplace($1, $2, 'x')", 
+	protect_vars: 2
 });
 createGiacElement({
 	name: 'fouriera',
@@ -64,7 +66,8 @@ createGiacElement({
 		"and lower bound <<MathQuill {ghost: '0', default: '0' }>>",
 	],
 	pre_command: "assume('n', DOM_INT)",
-	command: "fourier_an($1, $2, $3, 'n', $4)" 
+	command: "fourier_an($1, $2, $3, 'n', $4)", 
+	protect_vars: 2
 });
 createGiacElement({
 	name: 'fourierb',
@@ -78,7 +81,8 @@ createGiacElement({
 		"and lower bound <<MathQuill {ghost: '0', default: '0' }>>",
 	],
 	pre_command: "assume('n', DOM_INT)",
-	command: "fourier_bn($1, $2, $3, 'n', $4)" 
+	command: "fourier_bn($1, $2, $3, 'n', $4)", 
+	protect_vars: 2 
 });
 createGiacElement({
 	name: 'fourierc',
@@ -92,7 +96,8 @@ createGiacElement({
 		"and lower bound <<MathQuill {ghost: '0', default: '0' }>>",
 	],
 	pre_command: "assume('n', DOM_INT)",
-	command: "fourier_cn($1, $2, $3, 'n', $4)" 
+	command: "fourier_cn($1, $2, $3, 'n', $4)", 
+	protect_vars: 2 
 });
 createGiacElement({
 	name: 'series',
@@ -104,7 +109,8 @@ createGiacElement({
 		"around <<MathQuill {ghost: '0', default: '0' }>>",
 		"of order <<MathQuill {ghost: '5', default: '5'}>> <<SelectBox {options: { 0: 'Bidirectional', 1: 'Unidirectional positive', -1: 'Unidirectional negative'}}>>"
 	],
-	command: "series($1, $2, $3, $4, $5)" 
+	command: "series($1, $2, $3, $4, $5)", 
+	protect_vars: 2 
 });
 createGiacElement({
 	name: 'taylor',
@@ -116,7 +122,8 @@ createGiacElement({
 		"around <<MathQuill {ghost: '0', default: '0' }>>",
 		"of order <<MathQuill {ghost: '5', default: '5'}>> <<SelectBox {options: { 0: 'Bidirectional', 1: 'Unidirectional positive', -1: 'Unidirectional negative'}}>>"
 	],
-	command: "taylor($1, $2, $4, $3, $5)" 
+	command: "taylor($1, $2, $4, $3, $5)", 
+	protect_vars: 2 
 });
 createGiacElement({
 	name: 'ztrans',
@@ -127,7 +134,8 @@ createGiacElement({
 		" of <<MathQuill {ghost: 'expression'}>>",
 		"for <<MathQuill {ghost: 'variable' }>>"
 	],
-	command: "ztrans($1, $2, 'z')" 
+	command: "ztrans($1, $2, 'z')", 
+	protect_vars: 2 
 });
 createGiacElement({
 	name: 'iztrans',
@@ -138,7 +146,8 @@ createGiacElement({
 		" of <<MathQuill {ghost: 'expression'}>>",
 		"for <<MathQuill {ghost: 'variable' }>>"
 	],
-	command: "invztrans($1, $2, 'x')" 
+	command: "invztrans($1, $2, 'x')", 
+	protect_vars: 2 
 });
 createGiacElement({
 	name: 'fmax',
@@ -149,7 +158,8 @@ createGiacElement({
 		"for <<MathQuill {ghost: 'variable' }>>",
 		"between <<MathQuill {ghost: 'start' }>> and <<MathQuill {ghost: 'end' }>>"
 	],
-	command: "fMax($1, $2=$3..$4)" 
+	command: "fMax($1, $2=$3..$4)", 
+	protect_vars: 2 
 });
 createGiacElement({
 	name: 'fmin',
@@ -160,7 +170,8 @@ createGiacElement({
 		"for <<MathQuill {ghost: 'variable' }>>",
 		"between <<MathQuill {ghost: 'start' }>> and <<MathQuill {ghost: 'end' }>>"
 	],
-	command: "fMin($1, $2=$3..$4)" 
+	command: "fMin($1, $2=$3..$4)", 
+	protect_vars: 2 
 });
 createGiacElement({
 	name: 'pade',
@@ -172,7 +183,8 @@ createGiacElement({
 		"with numerator order <<MathQuill {ghost: 'm' }>>",
 		"and denominator order <<MathQuill {ghost: 'n' }>>"
 	],
-	command: "pade($1, '$2', $4+2, $3+1)" 
+	command: "pade($1, '$2', $4+2, $3+1)", 
+	protect_vars: 2 
 });
 
 

@@ -180,6 +180,10 @@ var createGiacElement = function(options) {
 					for(var i = 0; i < _this.items.length; i++) 
 						command = command.replace("$" + (i+1), _this.items[i].text());
 					_this.commands = _this.genCommand(command);
+					if(_this.options.protect_vars) {
+						_this.commands[0].restore_vars = _this.items[_this.options.protect_vars-1].text();
+						_this.commands[0].protect_vars = _this.items[_this.options.protect_vars-1].text();
+					}
 					_this.fullEvaluation = (_this.scoped || _this.was_scoped);
 					_this.evaluate();
 					_this.needsEvaluation = false;

@@ -229,6 +229,7 @@ var desolve = P(GiacGeneric, function(_, super_) {
 					// symbolic solver desolve
 					if(!_this.varField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_]*\)$/i))
 						errors.push('Invalid function name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid function with dependant variables.  Ex: f(x)');
+					var step_var = _this.varField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_]*)\)$/i,"$1, $2");
 					var eqs = [];
 					$.each(_this.eqFields, function(i, v) { eqs.push(v.text()); });
 					var var_command = _this.varField.text({default: 'f(x)'});
@@ -239,13 +240,14 @@ var desolve = P(GiacGeneric, function(_, super_) {
 					_this.commands = _this.genCommand('[val]');
 					_this.commands[0].unit_convert = true;
 				}
+				_this.commands[0].restore_vars = step_var;
 				if(errors.length && _this.outputMathBox) {
 					_this.worksheet.save();
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {
 					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
-					_this.commands.unshift({command: command, nomarkup: true, pre_command: (_this.numeric_mode ? 'mksareduce_mode(1);' : 'mksavariable_mode(1);') }); 
+					_this.commands.unshift({command: command, protect_vars: step_var, nomarkup: true, pre_command: (_this.numeric_mode ? 'mksareduce_mode(1);' : 'mksavariable_mode(1);') }); 
 					_this.fullEvaluation = (_this.scoped || _this.was_scoped);
 					_this.evaluate();
 					_this.needsEvaluation = false;
