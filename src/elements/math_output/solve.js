@@ -175,8 +175,23 @@ var solve = P(GiacGeneric, function(_, super_) {
 					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
 					_this.commands.unshift({command: command, nomarkup: true, pre_command: (_this.ask_initial_guess ? 'mksareduce_mode(1);' : 'mksavariable_mode(1);') }); 
 
+					// We don't want scope to depend on variable we are trying to solve for...so drop them out
+					var var_list = _this.varField.text().split(',');
+					var purge_command = '';
+					var restore_command = '';
+					var restore_vars = [];
+					for(var i = 0; i < var_list.length; i++) {
+						purge_command += "if(" + var_list[i] + "!='" + var_list[i] + "'){" + var_list[i] + "__temp:=" + var_list[i] + ";};";
+						restore_command += "if(" + var_list[i] + "__temp!='" + var_list[i] + "__temp'){" + var_list[i] + ":=" + var_list[i] + "__temp;};";
+						restore_vars.push(var_list[i] + "__temp");
+					}
+					_this.commands.unshift({command: purge_command + "purge(" + _this.varField.text() + ");", nomarkup: true});
+
 					if(_this.ask_initial_guess) // insert guess into the equations to see if it causes a unit error
 						_this.commands.push({command: "((" + _this.varField.text() + ")->(" + _this.eqFields[0].text().replace(/==/g,'-') + "))(" + guess_text + ")", nomarkup: true});
+
+					// Restore purged scoped vars
+					_this.commands.push({command: restore_command + "purge(" + restore_vars.join(",") + ");", nomarkup: true});
 
 					_this.fullEvaluation = (_this.scoped || _this.was_scoped);
 					_this.evaluate();
@@ -186,29 +201,29 @@ var solve = P(GiacGeneric, function(_, super_) {
 		};
 	}
 	_.evaluationFinished = function(result) {
-		if(this.ask_initial_guess && !result[2].success) {
-			if(result[2].returned.match(/Incompatible units Error/))
-				result[1].warnings.push('Error during unit consistency check: Ensure your intial guess has the proper expected units, and that units in the equations balance')
+		if(this.ask_initial_guess && !result[3].success) {
+			if(result[3].returned.match(/Incompatible units Error/))
+				result[2].warnings.push('Error during unit consistency check: Ensure your intial guess has the proper expected units, and that units in the equations balance')
 			else
-				result[1].warnings.push(result[2].returned);
+				result[2].warnings.push(result[3].returned);
 		}
-		if(result[1].returned && result[1].success) {
+		if(result[2].returned && result[2].success) {
 			this.was_scoped = false;
 			// Test for no result
-			if(result[1].returned.match(/[\s]*\\begin{bmatrix[0-9]+}\\end{bmatrix[0-9]+}[\s]*/)) { 
-				result[1].returned = ''; 
-				result[1].warnings.push('No results found'); 
+			if(result[2].returned.match(/[\s]*\\begin{bmatrix[0-9]+}\\end{bmatrix[0-9]+}[\s]*/)) { 
+				result[2].returned = ''; 
+				result[2].warnings.push('No results found'); 
 			} else {
 				if(this.number_of_equations > 1) 
 					var to_add = "\\left\\{ " + this.varField.text() + " \\right\\}"
 				else
 					var to_add = this.varField.text();
-				result[1].returned = to_add + " \\whitespace\\Longrightarrow \\whitespace " + result[1].returned;
+				result[2].returned = to_add + " \\whitespace\\Longrightarrow \\whitespace " + result[2].returned;
 			}
 		}
-		if(result[1].success && result[1].warnings.join(",").match(/undefined/i) && (this.number_of_equations != this.varField.text().split(',').length))
-			result[1].warnings.push('The number of equations does not match the number of variables in the variable list.  If there are other independant variables in your equations, please include them in the variable list');
-		var to_return = super_.evaluationFinished.call(this, [result[1]]); // Transform to array with result 1 in spot 0, as that is what is expected in evaluationFinished
+		if(result[2].success && result[2].warnings.join(",").match(/undefined/i) && (this.number_of_equations != this.varField.text().split(',').length))
+			result[2].warnings.push('The number of equations does not match the number of variables in the variable list.  If there are other independant variables in your equations, please include them in the variable list');
+		var to_return = super_.evaluationFinished.call(this, [result[2]]); // Transform to array with result 1 in spot 0, as that is what is expected in evaluationFinished
 		this.last_result = result;
 		return to_return;
 	}
