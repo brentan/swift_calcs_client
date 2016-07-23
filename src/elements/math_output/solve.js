@@ -13,7 +13,7 @@ var solve = P(GiacGeneric, function(_, super_) {
 	_.innerHtml = function() {
 		return '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
 	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span>' + focusableHTML('CodeBlock', 'solve') + '</td>'
-	 	+ '<td class="' + css_prefix + 'content"><div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'eq0') + helpBlock() + '</div><div class="' + css_prefix + 'hide_print"><div class="' + css_prefix + 'add_equation">Add another equation</div></div>'
+	 	+ '<td class="' + css_prefix + 'content"><div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'eq0') + helpBlock() + '</div><div><div class="' + css_prefix + 'add_equation ' + css_prefix + 'hide_print">Add another equation</div></div>'
 	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="1">for&nbsp;' + focusableHTML('MathQuill',  'var') + '<span class="initial_guess" style="display:none;">&nbsp;with initial guess&nbsp;' + focusableHTML('MathQuill',  'var_guess') + '</span></div>'
 	  + '<div class="' + css_prefix + 'focusableItems" data-id="2">using&nbsp;' + focusableHTML('SelectBox',  'solver') + '</div>'
 		+ answerSpan() + '</td></tr></tbody></table>';
