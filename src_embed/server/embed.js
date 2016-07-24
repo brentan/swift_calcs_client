@@ -12,6 +12,18 @@ var receiveMessage = function(event) {
     case 'handshake':
       if(command[3] == window.sc_client_version) handshake_complete = true;
       break;
+    case 'src_url':
+      var track_visit = function() {
+        if(ahoy && window.data_hash.length) ahoy.track("Embedded iFrame", {src: command[3], element_type: window.data_type, element_hash: window.data_hash});
+        else window.setTimeout(track_visit, 250);
+      }
+      track_visit();
+      break;
+    case 'setTextareaLocation':
+      var location = command[3]*1;
+      var location = Math.max(Math.min(location, $(".worksheet_holder_outer_box").height()-100),0);
+      $('.sc_textarea').css('top', location + 'px');
+      break;
   }
 }
 var setHeight = window.embedSetHeight = function() {

@@ -47,6 +47,7 @@ var receiveMessage = function(event) {
     case 'handshake':
       if(command[3] == sc_embed_version) {
         sendMessage("handshake", sc_embed_version);
+        sendMessage("src_url", window.location.href);
         handshake_complete = true;
       }
       break;
@@ -61,6 +62,14 @@ var sendMessage = function(command, valu) {
   var data = "SCembed=" + iframe_id + "=" + command + "=" + valu;
   iframe.contentWindow.postMessage(data, dev ? "http://dev.swiftcalcs.com:3000" : "https://www.swiftcalcs.com");
 }
+
+var resetServerTextareaLocation = function() {
+  // We have to send the server the scroll position and the iframe position so it can move its internal textarea div, otherwise the page
+  // will jump around during focus events as it could be off-screen
+  var iframe_position = iframe.getBoundingClientRect().top;
+  sendMessage("setTextareaLocation",-1 * iframe_position)
+}
+window.addEventListener("scroll", resetServerTextareaLocation);
 
 // Inject iframe into DOM
 el.innerHTML = '';
