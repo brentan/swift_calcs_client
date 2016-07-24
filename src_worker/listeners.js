@@ -263,6 +263,7 @@ var restoreVars = function(var_list) {
   // This command undoes the stashing of dependant variables (like solve for x), to restore 'x'
   var restore_command = '';
   var restore_vars = [];
+  var_list = var_list.split(',');
   for(var i = 0; i < var_list.length; i++) {
     restore_command += "if(" + var_list[i] + "__temp!='" + var_list[i] + "__temp'){" + var_list[i] + ":=" + var_list[i] + "__temp;};";
     restore_vars.push(var_list[i] + "__temp");
