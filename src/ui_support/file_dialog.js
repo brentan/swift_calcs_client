@@ -135,12 +135,18 @@ $(function() {
 			+ "<span class='invite_reject'><span class='fa fa-times-circle'></span>Reject</span>"
 			+ "<span class='invite_pending'><i class='fa fa-pulse fa-spinner'></i></span>";
 	}
+	var prepend_to_list = false;
 	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html, onshape) {
 		clear_batch();
 		window.selectToolboxTab('projects_list');
 		// Assumes worksheets already sorted by date from latest to earliest
 		$('.worksheet_holder').html('');
 		$('<div/>').addClass('active_path').html(path_html).appendTo('.worksheet_holder');
+		if(prepend_to_list !== false) {
+			prepend_to_list.updated_at = Math.floor(Date.now()/1000);
+			prepend_to_list.invitation = false;
+			worksheets.unshift(prepend_to_list);
+		}
 		if(worksheets.length > 0) {
 			var d = new Date();
 			d.setHours(0,0,0,0);
@@ -148,9 +154,9 @@ $(function() {
 			var box = false;
 			var index = 0;
 			var time_splits = [d, d-24*3600*1000, d-7*24*3600*1000];
-			var time_names = ['Today', 'Yesterday', 'Last Seven Days'];
 			var current_month_string = '';
 			for(var i = 0; i < worksheets.length; i++) {
+				if(prepend_to_list && (i > 0) && (worksheets[i].id == prepend_to_list.id)) continue;
 				worksheets[i].updated_at = new Date(worksheets[i].updated_at * 1000);
 				if(in_box) {
 				  if((index < time_splits.length) && (worksheets[i].updated_at < d)) in_box = false;
@@ -288,6 +294,7 @@ $(function() {
 	    }
 	    $div.appendTo('.worksheet_holder')
 		}
+		prepend_to_list = false;
 	}
 	var addStar = window.addStar = function(data_id) {
     window.trackEvent("Star", "Add", data_id);
@@ -939,7 +946,18 @@ $(function() {
 		window.selectToolboxTab('projects_list');
 		$('.base_layout').removeClass('worksheet_open');
 		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-		if(clear_url !== false) {
+		if((clear_url !== false) && SwiftCalcs.pushState.last_active_url.match(/^(\/)?$/)) {
+			// Closing a worksheet that was 'maximized', so we should load the active list but prepend this to its top
+			var item = el.children('.active_holder').children('.worksheet_item');
+			prepend_to_list = {
+				star_id: item.find('span.star fa').hasClass('fa-star'),
+				name: item.attr('data-name'),
+				parent_project_id: item.attr('parent-id'),
+				hash_string: item.attr('data-hash'),
+				id: item.attr('data-id')
+			}
+			window.setTimeout(function() { loadProject('active'); }, 275);
+		} else if(clear_url !== false) {
 			$(document).prop('title', SwiftCalcs.pushState.last_active_title);
 			SwiftCalcs.pushState.navigate(SwiftCalcs.pushState.last_active_url);
 		}
