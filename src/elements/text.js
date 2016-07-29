@@ -525,6 +525,25 @@ var WYSIWYG = P(function(_) {
           e.preventDefault();
           break;
         case 'Shift-Enter':
+          // Shift enter is a special command that will insert a math block at the specified location
+          if(t.checkForSpecialBlock(e)) return;
+          t.ignoreUndo = false;
+          var stream = t.el.worksheet.trackingStream;
+          if(!stream) t.el.worksheet.startUndoStream();
+          t.setUndoPoint();
+          rangy.getSelection(t.$editor[0]).deleteFromDocument(); // Delete anything that is highlighted
+          if(t.startPosition()) {
+            math().insertBefore(t.el).show().focus(-1);
+          } else if(t.endPosition()) {
+            math().insertAfter(t.el).show().focus(-1);
+          } else {
+            t.split();
+            math().insertAfter(t.el).show().focus(-1);
+          }
+          t.syncCode();
+          if(!stream) t.el.worksheet.endUndoStream();
+          e.preventDefault();
+          break;
         case 'Ctrl-Enter':
         case 'Enter':
           if(t.checkForSpecialBlock(e)) return;
