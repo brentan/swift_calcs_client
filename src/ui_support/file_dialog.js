@@ -1073,10 +1073,11 @@ $(function() {
 			window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {id: id, hash_string: hash_string} }, try_success, fail);
 	}
 	$('body').on('click', '.project_item', function(e) {
+		if($(this).closest(".details_span").length) return;
 		var archive = $(this).closest('.archived').length > 0;
 		window.loadProject($(this).attr('data-hash_string'), $(this).attr('data-name'), archive);
 	});
-	$('body').on('click', 'td.info .placeholder', function(e) {
+	$('body').on('click', 'td.location', function(e) {
 		window.moveWorksheet($(this).closest('.active_holder').children('.worksheet_item, .invitation_item'));
 	});
 	var moveWorksheet = window.moveWorksheet = function(el, remove_after_move) {
@@ -1086,25 +1087,25 @@ $(function() {
 			window.hidePopupOnTop();
 			el.attr('parent-id', response.id);
 			if(response.path) 
-				dets.find('td.projects').html(response.path).closest('tr').show();
+				dets.find('td.location > div').html(response.path);
 			else
-				dets.find('td.projects').html('<div class="placeholder">Worksheet is not part of a project</div>');
+				dets.find('td.location > div').html('No Project');
 		}
 		var fail = function(response) {
 			window.hidePopupOnTop();
-			dets.find('td.projects').html('<div class="placeholder">An error occurred</div>');
+			dets.find('td.location > div').html('<div class="placeholder">An error occurred</div>');
 		}
 		var processMove = function(project_id) {
-			dets.find('td.projects').html('<i class="fa fa-spinner fa-pulse"></i>');
+			dets.find('td.location > div').html('<i class="fa fa-spinner fa-pulse"></i>');
 			window.ajaxRequest("/projects/move", { data_type: 'Worksheet', id: el.attr('data-id'), project_id: project_id, current_view: current_project_id}, success, fail);
 		}
 		moveDialog(processMove, el.attr('parent-id'));
 	}
-	$('body').on('click', 'td.info .info.revisions', function(e) {
+	$('body').on('click', 'td.revisions', function(e) {
     window.trackEvent("Worksheet", "Load Revisions", "From Header");
 		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-name'));
 	});
-	$('body').on('click', 'td.collaborators .bubble, td.collaborators .placeholder', function(e) {
+	$('body').on('click', 'td.collaborators', function(e) {
     window.trackEvent("Worksheet", "Sharing Dialog","From Header");
 		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), 'Worksheet');
 	});

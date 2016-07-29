@@ -123,6 +123,8 @@ $(function() {
       success: function(response) {
         if(response.success) {
           window.hidePopupOnTop();
+          if($(".active_worksheet .worksheet_item").attr("data-hash") == response.hash) // Update worksheet rights list if worksheet is open
+            $(".active_worksheet td.collaborators > div").html(response.rights)
           showNotice(response.message, 'green');
         } else {
           window.showPopupOnTop();

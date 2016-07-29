@@ -315,10 +315,13 @@ var Worksheet = P(function(_) {
 		}
 		var to_parse = response.data;
 		// Load the details section
-		var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody>'
+
+    var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody><tr><td class="collaborators"></td><td class="settings"></td><td class="location"></td><td class="revisions"></td></tr></tbody></table>');
+
+	  /*var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody>'
 			+ '<tr><td class="left"><i class="fa fa-users"></i></td><td class="collaborators right"></td></tr>' //+ '<tr><td class="left"><i class="fa fa-tags"></i></td><td class="labels right"></td></tr>'
 			+ '<tr><td class="left"><i class="fa fa-info-circle"></i></td><td class="info right"></td></tr>'
-			+ '</tbody></table>');
+			+ '</tbody></table>');*/
 		// Labels:
 		/*
 		if(this.rights >= 3)
@@ -336,18 +339,16 @@ var Worksheet = P(function(_) {
 		*/
 		// Project
 		if(response.project_path) 
-			det_div.find('td.info').append($('<div/>').html('Project: ' + response.project_path));
+			det_div.find('td.location').append($('<i/>').addClass('fa').addClass('fa-folder-open')).append($('<div/>').html(response.project_path));
 		else 
-			det_div.find('td.info').append($('<div/>').addClass('placeholder').html('No project'));
-		det_div.find('td.info').append($('<div/>').addClass('break').html('-'));
-		det_div.find('td.info').append($('<div/>').html(response.update_time));
-		det_div.find('td.info').append($('<div/>').addClass('break').html('-'));
+			det_div.find('td.location').append($('<i/>').addClass('fa').addClass('fa-folder-open')).append($('<div/>').html('No project'));
+		det_div.find('td.revisions').append($('<i/>').addClass('fa').addClass('fa-history')).append($('<div/>').html(response.update_time));
 		// Collaborators
-		det_div.find('.collaborators').html(response.collaborators);
+		det_div.find('.collaborators').append($('<i/>').addClass('fa').addClass('fa-users')).append($('<div/>').addClass('nopadding').html(response.collaborators));
 		// Settings
-		$('<div/>').addClass('settings').html(this.setSettingsText()).appendTo(det_div.find('td.info')).on('click', function(_this) { return function(e) {
+		$('<div/>').addClass('settings').html(this.setSettingsText()).appendTo(det_div.find('td.settings').append($('<i/>').addClass('fa').addClass('fa-gear')).on('click', function(_this) { return function(e) {
 			_this.loadSettingsPane();
-		}; }(this));
+		}; }(this)));
     if(typeof window.embedded === 'undefined') 
 		  det_div.insertBefore(this.jQ).slideDown({duration: 200});
 		var name_span = this.jQ.closest('.active_holder').find('.worksheet_item span.name');
