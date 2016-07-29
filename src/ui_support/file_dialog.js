@@ -954,7 +954,8 @@ $(function() {
 				name: item.attr('data-name'),
 				parent_project_id: item.attr('parent-id'),
 				hash_string: item.attr('data-hash'),
-				id: item.attr('data-id')
+				id: item.attr('data-id'),
+				archive_id: item.hasClass('archived')
 			}
 			window.setTimeout(function() { loadProject('active'); }, 275);
 		} else if(clear_url !== false) {
