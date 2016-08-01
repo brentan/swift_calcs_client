@@ -120,7 +120,7 @@ var solve = P(GiacGeneric, function(_, super_) {
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i))
+				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
 				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*(,[a-z][a-z0-9_]*)*$/i))
 					errors.push('Invalid variable list (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid comma-seperated list of variables');
