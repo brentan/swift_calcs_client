@@ -93,7 +93,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
-			window.ajaxRequest("/onshape/get_variable", {id: this.worksheet.server_id, eid: this.part_id, fid: this.var_id}, function(_this) { return function(response) { 
+			window.ajaxRequest("/onshape/get_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id}, function(_this) { return function(response) { 
 				if(response.var["name"]) {
 					_this.jQ.find(".var_name").html(response.var["name"]);
 					_this.commands = _this.genCommand(_this.varField.text() + ' := ' + response.var["value"].trim().replace(/  /g,' ').replace(/ /g,'_'));

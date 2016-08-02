@@ -27,7 +27,7 @@ var fusion = P(Element, function(_, super_) {
 			e.preventDefault();
 			e.stopPropagation();
 		}; }(this));
-		window.ajaxRequest("/fusion/get_vars", {id: this.worksheet.server_id}, function(_this) { return function(response) { 
+		window.ajaxRequest("/fusion/get_vars", {hash_string: this.worksheet.hash_string}, function(_this) { return function(response) { 
 			vars = response.vars.split("&");
 			for(var i = 0; i < vars.length; i++) {
 				var varname = vars[i].replace(/=.*$/,'')
@@ -68,7 +68,7 @@ var fusion = P(Element, function(_, super_) {
 					vars.push(children[i].var_name.trim() + "=" + children[i].var_value.trim());
 			}
 		vars = vars.join("&");
-		window.ajaxRequest("/fusion/set_vars", {id: this.worksheet.server_id, vars: vars}, function(_this) { return function(response) { 
+		window.ajaxRequest("/fusion/set_vars", {hash_string: this.worksheet.hash_string, vars: vars}, function(_this) { return function(response) { 
 			_this.jQ.find('div.sync a').removeClass('grey');
 		} }(this), function(_this) { return function(response) { 
 		} }(this));

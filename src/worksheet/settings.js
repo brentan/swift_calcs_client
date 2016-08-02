@@ -256,7 +256,7 @@ Worksheet.open(function(_) {
 		giac.sendCommand({restart_string: "DIGITS:=" + (this.settings.digits) + ";complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units)});
 		if(recalculate !== false) {
 			this.settings.saved = true;
-			if(this.rights >= 3) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {id: this.server_id, settings: this.settings } });
+			if(this.rights >= 3) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {hash_string: this.hash_string, settings: this.settings } });
 			$('.apply_now').removeClass('shown').hide();
 			SwiftCalcs.active_worksheet.ends[-1].evaluate(true, true); if(!SwiftCalcs.giac.auto_evaluation) { SwiftCalcs.giac.manualEvaluation(); }
 		}

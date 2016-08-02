@@ -61,7 +61,7 @@ $(function() {
       i.closest(".rights_form").find(".hide_on_public").show();
   }
   var createRightsDropdown = window.createUserRightsDropdown = function(span) {
-    var id = span.attr('data-id');
+    var id = span.attr('data-hash');
     var sel = $('<select/>')
       .append("<option value='1'>Can view</option>")
       .append("<option value='2'>Can view and duplicate</option>")
@@ -75,7 +75,7 @@ $(function() {
     span.replaceWith(sel);
     sel.val(to_sel);
     if(id) 
-      sel.attr('data-id', id);
+      sel.attr('data-hash', id);
     if(span.attr('data-orig'))
       sel.attr('data-orig', span.attr('data-orig'));
   }
@@ -85,7 +85,7 @@ $(function() {
     var data = {};
     data.token = form.find('.token').val();
     data.item_type = form.find('.item_type').val();
-    data.item_id = form.find('.item_id').val()*1;
+    data.item_hash = form.find('.item_hash').val();
     // Public Rights
     data.public_rights = form.find('.public_selection input.public_rights').val()*1;
     // Changes to users already added
@@ -94,7 +94,7 @@ $(function() {
       var val = $(this).val()*1;
       if((val == 0) && !$(this).attr('data-orig')) // 'No rights' selected for somebody with no inherited rights...so change to 'inherit' so it just removes rights for this person
         val = -1;
-      data.people.push({ id: $(this).attr('data-id')*1, user_rights: val });
+      data.people.push({ hash_string: $(this).attr('data-hash'), user_rights: val });
     });
     // New inherited user (overwrite?)
     data.inherited_people = [];
@@ -102,7 +102,7 @@ $(function() {
       var val = $(this).val()*1;
       var orig = $(this).attr('data-orig')*1;
       if(val == orig) return;
-      data.inherited_people.push({user_id: $(this).attr('data-id')*1, user_rights: val });
+      data.inherited_people.push({user_hash: $(this).attr('data-hash'), user_rights: val });
     });
     // New invited users
     data.invite_emails = [];
@@ -123,7 +123,7 @@ $(function() {
       success: function(response) {
         if(response.success) {
           window.hidePopupOnTop();
-          if($(".active_worksheet .worksheet_item").attr("data-hash") == response.hash) // Update worksheet rights list if worksheet is open
+          if($(".active_worksheet .worksheet_item, .active_worksheet .invitation_item").attr("data-hash") == response.hash) // Update worksheet rights list if worksheet is open
             $(".active_worksheet td.collaborators > div").html(response.rights)
           showNotice(response.message, 'green');
         } else {
@@ -140,7 +140,7 @@ $(function() {
       }
     });
   }
-  var invalidateURL = function(link, item_type, item_id) {
+  var invalidateURL = function(link, item_type, item_hash) {
     $('<span><i class="fa fa-spinner fa-pulse"></i>&nbsp;Loading</span>').insertAfter(link);
     link.hide();
     $.ajax({
@@ -148,23 +148,29 @@ $(function() {
       url: "/rights/invalidate_url",
       dataType: 'json',
       cache: false,
-      data: { item_type: item_type, item_id: item_id }, 
+      data: { item_type: item_type, item_hash: item_hash }, 
       success: function(response) {
         if(response.success) {
           link.show();
           link.next('span').remove();
           link.closest('form').find("input.static").attr('data-url', response.url).val(response.url);
-          if(item_type == 'Folder') {
-            $('.file_dialog .folder_item').each(function() {
-              if($(this).attr('data-id')*1 == item_id*1) 
-                $(this).attr('data-hash_string',response.hash_string);
+          link.closest('form').find('.item_hash').val(response.hash_string);
+          createEmbedCode();
+          if(item_type == 'Project') {
+            $('.projects_list div.item').each(function() {
+              if($(this).attr('data-hash') == item_hash) 
+                $(this).attr('data-hash',response.hash_string);
             });
+            if(window.current_project_hash() == item_hash) 
+              window.setCurrentProject(response.hash_string, response.url_end, window.current_project_onshape());
+            if(SwiftCalcs.pushState.fragment.indexOf(item_hash) !== -1)
+              SwiftCalcs.pushState.navigate(SwiftCalcs.pushState.fragment.replace(item_hash, response.hash_string), {trigger: false});
           }
-          if(SwiftCalcs.active_worksheet && (item_type == 'Worksheet') && (item_id == SwiftCalcs.active_worksheet.server_id))
-            SwiftCalcs.active_worksheet.rename(SwiftCalcs.active_worksheet.name, response.hash_string, SwiftCalcs.active_worksheet.server_id)
-          $('.file_dialog .file_item').each(function() {
-            if(($(this).attr('data-type') == item_type) && ($(this).attr('data-id')*1 == item_id*1))
-              $(this).attr('data-hash_string',response.hash_string);
+          if(SwiftCalcs.active_worksheet && (item_type == 'Worksheet') && (item_hash == SwiftCalcs.active_worksheet.hash_string))
+            SwiftCalcs.active_worksheet.rename(SwiftCalcs.active_worksheet.name, response.hash_string)
+          $('.worksheet_holder_outer_box .worksheet_item').each(function() {
+            if($(this).attr('data-hash') == item_hash)
+              $(this).attr('data-hash',response.hash_string);
           })
         } else {
           link.show();
@@ -196,7 +202,7 @@ $(function() {
     var autosave = el.find('.embed_autosave').val() === '1' ? 'true' : 'false';
     var interaction = el.find('.embed_interaction').val();
     var worksheet = el.attr('data-worksheet') === '1' ? 'w' : 'p';
-    var hash_string = el.attr('data-hash');
+    var hash_string = el.closest('form').find('.item_hash').val();
     var dev = el.attr('data-dev') === '1' ? 'true' : 'false';
     // First code should inject a div to house the iframe, and put 'loading' inside it
     var code = "<script language='javascript'>(function() { document.write('<div style=\"border-width:0px;padding:0px;margin:3px;\" id=\"SwiftCalcs_" + worksheet + "_" + hash_string + "\"><div style=\"height:" + (height > 0 ? height : '600') + "px;text-align:center;font-size:24px;color:black;margin-top:50px;\">Loading...</div></div>');";
@@ -212,8 +218,8 @@ $(function() {
     el.find('.iframe_embed input').val("<iframe width='100%' height='" + (height > 0 ? height : '600') + "' frameborder='0' allowTransparency='true' scrolling='no' style='width:100%;overflow:hidden;border-width:0px;height:" + (height > 0 ? height : '600') + "px;background-color:transparent;' src='" + iframe_src + "'></iframe>");
   }
 
-	var openSharingDialog = window.openSharingDialog = function(item_id, item_type) {
-    if(item_id == -1) {
+	var openSharingDialog = window.openSharingDialog = function(item_hash, item_type) {
+    if(item_hash == '') {
       if(window.user_logged_in) {
         showNotice("Save this document in order to enable sharing");
       } else {
@@ -233,7 +239,7 @@ $(function() {
       url: "/rights",
       dataType: 'json',
       cache: false,
-      data: { item_id: item_id, item_type: item_type }, 
+      data: { item_hash: item_hash, item_type: item_type }, 
       success: function(response) {
       	if(response.success) {
           window.showPopupOnTop();
@@ -268,7 +274,7 @@ $(function() {
             emailInput($(this));
           });
           el.find('a.invalidate').on('click', function(e) {
-            invalidateURL($(this), $(this).closest('form').find('.item_type').val(), $(this).closest('form').find('.item_id').val()*1)
+            invalidateURL($(this), $(this).closest('form').find('.item_type').val(), $(this).closest('form').find('.item_hash').val())
             e.preventDefault();
             return false;
           })

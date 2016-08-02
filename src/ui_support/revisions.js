@@ -4,22 +4,24 @@ $(function() {
 			SwiftCalcs.pushState.navigate('/worksheets/' + SwiftCalcs.active_worksheet.hash_string + '/' + encodeURIComponent(SwiftCalcs.active_worksheet.name.replace(/ /g,'_')));
 			SwiftCalcs.active_worksheet.rights = SwiftCalcs.active_worksheet.revision_rights_level;
 			SwiftCalcs.active_worksheet.generateTopWarning();
-			window.silentRequest('/worksheet_commands',{command: 'restore_worksheet', data: { id: SwiftCalcs.active_worksheet.server_id, revision: SwiftCalcs.active_worksheet.revision_id }})
-			SwiftCalcs.active_worksheet.revision_id = 0;
+			window.silentRequest('/worksheet_commands',{command: 'restore_worksheet', data: { hash_string: SwiftCalcs.active_worksheet.hash_string, revision: SwiftCalcs.active_worksheet.revision_hash }}, function(response) {
+        $(".details_span div.revisions").html(response.message);
+      });
+			SwiftCalcs.active_worksheet.revision_hash = '';
 			SwiftCalcs.active_worksheet.save(true);
 		} 
 	}
-	var loadRevision = function(id, hash_string, name) {
+	var loadRevision = function(revision_hash, hash_string, name) {
 		hideDialogs();
-		SwiftCalcs.pushState.navigate('/revisions/' + hash_string + '/' + id + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
+		SwiftCalcs.pushState.navigate('/revisions/' + hash_string + '/' + revision_hash + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
 	}
-	var loadRevisions = window.loadRevisions = function(id, hash_string, name) {
+	var loadRevisions = window.loadRevisions = function(hash_string, name) {
     var success = function(response) {
       window.showPopupOnTop();
       $('.popup_dialog .full').html(response.html);
       $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
       $('.popup_dialog').find('.load_revision').on('click', function(e) {
-        loadRevision($(this).attr('data-id'), hash_string, name);
+        loadRevision($(this).attr('data-hash'), hash_string, name);
         e.preventDefault();
         return false;
       });
@@ -28,6 +30,6 @@ $(function() {
     var fail = function() {
       window.hidePopupOnTop();
     }
-    window.ajaxRequest("/revisions", { id: id }, success, fail);
+    window.ajaxRequest("/revisions", { hash_string: hash_string }, success, fail);
   }
 });

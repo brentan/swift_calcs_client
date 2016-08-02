@@ -40,7 +40,7 @@ var image = P(importData, function(_, super_) {
 		    url: "/file_by_url",
 		    dataType: 'json',
 		    cache: false,
-		    data: { worksheet_id: _this.worksheet.server_id, url: text }, 
+		    data: { worksheet_hash: _this.worksheet.hash_string, url: text }, 
 		    success: function(response) {
 					item.updateProgress(100);
 		    	if(response.success) {

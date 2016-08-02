@@ -103,7 +103,7 @@ Worksheet.open(function(_) {
 		  dropZone: null,
 		  formData: [
 		    { name: 'authenticity_token', value: $('meta[name="csrf-token"]').attr('content') },
-		    { name: 'worksheet_id', value: _this.server_id }
+		    { name: 'worksheet_hash', value: _this.hash_string }
 		  ]
 		});
         upload_bind_complete = true;

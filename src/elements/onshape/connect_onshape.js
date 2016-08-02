@@ -13,7 +13,7 @@ var connectOnshape = P(Element, function(_, super_) {
 	}
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
-		window.ajaxRequest("/onshape/get_elements", {id: this.worksheet.server_id}, function(_this) { return function(response) { _this.ajaxCallback(true, response); } }(this), function(_this) { return function(response) { _this.ajaxCallback(false, response); } }(this));
+		window.ajaxRequest("/onshape/get_elements", {hash_string: this.worksheet.hash_string}, function(_this) { return function(response) { _this.ajaxCallback(true, response); } }(this), function(_this) { return function(response) { _this.ajaxCallback(false, response); } }(this));
 		return this;
 	}
 	_.ajaxCallback = function(success, response) {
@@ -85,7 +85,7 @@ var connectOnshape_3 = P(Element, function(_, super_) {
 	_.postInsertHandler = function() {
 		this.focusableItems = [[registerFocusable(CodeBlock, this, (this.get ? 'Read' : 'Set') + ' Onshape Variable', { })]];
 		super_.postInsertHandler.call(this);
-		window.ajaxRequest("/onshape/get_variables", {id: this.worksheet.server_id, eid: this.part_id}, function(_this) { return function(response) { _this.ajaxCallback(true, response); } }(this), function(_this) { return function(response) { _this.ajaxCallback(false, response); } }(this));
+		window.ajaxRequest("/onshape/get_variables", {hash_string: this.worksheet.hash_string, eid: this.part_id}, function(_this) { return function(response) { _this.ajaxCallback(true, response); } }(this), function(_this) { return function(response) { _this.ajaxCallback(false, response); } }(this));
 		return this;
 	}
 	_.ajaxCallback = function(success, response) {
@@ -140,7 +140,7 @@ var connectOnshape_4 = P(Element, function(_, super_) {
 				// Create new variable
 				this.jQ.find('.' + css_prefix + 'SelectBox').hide();
 				this.jQ.find('.to_store').show();
-				window.ajaxRequest("/onshape/create_variable", {id: this.worksheet.server_id, eid: this.part_id, fid: this.var_id, name: var_name}, function(_this) { return function(response) { 
+				window.ajaxRequest("/onshape/create_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id, name: var_name}, function(_this) { return function(response) { 
 					_this.jQ.find('.' + css_prefix + 'SelectBox').show();
 					_this.jQ.find('.to_store').hide();
 					setOnshapeVariable(_this.part_name, _this.part_id, var_name, response.id).insertAfter(_this).show(0).focus(0);

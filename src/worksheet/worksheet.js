@@ -20,13 +20,12 @@ var Worksheet = P(function(_) {
 	_.lastActive = 0;
 	_.dragging = false;
 	_.mousedown = false;
-	_.server_id = -1;
 	_.name = '';
 	_.hash_string = '';
 	_.server_version = 1;
 	_.rights = 0;
 	_.uploads = "";
-	_.revision_id = 0;
+	_.revision_hash = 0;
 	_.loaded = false;
 	_.ready_to_print = false;
 
@@ -34,15 +33,15 @@ var Worksheet = P(function(_) {
   function uniqueWorksheetId() { return id += 1; }
 
   // Create the worksheet, pass in an optional name
-	_.init = function(name, hash_string, server_id, server_version, rights, settings) { 
-		if((typeof name === 'undefined') || (typeof name === 'undefined')) 
+	_.init = function(inputs) { 
+		if((typeof inputs === 'undefined') || (typeof inputs.name === 'undefined') || (typeof inputs.hash_string === 'undefined')) 
 			throw "Worksheet initialized with no name or hash_string";
-		if(server_id) this.server_id = server_id;
-		if(server_version) ajaxQueue.known_server_version[this.server_id] = server_version;
-		this.name = name;
-		this.hash_string = hash_string;
-		this.rights = rights;
-		this.settings = settings;
+		this.name = inputs.name;
+		this.hash_string = inputs.hash_string;
+    if(inputs.version) ajaxQueue.known_server_version[this.hash_string] = inputs.version;
+		this.rights = inputs.rights_level;
+		this.settings = inputs.settings;
+    this.author = inputs.author;
 		this.ends = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
@@ -90,7 +89,7 @@ var Worksheet = P(function(_) {
     $('.fatal_div').hide();
     $('nav.menu').removeClass('noWorksheet');
     ajaxQueue.suppress = false;
-    ajaxQueue.ignore_errors[this.server_id] = false;
+    ajaxQueue.ignore_errors[this.hash_string] = false;
 		this.bound = true;
 		this.generateTopWarning();
 		return this;
@@ -109,7 +108,7 @@ var Worksheet = P(function(_) {
 			case -2: //revision of a worksheet
 				var els = $('<div/>').html('<strong>Revision is View Only</strong>.  <a href="#" class="copy">Copy revision into new worksheet</a>, <a href="#" class="restore">restore worksheet to this revision</a>, or <a href="#" class="back">go to the current version</a>.');
 				els.find('a.copy').on('click', function(_this) { return function(e) {
-					window.newWorksheet(true, _this.server_id, _this.revision_id);
+					window.newWorksheet(true, _this.hash_string, _this.revision_hash);
 					e.preventDefault();
 					return false;
 				}; }(this));
@@ -134,7 +133,9 @@ var Worksheet = P(function(_) {
 			case 2: //view-only but can duplicate
 				var els = $('<div/>').html('<strong>File is View Only</strong>.  To save changes you make to this worksheet, <a href="#" class="copy">create a copy</a>.');
 				els.find('a.copy').on('click', function(_this) { return function(e) {
-					window.newWorksheet(true, _this.server_id); 
+          window.createPrompt("Grant View Rights to File Author?","This file was created by " + _this.author + ".  Would you like to give this person <strong>View Only</strong> access to your copy of the worksheet?",{Yes: 1, No: 0}, function(val) {
+            window.newWorksheet(true, _this.hash_string, null, val == '1');
+          });
 					e.preventDefault();
 					return false;
 				}; }(this));
@@ -159,20 +160,20 @@ var Worksheet = P(function(_) {
 			return false;
 		}; }(this));
   }
-	_.rename = function(new_name, new_hash, new_server_id) {
+	_.rename = function(new_name, new_hash) {
 		if(!new_name) new_name = prompt('Please enter a new name for this Worksheet:', this.name);
 		if(new_name) {
 			this.name = new_name;
 			$(document).prop('title', new_name);
 			$('#account_bar .content').find("input." + css_prefix + "worksheet_name").val(this.name);
-			if(new_hash && new_server_id) {// new hash_string and server id provided means this is a duplication event.  Do not save, just update my hash_string
+			if(new_hash) {// new hash_string and server id provided means this is a duplication event.  Do not save, just update my hash_string
+        ajaxQueue.server_version[new_hash] = ajaxQueue.server_version[this.hash_string];
 				this.hash_string = new_hash;
-				ajaxQueue.server_version[new_server_id] = ajaxQueue.server_version[this.server_id];
-				this.server_id = new_server_id;
-				ajaxQueue.known_server_version[this.server_id] = 1;
-    		ajaxQueue.ignore_errors[this.server_id] = false;
+				ajaxQueue.known_server_version[this.hash_string] = 1;
+    		ajaxQueue.ignore_errors[this.hash_string] = false;
 			} else
 				this.save();
+      pushState.navigate('/worksheets/' + this.hash_string + '/' + encodeURIComponent(this.name.replace(/ /g,'_')), {trigger: false});
 		}
 	}
 	/*
@@ -310,7 +311,7 @@ var Worksheet = P(function(_) {
 	// document is loading.
 	_.load = function(response) {
 		if(this.rights == -2) {
-			this.revision_id = response.revision_id;
+			this.revision_hash = response.revision_hash;
 			this.revision_rights_level = response.revision_rights_level;
 		}
 		var to_parse = response.data;
@@ -398,7 +399,7 @@ var Worksheet = P(function(_) {
 	  return this;
 	}
 	_.reset_server_base = function(base) {
-	  ajaxQueue.server_version[this.server_id] = base; // Seed the diff so that we load it with the current version that we just got from the server
+	  ajaxQueue.server_version[this.hash_string] = base; // Seed the diff so that we load it with the current version that we just got from the server
 	}
 	// Detach method (remove from the DOM)
 	_.unbind = function() {
@@ -421,7 +422,7 @@ var Worksheet = P(function(_) {
 		return this;
 	}
 	_.destroyChildren = function() {
-		if(ajaxQueue.saving && ajaxQueue.holding_pen[this.server_id]) {
+		if(ajaxQueue.saving && ajaxQueue.holding_pen[this.hash_string]) {
 			// Save is not complete, so wait to destroy children until save finishes
 			return window.setTimeout(function(_this) { return function() { _this.destroyChildren(); }; }(this), 50);
 		}
@@ -484,7 +485,7 @@ var Worksheet = P(function(_) {
 	}
 	/*
 	_.updateLabels = function(list) {
-		window.silentRequest('/worksheet_commands', {command: 'update_labels', data: { id: this.server_id, labels: list } }, function(response) {
+		window.silentRequest('/worksheet_commands', {command: 'update_labels', data: { hash_string: this.hash_string, labels: list } }, function(response) {
 			for(var i = 0; i < response.labels.length; i++) {
 				if(SwiftCalcs.labelIds[response.labels[i].id*1] !== true) {
 					SwiftCalcs.labelIds[response.labels[i].id*1] = true;

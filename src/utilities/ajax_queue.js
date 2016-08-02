@@ -55,7 +55,7 @@ var ajaxQueueClass = P(function(_) {
 			ajaxQueue.saving = false;
 		}
 		var post_data = {
-			worksheet_id: id,
+			worksheet_hash: id,
 			name: this.holding_pen[id].worksheet.name,
 			uploads: this.holding_pen[id].worksheet.uploads,
 			known_server_version: this.known_server_version[id]
@@ -95,7 +95,7 @@ var ajaxQueueClass = P(function(_) {
 			  		$('.popup_dialog .full').html("<div class='title'>" + response.title + "</div><div>" + response.message + "</div>");
 			      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
 			      window.resizePopup(true);
-			      if(SwiftCalcs.active_worksheet.server_id == id)
+			      if(SwiftCalcs.active_worksheet.hash_string == id)
 			      	SwiftCalcs.active_worksheet.FailedSaveMessage();
 					}
 					else
@@ -140,10 +140,10 @@ var ajaxQueueClass = P(function(_) {
 	/*
 	Public commands.  All require an item is attached to a worksheet.
 	*/
-	_.killSaves = function(server_id) {
-		if(this.holding_pen[server_id] && this.holding_pen[server_id].timer) 
-			window.clearTimeout(this.holding_pen[server_id].timer);
-		this.ignore_errors[server_id] = true;
+	_.killSaves = function(hash_string) {
+		if(this.holding_pen[hash_string] && this.holding_pen[hash_string].timer) 
+			window.clearTimeout(this.holding_pen[hash_string].timer);
+		this.ignore_errors[hash_string] = true;
 	}
 	_.saveNeeded = function(worksheet, force) {
 		if(force) this.suppress = false;
@@ -151,22 +151,22 @@ var ajaxQueueClass = P(function(_) {
 		if(!this.saving)
 			this.jQ.html('');
 		this.saving = true;
-		if(this.holding_pen[worksheet.server_id] && this.holding_pen[worksheet.server_id].timer) 
-			window.clearTimeout(this.holding_pen[worksheet.server_id].timer);
-		if(this.running[worksheet.server_id]) {
-			this.holding_pen[worksheet.server_id] = {
+		if(this.holding_pen[worksheet.hash_string] && this.holding_pen[worksheet.hash_string].timer) 
+			window.clearTimeout(this.holding_pen[worksheet.hash_string].timer);
+		if(this.running[worksheet.hash_string]) {
+			this.holding_pen[worksheet.hash_string] = {
 				timer: false,
 				worksheet: worksheet
 			};
 		} else if(force) {
-			this.holding_pen[worksheet.server_id] = {
+			this.holding_pen[worksheet.hash_string] = {
 				timer: false,
 				worksheet: worksheet
 			};
-			ajaxQueue.commit(worksheet.server_id, true);
+			ajaxQueue.commit(worksheet.hash_string, true);
 		} else {
-			this.holding_pen[worksheet.server_id] = {
-				timer: window.setTimeout(function() { ajaxQueue.commit(worksheet.server_id); }, 2000),
+			this.holding_pen[worksheet.hash_string] = {
+				timer: window.setTimeout(function() { ajaxQueue.commit(worksheet.hash_string); }, 2000),
 				worksheet: worksheet
 			};
 		}

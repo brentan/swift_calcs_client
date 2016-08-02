@@ -1,5 +1,5 @@
 $(function() {
-	var current_project_id = false;
+	var current_project_hash = false;
 	var current_project_onshape = false;
 	var current_project_navigable_url = false;
 	
@@ -34,7 +34,7 @@ $(function() {
       		$(document).prop('title', SwiftCalcs.pushState.last_active_title);
       		allowNewProject = !response.onshape || response.has_parent;
       		window.displayWorksheetList(response.worksheets, response.path, response.onshape)
-      		setCurrentProject(response.id, response.url_end, response.onshape_item);
+      		setCurrentProject(response.hash_string, response.url_end, response.onshape_item);
       	}	else {
 					$('.worksheet_holder').html('An error occurred: ' + response.message);
       		showNotice(response.message, 'red');
@@ -47,8 +47,17 @@ $(function() {
       }
     });
 	}
-	var setCurrentProject = window.setCurrentProject = function(id, url, onshape) {
-		current_project_id = id;
+	window.current_project_hash = function() {
+		return current_project_hash;
+	}
+	window.current_project_onshape = function() {
+		return current_project_onshape;
+	}
+	window.current_project_navigable_url = function() {
+		return current_project_navigable_url;
+	}
+	var setCurrentProject = window.setCurrentProject = function(hash, url, onshape) {
+		current_project_hash = hash;
 		current_project_onshape = onshape;
 		current_project_navigable_url = url;
 	}
@@ -156,7 +165,7 @@ $(function() {
 			var time_splits = [d, d-24*3600*1000, d-7*24*3600*1000];
 			var current_month_string = '';
 			for(var i = 0; i < worksheets.length; i++) {
-				if(prepend_to_list && (i > 0) && (worksheets[i].id == prepend_to_list.id)) continue;
+				if(prepend_to_list && (i > 0) && (worksheets[i].hash_string == prepend_to_list.hash_string)) continue;
 				worksheets[i].updated_at = new Date(worksheets[i].updated_at * 1000);
 				if(in_box) {
 				  if((index < time_splits.length) && (worksheets[i].updated_at < d)) in_box = false;
@@ -186,9 +195,9 @@ $(function() {
 				}
 				var el;
 				if(worksheets[i].invitation) 
-					el = $('<div/>').addClass('invitation_item').addClass('rights_id_' + worksheets[i].rights_id).attr('data-rights-id', worksheets[i].rights_id).attr('data-project', worksheets[i].worksheet ? 0 : 1).attr('data-id', worksheets[i].id).attr('data-hash', worksheets[i].hash_string).attr('data-name', worksheets[i].name).html(invitation_html(worksheets[i])).appendTo(box);
+					el = $('<div/>').addClass('invitation_item').addClass('rights_hash_' + worksheets[i].rights_hash).attr('data-rights-hash', worksheets[i].rights_hash).attr('data-project', worksheets[i].worksheet ? 0 : 1).attr('data-hash', worksheets[i].hash_string).attr('data-name', worksheets[i].name).html(invitation_html(worksheets[i])).appendTo(box);
 				else
-					el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + worksheets[i].id).attr('data-id', worksheets[i].id).attr('data-name', worksheets[i].name).attr('data-hash', worksheets[i].hash_string).attr('parent-id', worksheets[i].parent_project_id).html(worksheet_html(worksheets[i])).appendTo(box);
+					el = $('<div/>').addClass('worksheet_item').addClass('worksheet_hash_' + worksheets[i].hash_string).attr('data-name', worksheets[i].name).attr('data-hash', worksheets[i].hash_string).attr('parent-hash', worksheets[i].parent_project_hash).html(worksheet_html(worksheets[i])).appendTo(box);
 				if(worksheets[i].archive_id) el.addClass('archived');
 			}
 			if(in_box) box.appendTo('.worksheet_holder')
@@ -296,18 +305,18 @@ $(function() {
 		}
 		prepend_to_list = false;
 	}
-	var addStar = window.addStar = function(data_id) {
-    window.trackEvent("Star", "Add", data_id);
-		toggleStar(data_id, true);
+	var addStar = window.addStar = function(data_hash) {
+    window.trackEvent("Star", "Add", data_hash);
+		toggleStar(data_hash, true);
 	}
-	var removeStar = window.removeStar = function(data_id) {
-    window.trackEvent("Star", "Remove", data_id);
-		toggleStar(data_id, false);
+	var removeStar = window.removeStar = function(data_hash) {
+    window.trackEvent("Star", "Remove", data_hash);
+		toggleStar(data_hash, false);
 	}
-	var toggleStar = function(data_id, add) {
+	var toggleStar = function(data_hash, add) {
 		var flipStar = function(flip) {
 			$('.worksheet_item').each(function() {
-				if($(this).attr('data-id')*1 == data_id*1) {
+				if($(this).attr('data-hash') == data_hash) {
 					if(flip) 
 						$(this).find('i.star').removeClass('fa-spinner').removeClass('fa-pulse').removeClass('star').addClass('fa-star');
 					else
@@ -320,7 +329,7 @@ $(function() {
       url: "/projects/star",
       dataType: 'json',
       cache: false,
-      data: { id: data_id, add: add }, 
+      data: { hash_string: data_hash, add: add }, 
       success: function(response) {
       	if(response.success) {
 					flipStar(add);
@@ -337,7 +346,7 @@ $(function() {
     });
 	}
 	$('body').on('click', '.worksheet_item i.fa-star, .worksheet_item i.fa-star-o', function(e) {
-		var w_id = $(this).closest('.worksheet_item').attr('data-id');
+		var w_id = $(this).closest('.worksheet_item').attr('data-hash');
 		if($(this).hasClass('fa-star')) {
 			removeStar(w_id);
 		} else {
@@ -452,16 +461,16 @@ $(function() {
 	});
 	var batchCommand = window.batchCommand = function(command) {
 		if(command == 'move')
-			moveDialog(function(project_id) { processBatchCommand(project_id, command); });
+			moveDialog(function(project_hash) { processBatchCommand(project_hash, command); });
 		else if(command == 'clear')
 			clear_batch();
 		else 
 			processBatchCommand(0, command);
 	}
-	var processBatchCommand = function(project_id, command) {
+	var processBatchCommand = function(project_hash, command) {
 		var items = [];
 		$('.worksheet_item.selected').each(function() {
-			items.push($(this).attr('data-id'));
+			items.push($(this).attr('data-hash'));
 		});
 		if(items.length == 0) return;
 		showLoadingOnTop();
@@ -478,12 +487,12 @@ $(function() {
       url: "/projects/batch",
       dataType: 'json',
       cache: false,
-      data: { command: command, items: items, project_id: project_id, current_project_id: current_project_id }, 
+      data: { command: command, items: items, project_hash: project_hash, current_project_hash: current_project_hash }, 
       success: function(response) {
       	window.hidePopupOnTop();
       	if(response.success) {
       		$('.worksheet_item').each(function() {
-      			if(response.to_remove[$(this).attr('data-id')]) {
+      			if(response.to_remove[$(this).attr('data-hash')]) {
       				$(this).removeClass('selected');
 							if($(this).closest('.active_worksheet').length > 0) {
 								closeActive($(this).closest('.active_worksheet'));
@@ -524,8 +533,22 @@ $(function() {
       }
     });		
 	}
-	var moveDialog = function(callbackFunction, parent_project_id) {
-		if(typeof parent_project_id === 'undefined') parent_project_id = current_project_id;
+	var createPrompt = window.createPrompt = function(title, message, options, handler) { 
+    window.showPopupOnTop();
+		var el = $('.popup_dialog .full').html("<div class='title'>" + title + "</div><div>" + message + "</div>");
+    var buttons = $('.popup_dialog .bottom_links').html('');
+    $.each(options, function(k, v) {
+    	buttons.append('<button class="submit" data-val="' + v + '">' + k.replace(/_/g,' ') + '</button>');
+		});
+    buttons.find('button.submit').on('click', function(e) {
+    	window.hidePopupOnTop();
+    	handler($(this).attr('data-val'));
+    	e.preventDefault();
+    });
+		window.resizePopup(true);
+	}
+	var moveDialog = function(callbackFunction, parent_project_hash) {
+		if(typeof parent_project_hash === 'undefined') parent_project_hash = current_project_hash;
 		var expandCollapse = function(el) {
 			if(el.find('i.fa').hasClass('fa-caret-right')) {
 				// Expand
@@ -561,7 +584,7 @@ $(function() {
       		// Select current folder, if any
       		var found_one = false;
       		el.find('.project').each(function() {
-      			if($(this).attr('data-id') && ($(this).attr('data-id')*1 == parent_project_id*1)) {
+      			if($(this).attr('data-hash') && ($(this).attr('data-hash') == parent_project_hash)) {
       				found_one = true;
 	      			el.find('.project').removeClass('selected');
 	      			$(this).addClass('selected');
@@ -580,9 +603,9 @@ $(function() {
           buttons.append('<button class="submit">Move</button>');
           buttons.append('<button class="close grey">Cancel</button>');
           buttons.find('button.submit').on('click', function() {
-            var project_id = el.find('.selected').attr('data-id');
+            var project_hash = el.find('.selected').attr('data-hash');
             window.showLoadingOnTop();
-            callbackFunction(project_id);
+            callbackFunction(project_hash);
           });
     			window.resizePopup();
       	}	else {
@@ -679,25 +702,25 @@ $(function() {
     window.resizePopup(invite_dialog ? false : true);
     el.find('.input input').focus();
 	}
-	var newProject = window.newProject = function(parent_project_id, onshape) {
-		if(typeof parent_project_id === 'undefined') {
-			parent_project_id = current_project_id;
+	var newProject = window.newProject = function(parent_project_hash, onshape) {
+		if(typeof parent_project_hash === 'undefined') {
+			parent_project_hash = current_project_hash;
 			onshape = current_project_onshape;
 		}
-		promptDialog('Name your new project', 'Create', '', function(parent_project_id) { return function(name, data) { processNewProject(name, data, parent_project_id) }; }(parent_project_id), onshape !== true);
+		promptDialog('Name your new project', 'Create', '', function(parent_project_hash) { return function(name, data) { processNewProject(name, data, parent_project_hash) }; }(parent_project_hash), onshape !== true);
 	}
-	var processNewProject = function(name, data, parent_project_id) {
+	var processNewProject = function(name, data, parent_project_hash) {
     window.trackEvent("Project", "Create", name);
 		window.showLoadingOnTop();
 		post_data = { name: name, rights: data };
-		if(parent_project_id) post_data.project_id = parent_project_id;
+		if(parent_project_hash) post_data.project_hash = parent_project_hash;
 		var success = function(response) {
       window.hidePopupOnTop();
   		showNotice('Project Created', 'green');
   		var found = false;
   		$('.projects_list .left_item.projects .explain').remove();
   		$('.project_list').find('.item').each(function() {
-  			if($(this).attr('data-id') == response.parent_project_id) {
+  			if($(this).attr('data-hash') == response.parent_project_hash) {
   				$(response.html).appendTo($(this).children('.expand'));
   				if($(this).closest('.archive').length) return;
   				$(this).removeClass('no_arrows').removeClass('closed');
@@ -741,7 +764,7 @@ $(function() {
 		var offset = $(this).offset();
 		var top = offset.top - $(window).scrollTop();
 		var left = offset.left - $(window).scrollLeft();
-		var project_id = $(this).closest('.item').attr('data-id');
+		var project_hash = $(this).closest('.item').attr('data-hash');
 		var project_name = $(this).closest('.item').attr('data-name');
 		var el = $(this).closest('.item');
 		var closeMenu = function() {
@@ -750,7 +773,7 @@ $(function() {
 		}
 		closeMenu();
 		$(this).closest('.project_title').addClass('highlight');
-		var menu = $('<div/>').addClass('project_menu').addClass('loading').addClass('loading_p' + project_id).on('mouseleave', function(e) {
+		var menu = $('<div/>').addClass('project_menu').addClass('loading').addClass('loading_p' + project_hash).on('mouseleave', function(e) {
 			closeMenu();
 		});
 		$('<div/>').html('<i class="fa fa-fw fa-pulse fa-spinner"></i>').appendTo(menu);		
@@ -758,14 +781,14 @@ $(function() {
 			closeMenu();
 		}
 		var success = function(response) {
-			if($('.loading_p' + project_id).length == 0) return;
-			var menu = $('.loading_p' + project_id).removeClass('loading_p' + project_id).removeClass('loading').off('mouseleave');
+			if($('.loading_p' + project_hash).length == 0) return;
+			var menu = $('.loading_p' + project_hash).removeClass('loading_p' + project_hash).removeClass('loading').off('mouseleave');
 			menu.find('div').remove();
 			if(archived) {
 				$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Restore Project').on('click', function(e) {
 					// Restore
 					el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
-					window.ajaxRequest("/projects/archive", { add: "false", id: project_id, data_type: 'Project'}, function(response) { 
+					window.ajaxRequest("/projects/archive", { add: "false", hash_string: project_hash, data_type: 'Project'}, function(response) { 
 						showNotice('Project and all sub-projects and worksheets restored.','green'); 
 						$('.left_item.projects > .expand').html(response.tree); el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); 					
 						if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
@@ -773,8 +796,8 @@ $(function() {
 							if(!SwiftCalcs.pushState.fragment.match(/^(worksheets|revisions)\//i)) SwiftCalcs.pushState.refresh();
 						} else {
 							// in an archive view...remove returned ids
-							for(var i = 0; i < response.ids.length; i++) {
-								$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
+							for(var i = 0; i < response.hashes.length; i++) {
+								$('.worksheet_hash_' + response.hashes[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
 							}
 						}
 					}, function() { el.find('.fa-spinner').removeClass('fa-spinner').removeClass('fa-pulse').addClass('fa-cog'); });
@@ -783,7 +806,7 @@ $(function() {
 			} else {
 				if((response.rights_level >= 3) && (!response.onshape_parent))
 					$('<div/>').html('<i class="fa fa-fw fa-plus"></i>Add Sub-Project').on('click', function(e) {
-						window.newProject(project_id, response.onshape);
+						window.newProject(project_hash, response.onshape);
 						closeMenu();
 					}).appendTo(menu);
 				if(response.rights_level >= 3) {
@@ -796,7 +819,7 @@ $(function() {
 						}).appendTo(menu);
 					else
 						$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
-							window.openSharingDialog(project_id*1, 'Project');
+							window.openSharingDialog(project_hash, 'Project');
 							closeMenu();
 						}).appendTo(menu);
 				}
@@ -804,12 +827,12 @@ $(function() {
 					$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
 						// Archive
 						el.find('.fa-cog').removeClass('fa-cog').addClass('fa-spinner').addClass('fa-pulse');
-						window.ajaxRequest("/projects/archive", { add: "true", id: project_id, data_type: 'Project'}, function(response) { 
+						window.ajaxRequest("/projects/archive", { add: "true", hash_string: project_hash, data_type: 'Project'}, function(response) { 
 							el.slideUp({duration: 200, always: function() { el.remove(); } }); 
 							if(!window.location.href.match(/\/archive_projects\//) && !window.location.href.match(/.com(:3000)?\/archive/)) {
 								// Not in an archive view, so remove returned ids
-								for(var i = 0; i < response.ids.length; i++) {
-									$('.worksheet_id_' + response.ids[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
+								for(var i = 0; i < response.hashes.length; i++) {
+									$('.worksheet_hash_' + response.hashes[i]).slideUp({duration: 200, always: function() { $(this).remove(); } });
 								}
 							} else {
 								// in an archive view...so refresh if on listing page
@@ -820,7 +843,7 @@ $(function() {
 					}).appendTo(menu);
 				if((response.rights_level >= 3) && (!response.onshape_parent) && (!response.onshape_element))
 					$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename Project').on('click', function(e) {
-						promptDialog('Rename your project', 'Rename', project_name, function(el, project_id) { return function(name) { processProjectRename(el, project_id, name) }; }(el, project_id));
+						promptDialog('Rename your project', 'Rename', project_name, function(el, project_hash) { return function(name) { processProjectRename(el, project_hash, name) }; }(el, project_hash));
 						closeMenu();
 					}).appendTo(menu);
 				if(response.onshape_parent || response.onshape_element)
@@ -834,7 +857,7 @@ $(function() {
 					$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Project').on('click', function(e) {
 						if(confirm('Are you sure?  All worksheets inside this project will be destroyed as well.  You are the owner of this project, and it will be removed for all collaborators as well.  This action cannot be undone.')) {
 	    				window.trackEvent("Project", "Remove");
-							window.removeProject(el, project_id*1);
+							window.removeProject(el, project_hash);
 							el.remove();
 						}
 						closeMenu();
@@ -843,7 +866,7 @@ $(function() {
 					$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Remove Project').on('click', function(e) {
 						if(confirm('Are you sure?  You are not the owner of this project, it will be removed from your project list but will still be available to collaborators.  Any worksheets you own inside this project will be destroyed and cannot be recovered.  You can gain access to this project again at a later date by having a project admins re-invite you to the project.')) {
 							window.trackEvent("Project", "Delete");
-							window.removeProject(el, project_id*1);
+							window.removeProject(el, project_hash);
 							el.remove();
 						}
 						closeMenu();
@@ -853,26 +876,26 @@ $(function() {
 				closeMenu();
 			});
 		}
-		window.ajaxRequest('/projects/rights_level', {id: project_id}, success, fail);
+		window.ajaxRequest('/projects/rights_level', {hash_string: project_hash}, success, fail);
 		menu.appendTo('.base_layout').css('top', top + 'px').css('left', left + 'px');
 		e.preventDefault();
 		e.stopPropagation();
 	});
 
-	var processProjectRename = function(el, project_id, new_name) {
+	var processProjectRename = function(el, project_hash, new_name) {
 		el.attr('data-name', new_name);
 		el.children('.project_title').children('.name').html(new_name);
-		window.ajaxRequest("/projects/rename", { id: project_id, name: new_name }, function() { 
+		window.ajaxRequest("/projects/rename", { hash_string: project_hash, name: new_name }, function() { 
 			window.hidePopupOnTop(); 
       $('.project_list').find('.item').each(function() {
-      	if($(this).attr('data-id') == project_id) 
+      	if($(this).attr('data-hash') == project_hash) 
       		$(this).children('.project_title').children('.name').html(new_name);
       });
 		}, function() { window.hidePopupOnTop(); });
 	}
 	// Archive button
 	$('body').on('click', '.worksheet_item i.fa-archive', function(e) {
-		var w_id = $(this).closest('.worksheet_item').attr('data-id');
+		var w_id = $(this).closest('.worksheet_item').attr('data-hash');
 		if($(this).closest('.worksheet_item').hasClass('archived')) {
 			unArchive(w_id, 'Worksheet');
 		} else {
@@ -882,18 +905,18 @@ $(function() {
 		e.preventDefault();
 		e.stopPropagation();
 	});
-	var Archive = window.Archive = function(data_id, data_type) {
-		toggleArchive(data_id, data_type, true);
+	var Archive = window.Archive = function(data_hash, data_type) {
+		toggleArchive(data_hash, data_type, true);
 	}
-	var unArchive = window.unArchive = function(data_id, data_type) {
-		toggleArchive(data_id, data_type, false);
+	var unArchive = window.unArchive = function(data_hash, data_type) {
+		toggleArchive(data_hash, data_type, false);
 	}
-	var toggleArchive = function(data_id, data_type, add) {
+	var toggleArchive = function(data_hash, data_type, add) {
 		if(data_type == 'Worksheet') {
-    	window.trackEvent("Worksheet", add ? "Archive" : "Unarchive", data_id);
+    	window.trackEvent("Worksheet", add ? "Archive" : "Unarchive", data_hash);
 			var flipArchive = function(flip) {
 				$('.worksheet_item').each(function() {
-					if($(this).attr('data-id')*1 == data_id*1) {
+					if($(this).attr('data-hash') == data_hash) {
 						if(!flip) {
 							$(this).find('i.archiving').removeClass('fa-spinner').removeClass('fa-pulse').removeClass('archiving').addClass('fa-archive');
 							return;
@@ -922,10 +945,10 @@ $(function() {
 				});
 			}
 		} else {
-    	window.trackEvent("Project", add ? "Archive" : "Unarchive", data_id);
+    	window.trackEvent("Project", add ? "Archive" : "Unarchive", data_hash);
 			var flipArchive = function(flip) { }
 		}
-		window.ajaxRequest("/projects/archive", { id: data_id, data_type: data_type, add: add }, function() { flipArchive(true); }, function() { flipArchive(false); });
+		window.ajaxRequest("/projects/archive", { hash_string: data_hash, data_type: data_type, add: add }, function() { flipArchive(true); }, function() { flipArchive(false); });
 	}
 	$('body').on('click', '.archive_not_loaded', function(e) {
 		$(this).children('.project_list').html('<i class="fa fa-spinner fa-pulse"></i>').addClass('archive_tree');
@@ -942,19 +965,18 @@ $(function() {
 		$(this).removeClass('fusion_not_loaded');
 		window.ajaxRequest("/projects/fusion_tree", { }, function(response) { $('.fusion_tree').html(response.fusion_html).removeClass('fusion_tree'); }, function() { $('.fusion_tree').html('An error occurred').removeClass('fusion_tree').closest('.left_item').addClass('fusion_not_loaded'); });
 	});
-	var closeActive = window.closeActive = function(el, clear_url) { 
+	var closeActive = window.closeActive = function(el, clear_url, dont_check_for_empty) { 
 		window.selectToolboxTab('projects_list');
 		$('.base_layout').removeClass('worksheet_open');
 		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-		if((clear_url !== false) && SwiftCalcs.pushState.last_active_url.match(/^(\/)?$/)) {
+		if((clear_url !== false) && (dont_check_for_empty !== false) && SwiftCalcs.pushState.last_active_url.match(/^(\/)?$/)) {
 			// Closing a worksheet that was 'maximized', so we should load the active list but prepend this to its top
 			var item = el.children('.active_holder').children('.worksheet_item');
 			prepend_to_list = {
 				star_id: item.find('span.star fa').hasClass('fa-star'),
 				name: item.attr('data-name'),
-				parent_project_id: item.attr('parent-id'),
+				parent_project_hash: item.attr('parent-hash'),
 				hash_string: item.attr('data-hash'),
-				id: item.attr('data-id'),
 				archive_id: item.hasClass('archived')
 			}
 			window.setTimeout(function() { loadProject('active'); }, 275);
@@ -981,7 +1003,7 @@ $(function() {
 	var beginLoad = false;
 	var openActive = window.openActive = function(el, set_url) {
 		beginLoad = false;
-		closeActive($('.active_worksheet'), false);
+		closeActive($('.active_worksheet'), false, true);
 		window.selectToolboxTab('toolbox_holder');
 		var name = el.attr('data-name');
 		$(document).prop('title', name);
@@ -1021,7 +1043,7 @@ $(function() {
 		if($(this).hasClass('worksheet_loading')) return;
 		if($(this).hasClass('screen_explanation')) return;
 		if($(this).closest('.active_worksheet').length) 
-			closeActive($(this).closest('.active_worksheet')); 
+			closeActive($(this).closest('.active_worksheet'), false, false); 
 		else if(($(this).attr('data-project')*1) == 1) 
 			window.loadProject($(this).attr('data-hash'), $(this).attr('data-name'));
 		else {
@@ -1030,14 +1052,13 @@ $(function() {
 		}
 	});
 	var loadWorksheet = window.loadWorksheet = function(el, response) {
-		var id = el.attr('data-id');
 		var hash_string = el.attr('data-hash');
     window.trackEvent("Worksheet", "Load", hash_string);
 		var el_next = el.next('.content');
 		if(el_next.length == 0) el_next = $('<div/>').addClass('content').insertAfter(el);
 		var success = function(response) {
       if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-      var worksheet = SwiftCalcs.Worksheet(response.name, response.hash_string, response.id, response.version, response.rights_level, response.settings);
+      var worksheet = SwiftCalcs.Worksheet(response);
       if(window.embedded) {
       	$('div.header .name').html(response.name);
       	$('div.header .fa-external-link').attr('data-type','worksheets').attr('data-hash',response.hash_string);
@@ -1055,8 +1076,8 @@ $(function() {
       	window.setTimeout(function() { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.blur(); } });
       else
     		window.setTimeout(function() { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); } });
-      if(response.folder_id) 
-        window.setCurrentProject(response.folder_id, response.folder_url_end, response.onshape_item);
+      if(response.folder_hash) 
+        window.setCurrentProject(response.folder_hash, response.folder_url_end, response.onshape_item);
 		}
 		var try_success = function(response) {
 			if(beginLoad) success(response);
@@ -1070,7 +1091,7 @@ $(function() {
 		if(typeof response == 'object')
 			success(response);
 		else
-			window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {id: id, hash_string: hash_string} }, try_success, fail);
+			window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {hash_string: hash_string} }, try_success, fail);
 	}
 	$('body').on('click', '.project_item', function(e) {
 		if($(this).closest(".details_span").length) return;
@@ -1085,7 +1106,7 @@ $(function() {
 		var dets = el.closest('.active_holder').children('.details_span');
 		var success = function(response) {
 			window.hidePopupOnTop();
-			el.attr('parent-id', response.id);
+			el.attr('parent-hash', response.hash_string);
 			if(response.path) 
 				dets.find('td.location > div').html(response.path);
 			else
@@ -1095,26 +1116,26 @@ $(function() {
 			window.hidePopupOnTop();
 			dets.find('td.location > div').html('<div class="placeholder">An error occurred</div>');
 		}
-		var processMove = function(project_id) {
+		var processMove = function(project_hash) {
 			dets.find('td.location > div').html('<i class="fa fa-spinner fa-pulse"></i>');
-			window.ajaxRequest("/projects/move", { data_type: 'Worksheet', id: el.attr('data-id'), project_id: project_id, current_view: current_project_id}, success, fail);
+			window.ajaxRequest("/projects/move", { data_type: 'Worksheet', hash_string: el.attr('data-hash'), project_hash: project_hash, current_view: current_project_hash}, success, fail);
 		}
-		moveDialog(processMove, el.attr('parent-id'));
+		moveDialog(processMove, el.attr('parent-hash'));
 	}
 	$('body').on('click', 'td.revisions', function(e) {
     window.trackEvent("Worksheet", "Load Revisions", "From Header");
-		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-name'));
+		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-name'));
 	});
 	$('body').on('click', 'td.collaborators', function(e) {
     window.trackEvent("Worksheet", "Sharing Dialog","From Header");
-		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-id'), 'Worksheet');
+		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash'), 'Worksheet');
 	});
 	$('body').on('click', 'nav.menu .share_dialog', function(e) {
 		window.trackEvent("Worksheet", "Sharing Dialog","From Menu");
 		if(SwiftCalcs.active_worksheet)
-			window.openSharingDialog(SwiftCalcs.active_worksheet.server_id, 'Worksheet');
-		else if(current_project_id)
-			window.openSharingDialog(current_project_id, 'Project');
+			window.openSharingDialog(SwiftCalcs.active_worksheet.hash_string, 'Worksheet');
+		else if(current_project_hash)
+			window.openSharingDialog(current_project_hash, 'Project');
 		else 
 			window.showNotice("Open a worksheet or Project to Share", "red");
 		e.preventDefault();
@@ -1136,7 +1157,7 @@ $(function() {
 
 	$('body').on('click', 'nav.menu .closeActive', function(e) {
 		if($(this).closest('nav.menu').hasClass('noWorksheet')) return false;
-		window.closeActive($('.active_worksheet'));
+		window.closeActive($('.active_worksheet'), false, false);
 		e.preventDefault();
 		return false;
 	});
@@ -1168,7 +1189,7 @@ $(function() {
 		var offset = $(this).offset();
 		var top = offset.top - $(window).scrollTop();
 		var left = offset.left - $(window).scrollLeft();
-		var worksheet_id = $(this).closest('.worksheet_item').attr('data-id');
+		var worksheet_hash = $(this).closest('.worksheet_item').attr('data-hash');
 		var el = $(this).closest('.worksheet_item');
 		var window_touch = function(e) {
 			if($(e.target).closest('.project_menu').length == 0) closeMenu();
@@ -1181,7 +1202,7 @@ $(function() {
 		$(window).on('touchstart', window_touch);
 		closeMenu();
 		el.addClass('force_hover');
-		var menu = $('<div/>').addClass('project_menu').addClass('loading').addClass('loading_' + worksheet_id).on('mouseleave', function(e) {
+		var menu = $('<div/>').addClass('project_menu').addClass('loading').addClass('loading_' + worksheet_hash).on('mouseleave', function(e) {
 			closeMenu();
 		});
 		$('<div/>').html('<i class="fa fa-fw fa-pulse fa-spinner"></i>').appendTo(menu);
@@ -1189,9 +1210,9 @@ $(function() {
 			closeMenu();
 		}
 		var success = function(response) {
-			if($('.loading_' + worksheet_id).length == 0) return;
+			if($('.loading_' + worksheet_hash).length == 0) return;
 			el.attr('data-hash', response.hash_string);
-			var menu = $('.loading_' + worksheet_id).removeClass('loading_' + worksheet_id).removeClass('loading').off('mouseleave');
+			var menu = $('.loading_' + worksheet_hash).removeClass('loading_' + worksheet_hash).removeClass('loading').off('mouseleave');
 			menu.find('div').remove();
 			$('<div/>').html('<i class="fa fa-fw fa-external-link"></i>Open in Full Window').on('click', function(e) {
 				el.find('.fa-external-link').click();
@@ -1199,7 +1220,7 @@ $(function() {
 			}).appendTo(menu);
 			if(response.rights_level >= 2) 
 				$('<div/>').html('<i class="fa fa-fw fa-files-o"></i>Create a Copy').on('click', function(e) {
-					window.newWorksheet(true, worksheet_id);
+					window.newWorksheet(true, worksheet_hash);
 					closeMenu();
 				}).appendTo(menu);
 			if(response.rights_level >= 3) 
@@ -1223,27 +1244,27 @@ $(function() {
 					if(el.closest('.active_holder').length > 0) {
 						el.find('.name .hover').click();
 					} else {
-						promptDialog('Rename Worksheet', 'Rename', el.attr('data-name'), function(worksheet_id, el) { return function(name) { processRename(el, name, worksheet_id) }; }(worksheet_id, el));
+						promptDialog('Rename Worksheet', 'Rename', el.attr('data-name'), function(worksheet_hash, el) { return function(name) { processRename(el, name, worksheet_hash) }; }(worksheet_hash, el));
 					}
 					closeMenu();
 				}).appendTo(menu);
 			if(response.rights_level >= 3) 
 				$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
     			window.trackEvent("Worksheet", "Sharing Dialog","From Menu");
-					window.openSharingDialog(worksheet_id*1, 'Worksheet');
+					window.openSharingDialog(worksheet_hash, 'Worksheet');
 					closeMenu();
 				}).appendTo(menu);
 			if(response.rights_level >= 3) 
 				$('<div/>').html('<i class="fa fa-fw fa-history"></i>View Revisions').on('click', function(e) {
     			window.trackEvent("Worksheet", "Load Revisions", "From Menu");
-					window.loadRevisions(worksheet_id, el.attr('data-hash'), el.attr('data-name'));
+					window.loadRevisions(worksheet_hash, el.attr('data-name'));
 					closeMenu();
 				}).appendTo(menu);
 			if(response.rights_level >= 4) 
 				$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Worksheet').on('click', function(e) {
 					if(confirm('Are you sure?  You are the owner of this worksheet, and it will be removed for collaborators as well.  This action cannot be undone.')) {
     				window.trackEvent("Worksheet", "Remove");
-						window.removeWorksheet(el, worksheet_id);
+						window.removeWorksheet(el, worksheet_hash);
 					}
 					closeMenu();
 				}).appendTo(menu);
@@ -1251,7 +1272,7 @@ $(function() {
 				$('<div/>').html('<i class="fa fa-fw fa-trash"></i>Delete Worksheet').on('click', function(e) {
 					if(confirm('Are you sure?  You are not the owner of this worksheet, it will be removed from your worksheet list but will still be available to collaborators.  This action can only be undone by having worksheet admins re-invite you to the worksheet.')) {
 						window.trackEvent("Worksheet", "Delete");
-						window.removeWorksheet(el, worksheet_id);
+						window.removeWorksheet(el, worksheet_hash);
 					}
 					closeMenu();
 				}).appendTo(menu);
@@ -1264,12 +1285,12 @@ $(function() {
 		menu.appendTo('.base_layout').css('top', '0px').css('left', '0px');
 		var wide = menu.width();
 		menu.css('top', (top -5) + 'px').css('left', Math.max(0, left - wide + 30) + 'px');
-		window.ajaxRequest('/worksheet_commands', { command: 'rights_level', data: { id: worksheet_id } }, success, fail);
+		window.ajaxRequest('/worksheet_commands', { command: 'rights_level', data: { hash_string: worksheet_hash } }, success, fail);
 		e.preventDefault();
 		e.stopPropagation();
 	});
-	var removeWorksheet = window.removeWorksheet = function(el, worksheet_id) {
-		SwiftCalcs.ajaxQueue.killSaves(worksheet_id);
+	var removeWorksheet = window.removeWorksheet = function(el, worksheet_hash) {
+		SwiftCalcs.ajaxQueue.killSaves(worksheet_hash);
 		el.find('.name .hover').hide();
 		el.find('.name').append('<span class="fa fa-spinner fa-pulse"></span>');
 		var success = function(response) {
@@ -1279,7 +1300,7 @@ $(function() {
 			} else {
 				// In a list
 				if(el.closest('.active_worksheet').length > 0) {
-					closeActive(el.closest('.active_worksheet'));
+					closeActive(el.closest('.active_worksheet'), false, true);
 					el.addClass('closing').slideUp({duration: 400, always: function() { el.remove(); } });
 				} else 
 					el.addClass('closing').slideUp({duration: 200, always: function() { el.remove(); } });
@@ -1294,15 +1315,15 @@ $(function() {
 			el.find('.name .fa.fa-spinner').remove();
 			el.find('.name .hover').show();
 		}
-		window.ajaxRequest("/projects/remove", { data_type: 'Worksheet', id: worksheet_id }, success, fail);
+		window.ajaxRequest("/projects/remove", { data_type: 'Worksheet', hash_string: worksheet_hash }, success, fail);
 		window.hidePopupOnTop();
 	}
-	var removeProject = window.removeProject = function(el, project_id) {
+	var removeProject = window.removeProject = function(el, project_hash) {
 		var success = function(response) {
 			window.hidePopupOnTop();
-			ids = response.project_ids.split(",");
+			ids = response.project_hashes.split(",");
 			for(var i = 0; i > ids.length; i++) {
-				if(ids[i]*1 == current_project_id) {
+				if(ids[i] == current_project_hash) {
 					window.loadProject('active');
 					break;
 				}
@@ -1312,11 +1333,11 @@ $(function() {
 			window.hidePopupOnTop();
 			showNotice('red', message);
 		}
-		window.ajaxRequest("/projects/remove", { data_type: 'Project', id: project_id }, success, fail);
+		window.ajaxRequest("/projects/remove", { data_type: 'Project', hash_string: project_hash }, success, fail);
 		window.hidePopupOnTop();
 		window.showLoadingOnTop();
 	}
-	var processRename = function(el, name, worksheet_id) {
+	var processRename = function(el, name, worksheet_hash) {
 		el.find('.name .hover').hide();
 		el.find('.name').append('<span class="fa fa-spinner fa-pulse"></span>');
 		var success = function(response) {
@@ -1327,18 +1348,18 @@ $(function() {
 			el.find('.name .fa.fa-spinner').remove();
 			el.find('.name .hover').show();
 		}
-		window.ajaxRequest("/worksheet_commands", { command: 'rename', data: {id: el.attr('data-id'), name: name} }, success, fail);
+		window.ajaxRequest("/worksheet_commands", { command: 'rename', data: {hash_string: el.attr('data-hash'), name: name} }, success, fail);
 		window.hidePopupOnTop();
 	}
-	var newWorksheet = window.newWorksheet = function(duplicate, worksheet_id, revision_id) {
-    if(duplicate && revision_id) window.trackEvent("Worksheet", "Copy Revision", revision_id);
-    else if(duplicate) window.trackEvent("Worksheet", "Copy", worksheet_id);
+	var newWorksheet = window.newWorksheet = function(duplicate, worksheet_hash, revision_hash, lend_author_rights) {
+    if(duplicate && revision_hash) window.trackEvent("Worksheet", "Copy Revision", revision_hash);
+    else if(duplicate) window.trackEvent("Worksheet", "Copy", worksheet_hash);
     else window.trackEvent("Worksheet", "New");
 		$('.no_results').remove();
 		window.closeScreenExplanation();
-		closeActive($('.active_worksheet'));
+		closeActive($('.active_worksheet'), false, true);
 		var name = "";
-		post_data = {name: name, duplicate: (duplicate ? worksheet_id : null), revision: (duplicate ? revision_id : null), project_id: current_project_id };
+		post_data = {name: name, duplicate: (duplicate ? worksheet_hash : null), author_rights: (lend_author_rights ? true : false), revision: (duplicate ? revision_hash : null), project_hash: current_project_hash };
 		$(window).scrollTop(0);
 		var date_box = $('.today_box').first();
 		if(date_box.length == 0) {
@@ -1350,10 +1371,10 @@ $(function() {
 			date_box.hide().slideDown({duration: 150});
 			$('<div/>').addClass('worksheet_holder_box').insertAfter(date_box).hide().slideDown({duration: 150});
 		}
-		var loading_div = $('<div/>').addClass('worksheet_loading').addClass('worksheet_item').attr('data-id', '-1').html('<i class="fa fa-spinner fa-pulse"></i><span>' + (duplicate ? 'Copying' : 'Creating') + ' Worksheet...</span>').prependTo(date_box.next()).hide().slideDown({duration: 200});
+		var loading_div = $('<div/>').addClass('worksheet_loading').addClass('worksheet_item').attr('data-hash', '-1').html('<i class="fa fa-spinner fa-pulse"></i><span>' + (duplicate ? 'Copying' : 'Creating') + ' Worksheet...</span>').prependTo(date_box.next()).hide().slideDown({duration: 200});
 		var success = function(response) {
 			if(window.location.href.match(/\/(worksheets|revisions)\//)) SwiftCalcs.pushState.navigate('/');
-			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + response.id).attr('data-id', response.id).attr('data-hash', response.hash_string).attr('data-name', response.name).attr('parent-id', current_project_id).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
+			var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_hash_' + response.hash_string).attr('data-hash', response.hash_string).attr('data-name', response.name).attr('parent-hash', current_project_hash).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
 			if(response.archive_id) el.addClass('archived');
 			loading_div.remove();
 			el.addClass('change_name');
@@ -1441,7 +1462,6 @@ $(function() {
 		// Project List
 		var projectListIterator = function(el) {
 			var out = el.hasClass('left_item') ? { } : {
-				id: el.attr('data-id'),
 				name: el.attr('data-name'),
 				hash: el.attr('data-hash')
 			}; 
@@ -1556,7 +1576,7 @@ $(function() {
 		el.find('.invite_reject').show();
 		el.find('.invite_pending').hide();
 		}
-		window.ajaxRequest("/projects/invite", {id: el.attr('data-rights-id'), add: accept }, success, fail);
+		window.ajaxRequest("/projects/invite", {hash_string: el.attr('data-rights-hash'), add: accept }, success, fail);
 	}
 	$('.base_layout').on('click', '.invite_accept', function(e) {
 		acceptInvite($(this).closest('.invitation_item'));

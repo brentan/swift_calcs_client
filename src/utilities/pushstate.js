@@ -88,9 +88,9 @@ var PushState = P(function(_) {
       window.closeActive($('.active_worksheet'), false);
       $('.worksheet_holder').html('');
       var box = $('<div/>').addClass('worksheet_holder_box').addClass('single_sheet').appendTo($('.worksheet_holder'));
-      var loading_div = $('<div/>').addClass('worksheet_loading').addClass('worksheet_item').attr('data-id', '-1').html('<i class="fa fa-spinner fa-pulse"></i><span>Loading Worksheet...</span>').prependTo(box);
+      var loading_div = $('<div/>').addClass('worksheet_loading').addClass('worksheet_item').html('<i class="fa fa-spinner fa-pulse"></i><span>Loading Worksheet...</span>').prependTo(box);
       var success = function(response) {
-        var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_id_' + response.id).attr('data-id', response.id).attr('data-name', response.name).attr('parent-id', response.project_id).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
+        var el = $('<div/>').addClass('worksheet_item').addClass('worksheet_hash_' + response.hash_string).attr('data-hash', response.hash_string).attr('data-name', response.name).attr('parent-hash', response.project_hash).html(worksheet_html({name: response.name, star_id: false})).insertAfter(loading_div);
         if(response.archive_id) el.addClass('archived');
         loading_div.remove();
         window.openActive(el, set_url);
@@ -104,7 +104,7 @@ var PushState = P(function(_) {
         window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: { hash_string: hash_string } }, success, fail);
       } else {
         var hash_string = fragment.replace(/revisions\/([^\/]*).*$/i,"$1");
-        var revision = fragment.replace(/revisions\/([^\/]*)\/([0-9]+).*$/i,"$2");
+        var revision = fragment.replace(/revisions\/([^\/]*)\/([^\/]+).*$/i,"$2");
         window.ajaxRequest("/worksheet_commands", { command: 'get_revision', data: { hash_string: hash_string, revision: revision } }, success, fail);
       }
       return true;

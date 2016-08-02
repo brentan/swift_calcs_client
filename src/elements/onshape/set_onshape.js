@@ -91,7 +91,7 @@ var setOnshapeVariable = P(MathOutput, function(_, super_) {
 				result[0] = {success: false, returned: 'Invalid Value: ' + to_store + '.  Answer must be numeric, and only units of length are allowed.'};
 			else {
 				this.jQ.find('.to_store').show();
-				window.ajaxRequest("/onshape/set_variable", {id: this.worksheet.server_id, eid: this.part_id, fid: this.var_id, name: this.var_name, value: to_store}, function(_this) { return function(response) { 
+				window.ajaxRequest("/onshape/set_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id, name: this.var_name, value: to_store}, function(_this) { return function(response) { 
 					_this.jQ.find('.to_store').hide();
 					if(!response.true_success) {
 						if(response.message.indexOf("400")>=0)
