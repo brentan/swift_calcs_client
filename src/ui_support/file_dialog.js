@@ -1228,6 +1228,11 @@ $(function() {
 					window.moveWorksheet(el, true);
 					closeMenu();
 				}).appendTo(menu);
+			if(response.rights_level >= 3) 
+				$('<div/>').html('<i class="fa fa-fw fa-code-fork"></i>View Forks').on('click', function(e) {
+					window.loadCopies(el.attr('data-hash'));
+					closeMenu();
+				}).appendTo(menu);
 			if(archived) {
 				$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Restore Worksheet').on('click', function(e) {
 					el.find('.fa.unarchive').click();

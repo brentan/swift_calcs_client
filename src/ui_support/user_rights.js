@@ -344,5 +344,27 @@ $(function() {
       }
     });
 	}
+  var loadCopies = window.loadCopies = function(hash_string) {
+    var success = function(response) {
+      window.showPopupOnTop();
+      $('.popup_dialog .full').html(response.html);
+      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+      $('.popup_dialog').find('.load_worksheet_child').on('click', function(e) {
+        if($(this).find(".explain").length)
+          showNotice("Sorry, this user has not granted access to this worksheet","red");
+        else {
+          window.hideDialogs();
+          SwiftCalcs.pushState.navigate('/worksheets/' + $(this).attr('data-hash'), {trigger: true});
+        }
+        e.preventDefault();
+        return false;
+      });
+      window.resizePopup();
+    }
+    var fail = function() {
+      window.hidePopupOnTop();
+    }
+    window.ajaxRequest("/worksheets_children", { hash_string: hash_string }, success, fail);
+  }
 
 });
