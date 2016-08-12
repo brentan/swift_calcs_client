@@ -562,7 +562,7 @@ var plot = P(Element, function(_, super_) {
     }).prependTo(links);
 		$('<button class="ok">Ok</button>').on('click', function(e) {
 			var label = $('.popup_dialog').find('input.label').val().trim();
-			if(!this.has_bar || (axis != X_AXIS)) {
+			if(!_this.has_bar || (axis != X_AXIS)) {
 				var min_val = $('.popup_dialog').find('input.min').val().trim();
 				var max_val = $('.popup_dialog').find('input.max').val().trim();
 				var log_val = $('.popup_dialog').find('input.log').prop('checked');
