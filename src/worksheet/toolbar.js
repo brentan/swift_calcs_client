@@ -50,7 +50,9 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		if(window.matchMedia("only screen and (max-device-width: 480px)").matches) {
 			var toolbar_height = 0;
 			var extra_padding = 2;
-			if($('div.anonymous_message').length) extra_padding += $('div.anonymous_message').height();
+			$('div.top_yellow_message').each(function() {
+				extra_padding += $(this).height();
+			});
 		} else {
 			var toolbar_height = this.toolbar_holder.height();
 			var extra_padding = 20;
@@ -62,7 +64,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			this.toolbar_holder.css('top', top + 'px');
 		$('div.sidebar').css('top', bot + 'px');
 		$('div.projects_list').css('top', top + 'px');
-		$('div.anonymous_message').css('top', bot + 'px');
+		$('div.top_yellow_message').css('top', bot + 'px');
 		$('div.toolbox_top').css('height', toolbar_height + 'px');
 	}
 	var current_toolbar_target = 0;

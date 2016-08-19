@@ -24,6 +24,7 @@
 var parse = function(to_paste) {
   var regex = /([\{\}])/;
   var result = [];
+  if((typeof to_paste === 'undefined') || (to_paste.length == 0)) return [];
   //replace newlines after elements (these are added by select method when pushing to the textarea)
   to_paste = to_paste.replace(/\}\n/g,'}');
 

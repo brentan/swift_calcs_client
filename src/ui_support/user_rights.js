@@ -114,78 +114,43 @@ $(function() {
     data.invite_notify = form.find('.checkbox.notify').attr('data-val')*1;
     data.invite_message = form.find('textarea.add_message').val();
     window.showLoadingOnTop();
-    $.ajax({
-      type: "POST",
-      url: "/rights/set_rights",
-      dataType: 'json',
-      cache: false,
-      data: {rights: data}, 
-      success: function(response) {
-        if(response.success) {
-          window.hidePopupOnTop();
-          if($(".active_worksheet .worksheet_item, .active_worksheet .invitation_item").attr("data-hash") == response.hash) // Update worksheet rights list if worksheet is open
-            $(".active_worksheet td.collaborators > div").html(response.rights)
-          showNotice(response.message, 'green');
-        } else {
-          window.showPopupOnTop();
-          showNotice(response.message, 'red');
-        }
-      },
-      error: function(err) {
-          window.showPopupOnTop();
-        showNotice('Error: ' + err.responseText, 'red');
-        console.log(err);
-        //Depending on error, do we try again?
-        // TODO: Much better error handling!
-      }
+    window.ajaxRequest("/rights/set_rights", {rights: data}, function(response) {
+      window.hidePopupOnTop();
+      if($(".active_worksheet .worksheet_item, .active_worksheet .invitation_item").attr("data-hash") == response.hash) // Update worksheet rights list if worksheet is open
+        $(".active_worksheet td.collaborators > div").html(response.rights)
+      showNotice(response.message, 'green');
+    }, function(err) {
+      window.showPopupOnTop();
     });
   }
   var invalidateURL = function(link, item_type, item_hash) {
     $('<span><i class="fa fa-spinner fa-pulse"></i>&nbsp;Loading</span>').insertAfter(link);
     link.hide();
-    $.ajax({
-      type: "POST",
-      url: "/rights/invalidate_url",
-      dataType: 'json',
-      cache: false,
-      data: { item_type: item_type, item_hash: item_hash }, 
-      success: function(response) {
-        if(response.success) {
-          link.show();
-          link.next('span').remove();
-          link.closest('form').find("input.static").attr('data-url', response.url).val(response.url);
-          link.closest('form').find('.item_hash').val(response.hash_string);
-          createEmbedCode();
-          if(item_type == 'Project') {
-            $('.projects_list div.item').each(function() {
-              if($(this).attr('data-hash') == item_hash) 
-                $(this).attr('data-hash',response.hash_string);
-            });
-            if(window.current_project_hash() == item_hash) 
-              window.setCurrentProject(response.hash_string, response.url_end, window.current_project_onshape());
-            if(SwiftCalcs.pushState.fragment.indexOf(item_hash) !== -1)
-              SwiftCalcs.pushState.navigate(SwiftCalcs.pushState.fragment.replace(item_hash, response.hash_string), {trigger: false});
-          }
-          if(SwiftCalcs.active_worksheet && (item_type == 'Worksheet') && (item_hash == SwiftCalcs.active_worksheet.hash_string))
-            SwiftCalcs.active_worksheet.rename(SwiftCalcs.active_worksheet.name, response.hash_string)
-          $('.worksheet_holder_outer_box .worksheet_item').each(function() {
-            if($(this).attr('data-hash') == item_hash)
-              $(this).attr('data-hash',response.hash_string);
-          })
-        } else {
-          link.show();
-          link.next('span').remove();
-          showNotice(response.message, 'red');
-        }
-      },
-      error: function(err) {
-        link.show();
-        link.next('span').remove();
-        showNotice('Error: ' + err.responseText, 'red');
-        console.log(err);
-        //Depending on error, do we try again?
-        // TODO: Much better error handling!
+    window.ajaxRequest("/rights/invalidate_url", { item_type: item_type, item_hash: item_hash }, function(response) {
+      link.show();
+      link.next('span').remove();
+      link.closest('form').find("input.static").attr('data-url', response.url).val(response.url);
+      link.closest('form').find('.item_hash').val(response.hash_string);
+      createEmbedCode();
+      if(item_type == 'Project') {
+        $('.projects_list div.item').each(function() {
+          if($(this).attr('data-hash') == item_hash) 
+            $(this).attr('data-hash',response.hash_string);
+        });
+        if(window.current_project_hash() == item_hash) 
+          window.setCurrentProject(response.hash_string, response.url_end, window.current_project_onshape());
+        if(SwiftCalcs.pushState.fragment.indexOf(item_hash) !== -1)
+          SwiftCalcs.pushState.navigate(SwiftCalcs.pushState.fragment.replace(item_hash, response.hash_string), {trigger: false});
       }
+      if(SwiftCalcs.active_worksheet && (item_type == 'Worksheet') && (item_hash == SwiftCalcs.active_worksheet.hash_string))
+        SwiftCalcs.active_worksheet.rename(SwiftCalcs.active_worksheet.name, response.hash_string)
+      $('.worksheet_holder_outer_box .worksheet_item').each(function() {
+        if($(this).attr('data-hash') == item_hash)
+          $(this).attr('data-hash',response.hash_string);
+      });
+    }, function(err) {
+      link.show();
+      link.next('span').remove();
     });
   }
 
@@ -234,114 +199,97 @@ $(function() {
       return;
     }
     window.showLoadingOnTop();
-		$.ajax({
-      type: "POST",
-      url: "/rights",
-      dataType: 'json',
-      cache: false,
-      data: { item_hash: item_hash, item_type: item_type }, 
-      success: function(response) {
-      	if(response.success) {
-          window.showPopupOnTop();
-					var el = $('.popup_dialog .full').html(response.html);
-          el.find('input.static').each( function() {
-            this.addEventListener('input', function() { $(this).val($(this).attr('data-url')); this.select(); });
-            $(this).on('click', function() { this.focus(); this.select(); });
-          });
-          el.find('.collapsable_item .collapsed').on('click', function() {
-            if($(this).parent().hasClass('collapsed')) {
-              // Expand
-              $(this).parent().removeClass('collapsed');
-              $(this).find('i.fa.fa-caret-right').removeClass('fa-caret-right').addClass('fa-caret-down');
-              $(this).next('.expanded').slideDown({duration: 120});
-            } else {
-              // Collapse
-              $(this).parent().addClass('collapsed');
-              $(this).find('i.fa.fa-caret-down').addClass('fa-caret-right').removeClass('fa-caret-down');
-              $(this).next('.expanded').slideUp({duration: 120});
-            }
-          });
-          el.find('.selectable').on('click', function() {
-            selectItem($(this));
-          });
-          el.find('i.fa-dot-circle-o').closest('.selectable').each(function() {
-            selectItem($(this));
-          });
-          el.find('span.rights_select').each(function() {
-            createRightsDropdown($(this));
-          });
-          el.find('span.email_input').each(function() {
-            emailInput($(this));
-          });
-          el.find('a.invalidate').on('click', function(e) {
-            invalidateURL($(this), $(this).closest('form').find('.item_type').val(), $(this).closest('form').find('.item_hash').val())
-            e.preventDefault();
-            return false;
-          })
-          el.find('.checkbox').on('click', function(e) {
-            var box = $(this).children('i.fa');
-            if(box.hasClass('fa-check-square-o')) {
-              box.removeClass('fa-check-square-o').addClass('fa-square-o');
-              $(this).attr('data-val', '0');
-            } else {
-              box.removeClass('fa-square-o').addClass('fa-check-square-o');
-              $(this).attr('data-val', '1');
-            }
-          });
-          el.find('a.add_message').on('click', function(e) {
-            var box = el.find('div.add_message');
-            if(box.hasClass('shown')) {
-              box.removeClass('shown');
-              box.hide();
-              $(this).html('Add Message');
-            } else {
-              box.addClass('shown');
-              box.show();
-              $(this).html('Discard Message');
-            }
-            box.find('textarea').val('');
-            e.preventDefault();
-            return false;
-          });
-          // Autogrow the textarea
-          el.find('textarea').on('paste input', function () {
-            if ($(this).outerHeight() > this.scrollHeight)
-              $(this).height(60)
-            var height = $(this).height();
-            while ($(this).outerHeight() < this.scrollHeight) {
-              $(this).height(height + 5);
-              height += 5;
-            }
-            $(this).height(height + 5);
-          });
-          // Create the buttons at the bottom
-          buttons = $('.popup_dialog .bottom_links').html('');
-          if(response.assign_rights) {
-            buttons.append('<button class="submit">Save Changes</button>');
-            buttons.append('<button class="close grey">Cancel</button>');
-          } else
-            buttons.append('<button class="close">Close</button>');
-          buttons.find('button.submit').on('click', function() {
-            submitRights($('form.rights_form'));
-          });
-          // Populate embed boxes
-          createEmbedCode();
-          // Listen for changes to embed options
-          el.find('.embed_span select').on('change', function(e) { createEmbedCode(); });
-          el.find('.embed_span .iframe_code').on('click', function(e) { $(this).hide(); $(this).closest('.embed_span').find('.iframe_embed').show(); });
-          window.resizePopup();
-      	}	else {
-          window.hidePopupOnTop();
-      		showNotice(response.message, 'red');
-      	}
-      },
-      error: function(err) {
-        window.hidePopupOnTop();
-      	showNotice('Error while communicating with the server.  We have been notified', 'red');
-      	console.log(err);
-      	//Depending on error, do we try again?
-      	// TODO: Much better error handling!
-      }
+    window.ajaxRequest("/rights", { item_hash: item_hash, item_type: item_type }, function(response) {
+      window.showPopupOnTop();
+			var el = $('.popup_dialog .full').html(response.html);
+      el.find('input.static').each( function() {
+        this.addEventListener('input', function() { $(this).val($(this).attr('data-url')); this.select(); });
+        $(this).on('click', function() { this.focus(); this.select(); });
+      });
+      el.find('.collapsable_item .collapsed').on('click', function() {
+        if($(this).parent().hasClass('collapsed')) {
+          // Expand
+          $(this).parent().removeClass('collapsed');
+          $(this).find('i.fa.fa-caret-right').removeClass('fa-caret-right').addClass('fa-caret-down');
+          $(this).next('.expanded').slideDown({duration: 120});
+        } else {
+          // Collapse
+          $(this).parent().addClass('collapsed');
+          $(this).find('i.fa.fa-caret-down').addClass('fa-caret-right').removeClass('fa-caret-down');
+          $(this).next('.expanded').slideUp({duration: 120});
+        }
+      });
+      el.find('.selectable').on('click', function() {
+        selectItem($(this));
+      });
+      el.find('i.fa-dot-circle-o').closest('.selectable').each(function() {
+        selectItem($(this));
+      });
+      el.find('span.rights_select').each(function() {
+        createRightsDropdown($(this));
+      });
+      el.find('span.email_input').each(function() {
+        emailInput($(this));
+      });
+      el.find('a.invalidate').on('click', function(e) {
+        invalidateURL($(this), $(this).closest('form').find('.item_type').val(), $(this).closest('form').find('.item_hash').val())
+        e.preventDefault();
+        return false;
+      })
+      el.find('.checkbox').on('click', function(e) {
+        var box = $(this).children('i.fa');
+        if(box.hasClass('fa-check-square-o')) {
+          box.removeClass('fa-check-square-o').addClass('fa-square-o');
+          $(this).attr('data-val', '0');
+        } else {
+          box.removeClass('fa-square-o').addClass('fa-check-square-o');
+          $(this).attr('data-val', '1');
+        }
+      });
+      el.find('a.add_message').on('click', function(e) {
+        var box = el.find('div.add_message');
+        if(box.hasClass('shown')) {
+          box.removeClass('shown');
+          box.hide();
+          $(this).html('Add Message');
+        } else {
+          box.addClass('shown');
+          box.show();
+          $(this).html('Discard Message');
+        }
+        box.find('textarea').val('');
+        e.preventDefault();
+        return false;
+      });
+      // Autogrow the textarea
+      el.find('textarea').on('paste input', function () {
+        if ($(this).outerHeight() > this.scrollHeight)
+          $(this).height(60)
+        var height = $(this).height();
+        while ($(this).outerHeight() < this.scrollHeight) {
+          $(this).height(height + 5);
+          height += 5;
+        }
+        $(this).height(height + 5);
+      });
+      // Create the buttons at the bottom
+      buttons = $('.popup_dialog .bottom_links').html('');
+      if(response.assign_rights) {
+        buttons.append('<button class="submit">Save Changes</button>');
+        buttons.append('<button class="close grey">Cancel</button>');
+      } else
+        buttons.append('<button class="close">Close</button>');
+      buttons.find('button.submit').on('click', function() {
+        submitRights($('form.rights_form'));
+      });
+      // Populate embed boxes
+      createEmbedCode();
+      // Listen for changes to embed options
+      el.find('.embed_span select').on('change', function(e) { createEmbedCode(); });
+      el.find('.embed_span .iframe_code').on('click', function(e) { $(this).hide(); $(this).closest('.embed_span').find('.iframe_embed').show(); });
+      window.resizePopup(); 
+    }, function(err) {
+      window.hidePopupOnTop();
     });
 	}
   var loadCopies = window.loadCopies = function(hash_string) {
