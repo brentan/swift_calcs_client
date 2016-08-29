@@ -104,44 +104,58 @@ var Worksheet = P(function(_) {
 	}
 	_.generateTopWarning = function() {
 		this.jQ.closest('.active_holder').find('.top_warning').remove();
-		switch(this.rights) {
-			case -2: //revision of a worksheet
-				var els = $('<div/>').html('<strong>Revision is View Only</strong>.  <a href="#" class="copy">Copy revision into new worksheet</a>, <a href="#" class="restore">restore worksheet to this revision</a>, or <a href="#" class="back">go to the current version</a>.');
-				els.find('a.copy').on('click', function(_this) { return function(e) {
-					window.newWorksheet(true, _this.hash_string, _this.revision_hash);
-					e.preventDefault();
-					return false;
-				}; }(this));
-				els.find('a.restore').on('click', function(_this) { return function(e) {
-					window.restoreWorksheet();
-					e.preventDefault();
-					return false;
-				}; }(this));
-				els.find('a.back').on('click', function(e) {
-					pushState.navigate('/worksheets/' + SwiftCalcs.active_worksheet.hash_string + '/' + encodeURIComponent(SwiftCalcs.active_worksheet.name.replace(/ /g,'_')), {trigger: true});
-					e.preventDefault();
-					return false;
-				});
-				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
-				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
-				break;
-			case 1: //view-only
-				var els = $('<div/>').html('<strong>File is View Only</strong>.  Any changes you make will not be saved.');
-				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
-				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
-				break;
-			case 2: //view-only but can duplicate
-				var els = $('<div/>').html('<strong>File is View Only</strong>.  To save changes you make to this worksheet, <a href="#" class="copy">create a copy</a>.');
-				els.find('a.copy').on('click', function(_this) { return function(e) {
-          window.createPrompt("Grant View Rights to File Author?","This file was created by " + _this.author + ".  Would you like to give this person <strong>View Only</strong> access to your copy of the worksheet?",{Yes: 1, No: 0}, function(val) {
-            window.newWorksheet(true, _this.hash_string, null, val == '1');
-          });
-					e.preventDefault();
-					return false;
-				}; }(this));
-				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
-				this.save(); // Won't actually save, but will set the saving message to an appropriate message.
-				break;
+    if(window.embedded) {
+      // Embedded windows don't show messages except the 'copy' message, if allowed
+      if(window.show_copy_message && ((this.rights == 2) || ((this.rights >= 2) && window.no_save))) {
+        var els = $('<div/>').html('<strong>Want your own version to edit</strong>?  <a href="#" class="copy">Create a copy</a> in your Swift Calcs account to enable editing and allow saving.');
+        els.find('a.copy').on('click', function(_this) { return function(e) {
+          var val = confirm("Would you like to grant the original worksheet author (" + _this.author + ") view-only access rights to your copy?  Click 'OK' to grant access, or 'cancel' to create a copy without granting access.");
+          window.open("/worksheet_copy/" + _this.hash_string + "?author_rights=" + (val ? 'true' : 'false'));
+          e.preventDefault();
+          return false;
+        }; }(this));
+        createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
+      }
+    } else {
+  		switch(this.rights) {
+  			case -2: //revision of a worksheet
+  				var els = $('<div/>').html('<strong>Revision is View Only</strong>.  <a href="#" class="copy">Copy revision into new worksheet</a>, <a href="#" class="restore">restore worksheet to this revision</a>, or <a href="#" class="back">go to the current version</a>.');
+  				els.find('a.copy').on('click', function(_this) { return function(e) {
+  					window.newWorksheet(true, _this.hash_string, _this.revision_hash);
+  					e.preventDefault();
+  					return false;
+  				}; }(this));
+  				els.find('a.restore').on('click', function(_this) { return function(e) {
+  					window.restoreWorksheet();
+  					e.preventDefault();
+  					return false;
+  				}; }(this));
+  				els.find('a.back').on('click', function(e) {
+  					pushState.navigate('/worksheets/' + SwiftCalcs.active_worksheet.hash_string + '/' + encodeURIComponent(SwiftCalcs.active_worksheet.name.replace(/ /g,'_')), {trigger: true});
+  					e.preventDefault();
+  					return false;
+  				});
+  				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
+  				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
+  				break;
+  			case 1: //view-only
+  				var els = $('<div/>').html('<strong>File is View Only</strong>.  Any changes you make will not be saved.');
+  				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
+  				this.save(); // Wont actually save, but will set the saving message to an appropriate message.
+  				break;
+  			case 2: //view-only but can duplicate
+  				var els = $('<div/>').html('<strong>File is View Only</strong>.  To save changes you make to this worksheet, <a href="#" class="copy">create a copy</a>.');
+  				els.find('a.copy').on('click', function(_this) { return function(e) {
+            window.createPrompt("Grant View Rights to File Author?","This file was created by " + _this.author + ".  Would you like to give this person <strong>View Only</strong> access to your copy of the worksheet?",{Yes: 1, No: 0}, function(val) {
+              window.newWorksheet(true, _this.hash_string, null, val == '1');
+            });
+  					e.preventDefault();
+  					return false;
+  				}; }(this));
+  				createWarningBox(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
+  				this.save(); // Won't actually save, but will set the saving message to an appropriate message.
+  				break;
+      }
 		}
 	}
   _.FailedSaveMessage = function() {
