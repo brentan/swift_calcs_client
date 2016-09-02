@@ -30,7 +30,7 @@ var plot_bar = P(barplot, function(_, super_) {
 	_.createCommands = function() {
 		this.plot_me = false;
 		return [
-			{command: "latex(evalf(mksa_base((" + this.eq1.text({check_for_array: true}) + ")[0])))", nomarkup: true},
+			{command: "latex(evalf(mksa_base_first(" + this.eq1.text({check_for_array: true}) + ")))", nomarkup: true},
 			{command: "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))", nomarkup: true}
 		];
 	}

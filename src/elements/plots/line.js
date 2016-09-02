@@ -40,12 +40,12 @@ var plot_line = P(subplot, function(_, super_) {
 		this.plot_me = false;
 		var xs = this.eq0.text().trim();
 		var commands = [
-				{command: "latex(evalf(mksa_base((" + this.eq1.text({check_for_array: true}) + ")[0])))", nomarkup: true},
+				{command: "latex(evalf(mksa_base_first(" + this.eq1.text({check_for_array: true}) + ")))", nomarkup: true},
 				{command: "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))", nomarkup: true}
 			];
 		if(xs.length) {
 			this.x_provided = true;
-			commands.push({command: "latex(evalf(mksa_base((" + this.eq0.text({check_for_array: true}) + ")[0])))", nomarkup: true});
+			commands.push({command: "latex(evalf(mksa_base_first(" + this.eq0.text({check_for_array: true}) + ")))", nomarkup: true});
 			commands.push({command: "mksa_remove(evalf(" + this.eq0.text({check_for_array: true}) + "))", nomarkup: true});
 		} else
 			this.x_provided = false;
