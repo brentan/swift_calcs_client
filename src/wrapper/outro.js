@@ -19,6 +19,7 @@
 		'plot_bar_stacked': plot_bar_stacked,
 		'plot_bar': plot_bar,
 		'plot_histogram': plot_histogram,
+		'plot_parametric': plot_parametric,
 		'purge': purge,
 		'solve': solve,
 		'desolve': desolve,

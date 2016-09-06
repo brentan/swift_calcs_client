@@ -47,7 +47,7 @@ $(function() {
     Plots_and_Charts: [
       {left: 'fa-line-chart', text: 'Plot Function', el: 'plot'},
       {left: 'fa-area-chart', text: 'Line Plot', el: 'plot', focus_right: true, option: 'plot_line'},
-      {left: 'fa-area-chart', text: 'Area Plot', el: 'plot', focus_right: true, option: 'plot_area'},
+      {left: 'fa-line-chart', text: 'Parametric Plot', el: 'plot', focus_right: true, option: 'plot_parametric'},
       {left: 'fa-area-chart', text: 'Scatter Plot', el: 'plot', focus_right: true, option: 'plot_scatter'},
       {left: 'fa-bar-chart', text: 'Bar Chart', el: 'plot', focus_right: true, option: 'plot_bar'},
       {left: 'fa-bar-chart', text: 'Histogram', el: 'plot', focus_right: true, option: 'plot_histogram'},

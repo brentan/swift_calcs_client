@@ -680,6 +680,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 			 	plot_area: 'Area Plot',
 			 	plot_area_stacked: 'Stacked Area Plot',
 			 	plot_scatter: 'Scatter Plot',
+			 	plot_parametric: 'Parametric Plot',
 			 	plot_bar: 'Bar Chart',
 			 	plot_bar_stacked: 'Stacked Bar Chart',
 			 	plot_histogram: 'Histogram',
