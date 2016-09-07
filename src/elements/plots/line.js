@@ -36,78 +36,91 @@ var plot_line = P(subplot, function(_, super_) {
 			]
 		};
 	}
-	_.createCommands = function() {
-		this.plot_me = false;
+	_.getUnitsCommands = function() {
 		var xs = this.eq0.text().trim();
 		var commands = [
-				{command: "latex(evalf(mksa_base_first(" + this.eq1.text({check_for_array: true}) + ")))", nomarkup: true},
-				{command: "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))", nomarkup: true}
+				{command: "latex(evalf(mksa_base_first(" + this.eq1.text({check_for_array: true}) + ")))", nomarkup: true}
 			];
 		if(xs.length) {
 			this.x_provided = true;
 			commands.push({command: "latex(evalf(mksa_base_first(" + this.eq0.text({check_for_array: true}) + ")))", nomarkup: true});
+		} else
+			this.x_provided = false;
+		return commands;
+	}
+	_.createCommands = function() {
+		this.plot_me = false;
+		var xs = this.eq0.text().trim();
+		var commands = [
+				{command: "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))", nomarkup: true}
+			];
+		if(xs.length) {
+			this.x_provided = true;
 			commands.push({command: "mksa_remove(evalf(" + this.eq0.text({check_for_array: true}) + "))", nomarkup: true});
 		} else
 			this.x_provided = false;
 		return commands;
 	}
 	_.evaluationFinished = function(result) {
-		if(result[1].success && ((this.x_provided && result[3].success) || !this.x_provided)) {
-			this.y_unit = result[0].returned;
-			this.x_unit = this.x_provided ? result[2].returned : '1.0';
-			try {
-				this.ys = '[' + result[1].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
-				this.ys = this.ys.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');
-				if(!this.ys.match(/[0-9]/)) {
-					this.outputBox.setWarning('No numeric results were returned and nothing will be plotted').expand();
-					return true;
-				}
-				this.ys = eval(this.ys);
-				if(((this.y_axis == 'y') && this.parent.y_log) || ((this.y_axis == 'y2') && this.parent.y2_log)) {
-					for(var j=0; j<=this.ys.length; j++) {
-						if(this.ys[j] <= 0) this.ys[j] = NaN;
-					}
-				}
-				if(this.x_provided) {
-					this.xs = '[' + result[3].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
-					this.xs = this.xs.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');
-					if(!this.xs.match(/[0-9]/)) {
+    if(this.parent.getUnits) {
+      if(result[0].success) this.y_unit = result[0].returned;
+      if(this.x_provided && result[1].success) this.x_unit = result[1].returned;
+    } else {
+			if(result[0].success && ((this.x_provided && result[1].success) || !this.x_provided)) {
+				try {
+					this.ys = '[' + result[0].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
+					this.ys = this.ys.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');
+					if(!this.ys.match(/[0-9]/)) {
 						this.outputBox.setWarning('No numeric results were returned and nothing will be plotted').expand();
 						return true;
 					}
-					this.xs = eval(this.xs);
-					if(this.parent.x_log) {
-						for(var j=0; j<=this.xs.length; j++) {
-							if(this.xs[j] <= 0) {
-								this.xs.splice(j,1);
-								this.ys.splice(j,1);
-								j = j - 1;
-							}
+					this.ys = eval(this.ys);
+					if(((this.y_axis == 'y') && this.parent.y_log) || ((this.y_axis == 'y2') && this.parent.y2_log)) {
+						for(var j=0; j<=this.ys.length; j++) {
+							if(this.ys[j] <= 0) this.ys[j] = NaN;
 						}
 					}
-				} else {
-					// NO x-array provided...thats ok, create one
-					this.xs = [];
-					for(var i = 1; i <= this.ys.length; i++)
-						this.xs.push(i);
+					if(this.x_provided) {
+						this.xs = '[' + result[1].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
+						this.xs = this.xs.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');
+						if(!this.xs.match(/[0-9]/)) {
+							this.outputBox.setWarning('No numeric results were returned and nothing will be plotted').expand();
+							return true;
+						}
+						this.xs = eval(this.xs);
+						if(this.parent.x_log) {
+							for(var j=0; j<=this.xs.length; j++) {
+								if(this.xs[j] <= 0) {
+									this.xs.splice(j,1);
+									this.ys.splice(j,1);
+									j = j - 1;
+								}
+							}
+						}
+					} else {
+						// NO x-array provided...thats ok, create one
+						this.xs = [];
+						for(var i = 1; i <= this.ys.length; i++)
+							this.xs.push(i);
+					}
+					if(this.xs.length != this.ys.length) {
+						this.outputBox.setWarning('Provided x and y vectors are of unequal lengths').expand();
+						return true;
+					}
+					// Set parent x_min/x_max
+					this.parent.calc_x_min = this.parent.calc_x_min === false ? Math.min.apply(Math, this.xs) : Math.min(Math.min.apply(Math, this.xs), this.parent.calc_x_min);
+					this.parent.calc_x_max = this.parent.calc_x_max === false ? Math.max.apply(Math, this.xs) : Math.max(Math.max.apply(Math, this.xs), this.parent.calc_x_max);
+					this.ys.unshift('data_' + this.id);
+					this.xs.unshift('x_' + this.id);
+					this.plot_me = true;
+					this.outputBox.clearState().collapse();
+				} catch(e) {
+					this.outputBox.setError('Error evaluating function: Non-numeric results were returned and could not be plotted').expand();
 				}
-				if(this.xs.length != this.ys.length) {
-					this.outputBox.setWarning('Provided x and y vectors are of unequal lengths').expand();
-					return true;
-				}
-				// Set parent x_min/x_max
-				this.parent.calc_x_min = this.parent.calc_x_min === false ? Math.min.apply(Math, this.xs) : Math.min(Math.min.apply(Math, this.xs), this.parent.calc_x_min);
-				this.parent.calc_x_max = this.parent.calc_x_max === false ? Math.max.apply(Math, this.xs) : Math.max(Math.max.apply(Math, this.xs), this.parent.calc_x_max);
-				this.ys.unshift('data_' + this.id);
-				this.xs.unshift('x_' + this.id);
-				this.plot_me = true;
-				this.outputBox.clearState().collapse();
-			} catch(e) {
-				this.outputBox.setError('Error evaluating function: Non-numeric results were returned and could not be plotted').expand();
+			} else {
+				var err = result[0].success ? result[1].returned : result[0].returned;
+				this.outputBox.setError(err).expand();
 			}
-		} else {
-			var err = result[1].success ? result[3].returned : result[1].returned;
-			this.outputBox.setError(err).expand();
 		}
 		return true;
 	}

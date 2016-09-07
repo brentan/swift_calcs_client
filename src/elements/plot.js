@@ -32,6 +32,7 @@ var plot = P(Element, function(_, super_) {
 	_.rotated = false;
 	_.height = 300;
 	_.plotBox = false;
+	_.getUnits = false;
 	_.helpText = "<<plot>>\nCreate a plot of data and functions.  Insert new data to plot with the 'add another item' link, and adjust the properties of each data-set, such as color or line thickness, by clicking on the item in the plot.";
 
 	_.innerHtml = function() {
@@ -119,37 +120,104 @@ var plot = P(Element, function(_, super_) {
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		this.calc_x_max = false;
 		this.calc_x_min = false;
-		// Build command list
-		this.commands = [
-			{ command: 'evalf(mksa_remove(' + (this.x_units ? this.worksheet.latexToText(this.x_units) : '1') + '))', nomarkup: true },
-			{ command: 'latex(evalf(mksa_base(' + (this.x_units ? this.worksheet.latexToText(this.x_units) : '1') + ')))', nomarkup: true },
-			{ command: 'evalf(mksa_remove(' + (this.y_units ? this.worksheet.latexToText(this.y_units) : '1') + '))', nomarkup: true },
-			{ command: 'latex(evalf(mksa_base(' + (this.y_units ? this.worksheet.latexToText(this.y_units) : '1') + ')))', nomarkup: true },
-			{ command: 'evalf(mksa_remove(' + (this.y2_units ? this.worksheet.latexToText(this.y2_units) : '1') + '))', nomarkup: true },
-			{ command: 'latex(evalf(mksa_base(' + (this.y2_units ? this.worksheet.latexToText(this.y2_units) : '1') + ')))', nomarkup: true },
-		];
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
 			this.move_to_next = move_to_next;
-			giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+			this.getUnits = true;
+			if(this.ends[L]) 
+				this.ends[L].continueEvaluation(evaluation_id, true)
+			else 
+				this.childrenEvaluated(evaluation_id);
 		} else 
 			this.evaluateNext(evaluation_id, move_to_next);
 	}
+	_.childrenEvaluated = function(evaluation_id) {
+		if(this.getUnits) {
+			this.getUnits = false;
+			// Determine default axis units before getting plot data
+			var x_unit = this.x_units ? this.x_unit : false;
+			var y_unit = this.y_units ? this.y_unit : false;
+			var y2_unit = this.y2_units ? this.y2_unit : false;
+			var ignore_custom_xs = false;
+			var children = this.children();
+			for(var i = 0; i < children.length; i++) {
+				if(children[i] instanceof barplot) 
+					ignore_custom_xs = true;
+				if(!ignore_custom_xs && (x_unit === false)) x_unit = children[i].x_unit;
+				if(children[i].y_axis != 'y2') {
+					if(y_unit === false) y_unit = children[i].y_unit;
+				} else {
+					if(y2_unit == false) y2_unit = children[i].y_unit;
+				}
+			}
+			// Build command list
+			this.commands = [];
+			if(this.x_units) {
+				this.commands.push({ command: 'evalf(mksa_remove(' + this.worksheet.latexToText(this.x_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(this.x_units) + ')))', nomarkup: true });
+				this.commands.push({ command: '1.0', nomarkup: true});
+			} else if(x_unit) {
+				this.commands.push({ command: 'evalf(inv(unit_remove(' + this.worksheet.latexToText(x_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(x_unit) + ')))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(default_base(' + this.worksheet.latexToText(x_unit) + ')))', nomarkup: true });
+			} else {
+				this.commands.push({ command: '1.0', nomarkup: true });
+				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
+				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
+			}
+			if(this.y_units) {
+				this.commands.push({ command: 'evalf(mksa_remove(' + this.worksheet.latexToText(this.y_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(this.y_units) + ')))', nomarkup: true });
+				this.commands.push({ command: '1.0', nomarkup: true});
+			} else if(y_unit) {
+				this.commands.push({ command: 'evalf(inv(unit_remove(' + this.worksheet.latexToText(y_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(y_unit) + ')))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(default_base(' + this.worksheet.latexToText(y_unit) + ')))', nomarkup: true });
+			} else {
+				this.commands.push({ command: '1.0', nomarkup: true });
+				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
+				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
+			}
+			if(this.y2_units) {
+				this.commands.push({ command: 'evalf(mksa_remove(' + this.worksheet.latexToText(this.y2_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(this.y2_units) + ')))', nomarkup: true });
+				this.commands.push({ command: '1.0', nomarkup: true});
+			} else if(y2_unit) {
+				this.commands.push({ command: 'evalf(inv(unit_remove(' + this.worksheet.latexToText(y2_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(y2_unit) + ')))', nomarkup: true });
+				this.commands.push({ command: 'latex(evalf(default_base(' + this.worksheet.latexToText(y2_unit) + ')))', nomarkup: true });
+			} else {
+				this.commands.push({ command: '1.0', nomarkup: true });
+				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
+				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
+			}
+			if(this.shouldBeEvaluated(evaluation_id)) {
+				giac.execute(evaluation_id, this.move_to_next, this.commands, this, 'evaluationFinished');
+			} else 
+				this.evaluateNext(evaluation_id, this.move_to_next);
+		} else {
+			// Already have units set, just ran through all children to get data
+			this.drawPlot();
+			this.evaluateNext(evaluation_id, this.move_to_next);
+		}
+	}
 	_.evaluationFinished = function(result, evaluation_id) {
-		var any_yet = false;
 		this.x_unit_conversion = result[0].returned*1;
 		this.x_unit = result[1].returned;
-		this.y_unit_conversion = result[2].returned*1;
-		this.y_unit = result[3].returned;
-		this.y2_unit_conversion = result[4].returned*1;
-		this.y2_unit = result[5].returned;
+		this.x_unit_label = this.x_units ? this.x_units : result[2].returned;
+		this.y_unit_conversion = result[3].returned*1;
+		this.y_unit = result[4].returned;
+		this.y_unit_label = this.y_units ? this.y_units : result[5].returned;
+		this.y2_unit_conversion = result[6].returned*1;
+		this.y2_unit = result[7].returned;
+		this.y2_unit_label = this.y2_units ? this.y2_units : result[8].returned;
 		if(this.ends[L]) 
 			this.ends[L].continueEvaluation(evaluation_id, true)
 		else 
 			this.childrenEvaluated(evaluation_id);
 		return false;
 	}
-	_.childrenEvaluated = function(evaluation_id) {
+	_.drawPlot = function() {
 		// Draw the plot, if there is anything to plot
 		var columns = [];
 		this.has_bar = false;
@@ -191,8 +259,10 @@ var plot = P(Element, function(_, super_) {
 			if(children[i] instanceof plot_histogram) {
 				if(hist_plot)
 					children[i].outputBox.setWarning('Histogram Plot Bin Labels ignored.  Bars have been plotted on the axis of another histogram that may have different bin sizes').expand();
-				else
+				else {
 					hist_plot = children[i].x_labels;
+					hist_plot_unit_label = children[i].x_unit;
+				}
 			}
 			if(children[i] instanceof plot_func) {
 				if(ignore_custom_xs) {
@@ -295,12 +365,9 @@ var plot = P(Element, function(_, super_) {
 		var x_label = this.x_label ? this.x_label : 'Add a label';
 		var y_label = this.y_label ? this.y_label : 'Add a label';
 		var y2_label = this.y2_label ? this.y2_label : 'Add a label';
-		if(!ignore_custom_xs && this.x_units) x_label += ' [' + this.worksheet.latexToUnit(this.x_units)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
-		else if(!ignore_custom_xs && x_unit && (x_unit != '1.0')) x_label += ' [' + this.worksheet.latexToUnit(x_unit)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
-		if(this.y_units) y_label += ' [' + this.worksheet.latexToUnit(this.y_units)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
-		else if(y_unit && (y_unit != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(y_unit)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
-		if(this.y2_units) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_units)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
-		else if(y2_unit && (y2_unit != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(y2_unit)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		if(!ignore_custom_xs && this.x_unit_label && (this.x_unit_label != '1.0')) x_label += ' [' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		if(this.y_unit_label && (this.y_unit_label != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		if(this.y2_unit_label && (this.y2_unit_label != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
 		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
 		if(columns.length) {
 			if(this.y_log) {
@@ -359,7 +426,7 @@ var plot = P(Element, function(_, super_) {
 					var title = $(this).val().trim();
 					if(title == '') title = false;
 					_this.chart_title = title;
-					_this.childrenEvaluated();
+					_this.drawPlot();
 					_this.worksheet.save();
 				});
 				e.preventDefault();
@@ -379,7 +446,7 @@ var plot = P(Element, function(_, super_) {
 			if(hist_plot) {
 				var categories = [];
 				for(var i = 0; i < hist_plot.length; i++) 
-					categories.push(ceil10(hist_plot[i][0], x_tick_order) + ' to ' + ceil10(hist_plot[i][1], x_tick_order));
+					categories.push(ceil10(hist_plot[i][0], x_tick_order) + ' to ' + ceil10(hist_plot[i][1], x_tick_order) + ((hist_plot_unit_label && (hist_plot_unit_label != '1.0')) ? (' [' + this.worksheet.latexToUnit(hist_plot_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']') : ''));
 			}	else if(this.x_labels && this.has_bar)
 				var categories = this.x_labels.split('__s__');
 			else 
@@ -477,15 +544,12 @@ var plot = P(Element, function(_, super_) {
 				if(child.selected)
 					child.addSelectLine();
 			});
-			// BRENTAN: Still need a way to change the unit of an axis out of mksa units
 		} else {
 			if(this.plotBox) this.plotBox = this.plotBox.destroy();
 			this.jQ.find('.' + css_prefix + 'plot_box').height('auto');
 			this.expand();
 			this.jQ.find('.' + css_prefix + 'plot_box .explain').html('No data to plot.  Please setup a data series to plot.');
 		}
-		if(evaluation_id)
-			this.evaluateNext(evaluation_id, this.move_to_next);
 	}
 	_.children = function() { 
 		var kids = super_.children.call(this);
@@ -504,7 +568,7 @@ var plot = P(Element, function(_, super_) {
 		switch(command) { 
 			case 'rotated_axes':
 				this.rotated = value;
-				this.childrenEvaluated();
+				this.drawPlot();
 				break;
 			case 'mathMode':
         math().insertAfter(this).show(0).focus(-1);
@@ -688,7 +752,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 		});
 		this.selectBox.paste(this.plot_type);
 		var _this = this;
-		this.label = registerFocusable(CommandBlock, this, 'plot_label', { editable: true, handlers: {blur: function(el) { _this.parent.childrenEvaluated(); } } })
+		this.label = registerFocusable(CommandBlock, this, 'plot_label', { editable: true, handlers: {blur: function(el) { _this.parent.drawPlot(); } } })
 		this.focusableItems.unshift([this.label]);
 		this.focusableItems.unshift([this.selectBox]);
 		super_.postInsertHandler.call(this);
@@ -736,17 +800,21 @@ var subplot = P(EditableBlock, function(_, super_) {
 		};
 	}
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
-		if(this.shouldBeEvaluated(evaluation_id)) 
-			this.commands = this.createCommands();
+		if(this.shouldBeEvaluated(evaluation_id)) {
+			if(this.parent.getUnits)
+				this.commands = this.getUnitsCommands();
+			else
+				this.commands = this.createCommands();
+		}
 		return super_.continueEvaluation.call(this, evaluation_id, move_to_next);
 	}
 	_.preRemoveHandler = function() {
 		super_.preRemoveHandler.call(this);
-		window.setTimeout(function(el) { return function() { el.childrenEvaluated(); }; }(this.parent));
+		window.setTimeout(function(el) { return function() { el.drawPlot(); }; }(this.parent));
 	}
 	_.preReinsertHandler = function() {
 		super_.preReinsertHandler.call(this);
-		window.setTimeout(function(el) { return function() { el.childrenEvaluated(); }; }(this.parent));
+		window.setTimeout(function(el) { return function() { el.drawPlot(); }; }(this.parent));
 	}
   _.toString = function() {
   	return '{' + this.plot_type + '}{{' + this.argumentList().join('}{') + '}}';
@@ -832,7 +900,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 				this[command]=value;
 		}
 		this.worksheet.save();
-		this.parent.childrenEvaluated();
+		this.parent.drawPlot();
 	}
 	// Methods to overwrite (in addition to innerHtml and postInsertHandler)
 	_.createCommands = function() {

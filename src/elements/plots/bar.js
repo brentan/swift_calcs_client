@@ -27,32 +27,39 @@ var plot_bar = P(barplot, function(_, super_) {
 			]
 		};
 	}
+	_.getUnitsCommands = function() {
+		return [
+			{command: "latex(evalf(mksa_base_first(" + this.eq1.text({check_for_array: true}) + ")))", nomarkup: true},
+		];
+	}
 	_.createCommands = function() {
 		this.plot_me = false;
 		return [
-			{command: "latex(evalf(mksa_base_first(" + this.eq1.text({check_for_array: true}) + ")))", nomarkup: true},
 			{command: "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))", nomarkup: true}
 		];
 	}
 	_.evaluationFinished = function(result) {
-		if(result[1].success) {
-			this.y_unit = result[0].returned;
-			try {
-				this.ys = '[' + result[1].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
-				this.ys = this.ys.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');
-				if(!this.ys.match(/[0-9]/)) {
-					this.outputBox.setWarning('No numeric results were returned and nothing will be plotted').expand();
-					return true;
-				}
-				this.ys = eval(this.ys);
-				this.ys.unshift('data_' + this.id);
-				this.plot_me = true;
-				this.outputBox.clearState().collapse();
-			} catch(e) {
-				this.outputBox.setError('Error evaluating function: Non-numeric results were returned and could not be plotted').expand();
-			}
+		if(this.parent.getUnits) {
+			if(result[0].success) this.y_unit = result[0].returned;
 		} else {
-			this.outputBox.setError(result[1].returned).expand();
+			if(result[0].success) {
+				try {
+					this.ys = '[' + result[0].returned.replace(/[^0-9\.\-,e]/g,'') + ']'; // Remove non-numeric characters
+					this.ys = this.ys.replace(/,,/g,',null,').replace('[,','[null,').replace(',]',',null]');
+					if(!this.ys.match(/[0-9]/)) {
+						this.outputBox.setWarning('No numeric results were returned and nothing will be plotted').expand();
+						return true;
+					}
+					this.ys = eval(this.ys);
+					this.ys.unshift('data_' + this.id);
+					this.plot_me = true;
+					this.outputBox.clearState().collapse();
+				} catch(e) {
+					this.outputBox.setError('Error evaluating function: Non-numeric results were returned and could not be plotted').expand();
+				}
+			} else {
+				this.outputBox.setError(result[0].returned).expand();
+			}
 		}
 		return true;
 	}
