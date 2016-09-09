@@ -253,7 +253,7 @@ Worksheet.open(function(_) {
 		return this;
 	}
 	_.settingsToGiac = function(recalculate) {
-		giac.sendCommand({restart_string: "DIGITS:=" + (this.settings.digits) + ";complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units)});
+		giac.sendCommand({restart_string: "DIGITS:=" + (this.settings.digits) + ";complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";approx_mode:=" + (this.settings.approx == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units)});
 		if(recalculate !== false) {
 			this.settings.saved = true;
 			if(this.rights >= 3) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {hash_string: this.hash_string, settings: this.settings } });
