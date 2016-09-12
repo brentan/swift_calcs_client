@@ -49,9 +49,14 @@ var sendMessage = function(json) {
 var errors = [];
 var warnings = [];
 var ii = 0;
+var log_io = false;
 var receiveMessage = function(command) {
   if(command.giac_version)
     return loadGiac(command.giac_version);
+  if(command.set_io) {
+    log_io = !log_io;
+    return;
+  }
   if(command.increase_timeout) {
     timeout_length += 10;
     return Module.caseval('timeout ' + timeout_length);
@@ -320,17 +325,23 @@ var Module = {
     if (Module.setStatus.interval) clearInterval(Module.setStatus.interval);
     sendMessage({command: 'setStatus', value: text});
     if(text === '') {
-  		Module.caseval = Module.cwrap('caseval', 'string', ['string']);    
+  		Module.caseval_direct = Module.cwrap('caseval', 'string', ['string']);    
       // Initialize timeout
       // Module.caseval('timeout ' + timeout_length);
       // Module.caseval('ckevery 10000');
     }
   },
-  caseval2: function(text) {
+  caseval_log: function(text) {
     console.log("IN: " + text);
-    var out = Module.caseval2(text);
+    var out = Module.caseval_direct(text);
     console.log("OUT: " + out);
     return out;
+  },
+  caseval: function(text) {
+    if(log_io)
+      return Module.caseval_log(text);
+    else
+      return Module.caseval_direct(text);
   },
   casevalWithTimeout: function(text) {
     try {

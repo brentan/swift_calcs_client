@@ -224,6 +224,9 @@ var GiacHandler = P(function(_) {
 			window.setTimeout(function(_this) { return function() { _this.sendCommand(hash_string, el); }; }(this), 250);
 		}
 	}
+  _.log_io = function() {
+    this.worker.postMessage(JSON.stringify({set_io: true}));
+  }
 });
 
 // Initialize the giac object
