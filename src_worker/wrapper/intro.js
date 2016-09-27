@@ -6,6 +6,7 @@ var restart_string = "complex_mode:=1;angle_radian:=1;"
 var newConstant = function(name, ob) {
 	constants[name] = ob;
 }
+
 // Helper to create an output table.  Will take a 2D array and turn it into latex output
 var toTable = function(data) {
 	var out = '\\begin{matrix0} ';
@@ -25,12 +26,6 @@ var toTable = function(data) {
 		}
 	}
 	return out + ' \\end{matrix0}';
-}
-// Helper to convert 'number _unit' syntax into Mathquill \Unit{number}{unit} syntax
-var latexUnit = function(input) {
-	var number = input.replace(/ .*$/,'');
-	var unit = input.replace(/^.* /,'').replace(/_/g,'');
-	return number + ' \\Unit{' + unit + '}';
 }
 // return the unique items in an array
 function uniq(a) {

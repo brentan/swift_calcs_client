@@ -418,6 +418,7 @@ var Worksheet = P(function(_) {
 	// Detach method (remove from the DOM)
 	_.unbind = function() {
     $('nav.menu').addClass('noWorksheet');
+    giac.clean_up();
 		this.clearUndoStack();
 		this.unbindUploads();
 		this.unbindMouse();

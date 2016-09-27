@@ -153,6 +153,11 @@ var SelectBox = P(aFocusableItem, function(_, super_) {
 			return this.option_list[this.position].key;
 		return '';
 	}
+	_.getSelectedText = function() {
+		if(this.position > -1)
+			return this.option_list[this.position].val;
+		return '';
+	}
 	_.mouseOut = function(e) {
 		this.blur();
 	}

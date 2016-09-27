@@ -227,6 +227,9 @@ var GiacHandler = P(function(_) {
   _.log_io = function() {
     this.worker.postMessage(JSON.stringify({set_io: true}));
   }
+  _.clean_up = function() {
+    this.worker.postMessage(JSON.stringify({clean_up: true}));
+  }
 });
 
 // Initialize the giac object

@@ -57,6 +57,10 @@ var receiveMessage = function(command) {
     log_io = !log_io;
     return;
   }
+  if(command.clean_up) {
+    constants = {}
+    return;
+  }
   if(command.increase_timeout) {
     timeout_length += 10;
     return Module.caseval('timeout ' + timeout_length);
@@ -105,6 +109,11 @@ var receiveMessage = function(command) {
       // Prechecks on compilation can generate errors, but we still send here so that they are caught in the natural evaluation chain.  Otherwise we would have to hijack that chain
       // during the compilation step
       output.push({success: false, returned: command.commands[ii].genError, error_index: command.commands[ii].error_index ? command.commands[ii].error_index : -1});
+      continue;
+    }
+    if(command.commands[ii].setMaterial) {
+      // Create a new material object
+      output[ii] = setMaterial(command.commands[ii].setMaterial);
       continue;
     }
     if(command.commands[ii].protect_vars) {

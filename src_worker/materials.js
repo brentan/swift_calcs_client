@@ -1,84 +1,58 @@
 
-//BRENTAN: Significantly expand this.  Add many many more solid parameters and more materials
-
+//BRENTAN: Add support for fluids and gases
 var Material = P(function(_) {
-	_.E = 0;
-	_.rho = 0;
-	_.k = 0;
-	_.name = '';
-	// Property list and method list are used for autocomplete
-	_.propertyList = ['density','modulus','thermalConductivity'];
-	_.methodList = [];
-
-	_.init = function(data) {
-		this.E = data.modulus;
-		this.rho = data.density;
-		this.k = data.thermal_conductivity;
-		this.name = data.name;
-	}
-	_.density = function() {
-		return this.rho;
-	}
-	_.modulus = function() {
-		return this.E;
-	}
-	_.thermalConductivity = function() {
-		return this.k;
-	}
-	_.properties = function() {
-		return [
-			[this.name, '\\whitespace'],
-			['modulus', latexUnit(this.modulus())],
-			['density', latexUnit(this.density())],
-			['thermalConductivity', latexUnit(this.thermalConductivity())]
-		]
-	}
-	_.toString = function() {
-		return toTable(this.properties());
-	}
-	_.clone = function() {
-		// Used when setting another variable with an object
-		return Material({
-			modulus: this.E,
-			density: this.rho,
-			thermal_conductivity: this.k,
-			name: this.name
-		})
-	}
+  /* 
+  This is a generic material data type.  It is 'stupid' in that it has no internal 
+  logic or functionality beyond returning the constant values supplied through the input
+  To initialize, pass a hash with the following structure:
+  {
+    name: name,
+    properties: [
+      { name: name, value: value, unit: unit },
+      ...
+    ]
+  }
+  */
+  _.methodList = [];
+  _.init = function(data) {
+    this.name = data.name;
+    this.inputs = data;
+    var len = data.properties.length;
+    var propertyList = [];
+    for(var i = 0; i < len; i++) {
+      this[data.properties[i].name] = '(' + data.properties[i].value + ' * ' + data.properties[i].unit + ')';
+      propertyList.push(data.properties[i].name);
+    }
+    this.propertyList = propertyList;
+  }
+  _.toString = function() {
+    var output = [["\\mathbf{\\underline{" + this.name + "}}"]];
+    for(var i = 0; i < this.propertyList.length; i++)
+      output.push([this.propertyList[i]]);
+    output.push(["\\textcolor{#aaaaaa}{use\\whitespace variable.property\\whitespace syntax}"])
+    return toTable(output);
+  }
+  _.clone = function() {
+    // Used when setting another variable with an object
+    return Material(this.inputs);
+  }
 });
 
-var materials = {};
-materials.Steel = {
-    modulus: 200e9,
-    density: 8050,
-    thermal_conductivity: 54
-  };
-
-materials.Aluminum = {
-    modulus: 69e9,
-    density: 2700,
-    thermal_conductivity: 205
-       };
-
-materials.Titanium = {
-    modulus: 110e9,
-    density: 4340,
-    thermal_conductivity: 22
-       };
-
-materials.Oak = {
-    modulus: 11e9,
-    density: 750,
-    thermal_conductivity: 0.17
-       };
-for (prop in materials) {
-  if (!materials.hasOwnProperty(prop)) {
-    continue;
+var setMaterial = function(data) {
+  if(!data.var_name.match(/^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)?$/))
+    return {success: false, returned: "Invalid variable name.  Please enter a valid variable name."};
+  if(constants[data.var_name])
+    return {success: false, returned: "Please choose another variable name, an object has already been assigned to this variable."};
+  if(data.last_name.length > 0)
+    delete(constants[data.last_name]);
+  switch(data.data_type) {
+    case 1:
+      newConstant(data.var_name, Material(data.data));
+      break;
   }
-  materials[prop].modulus += ' _Pa';
-  materials[prop].density += ' _kg/(_m^3)';
-  materials[prop].thermal_conductivity += ' _W/(_m*_K)';
-  materials[prop].name = prop;
-  newConstant(prop, Material(materials[prop]));
+  return {success: true, returned: '1'};
 }
+
+//newConstant('testconstant', Material({name: 'test', properties: [ {name: 'test1', value: '22', unit: '_m'},{name: 'test2', value: '44', unit: '_in'}]}));
+
 //newConstant('testname', {propertyList: ['aa','bb'], methodList: [], aa: "[1,2,3]", bb: "[4,5,6]", toString: function() { return 'hello'; }, clone: function() { return 3; }});
