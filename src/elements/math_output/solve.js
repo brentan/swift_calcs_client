@@ -1,22 +1,20 @@
 
-var solve = P(GiacGeneric, function(_, super_) {
+var solve = P(SettableMathOutput, function(_, super_) {
 	_.klass = ['solve'];
 	_.number_of_equations = 1;
 	_.ask_initial_guess = false;
 	_.helpText = "<<solve <[EXPR]> for <[VARS]>>>\nSolve the expression(s) given (EXPR) for the variable(s) specified in VARS.  Use the 'add another equation' link to solve systems of equations.  When solving for multiple variables, enter as a comma-seperated list.  If an initial guess is requested, enter as a comma-seperated list corresponding to the variable list.\nExample: Solve x^2=4 for x with initial guess 0.2.\nExample: Solve x^2+y=6,x-y^2=-2 for x,y";
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','number_of_equations', 'scoped', 'ask_initial_guess'];
+	_.savedProperties = ['number_of_equations', 'ask_initial_guess'];
 
 	_.init = function() {
 		this.eqFields = [];
 		super_.init.call(this);
 	}
 	_.innerHtml = function() {
-		return '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
-	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span>' + focusableHTML('CodeBlock', 'solve') + '</td>'
-	 	+ '<td class="' + css_prefix + 'content"><div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'eq0') + helpBlock() + '</div><div><div class="' + css_prefix + 'add_equation ' + css_prefix + 'hide_print">Add another equation</div></div>'
+		var html = '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'eq0') + helpBlock() + '</div><div><div class="' + css_prefix + 'add_equation ' + css_prefix + 'hide_print">Add another equation</div></div>'
 	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="1">for&nbsp;' + focusableHTML('MathQuill',  'var') + '<span class="initial_guess" style="display:none;">&nbsp;with initial guess&nbsp;' + focusableHTML('MathQuill',  'var_guess') + '</span></div>'
-	  + '<div class="' + css_prefix + 'focusableItems" data-id="2">using&nbsp;' + focusableHTML('SelectBox',  'solver') + '</div>'
-		+ answerSpan() + '</td></tr></tbody></table>';
+	  + '<div class="' + css_prefix + 'focusableItems" data-id="2">using&nbsp;' + focusableHTML('SelectBox',  'solver') + '</div>';
+	  return this.wrapHTML('solve', html);
 	}
 	_.postInsertHandler = function() {
 		this.eqFields[0] = registerFocusable(MathQuill, this, 'eq0', { ghost: 'equation', handlers: {
@@ -33,8 +31,7 @@ var solve = P(GiacGeneric, function(_, super_) {
 		}});
 		this.solver = registerFocusable(SelectBox, this, 'solver', { options: { symbolic: 'Symbolic Solver', newton_solver: 'Newton-Raphson Numeric Solver'}});
 		this.eqFields[0].setExpressionMode(true);
-		this.command = registerFocusable(CodeBlock, this, 'solve', { });
-		this.focusableItems = [[this.command, this.eqFields[0]] , [this.varField], [this.solver]];
+		this.focusableItems = [[this.eqFields[0]] , [this.varField], [this.solver]];
 		this.needsEvaluation = false;
 		super_.postInsertHandler.call(this);
 		return this;
@@ -88,10 +85,7 @@ var solve = P(GiacGeneric, function(_, super_) {
   		id++;
   	});
   	// Recreate focusable Items array
-  	if(this.scoped)
-			this.focusableItems = [[this.varStoreField, this.command, this.eqFields[0]]];
-		else
-			this.focusableItems = [[this.command, this.eqFields[0]]];
+		this.focusableItems = [[this.varStoreField, this.command, this.eqFields[0]]];
 		for(var i = 1; i < this.number_of_equations; i++)
 			this.focusableItems.push([this.eqFields[i]])
 		if(this.ask_initial_guess)

@@ -128,7 +128,7 @@ var fusion_var = P(MathOutput, function(_, super_) {
 	_.var_value = '';
 	_.lineNumber = false;
 	_.needsEvaluation = false;
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','var_name', 'var_value'];
+	_.savedProperties = ['var_name', 'var_value'];
 
 	_.setVarName = function(var_name) {
 		this.var_name = var_name;

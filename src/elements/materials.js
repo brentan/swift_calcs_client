@@ -9,18 +9,19 @@ var material_selector = P(Element, function(_, super_) {
   _.scoped = false;
   _.lineNumber = true;
   _.loading = true;
+  _.open_box = false;
 
   _.innerHtml = function() {
     return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_name') + '<span class="equality">&#8801;</span>' + focusableHTML('CodeBlock', this.name) + '<span class="explain"></span><span class="select_span">' + focusableHTML('SelectBox',  'options') + '</span><span class="fa fa-spinner fa-pulse fa-fw" style="display:none;"></span>' + helpBlock() + "</div>";
   }
   _.postInsertHandler = function() {
-    this.varName = registerFocusable(MathQuill, this, 'var_name', { ghost: 'variable name', noWidth: true, handlers: {
+    this.varStoreField = registerFocusable(MathQuill, this, 'var_name', { ghost: 'variable name', noWidth: true, handlers: {
       enter: this.enterPressed(this),
       blur: this.submissionHandler(this)
     }});
     this.codeBlock = registerFocusable(CodeBlock, this, this.name, { });
     this.select_box = registerFocusable(SelectBox, this, 'options', { blank_message: this.blank_message, options: { } });
-    this.focusableItems = [[this.varName, this.codeBlock]];
+    this.focusableItems = [[this.varStoreField, this.codeBlock]];
     super_.postInsertHandler.call(this);
     this.loadOptions();
     return this;
@@ -30,6 +31,12 @@ var material_selector = P(Element, function(_, super_) {
       if(!_this.loading) _this.select_box.focus();
       else mathField.blur();
     };
+  }
+  _.storeAsVariable = function(var_name) {
+    if(var_name) 
+      this.varStoreField.paste(var_name.replace(/_(.*)/,"_{$1}"));
+    else
+      this.varStoreField.clear().focus(1).moveToLeftEnd().write("latex{ans_{" + this.uniqueAnsId() + "}}").closePopup().keystroke('Shift-Home', { preventDefault: function() { } });
   }
   _.submissionHandler = function(_this) {
     return function(mathField) {
@@ -44,7 +51,7 @@ var material_selector = P(Element, function(_, super_) {
           // Item has been selected!
           _this.blur();
           _this.loading = true;
-          _this.focusableItems = [[_this.varName, _this.codeBlock]];
+          _this.focusableItems = [[_this.varStoreField, _this.codeBlock]];
           if(_this.jQ) {
             _this.jQ.find(".select_span").hide();
             _this.jQ.find(".fa-spinner").show();
@@ -54,13 +61,13 @@ var material_selector = P(Element, function(_, super_) {
               var mat = _this.selected_class().insertAfter(_this);
               mat.setData(response.name, response.full_name, response.data, _this.data_type);
               mat.show(0).focus(0);
-              mat.varName.write(_this.varName.latex());
+              mat.varStoreField.write(_this.varStoreField.latex());
               _this.remove(0);
             }
           }(_this), function(_this) {
             return function () {
               _this.loading = false;
-              _this.focusableItems = [[_this.varName, _this.codeBlock, _this.select_box]];
+              _this.focusableItems = [[_this.varStoreField, _this.codeBlock, _this.select_box]];
               if(_this.jQ) {
                 _this.jQ.find(".select_span").show();
                 _this.jQ.find(".fa-spinner").hide();
@@ -74,7 +81,7 @@ var material_selector = P(Element, function(_, super_) {
   _.loadOptions = function(parent_id) {
     this.blur();
     this.loading = true;
-    this.focusableItems = [[this.varName, this.codeBlock]];
+    this.focusableItems = [[this.varStoreField, this.codeBlock]];
     if(this.jQ) {
       this.jQ.find(".select_span").hide();
       this.jQ.find(".fa-spinner").show();
@@ -82,17 +89,18 @@ var material_selector = P(Element, function(_, super_) {
     window.silentRequest('/populate_materials', { data_type: this.data_type, parent_id: parent_id }, function(_this) { return function(response) { 
       _this.select_box.fillBox(response.data);
       _this.loading = false;
-      _this.focusableItems = [[_this.varName, _this.codeBlock, _this.select_box]];
+      _this.focusableItems = [[_this.varStoreField, _this.codeBlock, _this.select_box]];
       if(_this.jQ) {
         _this.jQ.find(".select_span").show();
         _this.jQ.find(".fa-spinner").hide();
       }
       _this.focus();
       _this.select_box.focus()
-      _this.select_box.open();
+      if(_this.open_box) _this.select_box.open();
+      _this.open_box = true;
     } }(this), function(_this) { return function(response) {
       _this.loading = false;
-      _this.focusableItems = [[_this.varName, _this.codeBlock, _this.select_box]];
+      _this.focusableItems = [[_this.varStoreField, _this.codeBlock, _this.select_box]];
       if(_this.jQ) {
         _this.jQ.find(".select_span").show();
         _this.jQ.find(".fa-spinner").hide();
@@ -126,17 +134,17 @@ var material_holder = P(Element, function(_, super_) {
     return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_name') + '<span class="equality">&#8801;</span>' + focusableHTML('CodeBlock', this.name) + '<span class="material_name"></span>' + helpBlock() + '</div>' + answerSpan();
   }
   _.postInsertHandler = function() {
-    this.varName = registerFocusable(MathQuill, this, 'var_name', { ghost: 'variable name', noWidth: true, handlers: {
+    this.varStoreField = registerFocusable(MathQuill, this, 'var_name', { ghost: 'variable name', noWidth: true, handlers: {
       enter: this.enterPressed(this),
       blur: this.submissionHandler(this)
     }});
     this.codeBlock = registerFocusable(CodeBlock, this, this.name, { });
-    this.focusableItems = [[this.varName, this.codeBlock]];
+    this.focusableItems = [[this.varStoreField, this.codeBlock]];
     super_.postInsertHandler.call(this);
     if(this.string_data !== false) {
       this.setData(this.name, this.full_name, this.string_data, this.data_type);
       this.genCommand();
-      this.needsEvaluation = this.varName.empty() ? false : true;
+      this.needsEvaluation = this.varStoreField.empty() ? false : true;
     }
     return this;
   }
@@ -166,17 +174,17 @@ var material_holder = P(Element, function(_, super_) {
     };
   }
   _.genCommand = function() {
-    this.commands = [{command: "1", setMaterial: {data_type: this.data_type, var_name: this.varName.text().trim(), data: this.data, last_name: this.last_name} }];    
+    this.commands = [{command: "1", setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: this.data, last_name: this.last_name} }];    
   }
   _.shouldBeEvaluated = function(evaluation_id) {
     if(super_.shouldBeEvaluated.call(this, evaluation_id))
-      return (this.varName.text() != this.last_name)
+      return (this.varStoreField.text() != this.last_name)
     return false;
   }
   _.evaluationFinished = function(result) {
     if(result[0].success) {
       this.outputBox.clearState().collapse(true);
-      this.last_name = this.varName.text();
+      this.last_name = this.varStoreField.text();
     } else {
       this.outputBox.setError(result[0].returned).expand(true);
     }
@@ -197,6 +205,6 @@ var material_holder = P(Element, function(_, super_) {
     return '{' + this.class_name + '}{{' + this.argumentList().join('}{') + '}}';
   }
   _.changed = function(el) {
-    if(this.string_data !== false) this.needsEvaluation = this.varName.empty() ? false : true;
+    if(this.string_data !== false) this.needsEvaluation = this.varStoreField.empty() ? false : true;
   }
 });

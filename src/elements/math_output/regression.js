@@ -1,21 +1,19 @@
 
-var regression = P(GiacGeneric, function(_, super_) {
+var regression = P(SettableMathOutput, function(_, super_) {
 	_.klass = ['regression'];
 	_.mode = 'linear';
 	_.function_of = 'x';
 	_.helpText = "<<regression <[data]>>>\nWill find the best fit to the supplied data for the specified regression type:\nLinear: y = m*x + b\nPolynomial: y = a<sub>n</sub> * x<sup>n</sup> + ... + a<sub>2</sub> * x<sup>2</sup> + a<sub>1</sub> * x + a<sub>0</sub>\nPower: y = m * x ^ b\nExponential: y = a * e^(b * x)\nLogarithmic: y = a * ln(x) + b\nLogit Model: y'(x) is best fit to data for x<sub>0</sub>, x<sub>0</sub>+1, x<sub>0</sub>+2, ... with y(x<sub>0</sub>) = y<sub>0</sub>";
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','scoped', 'mode'];
+	_.savedProperties = ['mode'];
 
 	_.innerHtml = function() {
-		return '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
-	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span>' + focusableHTML('CodeBlock', 'regression') + '</td>'
-	 	+ '<td class="' + css_prefix + 'content"><div class="' + css_prefix + 'focusableItems" data-id="0"><span class="firstline">x</span><sub>data</sub><span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'xdata') + helpBlock() + '</div>'
+		var html = '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="firstline">x</span><sub>data</sub><span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'xdata') + helpBlock() + '</div>'
 	 	+ '<div class="' + css_prefix + 'focusableItems hide_logit" data-id="1">y<sub>data</sub><span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'ydata') + '</div>'
 	 	+ '<div class="' + css_prefix + 'focusableItems hidden show_polynomial" data-id="2" style="display:none;">polynomial&nbsp;order&nbsp;' + focusableHTML('MathQuill',  'order') + '</div>'
 	 	+ '<div class="' + css_prefix + 'focusableItems hidden show_logit" data-id="3" style="display:none;">x<sub>0</sub><span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'xo') + '</div>'
 	 	+ '<div class="' + css_prefix + 'focusableItems hidden show_logit" data-id="4" style="display:none;">y(x<sub>0</sub>)<span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'yo') + '</div>'
-	  + '<div class="' + css_prefix + 'focusableItems" data-id="5">' + focusableHTML('SelectBox',  'regression_type') + '</div>'
-		+ answerSpan() + '</td></tr></tbody></table>';
+	  + '<div class="' + css_prefix + 'focusableItems" data-id="5">' + focusableHTML('SelectBox',  'regression_type') + '</div>';
+	  return this.toWrap('regression', html);
 	}
 	_.postInsertHandler = function() {
 		this.xdata = registerFocusable(MathQuill, this, 'xdata', { ghost: 'data', handlers: {
@@ -46,8 +44,7 @@ var regression = P(GiacGeneric, function(_, super_) {
 			logarithmic: 'Logarithmic Regression',
 			logistic: 'Logit Model Regression'
 		}});
-		this.command = registerFocusable(CodeBlock, this, 'regression', { });
-		this.focusableItems = [[this.command, this.xdata] , [this.ydata], [this.regression_type]];
+		this.focusableItems = [[this.xdata] , [this.ydata], [this.regression_type]];
 		this.needsEvaluation = false;
 		super_.postInsertHandler.call(this);
 		return this;
@@ -65,24 +62,22 @@ var regression = P(GiacGeneric, function(_, super_) {
   			this.jQ.find('.show_logit').removeClass('hidden').show();
   			this.jQ.find('.show_polynomial').addClass('hidden').hide();
   			this.jQ.find('.firstline').html("y'");
-				this.focusableItems = [[this.command, this.xdata] , [this.xo], [this.yo], [this.regression_type]];
+				this.focusableItems = [[this.varStoreField, this.command, this.xdata] , [this.xo], [this.yo], [this.regression_type]];
   			break;
   		case 'polynomial':
   			this.jQ.find('.show_logit').addClass('hidden').hide();
   			this.jQ.find('.hide_logit').removeClass('hidden').show();
   			this.jQ.find('.show_polynomial').removeClass('hidden').show();
   			this.jQ.find('.firstline').html("x");
-				this.focusableItems = [[this.command, this.xdata] , [this.ydata], [this.order], [this.regression_type]];
+				this.focusableItems = [[this.varStoreField, this.command, this.xdata] , [this.ydata], [this.order], [this.regression_type]];
   			break;
   		default:
   			this.jQ.find('.show_logit').addClass('hidden').hide();
   			this.jQ.find('.hide_logit').removeClass('hidden').show();
   			this.jQ.find('.show_polynomial').addClass('hidden').hide();
   			this.jQ.find('.firstline').html("x");
-				this.focusableItems = [[this.command, this.xdata] , [this.ydata], [this.regression_type]];
+				this.focusableItems = [[this.varStoreField, this.command, this.xdata] , [this.ydata], [this.regression_type]];
   	}
-  	if(this.scoped)
-  		this.focusableItems[0].unshift(this.varStoreField);
   	var num = 0;
   	this.jQ.find('.' + css_prefix + 'content').find('.' + css_prefix + 'focusableItems').each(function() {
   		if(!$(this).hasClass('hidden')) {

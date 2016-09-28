@@ -3,6 +3,7 @@ var selected_material = P(material_holder, function(_, super_) {
   _.name = 'material';
   _.data_type = 1;
   _.class_name = "selected_material";
+  _.helpText = "<<<[VAR]> = material <[name]>>>\nLoad the data for the specified material into the specified variable.";
 
   _.postInsertHandler = function() {
     super_.postInsertHandler.call(this);

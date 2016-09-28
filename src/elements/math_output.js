@@ -1,12 +1,11 @@
 /* Math output is an extension of Element that has some built in commands
    to support math output in the output box, as well as some other functionality */
 
-var ans_id = 0;
 var MathOutput = P(EditableBlock, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
 	_.unitMode = false;
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','approx_set'];
+	//_.savedProperties = hard-coded in to element.js, since this is an overridden class.  Add them there
 	_.expectedUnits = false;
 	_.approx = false;
   _.approx_set = false;
@@ -322,4 +321,97 @@ var MathOutput = P(EditableBlock, function(_, super_) {
   	return super_.write.apply(this, arguments);
   }
 
+});
+// Mathoutput Block but also adds a [ans]= to the beggining.  The innerHTML should call wrapHTML with its HTML to add the necessary code.
+var SettableMathOutput = P(MathOutput, function(_, super_) {
+	//_.savedProperties = hard-coded in to element.js, since this is an overridden class.  Add them there
+	_.scoped = false;
+	_.was_scoped = false;
+	_.function_of = false; 
+	_.outputMode = 2;
+
+	_.postInsertHandler = function() {
+		this.varStoreField = registerFocusable(MathQuill, this, 'var_store', { ghost: 'ans', noWidth: true, handlers: {
+			enter: this.enterPressed(this),
+			blur: this.submissionHandler(this)
+		}});
+		this.command = registerFocusable(CodeBlock, this, this.code, {});
+		this.focusableItems[0].unshift(this.command);
+  	this.focusableItems[0].unshift(this.varStoreField);
+		super_.postInsertHandler.call(this);
+		return this;
+	}
+
+	_.wrapHTML = function(codeBlock, toWrap, twoLine) {
+		this.code = codeBlock;
+		if(twoLine === true) {
+			return '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
+		 	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span></td>'
+		 	+ '<td class="' + css_prefix + 'content"><div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', codeBlock) + '</div><div style="margin-left:100px;">' + toWrap
+		 	+ answerSpan() + '</div></td></tr></tbody></table>';
+		} else {
+			return '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
+		 	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span>' + focusableHTML('CodeBlock', codeBlock) + '</td>'
+		 	+ '<td class="' + css_prefix + 'content">' + toWrap
+			+ answerSpan() + '</td></tr></tbody></table>';
+		}
+	}
+
+	_.enterPressed = function(_this) {
+		return function(item) {
+			_this.submissionHandler(_this)();
+			var next_time = false;
+			var selected = false;
+			for(var i = 0; i < _this.focusableItems.length; i++) {
+				for(var j = 0; j < _this.focusableItems[i].length; j++) {
+					if(next_time) {
+						_this.focusableItems[i][j].focus(-1);
+						selected = true;
+						break;
+					}
+					if(_this.focusableItems[i][j] === item) next_time = true;
+				}
+				if(selected) break;
+			}
+			if(!selected) {
+				if(_this[R] && (_this[R] instanceof math) && _this[R].empty())
+					_this[R].focus(L);
+				else
+					math().setImplicit().insertAfter(_this).show().focus(0);
+			}	
+		};
+	}
+	_.storeAsVariable = function(var_name) {
+		this.scoped = true;
+		if(var_name) 
+			this.varStoreField.paste(var_name.replace(/_(.*)/,"_{$1}"));
+		else if(this.function_of)
+			this.varStoreField.clear().focus(1).moveToLeftEnd().write("latex{\\operatorname{ans_{" + this.uniqueAnsId() + "}}\\left({" + this.function_of + "}\\right)}").closePopup().keystroke('Shift-Home', { preventDefault: function() { } });
+		else
+			this.varStoreField.clear().focus(1).moveToLeftEnd().write("latex{ans_{" + this.uniqueAnsId() + "}}").closePopup().keystroke('Shift-Home', { preventDefault: function() { } });
+		this.outputBox.setWidth();
+	}
+	_.clearVariableStore = function(focus_next) {
+		this.scoped = false;
+		this.was_scoped = true;
+		if(focus_next) this.focusableItems[0][0].focus(L);
+	}
+	_.genCommand = function(command) {
+		this.scoped = this.varStoreField.text().trim().length > 0;
+		if(this.scoped) command = this.varStoreField.text() + ' := ' + command;
+		return super_.genCommand.call(this, command);
+	}
+  _.toString = function() {
+  	return '{' + this.klass[0] + '}{{' + this.argumentList().join('}{') + '}}';
+  }
+  _.focus = function(dir) {
+		if(!this.inTree) return this;
+  	super_.focus.call(this, dir);
+  	if(dir === 0) {
+  		if(this.focusableItems[0][2]) this.focusableItems[0][2].focus(L);
+  		else if(this.focusableItems[1][0]) this.focusableItems[1][0].focus(L);
+  	}
+  	return this;
+  }
+  
 });

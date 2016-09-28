@@ -17,94 +17,6 @@ structure:
 }
 */
 
-var GiacGeneric = P(MathOutput, function(_, super_) {
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','scoped'];
-	_.scoped = false;
-	_.was_scoped = false;
-	_.function_of = false; 
-	_.init = function() {
-		super_.init.call(this);
-	}
-  _.parseSavedProperties = function(args) {
-  	super_.parseSavedProperties.call(this, args);
-  	if(this.scoped) {
-  		this.jQ.find('span.' + css_prefix + 'var_store').show();
-  		this.varStoreField.reflow();
-	  	if(this.focusableItems[0][0] !== this.varStoreField)
-	  		this.focusableItems[0].unshift(this.varStoreField);
-  	}
-  	return this;
-  }
-	_.postInsertHandler = function() {
-		this.varStoreField = registerFocusable(MathQuill, this, 'var_store', { ghost: 'ans', noWidth: true, handlers: {
-			enter: this.enterPressed(this),
-			blur: this.submissionHandler(this)
-		}});
-		if(this.scoped)
-			this.focusableItems[0].unshift(this.varStoreField);
-		super_.postInsertHandler.call(this);
-		// Test for ans_n as variable assigned in this item.  If so, we need to up the ans_id count
-		if(this.scoped && this.varStoreField.text().match(/ans_[{]?[0-9]+[}]?/))
-			this.setAnswerIdCounter(this.varStoreField.text().replace(/^.*ans_[{]?([0-9]+)[}]?.*$/,"$1")*1);
-		return this;
-	}
-
-	_.enterPressed = function(_this) {
-		return function(item) {
-			_this.submissionHandler(_this)();
-			var next_time = false;
-			var selected = false;
-			for(var i = 0; i < _this.focusableItems.length; i++) {
-				for(var j = 0; j < _this.focusableItems[i].length; j++) {
-					if(next_time) {
-						_this.focusableItems[i][j].focus(-1);
-						selected = true;
-						break;
-					}
-					if(_this.focusableItems[i][j] === item) next_time = true;
-				}
-				if(selected) break;
-			}
-			if(!selected) {
-				if(_this[R] && (_this[R] instanceof math) && _this[R].empty())
-					_this[R].focus(L);
-				else
-					math().setImplicit().insertAfter(_this).show().focus(0);
-			}	
-		};
-	}
-  _.toString = function() {
-  	return '{' + this.klass[0] + '}{{' + this.argumentList().join('}{') + '}}';
-  }
-	_.storeAsVariable = function(var_name) {
-		this.scoped = true;
-    this.outputMode = 2;
-		this.jQ.find('span.' + css_prefix + 'var_store').show();
-  	this.varStoreField.reflow();
-  	if(this.focusableItems[0][0] !== this.varStoreField)
-  		this.focusableItems[0].unshift(this.varStoreField);
-		if(var_name)
-			this.varStoreField.paste(var_name.replace(/_(.*)/,"_{$1}"));
-		else if(this.function_of)
-			this.varStoreField.clear().focus(1).moveToLeftEnd().write("latex{\\operatorname{ans_{" + this.uniqueAnsId() + "}}\\left({" + this.function_of + "}\\right)}").closePopup().keystroke('Shift-Home', { preventDefault: function() { } });
-		else
-			this.varStoreField.clear().focus(1).moveToLeftEnd().write("latex{ans_{" + this.uniqueAnsId() + "}}").closePopup().keystroke('Shift-Home', { preventDefault: function() { } });
-		this.outputBox.setWidth();
-	}
-	_.clearVariableStore = function(focus_next) {
-		this.scoped = false;
-		this.was_scoped = true;
-		this.jQ.find('span.' + css_prefix + 'var_store').hide();
-  	if(this.focusableItems[0][0] === this.varStoreField)
-  		this.focusableItems[0].splice(0,1);
-		if(focus_next) this.focusableItems[0][0].focus(L);
-	}
-	_.genCommand = function(command) {
-		if(this.scoped) command = this.varStoreField.text() + ' := ' + command;
-		return super_.genCommand.call(this, command);
-	}
-});
-
 var giac_elements_to_add = [];
 var createGiacElement = function(options) {
 	// Generate the required class variables based on the input stuct
@@ -112,9 +24,7 @@ var createGiacElement = function(options) {
 	if(typeof options.code === 'undefined') options.code = options.name;
 	if(typeof options.nomarkup === 'undefined') options.nomarkup = false;
 	var id = 0;
-	var html = '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
- 	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span>' + focusableHTML('CodeBlock',  options.code) + '</td>'
-	+ '<td class="' + css_prefix + 'content">';
+	var html = '';
 	for(var i = 0; i < options.content.length; i++) {
 		focusable_list.push([]);
 		to_add = options.content[i].split('<<');
@@ -135,8 +45,8 @@ var createGiacElement = function(options) {
 		if(i == 0) html += helpBlock();
 		html += "</div>";
 	}
-	html += answerSpan() + '</td></tr></tbody></table>';
-	giac_elements_to_add.push({key: options.name, el: P(GiacGeneric, function(_, super_) {
+	options.two_line = (options.code.length > 12);
+	giac_elements_to_add.push({key: options.name, el: P(SettableMathOutput, function(_, super_) {
 		_.klass = [options.name];
 		_.helpText = options.helpText;
 		_.nomarkup = options.nomarkup;
@@ -146,7 +56,7 @@ var createGiacElement = function(options) {
 		var to_populate = focusable_list;
 		_.options = options;
 		_.innerHtml = function() {
-			return block_html;
+			return this.wrapHTML(this.options.code,block_html,this.options.two_line);
 		}
 		_.postInsertHandler = function() {
 			this.focusableItems = [];
@@ -167,7 +77,7 @@ var createGiacElement = function(options) {
 					this.items.push(this.focusableItems[i][j]);
 				}
 			}
-			this.focusableItems[0].unshift(registerFocusable(CodeBlock, this, this.options.code, {}));
+			if(this.options.two_line) this.focusableItems.unshift([]);
 			super_.postInsertHandler.call(this);
 			return this;
 		}

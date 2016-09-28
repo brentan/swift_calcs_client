@@ -46,6 +46,7 @@ var Element = P(function(_) {
 	_.scoped = false;          // Can this element change the scope (set/change variables).  If so, we need to keep track of scope here
 	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
 	_.inTree = false;
+	_.storeAsVariable = false; // Override with function that 'sets' the variable name for blocks with a '[x] = block' syntax
 
 	//Give each element a unique ID, this is just for tracking purposes
   var id = 0;
@@ -1224,14 +1225,15 @@ var Element = P(function(_) {
   		return this;
   	}
   	if(!args.length) return this;
-  	if(this.hasChildren || this.savedProperties.length) {
+  	if(this.hasChildren || this.savedProperties.length || (this instanceof MathOutput)) {
   		this.parseSavedProperties(args[0]);
 	  	var k = 1;
 	  } else
 	  	var k = 0;
   	var count = 0;
+  	var start_index = ((this instanceof SettableMathOutput) && !this.scoped) ? 1 : 0; // Ignore varStoreField for SettableMathOutput, if not scoped.  This sucks, but done for backwards compatibility.
   	for(var i = 0; i < this.focusableItems.length; i++) {
-  		for(var j = 0; j < this.focusableItems[i].length; j++) {
+  		for(var j = start_index; j < this.focusableItems[i].length; j++) {
 	  		if((this.focusableItems[i][j] instanceof CommandBlock) && !this.focusableItems[i][j].editable) continue; //Ignore command blocks, those are created with the block and have no saveable options
 	  		if(this.focusableItems[i][j] === -1) {
 	  			// We are at the children.  We simply parse this and the resultant blocks become my children
@@ -1242,6 +1244,7 @@ var Element = P(function(_) {
 	  			this.focusableItems[i][j].clear().paste(args[count + k]);
 	  		count++;
 	  	}
+	  	start_index = 0;
   	}
   	return this;
   }
@@ -1263,10 +1266,20 @@ var Element = P(function(_) {
   	var arg_list = this.hasChildren ? ['collapsed: ' + this.collapsed] : [];
   	for(var k = 0; k < this.savedProperties.length; k++) 
   		arg_list.push(this.savedProperties[k] + ": " + this[this.savedProperties[k]]);
+  	if(this instanceof MathOutput) {
+  		arg_list.push('expectedUnits: ' + this.expectedUnits);
+  		arg_list.push('approx: ' + this.approx);
+  		arg_list.push('factor_expand: ' + this.factor_expand);
+  		arg_list.push('outputMode: ' + this.outputMode);
+  		arg_list.push('approx_set: ' + this.approx_set);
+  	}
+  	if(this instanceof SettableMathOutput) 
+  		arg_list.push('scoped: ' + this.scoped);
   	if(arg_list.length)
   		output.push(arg_list.join(', '));
+  	var start_index = ((this instanceof SettableMathOutput) && !this.scoped) ? 1 : 0; // Ignore varStoreField for SettableMathOutput, if not scoped.  This sucks, but done for backwards compatibility.
   	for(var i = 0; i < this.focusableItems.length; i++) {
-  		for(var j = 0; j < this.focusableItems[i].length; j++) {
+  		for(var j = start_index; j < this.focusableItems[i].length; j++) {
 	  		if((this.focusableItems[i][j] instanceof CommandBlock) && !this.focusableItems[i][j].editable) continue; //Ignore command blocks, those are created with the block and have no saveable options
 	  		if(this.focusableItems[i][j] === -1) {
 	  			//We need to zip up the children
@@ -1279,6 +1292,7 @@ var Element = P(function(_) {
 	  		} else
 	  			output.push(this.focusableItems[i][j].toString());
 	  	}
+	  	start_index = 0;
   	}
   	return output;
   }

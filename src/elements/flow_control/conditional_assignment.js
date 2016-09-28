@@ -6,7 +6,7 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 	_.scoped = true;
 	_.lineNumber = true;
 	_.number_of_conditions = 2;
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','number_of_conditions'];
+	_.savedProperties = ['number_of_conditions'];
 
 	_.helpText = "<<if <[TEST]>>>\nIf the result of TEST is true (or non-zero), the block will be evaluated.  Otherwise, the block is skipped.  Examples: if x = 2, if x > 4";
 

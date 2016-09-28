@@ -21,7 +21,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 	_.needsEvaluation = false;
 	_.fullEvaluation = true;
 	_.scoped = true;
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','part_name','part_id','var_name','var_id'];
+	_.savedProperties = ['part_name','part_id','var_name','var_id'];
 
 	_.init = function(part_name, part_id, var_name, var_id) {
 		this.part_name = part_name;

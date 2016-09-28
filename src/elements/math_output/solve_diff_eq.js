@@ -1,11 +1,11 @@
 
-var desolve = P(GiacGeneric, function(_, super_) {
+var desolve = P(SettableMathOutput, function(_, super_) {
 	_.klass = ['desolve'];
 	_.number_of_equations = 1;
 	_.numeric_mode = false;
 	_.helpTextSymbolic = "<<solve differential equation <[EXPR]> for <[FUNC]>>>\nSolve the differential equation(s) and condition(s) given (EXPR) for the function specified in FUNC.  Use apostrophes in EXPR to indicate a derivative.  Use the 'add another equation' link to add more equations or conditions.\nExample: Solve differential equation f'' + f = cos(x), f(0) = 1, f'(0) = 0 for f(x)";
 	_.helpTextNumeric = "<<solve differential equation y'=<[EXPR]> and y(0)=<[INIT]> for <[x]> from <[0]> to <[end]>>>\nSolve the differential equation(s) given (EXPR) numerically.  Each equation is the derivative of a value y.  Initial conditions for each y must also be provided, as well as the end value for the dependant variable to which the solution should solve.  The solver will return a matrix with value from the intial condition to the final value, with values for y in between.\nExample: Solve differential equation y' = y * cos(x), y(0) = 1, for x from 0 to 1";
-	_.savedProperties = ['expectedUnits','approx','factor_expand','outputMode','number_of_equations', 'scoped', 'numeric_mode'];
+	_.savedProperties = ['number_of_equations', 'numeric_mode'];
 
 	_.init = function() {
 		this.eqFields = [];
@@ -15,12 +15,10 @@ var desolve = P(GiacGeneric, function(_, super_) {
 		super_.init.call(this);
 	}
 	_.innerHtml = function() {
-		return '<table class="' + css_prefix + 'giac_element"><tbody><tr><td class="' + css_prefix + 'var_store">'
-	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="0"><span class="' + css_prefix + 'var_store">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span></span>' + focusableHTML('CodeBlock', 'solve differential equation') + '</td>'
-	 	+ '<td class="' + css_prefix + 'content"><div class="' + css_prefix + 'focusableItems" data-id="0"><span class="initial_guess" style="display:none;">' + focusableHTML('MathQuill',  'var0') + '<span class="eqnum"></span></span>' + focusableHTML('MathQuill',  'eq0') + '<span class="initial_guess" style="display:none;">,&nbsp;&nbsp;&nbsp;<span class="eqinit"></span>' + focusableHTML('MathQuill',  'start0') + '</span>' + helpBlock() + '</div><div><div class="' + css_prefix + 'add_equation ' + css_prefix + 'hide_print">Add another equation</div></div>'
-	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="1">for&nbsp;' + focusableHTML('MathQuill',  'var') + '<span class="initial_guess" style="display:none;">&nbsp;from&nbsp;' + focusableHTML('MathQuill',  'start') + '&nbsp;to&nbsp;' + focusableHTML('MathQuill',  'final') + '&nbsp;with&nbsp;step&nbsp;of&nbsp;' + focusableHTML('MathQuill',  'step') + '</span></div>'
-	  + '<div class="' + css_prefix + 'focusableItems" data-id="2">using&nbsp;' + focusableHTML('SelectBox',  'solver') + '</div>'
-		+ answerSpan() + '</td></tr></tbody></table>';
+		var html = '<div class="' + css_prefix + 'focusableItems" data-id="1"><span class="initial_guess" style="display:none;">' + focusableHTML('MathQuill',  'var0') + '<span class="eqnum"></span></span>' + focusableHTML('MathQuill',  'eq0') + '<span class="initial_guess" style="display:none;">,&nbsp;&nbsp;&nbsp;<span class="eqinit"></span>' + focusableHTML('MathQuill',  'start0') + '</span>' + helpBlock() + '</div><div><div class="' + css_prefix + 'add_equation ' + css_prefix + 'hide_print">Add another equation</div></div>'
+	 	+ '<div class="' + css_prefix + 'focusableItems" data-id="2">for&nbsp;' + focusableHTML('MathQuill',  'var') + '<span class="initial_guess" style="display:none;">&nbsp;from&nbsp;' + focusableHTML('MathQuill',  'start') + '&nbsp;to&nbsp;' + focusableHTML('MathQuill',  'final') + '&nbsp;with&nbsp;step&nbsp;of&nbsp;' + focusableHTML('MathQuill',  'step') + '</span></div>'
+	  + '<div class="' + css_prefix + 'focusableItems" data-id="3">using&nbsp;' + focusableHTML('SelectBox',  'solver') + '</div>';
+		return this.wrapHTML('solve differential equation', html, true);
 	}
 	_.postInsertHandler = function() {
 		this.eqFields[0] = registerFocusable(MathQuill, this, 'eq0', { ghost: 'equation', handlers: {
@@ -137,11 +135,9 @@ var desolve = P(GiacGeneric, function(_, super_) {
   	});
   	// Recreate focusable Items array
 		if(this.numeric_mode)
-			this.focusableItems = [[this.command, this.varFields[0], this.eqFields[0], this.startFields[0]]];
+			this.focusableItems = [[this.varStoreField,this.command], [this.varFields[0], this.eqFields[0], this.startFields[0]]];
 		else
-			this.focusableItems = [[this.command, this.eqFields[0]]];
-  	if(this.scoped)
-			this.focusableItems[0].unshift(this.varStoreField);
+			this.focusableItems = [[this.varStoreField,this.command], [this.eqFields[0]]];
 		for(var i = 1; i < this.number_of_equations; i++) {
 			if(this.numeric_mode)
 				this.focusableItems.push([this.varFields[i], this.eqFields[i], this.startFields[i]]);
