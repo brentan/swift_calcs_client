@@ -57,6 +57,11 @@ var receiveMessage = function(command) {
     log_io = !log_io;
     return;
   }
+  if(command.destroyConstant) {
+    // need to destroy a constant.
+    destroyConstant(command.destroyConstant);
+    return;
+  }
   if(command.clean_up) {
     constants = {}
     return;

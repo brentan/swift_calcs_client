@@ -6,6 +6,9 @@ var restart_string = "complex_mode:=1;angle_radian:=1;"
 var newConstant = function(name, ob) {
 	constants[name] = ob;
 }
+var destroyConstant = function(name) {
+  delete(constants[name]);
+}
 
 // Helper to create an output table.  Will take a 2D array and turn it into latex output
 var toTable = function(data) {

@@ -115,7 +115,6 @@ var material_selector = P(Element, function(_, super_) {
 
 
 var material_holder = P(Element, function(_, super_) {
-  // BRENTAN: Need to deal with scenario where user removes this.  If that happens, we need to un-set the object.
   _.klass = ['material','material_holder'];
   _.needsEvaluation = false; 
   _.evaluatable = true;
@@ -147,6 +146,14 @@ var material_holder = P(Element, function(_, super_) {
       this.needsEvaluation = this.varStoreField.empty() ? false : true;
     }
     return this;
+  }
+  _.preRemoveHandler = function() {
+    // Since this is an object, we need to unset whenever we remove the element from the tree
+    super_.preRemoveHandler.call(this);
+    if(this.last_name != "") {
+      giac.sendCommand({destroyConstant: this.last_name});
+      this.last_name = "";
+    }
   }
   _.setData = function(name, full_name, data, data_type) {
     this.jQ.find('.material_name').html(full_name);

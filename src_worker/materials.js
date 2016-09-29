@@ -7,6 +7,7 @@ var Material = P(function(_) {
   To initialize, pass a hash with the following structure:
   {
     name: name,
+    full_name: "Full Name with Spaces and Illegals ()",
     properties: [
       { name: name, value: value, unit: unit },
       ...
@@ -16,6 +17,7 @@ var Material = P(function(_) {
   _.methodList = [];
   _.init = function(data) {
     this.name = data.name;
+    this.full_name = data.full_name;
     this.inputs = data;
     var len = data.properties.length;
     var propertyList = [];
@@ -26,10 +28,11 @@ var Material = P(function(_) {
     this.propertyList = propertyList;
   }
   _.toString = function() {
-    var output = [["\\mathbf{\\underline{" + this.name + "}}"]];
+    var output = [["\\mathbf{\\underline{" + this.full_name.replace(/ /g, "\\whitespace ").replace(/%/g,"\\percentSymbol ").replace(/<sub>([a-z0-9]+)<\/sub>/gi,'_{$1}').replace(/<sup>([a-z0-9]+)<\/sup>/gi,'^{$1}').replace(/\<\/?[a-z0-9]+\/?\>/gi,'') + "}}"]];
     for(var i = 0; i < this.propertyList.length; i++)
       output.push([this.propertyList[i]]);
-    output.push(["\\textcolor{#aaaaaa}{use\\whitespace variable.property\\whitespace syntax}"])
+    output.push(["\\textcolor{#aaaaaa}{use\\whitespace variable.property\\whitespace syntax\\whitespace to}"])
+    output.push(["\\textcolor{#aaaaaa}{access\\whitespace properties\\whitespace listed\\whitespace above}"])
     return toTable(output);
   }
   _.clone = function() {
@@ -44,7 +47,7 @@ var setMaterial = function(data) {
   if(constants[data.var_name])
     return {success: false, returned: "Please choose another variable name, an object has already been assigned to this variable."};
   if(data.last_name.length > 0)
-    delete(constants[data.last_name]);
+    destroyConstant(data.last_name);
   switch(data.data_type) {
     case 1:
       newConstant(data.var_name, Material(data.data));

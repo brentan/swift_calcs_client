@@ -17,9 +17,9 @@ var selected_material = P(material_holder, function(_, super_) {
       var properties = []
       var _this = this;
       $.each(data, function(k,v) {
-        properties.push({name: k, value: v.value, unit: _this.worksheet.latexToUnit(v.units)[0]})
+        properties.push({name: k.charAt(0).toLowerCase() + k.slice(1), value: v.value, unit: _this.worksheet.latexToUnit(v.units)[0]})
       });
-      super_.convertData.call(this, { name: this.name, properties: properties });
+      super_.convertData.call(this, { full_name: this.full_name, name: this.name, properties: properties });
     }
   }
 
