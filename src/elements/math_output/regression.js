@@ -13,7 +13,7 @@ var regression = P(SettableMathOutput, function(_, super_) {
 	 	+ '<div class="' + css_prefix + 'focusableItems hidden show_logit" data-id="3" style="display:none;">x<sub>0</sub><span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'xo') + '</div>'
 	 	+ '<div class="' + css_prefix + 'focusableItems hidden show_logit" data-id="4" style="display:none;">y(x<sub>0</sub>)<span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'yo') + '</div>'
 	  + '<div class="' + css_prefix + 'focusableItems" data-id="5">' + focusableHTML('SelectBox',  'regression_type') + '</div>';
-	  return this.toWrap('regression', html);
+	  return this.wrapHTML('regression', html);
 	}
 	_.postInsertHandler = function() {
 		this.xdata = registerFocusable(MathQuill, this, 'xdata', { ghost: 'data', handlers: {
