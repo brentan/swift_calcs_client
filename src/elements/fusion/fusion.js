@@ -16,7 +16,7 @@ var fusion = P(Element, function(_, super_) {
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'fusion 360') + helpBlock()
 		+ '</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div><div class="another_link explain ' + css_prefix + 'hide_print" style="margin-left: 60px;"><a href="#">Add another parameter</a></div><div class="' + css_prefix + 'insert"></div>'
-		+ '<div class="sync hide_print"></div>'
+		+ '<div class="sync ' + css_prefix + 'hide_print"></div>'
 		+ '<div class="' + css_prefix + 'focusableItems" data-id="2">' + focusableHTML('CodeBlock', 'end') + '</div>';
 	}
 	_.postInsertHandler = function() {

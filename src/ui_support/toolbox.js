@@ -9,6 +9,7 @@ $(function() {
       {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;', text: 'Define a Function', el: 'math', focus_right: true, option: 'latex{\\operatorname{f}\\left({}\\right)=}', prepend: true, highlight: "Right Shift-Right Shift-Right"},
       {left: 'fa-line-chart', text: 'Plot Function', el: 'plot'},
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
+      {left: 'fa-book', text: 'Material Library', el: 'material'},
       {left: 'fa-table', text: 'Table', vaporware: true},
       {left: 'fa-paint-brush', text: 'Drawing', vaporware: true},
       {left: 'test', text: 'Program Function', el: 'function', vaporware: true}

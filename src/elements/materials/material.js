@@ -3,6 +3,7 @@ var selected_material = P(material_holder, function(_, super_) {
   _.name = 'material';
   _.data_type = 1;
   _.class_name = "selected_material";
+  _.selecting_class = "material";
   _.helpText = "<<<[VAR]> = material <[name]>>>\nLoad the data for the specified material into the specified variable.";
 
   _.postInsertHandler = function() {
@@ -29,8 +30,9 @@ var selected_material = P(material_holder, function(_, super_) {
 var material = P(material_selector, function(_, super_) {
   _.name = 'material';
   _.data_type = 1;
-  _.blank_message = "Select Material"
+  _.blank_message = "Choose a Material"
   _.selected_class = selected_material
   _.helpText = "<<<[VAR]> = material <[name]>>>\nLoad the data for the specified material into the specified variable.";
+  _.special_footer = "Material data courtesy <a href='http://www.makeitfrom.com/' target='_blank'>MakeItFrom.com</a>";
 
 });
