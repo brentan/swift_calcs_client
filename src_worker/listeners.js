@@ -166,7 +166,7 @@ var receiveMessage = function(command) {
 		if(to_send.match(/^[a-z][a-z0-9_]* *:= *[a-z][a-z0-9_]*$/i) && constants[to_send.replace(/^[a-z][a-z0-9_]* *:= */i,'')]) {
 			var new_var = to_send.replace(/ *:= *[a-z][a-z0-9_]*$/i,'');
 			var old_var = to_send.replace(/^[a-z][a-z0-9_]* *:= */i,'');
-			constants[new_var] = user_vars[new_var] = constants[old_var].clone();
+			constants[new_var] = user_vars[new_var] = constants[old_var].clone(new_var);
 			output[ii] = {success: true, returned: constants[new_var].toString(), warnings: []};
       if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
 			continue;
