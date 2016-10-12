@@ -335,6 +335,7 @@ var SettableMathOutput = P(MathOutput, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
+		this.varStoreField.disableAutoUnit(true);
 		this.command = registerFocusable(CodeBlock, this, this.code, {});
 		this.focusableItems[0].unshift(this.command);
   	this.focusableItems[0].unshift(this.varStoreField);

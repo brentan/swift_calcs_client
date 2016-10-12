@@ -231,6 +231,7 @@ var material_holder = P(Element, function(_, super_) {
       enter: this.enterPressed(this),
       blur: this.submissionHandler(this)
     }});
+    this.varStoreField.disableAutoUnit(true);
     this.codeBlock = registerFocusable(CodeBlock, this, this.name, { });
     this.focusableItems = [[this.varStoreField, this.codeBlock]];
     super_.postInsertHandler.call(this);

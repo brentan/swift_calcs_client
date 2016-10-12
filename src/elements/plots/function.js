@@ -19,6 +19,7 @@ var plot_func = P(subplot, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
+		this.eq1.disableAutoUnit(true);
 		this.unit_box = registerFocusable(MathQuill, this, 'unit_box', { noWidth: true, handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)

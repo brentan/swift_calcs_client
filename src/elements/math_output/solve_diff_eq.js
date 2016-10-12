@@ -52,6 +52,8 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 		}});
 		this.solver = registerFocusable(SelectBox, this, 'solver', { options: { symbolic: 'Symbolic (Exact) Solver', newton_solver: 'Numeric (Approximate) Solver'}});
 		this.eqFields[0].setExpressionMode(true);
+		this.varField.disableAutoUnit(true);
+		this.varFields[0].disableAutoUnit(true);
 		this.command = registerFocusable(CodeBlock, this, 'solve differential equation', { });
 		this.focusableItems = [[this.command, this.eqFields[0]] , [this.varField], [this.solver]];
 		this.needsEvaluation = false;
@@ -89,6 +91,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 			blur: this.submissionHandler(this)
 		}}));
 		this.varFields[this.varFields.length - 1].latex("y_{" + this.eq_id + "}");
+		this.varFields[this.varFields.length - 1].disableAutoUnit(true);
 		this.eqFields[this.number_of_equations].setExpressionMode(true);
 		this.eq_id++;
 		this.number_of_equations++;

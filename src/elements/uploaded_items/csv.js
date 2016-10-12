@@ -23,6 +23,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
+		this.varName.disableAutoUnit(true);
 		this.codeBlock = registerFocusable(CodeBlock, this, 'import csv', { });
 		this.focusableItems = [[this.varName, this.codeBlock]];
 		super_.postInsertHandler.call(this);

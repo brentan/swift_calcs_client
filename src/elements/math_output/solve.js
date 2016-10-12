@@ -31,6 +31,7 @@ var solve = P(SettableMathOutput, function(_, super_) {
 		}});
 		this.solver = registerFocusable(SelectBox, this, 'solver', { options: { symbolic: 'Symbolic Solver', newton_solver: 'Newton-Raphson Numeric Solver'}});
 		this.eqFields[0].setExpressionMode(true);
+		this.varField.disableAutoUnit(true);
 		this.focusableItems = [[this.eqFields[0]] , [this.varField], [this.solver]];
 		this.needsEvaluation = false;
 		super_.postInsertHandler.call(this);
