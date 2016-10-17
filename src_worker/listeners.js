@@ -8,8 +8,10 @@ var eval_function = function(var_name) {
   var method = var_name.replace(/^.*SWIFTCALCSMETHOD/,'');
   var out = '';
   if(constants[ob]) {
+    constants[ob].clearState();
   	var out = constants[ob][method];
   	if(typeof out === 'function') out = constants[ob][method]();
+    if(constants[ob].error !== false) return "ERROR: " + constants[ob].error + ". ";
   }
   if(typeof out !== 'string') out = '';
   return out;
@@ -24,24 +26,22 @@ var eval_method = function(method_name, inputs) {
   If the evaluation is successful, return the results as a string
   If no function of this name is found, return an empty string ''
   */
-  if(method_name === 'revert__units') return inputs.replace(/u__/g,'_');  // Used to revert special units
-  if(method_name === 'testf') {
-    if(inputs.match(','))
-      return 'ERROR: Invalid input to ' + method_name;
-    else
-      return '23_mm';
-  }
-  return '';
-}
-var check_method = function(method_name) {
-  /* 
-  Will receive a string, method_name, that is asking if this is a valid
-  method_name.  We simply do a regex now and return 1 or 0 (expecting int response)
-  */
-  if(method_name.trim().match(/^[a-z][a-z0-9_]*$/i)) 
-    return 1; 
-   else 
-    return 0; 
+  if(method_name === 'revertSWIFTCALCSCLIENTunits') return inputs.replace(/u__/g,'_');  // Used to revert special units
+  var ob = method_name.replace(/SWIFTCALCSMETHOD.*$/,'');
+  var method = method_name.replace(/^.*SWIFTCALCSMETHOD/,'');
+  var out = '';
+  if(constants[ob]) {
+    var out = constants[ob][method];
+    constants[ob].clearState();
+    if(typeof out === 'function') {
+      out = constants[ob][method](inputs);
+      if(constants[ob].error !== false) return "ERROR: " + constants[ob].error + ". ";
+    } else if(method.substr(0,3) == "set") return "ERROR: '" + ob + "' does not allow property '" + method.replace("set","") + "' to be set in this way. ";
+    else return "ERROR: '" + ob + "' does not contain a method called '" + method + "'. ";
+  } else 
+    return "ERROR: '" + ob + "' is not an object (material, fluid, etc).  Please define '" + ob + "' before setting its parameters. ";
+  if(typeof out !== 'string') out = '';
+  return out;
 }
 var sendMessage = function(json) {
   postMessage(JSON.stringify(json));
@@ -81,8 +81,13 @@ var receiveMessage = function(command) {
   }
   if(command.varList) {
     // If we are asking for the variable list, we simply get that list and return it immediately
-    var vars = Module.caseval('VARS').slice(1,-1).split(',');
-    if((vars.length == 1) && (vars[0] == '')) vars = [];
+    var svars = Module.caseval('VARS').slice(1,-1).split(',');
+    var vars = [];
+    if((svars.length > 1) || (svars[0] != '')) {
+      for(var i = 0; i < svars.length; i++) {
+        if(!svars[i].match(/__/)) vars.push(svars[i]);
+      }
+    }
     var uvars = vars.slice(0);
     var objects = {};
     for(var key in constants) {// BRENTAN: Maybe change later to 'user_vars' if the constants list grows too large?

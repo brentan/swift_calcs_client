@@ -65,7 +65,7 @@ var programmatic_function = P(Element, function(_, super_) {
 	    if(((i+1) < commands.length) && (commands[i+1].unit_convert)) { // A bit hacky, but we have to deal with the special mksavariable_mode being enabled/disabled
 	    	this.command_list.push("temp__var := " + commands[i].command);
 	    	this.command_list.push('mksareduce_mode(0);mksavariable_mode(0);');
-	    	this.command_list.push(commands[i+1].command.replace(/\[val\]/g, "revert__units(temp__var)"));
+	    	this.command_list.push(commands[i+1].command.replace(/\[val\]/g, "revertSWIFTCALCSCLIENTunits(temp__var)"));
 	    	this.command_list.push('purge(temp__var);');
 	    	i++;
 	    } else
