@@ -80,10 +80,149 @@ var material_selector = P(Element, function(_, super_) {
   _.loadOptions = function(parent_id) {
     this.blur();
     window.showPopupOnTop();
-    $('.popup_dialog .full').html("<div class='select_material'><div class='input_box'><input type='text'></div><div class='title'>" + this.blank_message + "</div><div class='folder'></div><div class='list_content'></div></div>");
+    $('.popup_dialog .full').html("<div class='select_material'><div class='input_box'><input type='text'></div><div class='title'>" + this.blank_message + "</div><div class='search'><i class='fa fa-search'></i><div class='input'><input type='text' placeholder='Search'></div><i class='fa fa-times-circle'></i></div><div class='list_content'></div></div>");
     var $list_content_td = $('.popup_dialog .full div.list_content');
-    var $folder = $('.popup_dialog .folder');
-    var $input = $('.popup_dialog .full').find('input');
+    var $autocomplete = $('.popup_dialog .full').find('input').eq(1);
+    var $input = $('.popup_dialog .full').find('input').eq(0);
+    var loading = function() {
+      $('.popup_dialog .bottom_links').find('button.select_material').hide();
+      $list_content_td.html("<div style='text-align:center;'><h1>Loading...</h1><BR><BR><i class='fa fa-spinner fa-pulse'></i></div>");
+    }
+    loading();
+    window.resizePopup();
+    var _this = this;
+    var item_list = {};
+    var select_material = function() {
+      var val = $list_content_td.find('.selected').first();
+      if(val.length == 0) 
+        return showNotice("Please select a material", "red");
+      loading();
+      window.silentRequest('/get_material', { id: val.attr('data-id') }, function(response) {
+          $('.popup_dialog .full').html("");
+          window.hidePopupOnTop();
+          var mat = _this.selected_class().insertAfter(_this);
+          mat.setData(response.name, response.full_name, response.data, _this.data_type);
+          mat.show(0).focus(0);
+          mat.varStoreField.write(_this.varStoreField.latex());
+          _this.remove(0);
+        }, function () {
+          $('.popup_dialog .full').html("");
+          window.hidePopupOnTop();
+        });
+    }
+    var populate = function(response) { 
+      if(response.success) {
+        $list_content_td.html("<div class='folder'></div>");
+        $list_content_td.children(".folder").html(response.folder);
+        if(response.parent) {
+          $list_content_td.append("<div class='list group' data-id='" + response.parent_id + "'><i class='fa fa-arrow-left'></i>Back</div>");
+        }
+        $.each(response.groups, function(k,v) {
+          $list_content_td.append("<div class='list group' data-id='" + v.id + "'><i class='fa fa-arrow-right'></i>" + v.name + "</div>");
+        });
+        $.each(response.items, function(k,v) {
+          $list_content_td.append("<div class='list item' data-id='" + v.id + "'>" + v.name + "</div>");
+          item_list[v.id + ""] = v.data;
+        });
+        if((response.groups.length == 0) && (response.items.length == 0))
+          $list_content_td.append("<div><strong>No Results</strong></div>");
+        $('.popup_dialog .bottom_links').html('<button class="select_material" style="display:none;">Select Material</button><button class="grey close">Close</button>');
+        $('.popup_dialog .bottom_links').find('button.select_material').on('click', select_material);
+        // Listeners
+        $list_content_td.find('.group').on('click', function() {
+          if($(this).attr('data-id')*1 > 0)
+            load($(this).attr('data-id'));
+          else
+            load();
+          return false;
+        });
+        $list_content_td.find('.item').on('click', function() {
+          if($(this).find('.detail').length) return false;
+          $list_content_td.find('.selected').removeClass('selected');
+          $list_content_td.find('.detail').slideUp({duration: 200, always: function() { $(this).remove(); }});
+          $(this).addClass('selected');
+          var detail_div = $('<div/>').addClass('detail').appendTo($(this)).hide();
+          var to_add = [];
+          $.each(item_list[$(this).attr('data-id') + ""], function(k, v) {
+            to_add.push("<td class='item'>" + v.name + "</td><td class='item'>" + v.value + (v.units ? _this.worksheet.latexToUnit(v.units)[1] : '') + '</td>');
+          });
+          detail_div.html("<table><tbody><tr><td colspan=2><b>Available Properties</b></td><td rowspan=" + (to_add.length+1) + "><a class='button'>Select Material</a></td></tr><tr>" + to_add.join("</tr><tr>") + '</tr></tbody></table><div class="explain">' + _this.special_footer + '</div>').slideDown(200);
+          detail_div.find('a.button').on('click', select_material);
+          $('.popup_dialog .bottom_links').find('button.select_material').show();
+          $autocomplete.val('');
+          lastRequest = '';
+          $input.focus();
+          return false;
+        });
+        // register input
+        window.resizePopup();
+        if(!$autocomplete.is(":focus"))
+          $input.focus();
+      } else {
+        showNotice(response.message, 'red');
+        window.hidePopupOnTop();
+      }
+    };
+
+    var timeOut = false;
+    var ajaxRequest = false;
+    var lastRequest = '';
+    var submitFunction = function(_this){ return function(search) {
+      search = $autocomplete.val().trim();
+      // Cancel the last request if valid
+      if(ajaxRequest) ajaxRequest.abort();
+      // Currently loading? 
+      var curloading = $list_content_td.find('.fa-spinner').length > 0;
+      if(!curloading && (search == lastRequest)) return;
+      lastRequest = search;
+      if(search == '') // blank, reload initial material listing
+        return load();
+      if(search.length <= 2) {
+        if(curloading) $list_content_td.html("");
+        return showNotice('Please enter a search phrase of at least 3 characters');
+      }
+      loading();
+      ajaxRequest = $.ajax({
+        type: "POST",
+        url: "/material_search",
+        data: {query: search, data_type: _this.data_type },
+        success: populate,
+        error: function(err) {
+          window.hidePopupOnTop();
+          console.log('Error: ' + err.responseText)
+          showNotice('Error: There was a server error.  We have been notified', 'red');
+          SwiftCalcs.await_printing = false;
+        }
+      });
+    }; }(this);
+    $('.popup_dialog .full').find('div.search .fa-times-circle').on('click', function(evt) {
+      $autocomplete.val('');
+      submitFunction();
+      evt.preventDefault();
+    });
+    $autocomplete.on("keydown", function(evt) {
+      var which = evt.which || evt.keyCode;
+      var search = $(this).val();
+      var curloading = $list_content_td.find('.fa-spinner').length > 0;
+      // It will clear the setTimeOut activity if valid.
+      if(timeOut) clearTimeout(timeOut);
+      if((which == 10) || (which == 13)) {
+        evt.preventDefault();
+        this.blur(); //Blur will submit, see 'onblur'
+      }
+      else if(search.length >= 3) {
+        loading();
+        timeOut = setTimeout(function() { submitFunction(); }, 400);// wait for quarter second.
+      } else if(curloading) {
+        loading();
+        timeOut = setTimeout(function() { submitFunction(); }, 1200);// wait for quarter second.
+      }
+    }).on("blur", function(evt) {
+      submitFunction();
+      evt.preventDefault();
+      $input.focus();
+    });
+
     $input.on("keydown", function(evt) {
       var which = evt.which || evt.keyCode;
       switch(which) {
@@ -119,80 +258,7 @@ var material_selector = P(Element, function(_, super_) {
       }
       evt.preventDefault();
     });
-    var loading = function() {
-      $('.popup_dialog .bottom_links').find('button.select_material').hide();
-      $list_content_td.html("<div style='text-align:center;'><h1>Loading...</h1><BR><BR><i class='fa fa-spinner fa-pulse'></i></div>");
-    }
-    loading();
-    window.resizePopup();
-    var _this = this;
-    var item_list = {};
-    var select_material = function() {
-      var val = $list_content_td.find('.selected').first();
-      if(val.length == 0) 
-        return showNotice("Please select a material", "red");
-      loading();
-      window.silentRequest('/get_material', { id: val.attr('data-id') }, function(response) {
-          $('.popup_dialog .full').html("");
-          window.hidePopupOnTop();
-          var mat = _this.selected_class().insertAfter(_this);
-          mat.setData(response.name, response.full_name, response.data, _this.data_type);
-          mat.show(0).focus(0);
-          mat.varStoreField.write(_this.varStoreField.latex());
-          _this.remove(0);
-        }, function () {
-          $('.popup_dialog .full').html("");
-          window.hidePopupOnTop();
-        });
-    }
-    var populate = function(response) { 
-      if(response.success) {
-        $list_content_td.html("");
-        $folder.html(response.folder);
-        if(response.parent) {
-          $list_content_td.append("<div class='list group' data-id='" + response.parent_id + "'><i class='fa fa-arrow-left'></i>Back</div>");
-        }
-        $.each(response.groups, function(k,v) {
-          $list_content_td.append("<div class='list group' data-id='" + v.id + "'><i class='fa fa-arrow-right'></i>" + v.name + "</div>");
-        });
-        $.each(response.items, function(k,v) {
-          $list_content_td.append("<div class='list item' data-id='" + v.id + "'>" + v.name + "</div>");
-          item_list[v.id + ""] = v.data;
-        });
-        $('.popup_dialog .bottom_links').html('<button class="select_material" style="display:none;">Select Material</button><button class="grey close">Close</button>');
-        $('.popup_dialog .bottom_links').find('button.select_material').on('click', select_material);
-        // Listeners
-        $list_content_td.find('.group').on('click', function() {
-          if($(this).attr('data-id')*1 > 0)
-            load($(this).attr('data-id'));
-          else
-            load();
-          return false;
-        });
-        $list_content_td.find('.item').on('click', function() {
-          if($(this).find('.detail').length) return false;
-          $list_content_td.find('.selected').removeClass('selected');
-          $list_content_td.find('.detail').slideUp({duration: 200, always: function() { $(this).remove(); }});
-          $(this).addClass('selected');
-          var detail_div = $('<div/>').addClass('detail').appendTo($(this)).hide();
-          var to_add = [];
-          $.each(item_list[$(this).attr('data-id') + ""], function(k, v) {
-            to_add.push("<td class='item'>" + v.name + "</td><td class='item'>" + v.value + (v.units ? _this.worksheet.latexToUnit(v.units)[1] : '') + '</td>');
-          });
-          detail_div.html("<table><tbody><tr><td colspan=2><b>Available Properties</b></td><td rowspan=" + (to_add.length+1) + "><a class='button'>Select Material</a></td></tr><tr>" + to_add.join("</tr><tr>") + '</tr></tbody></table><div class="explain">' + _this.special_footer + '</div>').slideDown(200);
-          detail_div.find('a.button').on('click', select_material);
-          $('.popup_dialog .bottom_links').find('button.select_material').show();
-          $input.focus();
-          return false;
-        });
-        // register input
-        window.resizePopup();
-        $input.focus();
-      } else {
-        showNotice(response.message, 'red');
-        window.hidePopupOnTop();
-      }
-    };
+
     var load = function(parent_id) {
       loading();
       window.silentRequest('/populate_materials', { data_type: _this.data_type, parent_id: parent_id }, populate, function(response) {

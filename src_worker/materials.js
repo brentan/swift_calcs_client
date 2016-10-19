@@ -62,14 +62,61 @@ var Material = P(SwiftCalcsObject, function(_, super_) {
 });
 
 /*
-  Reference species for thermo calculations.  Each items is simply the NASA9 polynomial, with:
+  Reference species for thermo calculations.  Each item is the NASA polynomials for that species
 */
 
 var thermoReferenceSpecies = {
-  'H': [
-      {start: 100, end: 400, parameters: [1,2,3,4,5,6,7,8,9]},
-      {start: 400, end: 1000, parameters: [1,2,3,4,5,6,7,8,9]}
-    ]
+  'Ag': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, 33520.0237, 6.56281935]]}, {start:1000.0, end:6000.0, parameters:[true, [-330992.637, 982.008642, 1.381179917, 0.000617089999, -1.6881146e-07, 2.008826848e-11, -5.627285655e-16, 0, 27267.19171, 14.56862733]]}, {start:6000.0, end:20000.0, parameters:[true, [-371744150.0, 275806.9172, -73.8598261, 0.00960615872, -5.39393574e-07, 1.35885673e-11, -1.272610104e-16, 0, -2107724.971, 662.837457]]}],
+  'Al': [{start:200.0, end:1000.0, parameters:[true, [5006.60889, 18.61304407, 2.412531111, 0.0001987604647, -2.432362152e-07, 1.538281506e-10, -3.944375734e-14, 0, 38874.1268, 6.086585765]]}, {start:1000.0, end:6000.0, parameters:[true, [-29208.20938, 116.7751876, 2.356906505, 7.73723152e-05, -1.529455262e-08, -9.97167026e-13, 5.053278264e-16, 0, 38232.8865, 6.600920155]]}, {start:6000.0, end:20000.0, parameters:[true, [-504068232.0, 380232.265, -108.2347159, 0.01549444292, -1.070103856e-06, 3.5921109e-11, -4.696039394e-16, 0, -2901050.501, 949.188316]]}],
+  'Ar': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, 4.37967491]]}, {start:1000.0, end:6000.0, parameters:[true, [20.10538475, -0.0599266107, 2.500069401, -3.99214116e-08, 1.20527214e-11, -1.819015576e-15, 1.078576636e-19, 0, -744.993961, 4.37918011]]}, {start:6000.0, end:20000.0, parameters:[true, [-995126508.0, 645888.726, -167.5894697, 0.02319933363, -1.721080911e-06, 6.53193846e-11, -9.740147729e-16, 0, -5078300.34, 1465.298484]]}],
+  'B': [{start:200.0, end:1000.0, parameters:[true, [118.2394638, -0.0700991691, 2.500236159, -4.5842137e-07, 5.12318583e-10, -3.057217674e-13, 7.533815325e-17, 0, 68483.5908, 4.20950192]]}, {start:1000.0, end:6000.0, parameters:[true, [-107265.961, 322.530716, 2.126407232, 0.0002106579339, -5.93712916e-08, 7.37742799e-12, -2.282443381e-16, 0, 66434.131, 6.87706967]]}, {start:6000.0, end:20000.0, parameters:[true, [-415000131.0, 232957.6796, -47.2091371, 0.00487765596, -2.069413791e-07, 3.23351909e-12, -1.824076527e-18, 0, -1802904.743, 443.961764]]}],
+  'Ba': [{start:200.0, end:1000.0, parameters:[true, [2222.563526, -34.0797785, 2.706751118, -0.000638289449, 1.063003846e-06, -9.10262427e-10, 3.148062219e-13, 0, 21665.49702, 5.10254588]]}, {start:1000.0, end:6000.0, parameters:[true, [-19265792.28, 60065.0104, -66.3396413, 0.0350756593, -7.80760183e-06, 8.0851268e-10, -3.199486918e-14, 0, -358966.372, 500.75834]]}, {start:6000.0, end:20000.0, parameters:[true, [348345207.0, -292555.8261, 97.7488849, -0.01345477126, 9.56723979e-07, -3.38066231e-11, 4.72739054e-16, 0, 2250335.26, -796.844441]]}],
+  'Be': [{start:200.0, end:1000.0, parameters:[true, [-0.000411290152, 5.36496736e-06, 2.499999972, 7.56920369e-11, -1.097852652e-13, 8.00211024e-17, -2.303022777e-20, 0, 38222.6459, 2.146172983]]}, {start:1000.0, end:6000.0, parameters:[true, [-692628.584, 2466.773005, -0.977661334, 0.002458939515, -9.04795042e-07, 1.587880407e-10, -9.415600603e-15, 0, 23002.12917, 26.23234754]]}, {start:6000.0, end:20000.0, parameters:[true, [414583352.0, -225414.7519, 44.1143791, -0.003022853591, 1.178346131e-07, -2.27338765e-12, 1.196838345e-17, 0, 1866686.325, -375.23374]]}],
+  'Br2': [{start:200.0, end:1000.0, parameters:[true, [7497.04754, -235.0884557, 5.49193432, -0.002227573303, 2.932401703e-06, -1.954889514e-09, 5.31230789e-13, 0, 3521.47505, -1.96415157]]}, {start:1000.0, end:6000.0, parameters:[true, [-4311698.57, 11112.68634, -5.55577561, 0.00363051659, -2.754164226e-07, -6.21750676e-11, 7.37534162e-15, 0, -70365.8416, 78.7847802]]}],
+  'C(gr)': [{start:200.0, end:600.0, parameters:[false, [113285.676, -1980.421677, 13.65384188, -0.0463609644, 0.0001021333011, -1.082893179e-07, 4.47225886e-11, 0, 8943.85976, -72.9582474]]}, {start:600.0, end:2000.0, parameters:[false, [335600.441, -2596.528368, 6.94884191, -0.00348483609, 1.844192445e-06, -5.05520596e-10, 5.75063901e-14, 0, 13984.12456, -44.7718304]]}, {start:2000.0, end:6000.0, parameters:[false, [202310.5106, -1138.235908, 3.7002795, -0.0001833807727, 6.34368325e-08, -7.06858948e-12, 3.33543598e-16, 0, 5848.13485, -23.50925275]]}],
+  'Ca': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, 20638.92786, 4.38454833]]}, {start:1000.0, end:6000.0, parameters:[true, [7547341.24, -21486.42662, 25.30849567, -0.01103773705, 2.293249636e-06, -1.209075383e-10, -4.015333268e-15, 0, 158586.2323, -160.9512955]]}, {start:6000.0, end:20000.0, parameters:[true, [2291781634.0, -1608862.96, 431.246636, -0.0539650899, 3.53185621e-06, -1.16440385e-10, 1.527134223e-15, 0, 12586514.34, -3692.10161]]}],
+  'Cd': [{start:200.0, end:1000.0, parameters:[true, [-0.0001081751543, 1.816433041e-06, 2.499999989, 3.129989231e-11, -4.60071016e-14, 3.40704874e-17, -9.989497436e-21, 0, 12700.99766, 5.93154976]]}, {start:1000.0, end:6000.0, parameters:[true, [-269975.7467, 786.600114, 1.628169079, 0.000459412329, -1.150420443e-07, 1.074836707e-11, 8.790199555e-17, 0, 7675.14826, 12.20006052]]}, {start:6000.0, end:20000.0, parameters:[true, [-1336284287.0, 932094.911, -249.0956222, 0.0330287861, -2.200384347e-06, 7.42571255e-11, -1.026730246e-15, 0, -7267528.99, 2167.946107]]}],
+  'Cl2': [{start:200.0, end:1000.0, parameters:[true, [34628.1724, -554.712949, 6.20759103, -0.00298963673, 3.17303416e-06, -1.79363467e-09, 4.26005863e-13, 0, 1534.07075, -9.43835303]]}, {start:1000.0, end:6000.0, parameters:[true, [6092566.75, -19496.2688, 28.5453491, -0.0144996828, 4.46388943e-06, -6.35852403e-10, 3.32735931e-14, 0, 121211.722, -169.077832]]}],
+  'Co': [{start:200.0, end:1000.0, parameters:[true, [-2598.939184, 246.1989844, -0.610605837, 0.01393005772, -2.210012979e-05, 1.623755261e-08, -4.534904351e-12, 0, 49846.1376, 22.57584199]]}, {start:1000.0, end:6000.0, parameters:[true, [1381841.305, -3756.03668, 6.65713065, -0.001269246675, 1.464092329e-07, 6.57494657e-12, -1.102384178e-15, 0, 74944.4291, -22.58500836]]}, {start:6000.0, end:20000.0, parameters:[true, [-546801575.0, 403770.495, -114.2413163, 0.01663014422, -1.156228007e-06, 3.86251515e-11, -5.002032746e-16, 0, -3076031.798, 1003.028648]]}],
+  'Cr': [{start:200.0, end:1000.0, parameters:[true, [1335.658217, -21.02424026, 2.631908173, -0.000424626325, 7.43919416e-07, -6.76393163e-10, 2.507855625e-13, 0, 47158.6664, 6.00542545]]}, {start:1000.0, end:6000.0, parameters:[true, [-11202207.89, 34011.6369, -36.5706217, 0.02110296902, -5.51818014e-06, 7.17360171e-10, -3.505127367e-14, 0, -168899.344, 286.4481267]]}, {start:6000.0, end:20000.0, parameters:[true, [3900886930.0, -2462918.543, 591.563264, -0.0669712164, 3.94695779e-06, -1.166504597e-10, 1.367279456e-15, 0, 19553819.84, -5133.51055]]}],
+  'Cs': [{start:200.0, end:1000.0, parameters:[true, [54.6658407, -0.827934604, 2.50494221, -1.49462069e-05, 2.425976774e-08, -2.013172322e-11, 6.704271991e-15, 0, 8459.32139, 6.848825772]]}, {start:1000.0, end:6000.0, parameters:[true, [6166040.9, -18961.75522, 24.83229903, -0.01251977234, 3.30901739e-06, -3.35401202e-10, 9.626500908e-15, 0, 128511.1231, -152.2942188]]}, {start:6000.0, end:20000.0, parameters:[true, [-956623172.0, 432169.042, -63.7180102, 0.00524626058, -2.366560159e-07, 5.84848848e-12, -6.169370441e-17, 0, -3585268.84, 615.6618174]]}],
+  'Cu': [{start:200.0, end:1000.0, parameters:[true, [77.1313315, -1.169236206, 2.506987803, -2.116434879e-05, 3.44171471e-08, -2.862608999e-11, 9.559250991e-15, 0, 39839.8121, 5.73081322]]}, {start:1000.0, end:6000.0, parameters:[true, [2308090.411, -8503.261, 14.67859102, -0.00846713652, 2.887821016e-06, -4.27065918e-10, 2.304265084e-14, 0, 92075.3562, -78.5470156]]}, {start:6000.0, end:20000.0, parameters:[true, [-649059589.0, 424032.336, -102.8965806, 0.01297259934, -7.76669768e-07, 2.220446727e-11, -2.441532031e-16, 0, -3305304.58, 919.862292]]}],
+  'D': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, 25921.287, 0.591714338]]}, {start:1000.0, end:6000.0, parameters:[true, [60.5001921, -0.1810766064, 2.500210817, -1.220711706e-07, 3.71517217e-11, -5.66068021e-15, 3.393920393e-19, 0, 25922.43752, 0.590212537]]}, {start:6000.0, end:20000.0, parameters:[true, [216925977.8, -130930.9862, 33.9259505, -0.00380597381, 2.427699393e-07, -7.6779678e-12, 9.624191177e-17, 0, 1065922.04, -272.6201602]]}],
+  'E': [{start:298.15, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, -11.72081224]]}, {start:1000.0, end:6000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, -11.72081224]]}, {start:6000.0, end:20000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, -11.72081224]]}],
+  'F2': [{start:200.0, end:1000.0, parameters:[true, [10181.76308, 22.74241183, 1.97135304, 0.00815160401, -1.14896009e-05, 7.95865253e-09, -2.167079526e-12, 0, -958.6943, 11.30600296]]}, {start:1000.0, end:6000.0, parameters:[true, [-2941167.79, 9456.5977, -7.73861615, 0.00764471299, -2.241007605e-06, 2.915845236e-10, -1.425033974e-14, 0, -60710.0561, 84.2383508]]}],
+  'Fe': [{start:200.0, end:1000.0, parameters:[true, [67908.2266, -1197.218407, 9.84339331, -0.01652324828, 1.917939959e-05, -1.149825371e-08, 2.832773807e-12, 0, 54669.9594, -33.8394626]]}, {start:1000.0, end:6000.0, parameters:[true, [-1954923.682, 6737.1611, -5.48641097, 0.00437880345, -1.116286672e-06, 1.544348856e-10, -8.023578182e-15, 0, 7137.37006, 65.0497986]]}, {start:6000.0, end:20000.0, parameters:[true, [1216352511.0, -582856.393, 97.8963451, -0.00537070443, 3.19203792e-08, 6.26767143e-12, -1.480574914e-16, 0, 4847648.29, -869.728977]]}],
+  'Ge': [{start:200.0, end:1000.0, parameters:[true, [-20592.15242, -143.2022103, 4.50600233, 0.00154718784, -8.51829655e-06, 8.24382446e-09, -2.566167305e-12, 0, 43630.7086, -6.22526851]]}, {start:1000.0, end:6000.0, parameters:[true, [-856541.384, 3917.95866, -1.809888212, 0.002276482224, -5.36562755e-07, 5.98495809e-11, -2.541700646e-15, 0, 19565.18798, 38.4134679]]}, {start:6000.0, end:20000.0, parameters:[true, [24239651.36, -25436.05174, 14.56087539, -0.002592562254, 2.658628502e-07, -1.122785077e-11, 1.620997559e-16, 0, 229581.2461, -89.5358586]]}],
+  'H2': [{start:200.0, end:1000.0, parameters:[true, [40783.2281, -800.918545, 8.21470167, -0.0126971436, 1.75360493e-05, -1.20286016e-08, 3.36809316e-12, 0, 2682.48438, -30.4378866]]}, {start:1000.0, end:6000.0, parameters:[true, [560812.338, -837.149134, 2.97536304, 0.00125224993, -3.74071842e-07, 5.93662825e-11, -3.60699573e-15, 0, 5339.81585, -2.20276405]]}, {start:6000.0, end:20000.0, parameters:[true, [496671613.0, -314744.812, 79.838875, -0.00841450419, 4.75306044e-07, -1.37180973e-11, 1.6053746e-16, 0, 2488354.66, -669.552419]]}],
+  'He': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, 0.928723974]]}, {start:1000.0, end:6000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, 0.928723974]]}, {start:6000.0, end:20000.0, parameters:[true, [3396845.42, -2194.037652, 3.080231878, -8.06895755e-05, 6.25278491e-09, -2.574990067e-13, 4.429960218e-18, 0, 16505.1896, -4.04881439]]}],
+  'Hg': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, 6636.90008, 6.80020154]]}, {start:1000.0, end:6000.0, parameters:[true, [51465.7351, -168.1269855, 2.718343098, -0.0001445026192, 5.15897766e-08, -9.47248501e-12, 7.034797406e-16, 0, 7688.68493, 5.27123609]]}, {start:6000.0, end:20000.0, parameters:[true, [535844393.0, -443385.381, 146.3223992, -0.02318441669, 1.916335174e-06, -7.419662e-11, 1.067224054e-15, 0, 3391999.92, -1201.22599]]}],
+  'I2': [{start:200.0, end:1000.0, parameters:[true, [-5087.96877, -12.4958521, 4.50421909, 0.0001370962533, -1.390523014e-07, 1.174813853e-10, -2.337541043e-14, 0, 6213.46981, 5.58383694]]}, {start:1000.0, end:6000.0, parameters:[true, [-5632594.16, 17939.6156, -17.23055169, 0.0124421408, -3.33276858e-06, 4.12547794e-10, -1.960461713e-14, 0, -106850.5292, 160.0531883]]}],
+  'K': [{start:200.0, end:1000.0, parameters:[true, [9.66514393, -0.1458059455, 2.500865861, -2.601219276e-06, 4.18730658e-09, -3.43972211e-12, 1.131569009e-15, 0, 9959.49349, 5.03582226]]}, {start:1000.0, end:6000.0, parameters:[true, [-3566422.36, 10852.89825, -10.54134898, 0.00800980135, -2.696681041e-06, 4.71529415e-10, -2.97689735e-14, 0, -58753.3701, 97.3855124]]}, {start:6000.0, end:20000.0, parameters:[true, [920578659.0, -693530.028, 191.1270788, -0.02305931672, 1.430294866e-06, -4.40933502e-11, 5.366769166e-16, 0, 5395082.19, -1622.158805]]}],
+  'Kr': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, 5.49095651]]}, {start:1000.0, end:6000.0, parameters:[true, [264.3639057, -0.791005082, 2.500920585, -5.32816411e-07, 1.620730161e-10, -2.467898017e-14, 1.47858504e-18, 0, -740.348894, 5.48439815]]}, {start:6000.0, end:20000.0, parameters:[true, [-1375531087.0, 906403.053, -240.3481435, 0.0337831203, -2.563103877e-06, 9.96978779e-11, -1.521249677e-15, 0, -7111667.37, 2086.866326]]}],
+  'Li': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, 18413.90197, 2.447622965]]}, {start:1000.0, end:6000.0, parameters:[true, [1125610.652, -3463.53673, 6.56661192, -0.002260983356, 5.92228916e-07, -6.2816351e-11, 2.884948238e-15, 0, 40346.374, -26.55918195]]}, {start:6000.0, end:20000.0, parameters:[true, [2604352623.0, -1521952.201, 345.44005, -0.0377967485, 2.222420069e-06, -6.6915708e-11, 8.088023606e-16, 0, 12177918.47, -3006.680193]]}],
+  'Mg': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, 16946.58761, 3.63433014]]}, {start:1000.0, end:6000.0, parameters:[true, [-536483.155, 1973.709576, -0.36337769, 0.002071795561, -7.73805172e-07, 1.359277788e-10, -7.766898397e-15, 0, 4829.18811, 23.39104998]]}, {start:6000.0, end:20000.0, parameters:[true, [2166012586.0, -1008355.665, 161.9680021, -0.00879013035, -1.925690961e-08, 1.725045214e-11, -4.234946112e-16, 0, 8349525.9, -1469.355261]]}],
+  'Mn': [{start:200.0, end:1000.0, parameters:[true, [0.1034061359, -0.001551537349, 2.500009148, -2.723162066e-08, 4.33389743e-11, -3.51109389e-14, 1.136032201e-17, 0, 33219.3519, 6.649325463]]}, {start:1000.0, end:6000.0, parameters:[true, [5855.15582, 883.858844, -0.0364866258, 0.002703720687, -1.324971998e-06, 2.87260329e-10, -1.92363357e-14, 0, 28678.03487, 22.92541198]]}, {start:6000.0, end:20000.0, parameters:[true, [3936189040.0, -2353549.748, 537.72448, -0.0582481257, 3.3304751e-06, -9.68963105e-11, 1.133286034e-15, 0, 18795301.61, -4690.09789]]}],
+  'Mo': [{start:200.0, end:1000.0, parameters:[true, [76.4636791, -1.159269043, 2.506929462, -2.099249725e-05, 3.41477943e-08, -2.841269591e-11, 9.492443321e-15, 0, 78458.998, 7.60183566]]}, {start:1000.0, end:6000.0, parameters:[true, [5573271.0, -16623.65811, 21.35147077, -0.01003069377, 2.409784357e-06, -1.811267352e-10, 1.034189087e-15, 0, 184264.6473, -127.5326434]]}, {start:6000.0, end:20000.0, parameters:[true, [6205038910.0, -3855961.6, 937.159506, -0.1108164544, 6.9291239e-06, -2.199865715e-10, 2.798315513e-15, 0, 30621636.02, -8122.81134]]}],
+  'N2': [{start:200.0, end:1000.0, parameters:[true, [22103.71497, -381.846182, 6.08273836, -0.00853091441, 1.384646189e-05, -9.62579362e-09, 2.519705809e-12, 0, 710.846086, -10.76003316]]}, {start:1000.0, end:6000.0, parameters:[true, [587712.406, -2239.249073, 6.06694922, -0.00061396855, 1.491806679e-07, -1.923105485e-11, 1.061954386e-15, 0, 12832.10415, -15.86639599]]}, {start:6000.0, end:20000.0, parameters:[true, [831013916.0, -642073.354, 202.0264635, -0.03065092046, 2.486903333e-06, -9.70595411e-11, 1.437538881e-15, 0, 4938707.04, -1672.099736]]}],
+  'Na': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, 12183.82949, 4.24402818]]}, {start:1000.0, end:6000.0, parameters:[true, [952572.338, -2623.807254, 5.16259662, -0.001210218586, 2.306301844e-07, -1.249597843e-11, 7.22677119e-16, 0, 29129.63564, -15.19717061]]}, {start:6000.0, end:20000.0, parameters:[true, [1592533392.0, -971783.666, 223.8443963, -0.02380930558, 1.352018117e-06, -3.93697111e-11, 4.630689121e-16, 0, 7748677.26, -1939.615505]]}],
+  'Nb': [{start:200.0, end:1000.0, parameters:[true, [78896.6067, -1212.813914, 10.34579819, -0.01676630056, 1.979119979e-05, -1.218224409e-08, 3.058098336e-12, 0, 91653.1514, -35.9474285]]}, {start:1000.0, end:6000.0, parameters:[true, [-1096553.196, 2546.650713, 2.236054882, -0.001280029198, 8.46423799e-07, -1.486269508e-10, 8.714309406e-15, 0, 68791.2455, 13.9816903]]}, {start:6000.0, end:20000.0, parameters:[true, [1818626365.0, -1032414.94, 230.8238005, -0.02445004311, 1.395626888e-06, -4.08723301e-11, 4.826490497e-16, 0, 8359622.56, -1997.79729]]}],
+  'Ne': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, 3.35532272]]}, {start:1000.0, end:6000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, 3.35532272]]}, {start:6000.0, end:20000.0, parameters:[true, [-12382527.46, 6958.57958, 1.016709287, 0.0001424664555, -4.80393393e-09, -1.170213183e-13, 8.415153652e-18, 0, -56639.3363, 16.48438697]]}],
+  'Ni': [{start:200.0, end:1000.0, parameters:[true, [-32358.1055, 601.526462, -1.079270657, 0.01089505519, -1.369578748e-05, 8.31772579e-09, -2.019206968e-12, 0, 48138.1081, 27.188292]]}, {start:1000.0, end:6000.0, parameters:[true, [-493826.221, 1092.909991, 2.410485014, -1.599071827e-05, -1.047414069e-08, 4.62479521e-12, -4.448865218e-17, 0, 43360.7217, 9.6771956]]}, {start:6000.0, end:20000.0, parameters:[true, [349266988.0, -165422.7575, 33.4986936, -0.0035270859, 3.24006024e-07, -1.604177606e-11, 2.935430214e-16, 0, 1409017.848, -267.2455567]]}],
+  'O2': [{start:200.0, end:1000.0, parameters:[true, [-34255.6342, 484.700097, 1.119010961, 0.00429388924, -6.83630052e-07, -2.0233727e-09, 1.039040018e-12, 0, -3391.45487, 18.4969947]]}, {start:1000.0, end:6000.0, parameters:[true, [-1037939.022, 2344.830282, 1.819732036, 0.001267847582, -2.188067988e-07, 2.053719572e-11, -8.19346705e-16, 0, -16890.10929, 17.38716506]]}, {start:6000.0, end:20000.0, parameters:[true, [497529430.0, -286610.6874, 66.9035225, -0.00616995902, 3.016396027e-07, -7.4214166e-12, 7.27817577e-17, 0, 2293554.027, -553.062161]]}],
+  'P': [{start:200.0, end:1000.0, parameters:[true, [50.4086657, -0.763941865, 2.504563992, -1.381689958e-05, 2.245585515e-08, -1.866399889e-11, 6.227063395e-15, 0, 37324.2191, 5.359303481]]}, {start:1000.0, end:6000.0, parameters:[true, [1261794.642, -4559.83819, 8.91807931, -0.00438140146, 1.454286224e-06, -2.030782763e-10, 1.021022887e-14, 0, 65417.2396, -39.15974795]]}, {start:6000.0, end:20000.0, parameters:[true, [-22153925.45, -45669.1118, 28.37245428, -0.00448324404, 3.57941308e-07, -1.255311557e-11, 1.590290483e-16, 0, 337090.576, -205.6960928]]}],
+  'Pb': [{start:200.0, end:1000.0, parameters:[true, [1213.382285, -19.06116019, 2.619299546, -0.000382951961, 6.68818045e-07, -6.06123108e-10, 2.240022429e-13, 0, 22820.96238, 6.2013692]]}, {start:1000.0, end:6000.0, parameters:[true, [-9084313.07, 26726.7318, -26.26244039, 0.01358282305, -2.685523566e-06, 2.3524328e-10, -7.324114532e-15, 0, -148165.0666, 215.4011624]]}, {start:6000.0, end:20000.0, parameters:[true, [532547497.0, -275141.9152, 63.0303193, -0.00681367274, 4.44748961e-07, -1.519361678e-11, 2.043475665e-16, 0, 2243651.683, -522.56499]]}],
+  'Rb': [{start:200.0, end:1000.0, parameters:[true, [13.52856616, -0.2042232679, 2.501213823, -3.6506199e-06, 5.88472267e-09, -4.84227472e-12, 1.596211946e-15, 0, 8985.56921, 6.20700548]]}, {start:1000.0, end:6000.0, parameters:[true, [-1138274.064, 3804.04194, -2.750899258, 0.0038914607, -1.632296823e-06, 3.51189314e-10, -2.521064422e-14, 0, -14664.54849, 42.5344237]]}, {start:6000.0, end:20000.0, parameters:[true, [324519220.0, -349385.087, 115.9097652, -0.01492843123, 9.58238506e-07, -2.996233671e-11, 3.657332046e-16, 0, 2636178.014, -958.651723]]}],
+  'S': [{start:200.0, end:1000.0, parameters:[true, [-317.484182, -192.4704923, 4.68682593, -0.0058413656, 7.53853352e-06, -4.86358604e-09, 1.256976992e-12, 0, 33235.9218, -5.71847719]]}, {start:1000.0, end:6000.0, parameters:[true, [-485424.479, 1438.830408, 1.258504116, 0.000379799043, 1.630685864e-09, -9.54709585e-12, 8.041466646e-16, 0, 23349.9527, 15.59559533]]}, {start:6000.0, end:20000.0, parameters:[true, [-130200541.4, 69093.6202, -11.76228025, 0.00160154085, -1.05053334e-07, 4.34182902e-12, -7.675621927e-17, 0, -526148.503, 132.2195719]]}],
+  'Si': [{start:200.0, end:1000.0, parameters:[true, [98.3614081, 154.6544523, 1.87643667, 0.001320637995, -1.529720059e-06, 8.95056277e-10, -1.95287349e-13, 0, 52635.1031, 9.69828888]]}, {start:1000.0, end:6000.0, parameters:[true, [-616929.885, 2240.683927, -0.444861932, 0.001710056321, -4.10771416e-07, 4.55888478e-11, -1.889515353e-15, 0, 39535.5876, 26.79668061]]}, {start:6000.0, end:20000.0, parameters:[true, [-928654894.0, 544398.989, -120.6739736, 0.01359662698, -7.60649866e-07, 2.149746065e-11, -2.474116774e-16, 0, -4293792.12, 1086.382839]]}],
+  'Sn': [{start:200.0, end:1000.0, parameters:[true, [-124869.2263, 1618.84119, -4.60239735, 0.01045433308, 2.99826555e-06, -1.068699386e-08, 4.32342131e-12, 0, 27483.64008, 48.0506723]]}, {start:1000.0, end:6000.0, parameters:[true, [-5145695.64, 11405.75108, -4.17963206, 0.002236390679, -3.60321977e-07, 2.440237836e-11, -2.937628285e-16, 0, -42150.1357, 59.8145093]]}, {start:6000.0, end:20000.0, parameters:[true, [-1119787114.0, 642704.604, -137.8615913, 0.01453867222, -7.10958603e-07, 1.501409263e-11, -8.940758657e-17, 0, -5111296.87, 1245.625545]]}],
+  'Sr': [{start:200.0, end:1000.0, parameters:[true, [4.19064984, -0.0630443758, 2.500373027, -1.115455943e-06, 1.785248643e-09, -1.456209589e-12, 4.750132981e-16, 0, 18558.52648, 5.55577284]]}, {start:1000.0, end:6000.0, parameters:[true, [14894144.1, -43753.3505, 51.3726628, -0.02592566025, 6.58299e-06, -6.9496118e-10, 2.417779662e-14, 0, 297754.5522, -345.489077]]}, {start:6000.0, end:20000.0, parameters:[true, [556223372.0, -609319.322, 210.9096848, -0.03010063957, 2.178021676e-06, -7.82400346e-11, 1.10990962e-15, 0, 4579268.34, -1752.716908]]}],
+  'Ta': [{start:200.0, end:1000.0, parameters:[true, [-11509.07339, 47.8073043, 3.18558839, -0.00536652816, 1.288379705e-05, -1.045798666e-08, 3.050617695e-12, 0, 92997.9763, 5.33605661]]}, {start:1000.0, end:6000.0, parameters:[true, [1689726.898, -5986.85466, 9.56503967, -0.002511649459, 6.44303117e-07, -7.18923725e-11, 3.11335207e-15, 0, 130671.0983, -43.3509627]]}, {start:6000.0, end:20000.0, parameters:[true, [-841341956.0, 638150.904, -185.603185, 0.027973536, -2.073321805e-06, 7.39729917e-11, -1.017863944e-15, 0, -4836410.62, 1607.00775]]}],
+  'Ti': [{start:200.0, end:1000.0, parameters:[true, [-45701.794, 660.809202, 0.429525749, 0.00361502991, -3.54979281e-06, 1.759952494e-09, -3.052720871e-13, 0, 52709.4793, 20.26149738]]}, {start:1000.0, end:6000.0, parameters:[true, [-170478.6714, 1073.852803, 1.181955014, 0.0002245246352, 3.091697848e-07, -5.74002728e-11, 2.927371014e-15, 0, 49780.6991, 17.40431368]]}, {start:6000.0, end:20000.0, parameters:[true, [1152797766.0, -722240.838, 177.7167465, -0.02008059096, 1.221052354e-06, -3.81145208e-11, 4.798092423e-16, 0, 5772614.54, -1518.080466]]}],
+  'U': [{start:200.0, end:1000.0, parameters:[true, [69657.3775, -1070.351517, 8.07584231, -0.01060034069, 9.25654801e-06, -3.21989976e-09, 4.058048809e-13, 0, 68665.137, -22.40521678]]}, {start:1000.0, end:6000.0, parameters:[true, [-4092498.96, 12748.88349, -12.18707506, 0.00725810568, -7.78777507e-07, -3.84435385e-11, 7.066508567e-15, 0, -16993.72664, 115.5026301]]}, {start:6000.0, end:20000.0, parameters:[true, [-242467681.4, 102249.5503, -2.321762289, -0.000743317746, 9.67499397e-08, -4.15945228e-12, 6.313829223e-17, 0, -813755.928, 73.33489176]]}],
+  'V': [{start:200.0, end:1000.0, parameters:[true, [-55353.7602, 559.333851, 2.675543482, -0.00624304963, 1.565902337e-05, -1.372845314e-08, 4.16838881e-12, 0, 58206.6436, 9.52456749]]}, {start:1000.0, end:6000.0, parameters:[true, [1200390.3, -5027.0053, 10.58830594, -0.0050443261, 1.488547375e-06, -1.785922508e-10, 8.113013866e-15, 0, 91707.4091, -47.6833632]]}, {start:6000.0, end:20000.0, parameters:[true, [2456040166.0, -1339992.028, 278.1039851, -0.02638937359, 1.303527149e-06, -3.21468033e-11, 3.099999094e-16, 0, 10871520.43, -2439.95438]]}],
+  'W': [{start:200.0, end:1000.0, parameters:[true, [159522.3922, -2673.843928, 20.60469727, -0.0625231523, 0.0001105654838, -8.45351161e-08, 2.336187771e-11, 0, 113964.8616, -90.118369]]}, {start:1000.0, end:6000.0, parameters:[true, [-8048745.96, 14657.00424, -0.2508531501, -0.002596486992, 1.409225475e-06, -2.233011706e-10, 1.262640862e-14, 0, -3091.130919, 39.5582219]]}, {start:6000.0, end:20000.0, parameters:[true, [1421636486.0, -432536.555, -8.84161507, 0.0164553894, -1.908373835e-06, 8.53048289e-11, -1.360501851e-15, 0, 3994798.75, -12.66418236]]}],
+  'Xe': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, -745.375, 6.16441993]]}, {start:1000.0, end:6000.0, parameters:[true, [4025.22668, -12.09507521, 2.514153347, -8.24810208e-06, 2.530232618e-09, -3.89233323e-13, 2.360439138e-17, 0, -668.580073, 6.06367644]]}, {start:6000.0, end:20000.0, parameters:[true, [254039745.6, -110537.3774, 13.82644099, 0.001500614606, -3.93535903e-07, 2.765790584e-11, -5.943990574e-16, 0, 928544.383, -110.9834899]]}],
+  'Zn': [{start:200.0, end:1000.0, parameters:[true, [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0, 14938.05072, 5.11886101]]}, {start:1000.0, end:6000.0, parameters:[true, [-175559.1489, 498.413924, 1.969386292, 0.0002608808787, -5.62719508e-08, 2.723336049e-12, 4.266685808e-16, 0, 11737.73458, 8.96108565]]}, {start:6000.0, end:20000.0, parameters:[true, [-208728796.2, 157817.8131, -36.2203311, 0.00334523002, -8.56742272e-09, -7.12254474e-12, 1.691187274e-16, 0, -1217847.671, 345.943996]]}],
+  'Zr': [{start:200.0, end:1000.0, parameters:[true, [67158.9996, -943.598174, 6.35975618, -0.000979011973, -7.60822415e-06, 9.30871743e-09, -3.124675586e-12, 0, 75880.1947, -16.65770522]]}, {start:1000.0, end:6000.0, parameters:[true, [6006771.84, -15669.60605, 17.9698235, -0.00676340965, 1.733678968e-06, -2.064699786e-10, 9.33409261e-15, 0, 173463.6249, -105.1117377]]}, {start:6000.0, end:20000.0, parameters:[true, [520770138.0, -282565.2444, 60.7705435, -0.00508121141, 2.345845819e-07, -6.23721212e-12, 8.010718759e-17, 0, 2351487.351, -509.318306]]}]
 };
 
 /*
@@ -85,13 +132,13 @@ var thermoReferenceSpecies = {
       O: 2
     },
     polynomials: [
-      {start: 100, end: 400, parameters: [1,2,3,4,5,6,7,8,9]},...
+      {start: 100, end: 400, parameters: [true for 9 polynomial and false for 7, [1,2,3,4,5,6,7,8,9]]},...
     ],
     transport: {
       viscosity: {start: 100, end: 100, parameters: [1,2,3,4]},
       thermalConductivity: {start: 100, end: 100, parameters: [1,2,3,4]},...
     }, // transport is OPTIONAL
-    phase: 'gas|liquid|solid'
+    phase: 'gas|condensed'
   }
 */
 var seperator = "_";
@@ -115,8 +162,8 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
     this.name = name;
     this.var_name = var_name;
     this.data = data;
-    this.setTP(298.15, 101325);
-    this.setupAtoms(data.atoms);
+    this.set_TP(298.15, 101325);
+    this.setUpAtoms(data.atoms);
     this.propertyList = ['h','s','g','T','P','u','v','M','h_mole','s_mole','g_mole','u_mole','entropy', 'entropy_mole', 'enthalpy', 'enthalpy_mole', 'gamma', 'Cp', 'Cp_mole', 'Cv', 'Cv_mole','specificVolume', 'rho', 'density', 'pressure', 'temperature', 'molecularMass', 'gibbs', 'gibbs_mole', 'internalEnergy', 'internalEnergy_mole', 'logK', 'gF', 'gF_mole,gibbsFormation', 'gibbsFormation_mole', 'hF', 'hF_mole', 'enthalpyFormation', 'enthalpyFormation_mole', 'dhT298', 'dhT298_mole', 'hf298', 'hf298_mole', 'enthalpyFormation298', 'enthalpyFormation298_mole'];
     this.methodList = [];
 
@@ -135,7 +182,7 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
   }
   // Deep clone...we need this to replicate myself in the scope
   _.clone = function(new_var) {
-    return new IdealSpecies(this.name, this.data, new_var).setTP(this.getT(), this.getP());
+    return new IdealSpecies(this.name, this.data, new_var).set_TP(this.getT(), this.getP());
   }
   _.getT = function() {
     // First test that we are initialized
@@ -161,7 +208,7 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
     this.setError("Pressure did not evaluate to a real number");
     return 101325;
   }
-  _.setupAtoms = function(atom_list, reference) {
+  _.setUpAtoms = function(atom_list, reference) {
     //atoms: Use to find molecular weight
     //also find reference species that make this up, and add to an array
     this.referenceSpecies = [];
@@ -197,50 +244,96 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
   Species Thermo Property Setters
   */
   // Multi-set
-  _.setTP = function(temperature, pressure) {
-    this.setT(temperature).setP(pressure);
-    return this;
+  _.set_TP = function(temperature, pressure) {
+    if((typeof temperature === "string") && (typeof pressure === "undefined")) {
+      temperature = temperature.trim().substr(1,temperature.trim().length - 2);
+      temperature = temperature.split(",");
+      pressure = temperature[1];
+      temperature = temperature[0];
+    }
+    temperature = this.set_T(temperature)
+    pressure = this.set_P(pressure);
+    if((typeof temperature === "string") && (typeof pressure === "string"))
+      return "[" + temperature + "," + pressure + "]";
+    else
+      return '';
   }
-  _.setHP = function(enthalpy, pressure) {
-    this.setP(pressure);
-    this.setEnthalpy(enthalpy);
-    return this;
+  _.set_hP = function(enthalpy, pressure) {
+    if((typeof enthalpy === "string") && (typeof pressure === "undefined")) {
+      enthalpy = enthalpy.trim().substr(1,enthalpy.trim().length - 2);
+      enthalpy = enthalpy.split(",");
+      pressure = enthalpy[1];
+      enthalpy = enthalpy[0];
+    }
+    pressure = this.set_P(pressure);
+    enthalpy = this.set_Enthalpy(enthalpy);
+    if((typeof enthalpy === "string") && (typeof pressure === "string"))
+      return "[" + enthalpy + "," + pressure + "]";
+    else
+      return '';
   }
-  _.setSP = function(entropy, pressure) {
-    this.setP(pressure);
-    this.setEntropy(entropy);
-    return this;
+  _.set_sP = function(entropy, pressure) {
+    if((typeof entropy === "string") && (typeof pressure === "undefined")) {
+      entropy = entropy.trim().substr(1,entropy.trim().length - 2);
+      entropy = entropy.split(",");
+      pressure = entropy[1];
+      entropy = entropy[0];
+    }
+    pressure = this.set_P(pressure);
+    entropy = this.set_Entropy(entropy);
+    if((typeof entropy === "string") && (typeof pressure === "string"))
+      return "[" + entropy + "," + pressure + "]";
+    else
+      return '';
   }
-  _.setSV = function(entropy, specific_volumne) {
-    this.setSpecificVolume(specific_volumne);
-    this.setEntropy_v(entropy)
-    return this;
+  _.set_sv = function(entropy, specific_volume) {
+    if((typeof entropy === "string") && (typeof specific_volume === "undefined")) {
+      entropy = entropy.trim().substr(1,entropy.trim().length - 2);
+      entropy = entropy.split(",");
+      specific_volume = entropy[1];
+      entropy = entropy[0];
+    }
+    specific_volume = this.set_SpecificVolume(specific_volume);
+    entropy = this.set_Entropy_v(entropy)
+    if((typeof entropy === "string") && (typeof specific_volume === "string"))
+      return "[" + entropy + "," + specific_volume + "]";
+    else
+      return '';
   }
-  _.setUV = function(energy, specific_volumne) {
-    this.setSpecificVolume(specificVolume);
-    this.setInternalEnergy(energy);
-    return this;
+  _.set_uv = function(energy, specific_volume) {
+    if((typeof temperature === "string") && (typeof specific_volume === "undefined")) {
+      energy = energy.trim().substr(1,energy.trim().length - 2);
+      energy = energy.split(",");
+      specific_volume = energy[1];
+      energy = energy[0];
+    }
+    specific_volume = this.set_SpecificVolume(specific_volume);
+    energy = this.set_InternalEnergy(energy);
+    if((typeof energy === "string") && (typeof specific_volume === "string"))
+      return "[" + energy + "," + specific_volume + "]";
+    else
+      return '';
   }
   // Single
-  _.setT = _.setTemperature = function(temperature) {
+  _.set_T = _.set_temperature = function(temperature) {
     if(typeof temperature === "string") {
       if(Module.caseval("mksa_base(evalf(" + temperature + "))").trim() != "1_K") 
         return this.setError("Incompatible Units.  Expecting Temperature units (Kelvin)");
     } else
       temperature = temperature + "_K";
     Module.caseval(this.var_name + seperator + "T__in:=" + temperature);
-    return this;
+    return temperature;
   }
-  _.setP = _.setPressure = function(pressure) {
+  _.set_P = _.set_pressure = function(pressure) {
     if(typeof pressure === "string") {
       if(Module.caseval("mksa_base(evalf(" + pressure + "))").trim() != "1_(kg*m^-1.0*s^-2.0)") 
         return this.setError("Incompatible Units.  Expecting Pressure units (Pascal)");
     } else
       pressure = pressure + "_Pa";
     Module.caseval(this.var_name + seperator + "P__in:=" + pressure);
-    return this;
+    return pressure;
   }
-  _.setrho = _.setDensity = function(rho) {
+  _.set_rho = _.set_density = function(rho) {
     if(typeof rho === "string") {
       if(Module.caseval("mksa_base(evalf(" + rho + "))").trim() != "1_(kg*m^-3.0)") 
         return this.setError("Incompatible Units.  Expecting Density units (mass/volume)");
@@ -249,10 +342,10 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
         return this.setError("Input did not evaluate to a real number");
       rho = rho*1;
     } 
-    this.setSpecificVolume(1/rho);
-    return this;
+    this.set_SpecificVolume(1/rho);
+    return "1/(" + rho + ")*(_kg*_m^-3.0)";
   }
-  _.setV = _.setSpecificVolume = function(v) {
+  _.set_v = _.set_specificVolume = function(v) {
     if(this.phase != 'gas') return this.setError('Cannot set specific volume of a solid or liquid');
     if(typeof v === "string") {
       if(Module.caseval("mksa_base(evalf(" + v + "))").trim() != "1_(kg^-1.0*m^3.0)") 
@@ -262,10 +355,10 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
         return this.setError("Input did not evaluate to a real number");
       v = v*1;
     } 
-    this.setP((this.GasConstant * this.getT()) / (this.Mw * v));
-    return this;
+    this.set_P((this.GasConstant * this.getT()) / (this.Mw * v));
+    return "(" + v + ")*(_m^3.0/_kg)";;
   }
-  _.seth = _.setEnthalpy = function(enthalpy) {
+  _.set_h = _.set_enthalpy = function(enthalpy) {
     // To set enthalpy, we hold P constant at current pressure, then vary T until we have an enthalpy equal to the desired value
     // Utilize a newton-raphson iteration to converge on the final value.  Guess is taken as the current setpoint
     var mass_specific = false;
@@ -283,13 +376,13 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
       enthalpy = enthalpy*1;
     } 
     var _this = this;
-    this.setT(this.rootFinder(this.getT(), function(guess) {
-      _this.setT(guess);
+    this.set_T(this.rootFinder(this.getT(), function(guess) {
+      _this.set_T(guess);
       return (_this.enthalpy_i(mass_specific) - enthalpy);
     }));
-    return this;
+    return "(" + enthalpy + (mass_specific ? ")*(_J/_kg)" : ")*(_J/_mol)");
   }
-  _sets = _.setEntropy = function(entropy) {
+  _.set_s = _.set_entropy = function(entropy) {
     // To set entropy, we hold P constant at current pressure, then vary T until we have an entropy equal to the desired value
     // Utilize a newton-raphson iteration to converge on the final value.  Guess is taken as the current setpoint
     var mass_specific = false;
@@ -307,13 +400,13 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
       entropy = entropy*1;
     } 
     var _this = this;
-    this.setT(this.rootFinder(this.getT(), function(guess) {
-      _this.setT(guess);
+    this.set_T(this.rootFinder(this.getT(), function(guess) {
+      _this.set_T(guess);
       return (_this.entropy_i(mass_specific) - entropy);
     }));
-    return this;
+    return "(" + entropy + (mass_specific ? ")*(_J/_kg/_K)" : ")*(_J/_mol/_K)");
   }
-  _.sets_v = _.setEntropy_v = function(entropy) {
+  _.set_s_v = _.set_entropy_v = function(entropy) {
     // To set entropy, we hold v constant at current specific volume, then vary T until we have an entropy equal to the desired value
     // Utilize a newton-raphson iteration to converge on the final value.  Guess is taken as the current setpoint
     var mass_specific = false;
@@ -331,15 +424,15 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
       entropy = entropy*1;
     } 
     var _this = this;
-    this.setT(this.rootFinder(this.getT(), function(guess) {
+    this.set_T(this.rootFinder(this.getT(), function(guess) {
       var curV = _this.specificVolume();
-      _this.setT(guess);
-      _this.setSpecificVolume(curV);
+      _this.set_T(guess);
+      _this.set_SpecificVolume(curV);
       return (_this.entropy_i(mass_specific) - entropy);
     }));
-    return this;
+    return "(" + entropy + (mass_specific ? ")*(_J/_kg/_K)" : ")*(_J/_mol/_K)");
   }
-  _.setu = _.setInternalEnergy = function(energy) {
+  _.set_u = _.set_internalEnergy = function(energy) {
     // To set entropy, we hold v constant at current specific volume, then vary T until we have an energy equal to the desired value
     // Utilize a newton-raphson iteration to converge on the final value.  Guess is taken as the current setpoint
     var mass_specific = false;
@@ -357,35 +450,58 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
       energy = energy*1;
     } 
     var _this = this;
-    this.setT(this.rootFinder(this.getT(), function(guess) {
+    this.set_T(this.rootFinder(this.getT(), function(guess) {
       var curV = _this.specificVolume();
-      _this.setT(guess);
-      _this.setSpecificVolume(curV);
+      _this.set_T(guess);
+      _this.set_SpecificVolume(curV);
       return (_this.internalEnergy_i(mass_specific) - energy);
     }));
-    return this;
+    return "(" + energy + (mass_specific ? ")*(_J/_kg)" : ")*(_J/_mol)");
   }
   // Saturation
-  _.setSaturatedT = function() {
+  _.set_saturatedT = function() {
     this.setError('This fluid does not have saturation properties loaded.');
   }
-  _.setSaturatedP = function() {
+  _.set_saturatedP = function() {
     this.setError('This fluid does not have saturation properties loaded.');
   }
   /*
-   NASA9 polynomials
+   NASA polynomials
   */
   _.calcCp = function(data, T) {
     data = this.getThermoData(data, T);
-    return this.GasConstant * (data[0]/(T^2) + data[1]/T + data[2] + data[3]*T + data[4]*T^2 + data[5]*T^3 + data[6]*T^4);
+    if(data[0]) return this.calcCp9(data[1], T);
+    else return this.calcCp7(data[1], T);
   }
   _.calcEnthalpy = function(data, T) {
     data = this.getThermoData(data, T);
-    return this.GasConstant * T * (-1*data[0]/(T^2) + data[1] * Math.log(T)/T + data[2] + data[3]*T/2 + data[4]*(T^2)/3 + data[5]*(T^3)/4 + data[6]*(T^4)/5 + data[7]/T);
+    if(data[0]) return this.calcEnthalpy9(data[1], T);
+    else return this.calcEnthalpy7(data[1], T);
   }
   _.calcEntropy = function(data, T, P) {
     data = this.getThermoData(data, T);
+    if(data[0]) return this.calcEntropy9(data[1], T);
+    else return this.calcEntropy7(data[1], T);
+  }
+  // NASA 9 (new form)
+  _.calcCp9 = function(data, T) {
+    return this.GasConstant * (data[0]/(T^2) + data[1]/T + data[2] + data[3]*T + data[4]*T^2 + data[5]*T^3 + data[6]*T^4);
+  }
+  _.calcEnthalpy9 = function(data, T) {
+    return this.GasConstant * T * (-1*data[0]/(T^2) + data[1] * Math.log(T)/T + data[2] + data[3]*T/2 + data[4]*(T^2)/3 + data[5]*(T^3)/4 + data[6]*(T^4)/5 + data[7]/T);
+  }
+  _.calcEntropy9 = function(data, T, P) {
     return this.GasConstant * (-1*data[0]/(2*T^2) - data[1]/T + data[2]*Math.log(T) + data[3]*T + data[4]*(T^2)/2 + data[5]*(T^3)/3 + data[6]*(T^4)/4 + data[8]) - this.GasConstant * Math.log(P / 100000);
+  }
+  // NASA 7 (old form)
+  _.calcCp7 = function(data, T) {
+    return this.GasConstant * (((((data.data[4])*T + data.data[3])*T + data.data[2])*T + data.data[1])*T + data.data[0]);
+  }
+  _.calcEnthalpy7 = function(data, T) {
+    return this.GasConstant * T * (data.data[5] / T + ((((data.data[4]/5)*T + data.data[3]/4)*T + data.data[2]/3)*T + data.data[1]/2)*T + data.data[0]);
+  }
+  _.calcEntropy7 = function(data, T) {
+    return this.GasConstant * (data.data[6] + ((((data.data[4]/4)*T + data.data[3]/3)*T + data.data[2]/2)*T + data.data[1])*T + data.data[0]*Math.log(T));
   }
   /*
   Species Thermo Property Getters.  All are mole specific by default
@@ -478,9 +594,9 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
   // J/{kg|mol}
   _.enthalpyFormation298_i = function(mass_specific) {
     var curT = this.getT();
-    this.setT(298.15);
+    this.set_T(298.15);
     var hf298_mole = this.enthalpy_i();
-    this.setT(curT);
+    this.set_T(curT);
     if(mass_specific === true) return (hf298_mole*1000 / this.Mw);
     return hf298_mole;
   }
@@ -555,6 +671,22 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
   // Pa
   _.P = _.pressure = function() {
     return "(" + this.getP() + ")*_Pa";
+  }
+  // Multi-get
+  _.TP = function() {
+    return "[" + this.T + "," + this.P + "]";
+  }
+  _.hP = function() {
+    return "[" + this.h + "," + this.P + "]";
+  }
+  _.sP = function() {
+    return "[" + this.s + "," + this.P + "]";
+  }
+  _.sv = function() {
+    return "[" + this.s + "," + this.v + "]";
+  }
+  _.uv = function() {
+    return "[" + this.u + "," + this.v + "]";
   }
   // Saturation
   _.getTsat = function() {
@@ -822,7 +954,7 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
     Np: 237.0482 ,
     Pu: 244.0482 };
   //TODO: check the reference list and update those that need to point to condensed phases
-  _.referenceSpeciesList = {Ag:{}, Al:{}, Ar:{}, B:{}, Ba:{}, Be:{}, Br:{weight:2, name: 'Br2'}, C:{name:'C_gr', }, Ca:{}, Cd:{}, Cl:{weight:2, name: 'Cl2'}, Co:{}, Cr:{}, Cs:{}, Cu:{}, F:{weight:2, name: 'F2'}, Fe:{}, Ge:{}, H:{weight:2, name: 'H2'}, He:{}, Hg:{}, I:{weight:2, name: 'I2'}, K:{}, Kr:{}, Li:{}, Mg:{}, Mn:{}, Mo:{}, N:{weight:2, name: 'N2'}, Na:{}, Nb:{}, Ne:{}, Ni:{}, O:{weight:2, name: 'O2'}, P:{}, Pb:{}, Rb:{}, S:{}, Si:{}, Sn:{}, Sr:{}, Ta:{}, Th:{}, Ti:{}, U:{}, V:{}, W:{}, Xe:{}, Zn:{}, Zr:{}};
+  _.referenceSpeciesList = {Ag:{}, Al:{}, Ar:{}, B:{}, Ba:{}, Be:{}, Br:{weight:2, name: 'Br2'}, C:{name:'C(gr)', }, Ca:{}, Cd:{}, Cl:{weight:2, name: 'Cl2'}, Co:{}, Cr:{}, Cs:{}, Cu:{}, E:{}, F:{weight:2, name: 'F2'}, Fe:{}, Ge:{}, H:{weight:2, name: 'H2'}, He:{}, Hg:{}, I:{weight:2, name: 'I2'}, K:{}, Kr:{}, Li:{}, Mg:{}, Mn:{}, Mo:{}, N:{weight:2, name: 'N2'}, Na:{}, Nb:{}, Ne:{}, Ni:{}, O:{weight:2, name: 'O2'}, P:{}, Pb:{}, Rb:{}, S:{}, Si:{}, Sn:{}, Sr:{}, Ta:{}, Ti:{}, U:{}, V:{}, W:{}, Xe:{}, Zn:{}, Zr:{}};
   // Universal Gas Constant. [J/kmol/K]
   _.GasConstant = 8314.4621;
 
@@ -846,9 +978,9 @@ var setMaterial = function(data) {
             H: 2
           },
           polynomials: [
-            {start: 200, end: 1000, parameters: [  2.344331120E+00,   7.980520750E-03, 
+            {start: 200, end: 1000, parameters: [false, [  2.344331120E+00,   7.980520750E-03, 
                      -1.947815100E-05,   2.015720940E-08,  -7.376117610E-12,
-                     -9.179351730E+02,   6.830102380E-01, 0, 0]}
+                     -9.179351730E+02,   6.830102380E-01, 0, 0]]}
           ],
           transportNO: {
             viscosity: {start: 100, end: 100, parameters: [1,2,3,4]},

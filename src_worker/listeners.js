@@ -36,7 +36,7 @@ var eval_method = function(method_name, inputs) {
     if(typeof out === 'function') {
       out = constants[ob][method](inputs);
       if(constants[ob].error !== false) return "ERROR: " + constants[ob].error + ". ";
-    } else if(method.substr(0,3) == "set") return "ERROR: '" + ob + "' does not allow property '" + method.replace("set","") + "' to be set in this way. ";
+    } else if(method.substr(0,4) == "set_") return "ERROR: '" + ob + "' does not allow property '" + method.replace("set_","") + "' to be set in this way. ";
     else return "ERROR: '" + ob + "' does not contain a method called '" + method + "'. ";
   } else 
     return "ERROR: '" + ob + "' is not an object (material, fluid, etc).  Please define '" + ob + "' before setting its parameters. ";
