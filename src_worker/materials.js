@@ -229,13 +229,13 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
   }
   // NASA 9 (new form)
   _.calcCp9 = function(data, T) {
-    return this.mixture.GasConstant * (data[0]/(T**2) + data[1]/T + data[2] + data[3]*T + data[4]*T**2 + data[5]*T**3 + data[6]*T**4);
+    return this.mixture.GasConstant * (data[0]/(Math.pow(T,2)) + data[1]/T + data[2] + data[3]*T + data[4]*Math.pow(T,2) + data[5]*Math.pow(T,3) + data[6]*Math.pow(T,4));
   }
   _.calcEnthalpy9 = function(data, T) {
-    return this.mixture.GasConstant * T * (-1*data[0]/(T**2) + data[1] * Math.log(T)/T + data[2] + data[3]*T/2 + data[4]*(T**2)/3 + data[5]*(T**3)/4 + data[6]*(T**4)/5 + data[7]/T);
+    return this.mixture.GasConstant * T * (-1*data[0]/(Math.pow(T,2)) + data[1] * Math.log(T)/T + data[2] + data[3]*T/2 + data[4]*(Math.pow(T,2))/3 + data[5]*(Math.pow(T,3))/4 + data[6]*(Math.pow(T,4))/5 + data[7]/T);
   }
   _.calcEntropy9 = function(data, T, P) {
-    return this.mixture.GasConstant * (-1*data[0]/(2*T**2) - data[1]/T + data[2]*Math.log(T) + data[3]*T + data[4]*(T**2)/2 + data[5]*(T**3)/3 + data[6]*(T**4)/4 + data[8]) - this.mixture.GasConstant * Math.log(P / 100000);
+    return this.mixture.GasConstant * (-1*data[0]/(2*Math.pow(T,2)) - data[1]/T + data[2]*Math.log(T) + data[3]*T + data[4]*(Math.pow(T,2))/2 + data[5]*(Math.pow(T,3))/3 + data[6]*(Math.pow(T,4))/4 + data[8]) - this.mixture.GasConstant * Math.log(P / 100000);
   }
   // NASA 7 (old form)
   _.calcCp7 = function(data, T) {
