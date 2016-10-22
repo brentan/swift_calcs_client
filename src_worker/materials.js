@@ -166,6 +166,8 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
 
     //thermo data
     this.thermo_data = data.polynomials;
+    this.minT = this.thermo_data[0].start;
+    this.maxT = this.thermo_data[this.thermo_data.length-1].end;
     this.phase = data.phase;
     if((this.phase != 'gas') && (typeof data.density === 'function'))
       this.density_i = function() { return data.density };
@@ -423,6 +425,8 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   _.Mw = 0;
   _.transport = false;
   _.title = 'Mixture';
+  _.minT = 0;
+  _.maxT = 200000000;
 
   _.init = function(data, var_name) {
     this.var_name = var_name;
@@ -482,6 +486,8 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       species.mass_i = (species.moles_i * species.Mw)/1000;
       this.moles_i += species.moles_i;
       this.mass_i += species.mass_i;
+      this.minT = Math.max(this.minT, species.minT);
+      this.maxT = Math.min(this.maxT, species.maxT);
       this.species.push(species);
     }
     this.Mw = 0; // Find mixture mW
@@ -1085,9 +1091,10 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     if(options.relative_tolerance === undefined) options.relative_tolerance = 1e-6;
     if(options.absolute_tolerance === undefined) options.absolute_tolerance = 1e-6;
     if(options.maximum_iterations === undefined) options.maximum_iterations = 100;
-    if(options.minimum_x === undefined) options.minimum_x = 1;
-    if(options.maximum_x === undefined) options.maximum_x = 20000;
+    if(options.minimum_x === undefined) options.minimum_x = this.minT;
+    if(options.maximum_x === undefined) options.maximum_x = this.maxT;
     if(options.parameter_name === undefined) options.parameter_name = 'temperatures';
+    if(options.parameter_unit === undefined) options.parameter_unit = ' K';
     // Initialize solver
     var a = options.minimum_x;
     var fa = func(options.minimum_x);
@@ -1095,7 +1102,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     var fb = func(options.maximum_x);
     var count = 0
     if((fa*fb) >= 0) {
-      this.setError('Solution is outside the bounds of allowable ' + options.parameter_name + ': ' + options.minimum_x + ' to ' + options.maximum_x);
+      this.setError('Solution is outside the bounds of ' + options.parameter_name + ' for which data is available (' + options.minimum_x + options.parameter_unit + ' to ' + options.maximum_x + options.parameter_unit + ')');
       return guess;
     }
     var mflag = true;
