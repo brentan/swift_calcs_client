@@ -1,86 +1,67 @@
-/*
-Holder for all material types.  Should never be directly created, simply a parent class for all items in materials folder
+/* 
+Parent for all material types.  Includes holder and loading box
 */
-var material_selector = P(Element, function(_, super_) {
-  _.klass = ['material','material_selector','hide_print'];
+var material_holder = P(EditableBlock, function(_, super_) {
+  _.klass = ['material','material_holder'];
   _.needsEvaluation = false; 
-  _.evaluatable = false;
-  _.fullEvaluation = false; 
-  _.scoped = false;
+  _.evaluatable = true;
+  _.fullEvaluation = true; 
+  _.scoped = true;
   _.lineNumber = true;
-  _.open_box = false;
+  _.data_type = false;
+  _.data = false;
+  _.string_data = false;
+  _.name = false;
+  _.full_name = false;
   _.special_footer = '';
+  _.savedProperties = ['string_data', 'name', 'data_type', 'full_name'];
+  _.last_name = "";
+  _.blank_message = "";
+  _.ignore_blur_eval = false;
+  _.min_search_length = 3;
 
   _.innerHtml = function() {
-    return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_name') + '<span class="equality">&#8801;</span>' + focusableHTML('CodeBlock', this.name) + '<span class="explain"></span><span class="select_span"><a class="button" style="display:inline;padding:3px 5px;font-size:11px;">Choose Material</a></span>' + helpBlock() + "</div>";
+    return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_name') + '<span class="equality">&#8801;</span>' + focusableHTML('CodeBlock', this.class_name) + '<span class="material_name">No ' + this.blank_message + ' Specified</span><span class="' + css_prefix + 'hide_print explain">&nbsp;&nbsp;&nbsp;<a class="change" style="cursor: pointer;">Change</a></span>' + helpBlock() + '</div>' + answerSpan();
   }
   _.postInsertHandler = function() {
+    this.setFocusableItems();
+    super_.postInsertHandler.call(this);
+    if(this.string_data !== false) {
+      this.setData(this.name, this.full_name, this.string_data, this.data_type);
+      this.genCommand();
+      this.needsEvaluation = this.varStoreField.empty() ? false : true;
+    }
+    this.jQ.find("a.change").on("click", function(_this) { return function() {
+      _this.loadOptions();
+    } }(this));
+    if(this.name === false)
+      this.loadOptions();
+    return this;
+  }
+  _.setFocusableItems = function() {
     this.varStoreField = registerFocusable(MathQuill, this, 'var_name', { ghost: 'variable name', noWidth: true, handlers: {
       enter: this.enterPressed(this),
       blur: this.submissionHandler(this)
     }});
-    this.codeBlock = registerFocusable(CodeBlock, this, this.name, { });
+    this.varStoreField.disableAutoUnit(true);
+    this.codeBlock = registerFocusable(CodeBlock, this, this.class_name, { });
     this.focusableItems = [[this.varStoreField, this.codeBlock]];
-    super_.postInsertHandler.call(this);
-    this.jQ.find('a.button').on('click', function(_this) { return function() { _this.loadOptions(); }; }(this));
-    this.loadOptions();
-    return this;
   }
-  _.enterPressed = function(_this) {
-    return function(mathField) {
-      mathField.blur();
-    };
+  _.preRemoveHandler = function() {
+    // Since this is an object, we need to unset whenever we remove the element from the tree
+    super_.preRemoveHandler.call(this);
+    if(this.last_name != "") {
+      giac.sendCommand({destroyConstant: this.last_name});
+      this.last_name = "";
+    }
   }
-  _.storeAsVariable = function(var_name) {
-    if(var_name) 
-      this.varStoreField.paste(var_name.replace(/_(.*)/,"_{$1}"));
-    else
-      this.varStoreField.clear().focus(1).moveToLeftEnd().write("latex{ans_{" + this.uniqueAnsId() + "}}").closePopup().keystroke('Shift-Home', { preventDefault: function() { } });
-  }
-  _.submissionHandler = function(_this) {
-    return function(mathField) {
-      if(mathField === _this.select_box) {
-        var val = _this.select_box.text();
-        if(val.trim() === '') return;
-        val = val * 1;
-        _this.jQ.find('.explain').append("<span>" + _this.select_box.getSelectedText() + "<i class='fa fa-fw fa-arrow-right'></i></span>");
-        if(val > 0) {
-          _this.loadOptions(val);
-        } else {
-          // Item has been selected!
-          _this.blur();
-          _this.loading = true;
-          _this.focusableItems = [[_this.varStoreField, _this.codeBlock]];
-          if(_this.jQ) {
-            _this.jQ.find(".select_span").hide();
-            _this.jQ.find(".fa-spinner").show();
-          }
-          window.silentRequest('/get_material', { id: (-1*val) }, function(_this) {
-            return function(response) {
-              var mat = _this.selected_class().insertAfter(_this);
-              mat.setData(response.name, response.full_name, response.data, _this.data_type);
-              mat.show(0).focus(0);
-              mat.varStoreField.write(_this.varStoreField.latex());
-              _this.remove(0);
-            }
-          }(_this), function(_this) {
-            return function () {
-              _this.loading = false;
-              _this.focusableItems = [[_this.varStoreField, _this.codeBlock, _this.select_box]];
-              if(_this.jQ) {
-                _this.jQ.find(".select_span").show();
-                _this.jQ.find(".fa-spinner").hide();
-              }
-            }
-          }(_this));
-        }
-      }
-    };
-  }
+
   _.loadOptions = function(parent_id) {
+    this.ignore_blur_eval = true;
     this.blur();
+    this.ignore_blur_eval = false;
     window.showPopupOnTop();
-    $('.popup_dialog .full').html("<div class='select_material'><div class='input_box'><input type='text'></div><div class='title'>" + this.blank_message + "</div><div class='search'><i class='fa fa-search'></i><div class='input'><input type='text' placeholder='Search'></div><i class='fa fa-times-circle'></i></div><div class='list_content'></div></div>");
+    $('.popup_dialog .full').html("<div class='select_material'><div class='input_box'><input type='text'></div><div class='title'>Choose a " + this.blank_message + "</div><div class='search'><i class='fa fa-search'></i><div class='input'><input type='text' placeholder='Search'></div><i class='fa fa-times-circle'></i></div><div class='list_content'></div></div>");
     var $list_content_td = $('.popup_dialog .full div.list_content');
     var $autocomplete = $('.popup_dialog .full').find('input').eq(1);
     var $input = $('.popup_dialog .full').find('input').eq(0);
@@ -100,11 +81,8 @@ var material_selector = P(Element, function(_, super_) {
       window.silentRequest('/get_material', { id: val.attr('data-id') }, function(response) {
           $('.popup_dialog .full').html("");
           window.hidePopupOnTop();
-          var mat = _this.selected_class().insertAfter(_this);
-          mat.setData(response.name, response.full_name, response.data, _this.data_type);
-          mat.show(0).focus(0);
-          mat.varStoreField.write(_this.varStoreField.latex());
-          _this.remove(0);
+          _this.setData(response.name, response.full_name, response.data, _this.data_type);
+          _this.show(0).focus(0);
         }, function () {
           $('.popup_dialog .full').html("");
           window.hidePopupOnTop();
@@ -177,7 +155,7 @@ var material_selector = P(Element, function(_, super_) {
       lastRequest = search;
       if(search == '') // blank, reload initial material listing
         return load();
-      if(search.length <= 2) {
+      if(search.length < _this.min_search_length) {
         if(curloading) $list_content_td.html("");
         return showNotice('Please enter a search phrase of at least 3 characters');
       }
@@ -268,66 +246,20 @@ var material_selector = P(Element, function(_, super_) {
     load(parent_id);
   }
 
-  _.toString = function() {
-    return '';
-  }
-});
-
-
-var material_holder = P(Element, function(_, super_) {
-  _.klass = ['material','material_holder'];
-  _.needsEvaluation = false; 
-  _.evaluatable = true;
-  _.fullEvaluation = true; 
-  _.scoped = true;
-  _.lineNumber = true;
-  _.data_type = false;
-  _.data = false;
-  _.string_data = false;
-  _.name = false;
-  _.full_name = false;
-  _.savedProperties = ['string_data', 'name', 'data_type', 'full_name'];
-  _.last_name = "";
-
-  _.innerHtml = function() {
-    return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_name') + '<span class="equality">&#8801;</span>' + focusableHTML('CodeBlock', this.name) + '<span class="material_name"></span><span class="' + css_prefix + 'hide_print explain">&nbsp;&nbsp;&nbsp;<a class="change" style="cursor: pointer;">Change</a></span>' + helpBlock() + '</div>' + answerSpan();
-  }
-  _.postInsertHandler = function() {
-    this.varStoreField = registerFocusable(MathQuill, this, 'var_name', { ghost: 'variable name', noWidth: true, handlers: {
-      enter: this.enterPressed(this),
-      blur: this.submissionHandler(this)
-    }});
-    this.varStoreField.disableAutoUnit(true);
-    this.codeBlock = registerFocusable(CodeBlock, this, this.name, { });
-    this.focusableItems = [[this.varStoreField, this.codeBlock]];
-    super_.postInsertHandler.call(this);
-    if(this.string_data !== false) {
-      this.setData(this.name, this.full_name, this.string_data, this.data_type);
-      this.genCommand();
-      this.needsEvaluation = this.varStoreField.empty() ? false : true;
-    }
-    this.jQ.find("a.change").on("click", function(_this) { return function() {
-      var mat = SwiftCalcs.elements[_this.selecting_class]().insertAfter(_this);
-      mat.show(0).focus(0);
-      mat.varStoreField.write(_this.varStoreField.latex());
-      _this.remove(0);
-    } }(this));
-    return this;
-  }
-  _.preRemoveHandler = function() {
-    // Since this is an object, we need to unset whenever we remove the element from the tree
-    super_.preRemoveHandler.call(this);
-    if(this.last_name != "") {
-      giac.sendCommand({destroyConstant: this.last_name});
-      this.last_name = "";
-    }
-  }
   _.setData = function(name, full_name, data, data_type) {
+    var re_eval = (this.name !== false);
     this.jQ.find('.material_name').html(full_name);
     this.full_name = full_name;
     this.name = name;
     this.data_type = data_type;
     this.convertData(data);
+    if(re_eval) {
+      if(this.last_name != "") 
+        giac.sendCommand({destroyConstant: this.last_name});
+      this.last_name = "";
+      this.needsEvaluation = true;
+      this.submissionHandler(this)();
+    }
   }
   _.enterPressed = function(_this) {
     return function(item) {
@@ -340,6 +272,7 @@ var material_holder = P(Element, function(_, super_) {
   }
   _.submissionHandler = function(_this) {
     return function(mathField) {
+      if(_this.ignore_blur_eval) return;
       if(_this.needsEvaluation) {     
         _this.genCommand();
         _this.evaluate();
@@ -351,6 +284,7 @@ var material_holder = P(Element, function(_, super_) {
     this.commands = [{command: "1", setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: this.data, last_name: this.last_name} }];    
   }
   _.shouldBeEvaluated = function(evaluation_id) {
+    if(this.string_data === false) return false;
     if(super_.shouldBeEvaluated.call(this, evaluation_id))
       return (this.varStoreField.text() != this.last_name)
     return false;
@@ -358,7 +292,7 @@ var material_holder = P(Element, function(_, super_) {
   _.evaluationFinished = function(result) {
     if(result[0].success) {
       this.outputBox.clearState().collapse(true);
-      this.last_name = this.varStoreField.text();
+      this.last_name = this.varStoreField.text().trim();
     } else {
       this.outputBox.setError(result[0].returned).expand(true);
     }
@@ -368,6 +302,7 @@ var material_holder = P(Element, function(_, super_) {
   _.convertData = function(data) {
     if(typeof data === "string") {
       this.data = JSON.parse(data.replace(/\|/g,','));
+      this.string_data = data;
       return false;
     } else {
       this.data = data;

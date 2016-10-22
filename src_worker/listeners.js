@@ -363,9 +363,9 @@ var Module = {
       return Module.caseval_direct(text);
   },
   casevalWithTimeout: function(text) {
-    try {
+    //try {
       return Module.caseval(text);
-    } catch(e) {
+    /*} catch(e) {
       if(e.message)
         errors[ii] = fix_message(e.message);
       else
