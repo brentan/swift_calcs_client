@@ -10,6 +10,7 @@ $(function() {
       {left: 'fa-line-chart', text: 'Plot Function', el: 'plot'},
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
       {left: 'fa-book', text: 'Material Library', el: 'material'},
+      {left: 'fa-book', text: 'Ideal Mixtures', el: 'mixture'},
       {left: 'fa-table', text: 'Table', vaporware: true},
       {left: 'fa-paint-brush', text: 'Drawing', vaporware: true},
       {left: 'test', text: 'Program Function', el: 'function', vaporware: true}
