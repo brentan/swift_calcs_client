@@ -2,6 +2,7 @@
 //BRENTAN: Add support for fluids and gases
 var SwiftCalcsObject = P(function(_) {
   _.error = false;
+  _.warn  = false;
   // Set methodList and propertyList in init (can't define on a classwide basis here)
   /*
   Error handling
@@ -10,8 +11,13 @@ var SwiftCalcsObject = P(function(_) {
     this.error = error;
     return this;
   }
+  _.setWarning = function(warn) {
+    this.warn = warn;
+    return this;
+  }
   _.clearState = function() {
     this.error = false;
+    this.warn = false;
   }
   _.clone = function() {
     return this;
@@ -360,7 +366,7 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
   // Density (ideal gas - other phases overwrite this in init), [kg/m^3]
   _.density_i = function() {
     if(this.phase != 'gas')
-      this.setError('Species is a condensed phase and density was not loaded.');
+      this.setError('Species is a condensed phase and no density data was found.');
     return (this.getP() * this.Mw) / (this.mixture.GasConstant * this.getT());
   }
   // [m^3 / kg]
@@ -402,7 +408,10 @@ var IdealSpecies = P(SwiftCalcsObject, function(_, super_) {
     return data[data.length - 1].parameters;
   }
   _.setError = function(err) {
-    return this.mixture.setError(err);
+    return this.mixture.setError(this.name + ": " + err);
+  }
+  _.setWarning = function(wr) {
+    return this.mixture.setWarning(this.name + ": " + wr);
   }
 
 });
@@ -610,12 +619,16 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // Single
   _.set_T = _.set_temperature = function(temperature) {
+    var checkTemp = false;
     if(typeof temperature === "string") {
       if(Module.caseval("mksa_base(evalf(" + temperature + "))").trim() != "1_K") 
         return this.setError("Incompatible Units.  Expecting Temperature units (Kelvin)");
+      checkTemp = true;
     } else
       temperature = temperature + "_K";
     Module.caseval(this.var_name + seperator + "T__in:=" + temperature);
+    if(checkTemp)
+      this.checkTemperature();
     return temperature;
   }
   _.set_P = _.set_pressure = function(pressure) {
@@ -822,6 +835,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   */
   // J/K{kg|mol}
   _.Cv_i = function(mass_specific) {
+    this.checkTemperature();
     return this.commandSpeciesByMole('Cv_i', mass_specific);
   }
   _.Cv = function() {
@@ -832,6 +846,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // J/K{kg|mol}
   _.Cp_i = function(mass_specific) { 
+    this.checkTemperature();
     return this.commandSpeciesByMole('Cp_i', mass_specific);
   }
   _.Cp = function() {
@@ -845,6 +860,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // J/{kg|mol}
   _.enthalpy_i = function(mass_specific) { 
+    this.checkTemperature();
     return this.commandSpeciesByMole('enthalpy_i', mass_specific);
   }
   _.h = _.enthalpy = function() {
@@ -858,6 +874,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // J/K{kg|mol}
   _.entropy_i = function(mass_specific) { 
+    this.checkTemperature();
     return this.commandSpeciesByMole('entropy_i', mass_specific);
   }
   _.s = _.entropy = function() {
@@ -871,6 +888,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // J/{kg|mol}
   _.internalEnergy_i = function(mass_specific) {
+    this.checkTemperature();
     return this.commandSpeciesByMole('internalEnergy_i', mass_specific);
   }
   _.u = _.internalEnergy = function() {
@@ -884,6 +902,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // J/{kg|mol}
   _.gibbs_i = function(mass_specific) {
+    this.checkTemperature();
     return this.commandSpeciesByMole('gibbs_i', mass_specific);
   }
   _.g = _.gibbs = function() {
@@ -930,6 +949,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // J/{kg|mol}
   _.enthalpyFormation_i = function(mass_specific) {
+    this.checkTemperature();
     return this.commandSpeciesByMole('enthalpyFormation_i', mass_specific);
   }
   _.hF = _.enthalpyFormation = function() {
@@ -943,6 +963,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // J/{kg|mol}
   _.gibbsFormation_i = function(mass_specific) {
+    this.checkTemperature();
     return this.commandSpeciesByMole('gibbsFormation_i', mass_specific);
   }
   _.gF = _.gibbsFormation = function() {
@@ -1169,6 +1190,12 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       }
     }
     return s;
+  }
+
+  _.checkTemperature = function(temperature) {
+    if(typeof temperature === 'undefined') temperature = this.getT();
+    if((temperature > this.maxT) || (temperature < this.minT))
+      this.setWarning('Result may be erroneous: mixture temperature (' + this.getT() + ' K) is outside the range for which data is valid (' + this.minT + ' K to ' + this.maxT + ' K)');
   }
 
   /*
