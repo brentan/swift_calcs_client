@@ -1,6 +1,7 @@
 var constants = {};
 var user_vars = {};
 var timeout_length = 20;
+var digits = 9;
 var restart_string = "complex_mode:=1;angle_radian:=1;"
 // Helper to bind a new object into the constant hash
 var newConstant = function(name, ob) {

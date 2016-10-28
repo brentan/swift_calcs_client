@@ -13,6 +13,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 	_.pre_command = false;
 	_.nomarkup = false;
 	_.answerLatex = '';
+	_.digits = 0;
 	// Output mode has three values: 0 is auto, 1 is force hide, 2 is force show
 	_.outputMode = 0
 
@@ -38,7 +39,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
     	}
 		}
 
-		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, simplify: (this.factor_expand === 'expand' ? 'expand' : false), nomarkup: this.nomarkup}];
+		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, digits: this.digits, simplify: (this.factor_expand === 'expand' ? 'expand' : false), nomarkup: this.nomarkup}];
 		if(this.pre_command)
 			to_send.pre_command = this.pre_command;
 		return to_send;
@@ -131,6 +132,13 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 									//menu.append('<div class="pulldown_item" data-action="toggleSimplify"><i class="fa fa-toggle-' + simplify + ' fa-fw"></i>&nbsp; Simplify</div>');
 								}
 							}
+							if(this.digits == 0) {
+								// Use default precision
+									menu.append('<div class="pulldown_item" data-action="setDigits">Change precision (current: default)</div>');
+							} else {
+								// Use custom precision
+									menu.append('<div class="pulldown_item" data-action="setDigits">Change precision (current: ' + this.digits + ' digit' + (this.digits > 1 ? 's' : '') + ')</div>');
+							}
 						}
 					}
 				}
@@ -215,6 +223,34 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		if(this.factor_expand == 'simplify') this.factor_expand = false;
 		else this.factor_expand = 'simplify';
 		this.needsEvaluation = true;
+		this.submissionHandler(this)();
+	}
+	_.setDigits = function() {
+		var digits = prompt("Enter the number of significant digits to use for this result (delete to return to default value)", (this.digits > 0 ? this.digits+"" : ""));
+		if(digits == null) return;
+		if(digits.trim() == '') {
+			this.digits = 0;
+			this.needsEvaluation = true;
+			this.submissionHandler(this)();
+			return;
+		} 
+		if(!digits.match(/^[0-9]+$/)) {
+			showNotice("Invalid Entry: Please enter an integer from 1 to 14", "red");
+			return;
+		}
+		digits = digits * 1;
+		if(digits < 1) {
+			showNotice("Invalid Entry: Please enter an integer from 1 to 14", "red");
+			return;
+		}
+		if(digits > 14) {
+			showNotice("Invalid Entry: Please enter an integer from 1 to 14", "red");
+			return;
+		}
+		this.digits = digits;
+		this.needsEvaluation = true;
+    this.approx_set = true;
+		this.approx = true;
 		this.submissionHandler(this)();
 	}
 	_.mouseUp = function(e) {

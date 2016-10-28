@@ -1272,6 +1272,7 @@ var Element = P(function(_) {
   		arg_list.push('factor_expand: ' + this.factor_expand);
   		arg_list.push('outputMode: ' + this.outputMode);
   		arg_list.push('approx_set: ' + this.approx_set);
+  		arg_list.push('digits: ' + this.digits);
   	}
   	if(this instanceof SettableMathOutput) 
   		arg_list.push('scoped: ' + this.scoped);

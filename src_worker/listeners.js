@@ -73,7 +73,8 @@ var receiveMessage = function(command) {
     return Module.caseval('timeout ' + timeout_length);
   }
   if(command.restart_string) {
-    restart_string = command.restart_string;
+    digits = command.digits;
+    restart_string = "DIGITS:=" + command.digits + ";" + command.restart_string;
   }
   if(command.set_units) {
     Module.caseval('clear_usual_units()');
@@ -231,6 +232,8 @@ var receiveMessage = function(command) {
     if(!command.commands[ii].nomarkup) {
       // Nomarkup is a flag that ensures we dont add any simplification, latex output commands, or other commands to the input.  This section is run if nomarkup is FALSE
       // if to_send has units associated with it, we attempt to convert to that unit.  On failure, we revert to auto unit handling
+      var latex_command = 'latex(';
+      var end_command = ')';
       if(to_send.match(/(==|>|<|!=|<=|>=)/))
         var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : '';
       else
@@ -239,12 +242,14 @@ var receiveMessage = function(command) {
         simplify_command = simplify_command + '(usimplify_base';
       else
         simplify_command = '(';
-      if(command.commands[ii].approx)
+      if(command.commands[ii].approx) {
         simplify_command = 'evalf((';
-      else
+      } else
         simplify_command = '(' + simplify_command;
+      if(command.commands[ii].digits > 0) 
+        Module.caseval("DIGITS:=" + command.commands[ii].digits + ";");        
       if(command.commands[ii].unit) { // If provided, this is a 2 element array.  The first is the unit in evaluatable text, the second is an HTML representation
-        output.push({ success: true, returned: Module.casevalWithTimeout('latex(ufactor(' + simplify_command + '(' + to_send + ')),' + command.commands[ii].unit[0] + ')))') });
+        output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + 'ufactor(' + simplify_command + '(' + to_send + '))),' + command.commands[ii].unit[0] + ')' + end_command) });
         /*if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
           // Perhaps the auto-unit conversion messed this up...remove it
           // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...
@@ -255,13 +260,15 @@ var receiveMessage = function(command) {
             warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit[1]);  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
         } */
       } else 
-        output.push({ success: true, returned: Module.casevalWithTimeout('latex(usimplify(' + simplify_command + '(' + to_send + ')))))') });
+        output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + 'usimplify(' + simplify_command + '(' + to_send + '))))' + end_command) });
       // If evaluation resulted in an error, drop all of our additions (simplify, etc) and make sure that wasn't the problem
       var test_output = testError(output[ii],ii, to_send);
 			if(!test_output.success)
-				output[ii] = { success: true, returned: Module.casevalWithTimeout('latex(' + to_send + ')') }
-      // Change 1e-4 scientific notation to latex form
-      output[ii].returned = output[ii].returned.replace(/([0-9\.]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
+				output[ii] = { success: true, returned: Module.casevalWithTimeout(latex_command + to_send + end_command) }
+      if(command.commands[ii].digits > 0) 
+        Module.caseval("DIGITS:=" + digits + ";");   
+      // Change 1e-4 scientific notation to latex form: SHOULD BE DONE IN GIAC NOW??
+      // output[ii].returned = output[ii].returned.replace(/([0-9\.]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
     } else {
       // NO MARKUP command
       output.push({ success: true, returned: Module.casevalWithTimeout(to_send) });
