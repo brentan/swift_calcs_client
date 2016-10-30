@@ -35,7 +35,7 @@ var fusion = P(Element, function(_, super_) {
 			}
 			_this.varList["new+"]="Create new user parameter";
 			_this.vars_loaded = true;
-			_this.jQ.find('div.sync').html('<a href="#" onclick="window.open(\'fusion360://command=insert&file=na&privateInfo=SwiftCalcs_SC_load_SC_' + response.id + '_SC_' + response.docId + '_SC_\' + Math.floor(Math.random() * (1000000001)),\'_blank\');$(this).addClass(\'grey\');return false;" class="button grey">Sync to Fusion 360</a> <span class="explain">Make sure Fusion 360 is open on your machine</span>')
+			_this.jQ.find('div.sync').html('<a href="#" onclick="window.open(\'fusion360://command=insert&file=na&privateInfo=SwiftCalcs_SC_load_SC_' + response.id + '_SC_' + response.docId + '_SC_\' + Math.floor(Math.random() * (1000000001)),\'_blank\');$(this).addClass(\'grey\');return false;" class="button grey">Sync to Fusion 360</a> <span class="explain">Please ensure Fusion 360 is open on your machine</span>')
 			var children = _this.children();
 			for(var i = 0; i < children.length; i++)
 				if(children[i] instanceof choose_fusion_var) children[i].loadVars(_this.varList);
@@ -200,11 +200,11 @@ var fusion_var = P(MathOutput, function(_, super_) {
 				var finish_unit = result[1].returned.trim() == "1_m" ? " m" : "";
 				var to_store = result[2].returned.trim();
 				if(!to_store.match(/^\-? *[0-9]*(\.[0-9]*)?$/i) && !to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *(e|E) *(\-|\+)? *[0-9]*(\.[0-9]*)?$/i))
-					result[0] = {success: false, returned: 'Invalid Value: ' + to_store + '.  Answer must be numeric.'};
+					result[0] = {success: false, returned: 'Invalid Value (' + to_store.replace(/_/g,'') + '):  Answer must be numeric.'};
 				else
 					this.var_value = to_store + finish_unit;
 			} else
-				result[0] = {success: false, returned: 'Invalid Units: ' + result[1].returned.replace(/_/g,' ').replace(/^1/,'') + '.  Only units of length are allowed.'};
+				result[0] = {success: false, returned: 'Invalid Units ' + result[1].returned.replace(/_/g,' ').replace(/^1/,'') + ':  Only units of length are allowed.'};
 		}
 		super_.evaluationFinished.call(this, result);
 		return true;
