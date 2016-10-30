@@ -90,7 +90,7 @@ var connectOnshape_3 = P(Element, function(_, super_) {
 	}
 	_.ajaxCallback = function(success, response) {
 		if(success) {
-			if(response.var_list.length == 0) {
+			if(this.get && (response.var_list.length == 0)) {
 				if(this[L]) this[L].focus(L);
 				else if(this[R]) this[R].focus(L);
 				showNotice('This part has no variables.  Create a variable in the part and try again.','red');
