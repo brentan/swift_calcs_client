@@ -160,11 +160,11 @@ var Worksheet = P(function(_) {
       }
 		}
     if(this.onshape_did) {
-      var els = $('<div/>').html('<strong>Document Linked to Onshape</strong>?  <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Onshape file</a>.');
+      var els = $('<div/>').html('Document Linked to Onshape - <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Onshape file</a>.');
       var div = $('<div/>').addClass('top_share').append(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
     }
     /*if(this.fusion_id) {
-      var els = $('<div/>').html('<strong>Document Linked to Fusion 360</strong>?  <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Fusion 360 file</a> (requires Fusion 360 to be installed).');
+      var els = $('<div/>').html('Document Linked to Fusion 360 - <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Fusion 360 file</a> (requires Fusion 360 to be installed).');
       var div = $('<div/>').addClass('top_share').append(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
     }*/
 	}

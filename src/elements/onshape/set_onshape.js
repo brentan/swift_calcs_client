@@ -83,29 +83,37 @@ var setOnshapeVariable = P(MathOutput, function(_, super_) {
 	_.changed = function(el) {
 		this.needsEvaluation = true;
 	}
+
+	_.genCommand = function(to_compute) {
+		var out = super_.genCommand.call(this, to_compute);
+		out.push({command: "mksa_base(evalf(" + to_compute + "))", nomarkup: true});
+		out.push({command: "default_units(evalf(" + to_compute + "))", nomarkup: true});
+		return out;
+	}
 	// Hijack the evaluation chain and set the variable in Onshape
 	_.evaluationFinished = function(result) {
-		if(result[0].success) {
-			var to_store = result[1].returned.trim().replace(/_/g,' ').replace(/  /g,' ');
-			if(!to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *[a-z]*$/i))
-				result[0] = {success: false, returned: 'Invalid Value: ' + to_store + '.  Answer must be numeric, and only units of length are allowed.'};
-			else {
-				this.jQ.find('.to_store').show();
-				window.ajaxRequest("/onshape/set_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id, name: this.var_name, value: to_store}, function(_this) { return function(response) { 
-					_this.jQ.find('.to_store').hide();
-					if(!response.true_success) {
-						if(response.message.indexOf("400")>=0)
-							_this.setError('Invalid Value: ' + to_store + '.  Answer must be numeric, and only units of length are allowed.  Ensure variable still exists in Onshape.')
-						else
-						_this.setError(response.message);
-					}
-				}}(this), function(_this) { return function(response) { 
-					_this.jQ.find('.to_store').hide();
-					_this.setError(response.message)
-				}});
-			}
+		if(result[1].success && result[2].success) {
+			if((result[1].returned.trim() == "1_m") || (result[1].returned.trim() == "1")) {
+				var to_store = result[2].returned.trim().replace(/_/g,' ');
+				if(!to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *[a-z]*$/i) && !to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *(e|E) *(\-|\+)? *[0-9]*(\.[0-9]*)? *[a-z]*$/i))
+					result[0] = {success: false, returned: 'Invalid Value (' + to_store.replace(/_/g,'') + '):  Answer must be numeric.'};
+				else {
+					this.jQ.find('.to_store').show();
+					window.ajaxRequest("/onshape/set_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id, name: this.var_name, value: to_store}, function(_this) { return function(response) { 
+						_this.jQ.find('.to_store').hide();
+						if(!response.true_success) {
+							if(response.message.indexOf("400")>=0)
+								_this.setError('Invalid Value: ' + to_store + '.  Answer must be numeric, and only units of length are allowed.  Ensure variable still exists in Onshape.')
+							else
+							_this.setError(response.message);
+						}
+					}}(this), function(_this) { return function(response) { 
+						_this.jQ.find('.to_store').hide();
+						_this.setError(response.message)
+					}});
+				}
+			} else
+				result[0] = {success: false, returned: 'Invalid Units ' + result[1].returned.replace(/_/g,' ').replace(/^1/,'') + ':  Only units of length are allowed.'};
 		}
-		super_.evaluationFinished.call(this, result);
-		return true;
 	}
 });
