@@ -63,7 +63,6 @@ var setOnshapeVariable = P(MathOutput, function(_, super_) {
 				} else {
 					if(_this.jQ) _this.jQ.removeClass('warn error');
 					_this.commands = _this.genCommand(_this.varField.text());
-					_this.commands.push({command: "evalf(" + _this.varField.text() + ")", nomarkup: true});
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}
@@ -115,5 +114,7 @@ var setOnshapeVariable = P(MathOutput, function(_, super_) {
 			} else
 				result[0] = {success: false, returned: 'Invalid Units ' + result[1].returned.replace(/_/g,' ').replace(/^1/,'') + ':  Only units of length are allowed.'};
 		}
+		super_.evaluationFinished.call(this, result);
+		return true;
 	}
 });
