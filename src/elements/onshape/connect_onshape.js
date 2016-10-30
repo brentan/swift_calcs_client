@@ -91,7 +91,8 @@ var connectOnshape_3 = P(Element, function(_, super_) {
 	_.ajaxCallback = function(success, response) {
 		if(success) {
 			if(response.var_list.length == 0) {
-				connectOnshape(this.get).insertAfter(this).show(0).focus(R);
+				if(this[L]) this[L].focus(L);
+				else if(this[R]) this[R].focus(L);
 				showNotice('This part has no variables.  Create a variable in the part and try again.','red');
 			} else
 				connectOnshape_4(this.get, this.part_name, this.part_id, response.var_list).insertAfter(this).show(0).focus(R);
