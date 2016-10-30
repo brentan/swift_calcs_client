@@ -199,7 +199,7 @@ var fusion_var = P(MathOutput, function(_, super_) {
 			if((result[1].returned.trim() == "1_m") || (result[1].returned.trim() == "1")) {
 				var finish_unit = result[1].returned.trim() == "1_m" ? " m" : "";
 				var to_store = result[2].returned.trim();
-				if(!to_store.match(/^\-? *[0-9]*(\.[0-9]*)?$/i) && !to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *(e|E) *(\-|+)? *[0-9]*(\.[0-9]*)?$/i))
+				if(!to_store.match(/^\-? *[0-9]*(\.[0-9]*)?$/i) && !to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *(e|E) *(\-|\+)? *[0-9]*(\.[0-9]*)?$/i))
 					result[0] = {success: false, returned: 'Invalid Value: ' + to_store + '.  Answer must be numeric.'};
 				else
 					this.var_value = to_store + finish_unit;
