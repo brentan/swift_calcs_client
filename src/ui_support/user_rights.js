@@ -138,7 +138,7 @@ $(function() {
             $(this).attr('data-hash',response.hash_string);
         });
         if(window.current_project_hash() == item_hash) 
-          window.setCurrentProject(response.hash_string, response.url_end, window.current_project_onshape());
+          window.setCurrentProject(response.hash_string, response.url_end, window.current_project_no_save());
         if(SwiftCalcs.pushState.fragment.indexOf(item_hash) !== -1)
           SwiftCalcs.pushState.navigate(SwiftCalcs.pushState.fragment.replace(item_hash, response.hash_string), {trigger: false});
       }

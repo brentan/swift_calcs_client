@@ -42,6 +42,8 @@ var Worksheet = P(function(_) {
 		this.rights = inputs.rights_level;
 		this.settings = inputs.settings;
     this.author = inputs.author;
+    this.onshape_did = inputs.onshape_did;
+    this.fusion_id = inputs.fusion_id;
 		this.ends = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
@@ -157,6 +159,14 @@ var Worksheet = P(function(_) {
   				break;
       }
 		}
+    if(this.onshape_did) {
+      var els = $('<div/>').html('<strong>Document Linked to Onshape</strong>?  <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Onshape file</a>.');
+      var div = $('<div/>').addClass('top_share').append(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
+    }
+    /*if(this.fusion_id) {
+      var els = $('<div/>').html('<strong>Document Linked to Fusion 360</strong>?  <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Fusion 360 file</a> (requires Fusion 360 to be installed).');
+      var div = $('<div/>').addClass('top_share').append(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
+    }*/
 	}
   _.FailedSaveMessage = function() {
 		var els = $('<div/>').html('<strong>Saving Disabled</strong>.  Changes will not be saved.  <a href="#" class="reload">Reload to re-enable saving</a>.');

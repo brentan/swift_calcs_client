@@ -1,6 +1,6 @@
 $(function() {
 	var current_project_hash = false;
-	var current_project_onshape = false;
+	var current_project_no_save = false;
 	var current_project_navigable_url = false;
 	
 	var showLoadingPopup = window.showLoadingPopup = function() {
@@ -33,8 +33,8 @@ $(function() {
       		SwiftCalcs.pushState.last_active_title = response.path.replace(/(<([^>]+)>)/ig,"");
       		$(document).prop('title', SwiftCalcs.pushState.last_active_title);
       		allowNewProject = !response.onshape || response.has_parent;
-      		window.displayWorksheetList(response.worksheets, response.path, response.onshape)
-      		setCurrentProject(response.hash_string, response.url_end, response.onshape_item);
+      		window.displayWorksheetList(response.worksheets, response.path, response.onshape, response.fusion)
+      		setCurrentProject(response.hash_string, response.url_end, response.no_save);
       	}	else {
 					$('.worksheet_holder').html('An error occurred: ' + response.message);
       		showNotice(response.message, 'red');
@@ -50,15 +50,15 @@ $(function() {
 	window.current_project_hash = function() {
 		return current_project_hash;
 	}
-	window.current_project_onshape = function() {
-		return current_project_onshape;
+	window.current_project_no_save = function() {
+		return current_project_no_save;
 	}
 	window.current_project_navigable_url = function() {
 		return current_project_navigable_url;
 	}
-	var setCurrentProject = window.setCurrentProject = function(hash, url, onshape) {
+	var setCurrentProject = window.setCurrentProject = function(hash, url, no_save) {
 		current_project_hash = hash;
-		current_project_onshape = onshape;
+		current_project_no_save = no_save;
 		current_project_navigable_url = url;
 	}
 	var loadProject = window.loadProject = function(hash_string, name, archive, starred) {
@@ -145,7 +145,7 @@ $(function() {
 			+ "<span class='invite_pending'><i class='fa fa-pulse fa-spinner'></i></span>";
 	}
 	var prepend_to_list = false;
-	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html, onshape) {
+	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html, onshape, fusion) {
 		clear_batch();
 		window.selectToolboxTab('projects_list');
 		// Assumes worksheets already sorted by date from latest to earliest
@@ -220,10 +220,20 @@ $(function() {
 		    		$('<div/>').addClass('title').html('Onshape & Swift Calcs!').appendTo($div);
 		    		$('<div/>').addClass('explain').html('Swift Calcs inside Onshape enables:').appendTo($div);
 		    		var $ul = $('<ul/>');
-		    		$('<li/>').html('Use of Swift Calcs worksheets directly in Onshape').appendTo($ul);
+		    		$('<li/>').html('Use Swift Calcs worksheets directly in Onshape').appendTo($ul);
+		    		$('<li/>').html('Control Onshape variables from your Swift Calcs worksheets').appendTo($ul);
 		    		$('<li/>').html('Automatic association of Swift Calcs worksheets with their Onshape counterpart').appendTo($ul);
 		    		$('<li/>').html('Security and permissions inheitance from Onshape to your Swift Calcs worksheets').appendTo($ul);
-		    		$('<li/>').html('Anytime, anywhere access to worksheets through Onshape or at www.swiftcalcs.com').appendTo($ul);
+			    	$ul.appendTo($div);
+		    		$('<div/>').addClass('explain').html('Click the red icon at the bottom right of the screen to get started').appendTo($div);
+	    		} else if(fusion) {
+		    		$('<div/>').addClass('title').html('Fusion 360 & Swift Calcs!').appendTo($div);
+		    		$('<div/>').addClass('explain').html('Swift Calcs inside Fusion 360 enables:').appendTo($div);
+		    		var $ul = $('<ul/>');
+		    		$('<li/>').html('Use Swift Calcs worksheets with Fusion 360').appendTo($ul);
+		    		$('<li/>').html('Control Fusion 360 User Paramaters from your Swift Calcs worksheets').appendTo($ul);
+		    		$('<li/>').html('Automatic association of Swift Calcs worksheets with their Fusion 360 counterpart').appendTo($ul);
+		    		$('<li/>').html('Security and permissions inheitance from Onshape to your Swift Calcs worksheets').appendTo($ul);
 			    	$ul.appendTo($div);
 		    		$('<div/>').addClass('explain').html('Click the red icon at the bottom right of the screen to get started').appendTo($div);
 	    		} else {
@@ -702,12 +712,12 @@ $(function() {
     window.resizePopup(invite_dialog ? false : true);
     el.find('.input input').focus();
 	}
-	var newProject = window.newProject = function(parent_project_hash, onshape) {
+	var newProject = window.newProject = function(parent_project_hash, no_save) {
 		if(typeof parent_project_hash === 'undefined') {
 			parent_project_hash = current_project_hash;
-			onshape = current_project_onshape;
+			no_save = current_project_no_save;
 		}
-		promptDialog('Name your new project', 'Create', '', function(parent_project_hash) { return function(name, data) { processNewProject(name, data, parent_project_hash) }; }(parent_project_hash), onshape !== true);
+		promptDialog('Name your new project', 'Create', '', function(parent_project_hash) { return function(name, data) { processNewProject(name, data, parent_project_hash) }; }(parent_project_hash), no_save !== true);
 	}
 	var processNewProject = function(name, data, parent_project_hash) {
     window.trackEvent("Project", "Create", name);
@@ -1042,9 +1052,13 @@ $(function() {
 	$('body').on('click', '.worksheet_item, .invitation_item', function(e) {
 		if($(this).hasClass('worksheet_loading')) return;
 		if($(this).hasClass('screen_explanation')) return;
-		if($(this).closest('.active_worksheet').length) 
+		if($(this).closest('.active_worksheet').length) {
 			closeActive($(this).closest('.active_worksheet'), false, false); 
-		else if(($(this).attr('data-project')*1) == 1) 
+			if(current_project_navigable_url)
+				SwiftCalcs.pushState.navigate(current_project_navigable_url);
+			else
+				SwiftCalcs.pushState.navigate('/active/');
+		}	else if(($(this).attr('data-project')*1) == 1) 
 			window.loadProject($(this).attr('data-hash'), $(this).attr('data-name'));
 		else {
 			openActive($(this));
@@ -1077,7 +1091,7 @@ $(function() {
       else
     		window.setTimeout(function() { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.blur().focus(); SwiftCalcs.active_worksheet.ends[-1].focus(-1); } });
       if(response.folder_hash) 
-        window.setCurrentProject(response.folder_hash, response.folder_url_end, response.onshape_item);
+        window.setCurrentProject(response.folder_hash, response.folder_url_end, response.no_save);
 		}
 		var try_success = function(response) {
 			if(beginLoad) success(response);
@@ -1158,6 +1172,10 @@ $(function() {
 	$('body').on('click', 'nav.menu .closeActive', function(e) {
 		if($(this).closest('nav.menu').hasClass('noWorksheet')) return false;
 		window.closeActive($('.active_worksheet'), false, false);
+		if(current_project_navigable_url)
+			SwiftCalcs.pushState.navigate(current_project_navigable_url);
+		else
+			SwiftCalcs.pushState.navigate('/active/');
 		e.preventDefault();
 		return false;
 	});
@@ -1304,6 +1322,10 @@ $(function() {
 				SwiftCalcs.pushState.navigate('/active/', { trigger: true });
 			} else {
 				// In a list
+				if(current_project_navigable_url)
+					SwiftCalcs.pushState.navigate(current_project_navigable_url);
+				else
+					SwiftCalcs.pushState.navigate('/active/');
 				if(el.closest('.active_worksheet').length > 0) {
 					closeActive(el.closest('.active_worksheet'), false, true);
 					el.addClass('closing').slideUp({duration: 400, always: function() { el.remove(); } });

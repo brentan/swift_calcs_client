@@ -195,16 +195,24 @@ var fusion_var = P(MathOutput, function(_, super_) {
 	// Hijack the evaluation chain and set the variable in Onshape
 	_.evaluationFinished = function(result) {
 		this.needsEvaluation = false;
-		if(result[0].success) {
-			var to_store = result[1].returned.trim().replace(/_/g,' ').replace(/  /g,' ');
-			if(!to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *[a-z]*$/i))
-				result[0] = {success: false, returned: 'Invalid Value: ' + to_store + '.  Answer must be numeric, and only units of length are allowed.'};
-			else {
-				this.var_value = to_store;
-			}
+		if(result[1].success && result[2].success) {
+			if((result[1].returned.trim() == "1_m") || (result[1].returned.trim() == "1")) {
+				var finish_unit = result[1].returned.trim() == "1_m" ? " m" : "";
+				var to_store = result[2].returned.trim();
+				if(!to_store.match(/^\-? *[0-9]*(\.[0-9]*)?$/i) && !to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *(e|E) *(\-|+)? *[0-9]*(\.[0-9]*)?$/i))
+					result[0] = {success: false, returned: 'Invalid Value: ' + to_store + '.  Answer must be numeric.'};
+				else
+					this.var_value = to_store + finish_unit;
+			} else
+				result[0] = {success: false, returned: 'Invalid Units: ' + result[1].returned.replace(/_/g,' ').replace(/^1/,'') + '.  Only units of length are allowed.'};
 		}
 		super_.evaluationFinished.call(this, result);
 		return true;
 	}
-
+	_.genCommand = function(to_compute) {
+		var out = super_.genCommand.call(this, to_compute);
+		out.push({command: "mksa_base(evalf(" + to_compute + "))", nomarkup: true});
+		out.push({command: "mksa_remove(evalf(" + to_compute + "))", nomarkup: true});
+		return out;
+	}
 });
