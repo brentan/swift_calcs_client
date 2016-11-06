@@ -167,6 +167,12 @@ diff_match_patch.prototype.diff_compute_ = function(text1, text2, checklines,
     return [[DIFF_DELETE, text1]];
   }
 
+  var tr = deadline - new Date();
+  if (tr < 0) {
+    // Out of time, so bail with trivial diff
+    return [[DIFF_DELETE, text1], [DIFF_INSERT, text2]];
+  }
+
   var longtext = text1.length > text2.length ? text1 : text2;
   var shorttext = text1.length > text2.length ? text2 : text1;
   var i = longtext.indexOf(shorttext);
@@ -189,7 +195,12 @@ diff_match_patch.prototype.diff_compute_ = function(text1, text2, checklines,
   }
 
   // Check to see if the problem can be split in two.
-  var hm = this.diff_halfMatch_(text1, text2);
+  var hm = this.diff_halfMatch_(text1, text2, deadline);
+  tr = deadline - new Date();
+  if (tr < 0) {
+    // Out of time, so bail with trivial diff
+    return [[DIFF_DELETE, text1], [DIFF_INSERT, text2]];
+  }
   if (hm) {
     // A half-match was found, sort out the return data.
     var text1_a = hm[0];
@@ -634,7 +645,7 @@ diff_match_patch.prototype.diff_commonOverlap_ = function(text1, text2) {
  *     text2 and the common middle.  Or null if there was no match.
  * @private
  */
-diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2) {
+diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2, deadline) {
   if (this.Diff_Timeout <= 0) {
     // Don't risk returning a non-optimal diff if we have unlimited time.
     return null;
@@ -664,7 +675,16 @@ diff_match_patch.prototype.diff_halfMatch_ = function(text1, text2) {
     var j = -1;
     var best_common = '';
     var best_longtext_a, best_longtext_b, best_shorttext_a, best_shorttext_b;
+    var tr;
+    var k = 0;
     while ((j = shorttext.indexOf(seed, j + 1)) != -1) {
+      k += 1;
+      if (k % 100 === 0) {
+          tr = deadline - new Date();
+          if (tr < 0) {
+              return null;
+          }
+      }
       var prefixLength = dmp.diff_commonPrefix(longtext.substring(i),
                                                shorttext.substring(j));
       var suffixLength = dmp.diff_commonSuffix(longtext.substring(0, i),

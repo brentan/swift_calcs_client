@@ -26,6 +26,19 @@ var SwiftCalcsObject = P(function(_) {
     return "OVERRIDE ME";
   }
 });
+var secondaryNames = {
+  elasticModulus: 'E',
+  density: 'rho',
+  poissonRatio: 'nu',
+  electricalConductivity: 'kappa',
+  shearModulus: 'G',
+  heatCapacity: 'C',
+  proofStrength: 'sigma_y',
+  tensileStrength: 'TS',
+  thermalConductivity: 'k',
+  thermalDiffusivity: 'alpha',
+  thermalExpansion: 'alpha_V'
+}
 var Material = P(SwiftCalcsObject, function(_, super_) {
   /* 
   This is a generic material data type.  It is 'stupid' in that it has no internal 
@@ -48,6 +61,10 @@ var Material = P(SwiftCalcsObject, function(_, super_) {
     var len = data.properties.length;
     var propertyList = [];
     for(var i = 0; i < len; i++) {
+      if(typeof secondaryNames[data.properties[i].name] !== 'undefined') {
+        this[secondaryNames[data.properties[i].name]] = '(' + data.properties[i].value + ' * ' + data.properties[i].unit + ')';
+        propertyList.push(secondaryNames[data.properties[i].name]);
+      }
       this[data.properties[i].name] = '(' + data.properties[i].value + ' * ' + data.properties[i].unit + ')';
       propertyList.push(data.properties[i].name);
     }

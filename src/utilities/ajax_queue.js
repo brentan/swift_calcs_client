@@ -65,6 +65,25 @@ var ajaxQueueClass = P(function(_) {
 			post_data.full_resave = this.should_be_server_version[id];
 		} else {
 			// Create diff between what we have now and what we are trying to commit up
+			if(this.should_be_server_version[id].trim() === '') {
+				// Something is up....cancel the save
+				this.holding_pen[id] = false;
+				ajaxQueue.running[id] = false;
+				ajaxQueue.suppress = true;
+				ajaxQueue.saving = false;
+			  if(SwiftCalcs.active_worksheet.hash_string == id) {
+					ajaxQueue.jQ.html('Fatal error on save.  Saving disabled.');
+					if(ajaxQueue.ignore_errors[id] === true) return;
+		  		window.showPopupOnTop();
+		  		$('.popup_dialog .full').html("<div class='title'>Save Failed</div><div>There was a problem while saving your worksheet.  To avoid data-loss, saving has been disabled.  Please reload your browser window to correct this issue.</div>");
+		      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+		      window.resizePopup(true);
+		      SwiftCalcs.active_worksheet.FailedSaveMessage();
+				} else {
+					ajaxQueue.jQ.html('');
+					return;
+				}
+			}
 			var diff = diff_patch.diff_main(this.server_version[id], this.should_be_server_version[id], true);
 		  var patch_list = diff_patch.patch_make(this.server_version[id], this.should_be_server_version[id], diff);
 		  patch_list = diff_patch.patch_toText(patch_list);

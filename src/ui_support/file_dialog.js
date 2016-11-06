@@ -1085,7 +1085,6 @@ $(function() {
       	el.removeClass('change_name');
       	el.find('.name .hover').click();
       	el.find('.name_change input').select();
-      	window.setTimeout( function() { window.loadNextScreenExplanation(2); }, 250);
       } else if(window.embedded)
       	window.setTimeout(function() { if(SwiftCalcs.active_worksheet) { SwiftCalcs.active_worksheet.blur(); } });
       else

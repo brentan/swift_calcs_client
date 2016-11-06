@@ -320,8 +320,6 @@ var Worksheet = P(function(_) {
   		el.closest('span').prev('span').show().children('span').html(el.val());
   		el.closest('span').remove();
   		window.setTimeout(function() { _this.ends[-1].focus(-1); });
-  		window.closeScreenExplanation();
-  		window.setTimeout(function() { window.loadNextScreenExplanation(3); }, 300);
   	}
   	input_div.children('input').val(_this.name).on('blur', function(e) {
   		setName($(this));
@@ -547,8 +545,10 @@ var Worksheet = P(function(_) {
   }
   _.toString = function() {
 		var out = [];
+    var past_first_line = false;
 		jQuery.each(this.children(), function(i, child) {
-			if(child.implicit || child.no_save) return;
+			if(past_first_line && (child.implicit || child.no_save)) return;
+      past_first_line = true;
 			out.push(child.toString());
 		});
 		return out.join("\n");
