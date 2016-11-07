@@ -95,7 +95,7 @@ var receiveMessage = function(command) {
     var objects = {};
     for(var key in constants) {// BRENTAN: Maybe change later to 'user_vars' if the constants list grows too large?
       vars.push(key);
-      vars.push(key + '.');
+      vars.push(key + ':');
       objects[key] = {propertyList:constants[key].propertyList, methodList: constants[key].methodList};
     }
     for(var key in user_vars) {
