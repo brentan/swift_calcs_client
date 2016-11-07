@@ -43,6 +43,8 @@ var setOnshapeVariable = P(MathOutput, function(_, super_) {
 		super_.postInsertHandler.call(this);
 		this.jQ.find('.var_name').html(this.var_name);
 		this.jQ.find('.part_name').html(this.part_name);
+		if(this.worksheet.rights < 3)
+			this.jQ.find('span.to_store').parent().after('<div class="explain">You do not have <i>edit</i> rights for this worksheet.  Onshape syncing is disabled.</div>');
 		return this;
 	}
   _.toString = function() {
@@ -97,19 +99,21 @@ var setOnshapeVariable = P(MathOutput, function(_, super_) {
 				if(!to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *[a-z]*$/i) && !to_store.match(/^\-? *[0-9]*(\.[0-9]*)? *(e|E) *(\-|\+)? *[0-9]*(\.[0-9]*)? *[a-z]*$/i))
 					result[0] = {success: false, returned: 'Invalid Value (' + to_store.replace(/_/g,'') + '):  Answer must be numeric.'};
 				else {
-					this.jQ.find('.to_store').show();
-					window.ajaxRequest("/onshape/set_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id, name: this.var_name, value: to_store}, function(_this) { return function(response) { 
-						_this.jQ.find('.to_store').hide();
-						if(!response.true_success) {
-							if(response.message.indexOf("400")>=0)
-								_this.setError('Invalid Value: ' + to_store + '.  Answer must be numeric, and only units of length are allowed.  Ensure variable still exists in Onshape.')
-							else
-							_this.setError(response.message);
-						}
-					}}(this), function(_this) { return function(response) { 
-						_this.jQ.find('.to_store').hide();
-						_this.setError(response.message)
-					}});
+					if(this.worksheet.rights >= 3) {
+						this.jQ.find('.to_store').show();
+						window.ajaxRequest("/onshape/set_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id, name: this.var_name, value: to_store}, function(_this) { return function(response) { 
+							_this.jQ.find('.to_store').hide();
+							if(!response.true_success) {
+								if(response.message.indexOf("400")>=0)
+									_this.setError('Invalid Value: ' + to_store + '.  Answer must be numeric, and only units of length are allowed.  Ensure variable still exists in Onshape.')
+								else
+								_this.setError(response.message);
+							}
+						}}(this), function(_this) { return function(response) { 
+							_this.jQ.find('.to_store').hide();
+							_this.setError(response.message)
+						}});
+					}
 				}
 			} else
 				result[0] = {success: false, returned: 'Invalid Units ' + result[1].returned.replace(/_/g,' ').replace(/^1/,'') + ':  Only units of length are allowed.'};

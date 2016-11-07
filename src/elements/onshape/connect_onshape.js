@@ -116,19 +116,18 @@ var connectOnshape_4 = P(Element, function(_, super_) {
 		this.part_name = name;
 		this.part_id = id;
 		this.vars = var_list; 
-		if(get)
-			this.var_list = {};
-		else
-			this.var_list = {new: "Create new variable"};
-		this.get = get;
-		for(var i = 0; i < var_list.length; i++)
-			this.var_list["" + i] = var_list[i]['name'];
 	}
 	_.innerHtml = function() {
 	 	return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', (this.get ? 'Read' : 'Set') + ' Onshape Variable') + '&nbsp;from&nbsp;' + this.part_name + '</div>'
 	 	+ '<div class="' + css_prefix + 'focusableItems ' + css_prefix + 'left_indent" data-id="1">' + focusableHTML('SelectBox', 'var') + '<span class="to_store">&nbsp;<i class="fa fa-spinner fa-pulse"></i>&nbsp;Updating Onshape</span></div>';
 	}
 	_.postInsertHandler = function() {
+		if(this.get || this.worksheet.rights < 3)
+			this.var_list = {};
+		else
+			this.var_list = {new: "Create new variable"};
+		for(var i = 0; i < this.vars.length; i++)
+			this.var_list["" + i] = this.vars[i]['name'];
 		this.var_select = registerFocusable(SelectBox, this, 'var', { blank_message: 'Choose a Variable', dont_grey_blank: true, options: this.var_list});
 		this.focusableItems = [[registerFocusable(CodeBlock, this, (this.get ? 'Read' : 'Set') + ' Onshape Variable', { })],[this.var_select]];
 		super_.postInsertHandler.call(this);
@@ -141,17 +140,22 @@ var connectOnshape_4 = P(Element, function(_, super_) {
 				// Create new variable
 				this.jQ.find('.' + css_prefix + 'SelectBox').hide();
 				this.jQ.find('.to_store').show();
-				window.ajaxRequest("/onshape/create_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id, name: var_name}, function(_this) { return function(response) { 
-					_this.jQ.find('.' + css_prefix + 'SelectBox').show();
-					_this.jQ.find('.to_store').hide();
-					setOnshapeVariable(_this.part_name, _this.part_id, var_name, response.id).insertAfter(_this).show(0).focus(0);
-					_this.remove(0);
-				}}(this), function(_this) { return function(response) { 
-					_this.jQ.find('.' + css_prefix + 'SelectBox').show();
-					_this.jQ.find('.to_store').hide();
-					_this.var_select.clear();
-					_this.setError(response.message)
-				}});
+				if(this.worksheet.rights >= 3)
+					window.ajaxRequest("/onshape/create_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id, name: var_name}, function(_this) { return function(response) { 
+						_this.jQ.find('.' + css_prefix + 'SelectBox').show();
+						_this.jQ.find('.to_store').hide();
+						setOnshapeVariable(_this.part_name, _this.part_id, var_name, response.id).insertAfter(_this).show(0).focus(0);
+						_this.remove(0);
+					}}(this), function(_this) { return function(response) { 
+						_this.jQ.find('.' + css_prefix + 'SelectBox').show();
+						_this.jQ.find('.to_store').hide();
+						_this.var_select.clear();
+						_this.setError(response.message)
+					}});
+				else {
+					this.var_select.clear();
+					showNotice("You do not have access rights to create variables.","red")
+				}
 			} else {
 				this.var_select.clear();
 				showNotice("Invalid variable name.  Must be letter followed by letter and/or numbers.","red")

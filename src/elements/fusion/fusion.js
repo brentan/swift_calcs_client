@@ -35,7 +35,10 @@ var fusion = P(Element, function(_, super_) {
 			}
 			_this.varList["new+"]="Create new user parameter";
 			_this.vars_loaded = true;
-			_this.jQ.find('div.sync').html('<a href="#" onclick="window.open(\'fusion360://command=insert&file=na&privateInfo=SwiftCalcs_SC_load_SC_' + response.id + '_SC_' + response.docId + '_SC_\' + Math.floor(Math.random() * (1000000001)),\'_blank\');$(this).addClass(\'grey\');return false;" class="button grey">Sync to Fusion 360</a> <span class="explain">Please ensure Fusion 360 is open on your machine</span>')
+			if(_this.worksheet.rights >= 3)
+				_this.jQ.find('div.sync').html('<a href="#" onclick="window.open(\'fusion360://command=insert&file=na&privateInfo=SwiftCalcs_SC_load_SC_' + response.id + '_SC_' + response.docId + '_SC_\' + Math.floor(Math.random() * (1000000001)),\'_blank\');$(this).addClass(\'grey\');return false;" class="button grey">Sync to Fusion 360</a> <span class="explain">Please ensure Fusion 360 is open on your machine</span>')
+			else
+				_this.jQ.find('div.sync').html('<span class="explain">You do not have <i>edit</i> rights for this worksheet.  Fusion 360 syncing is disabled.</span>');
 			var children = _this.children();
 			for(var i = 0; i < children.length; i++)
 				if(children[i] instanceof choose_fusion_var) children[i].loadVars(_this.varList);
@@ -68,12 +71,13 @@ var fusion = P(Element, function(_, super_) {
 					vars.push(children[i].var_name.trim() + "=" + children[i].var_value.trim());
 			}
 		vars = vars.join("&");
-		window.ajaxRequest("/fusion/set_vars", {hash_string: this.worksheet.hash_string, vars: vars}, function(_this) { return function(response) { 
-			_this.jQ.find('div.sync a').removeClass('grey');
-			if(response.duplicates)
-				showNotice("Warning, some parameters are set in other Swift Calcs documents, which may cause conflicts (" + response.duplicates + ")", "red");
-		} }(this), function(_this) { return function(response) { 
-		} }(this));
+		if(this.worksheet.rights >= 3)
+			window.ajaxRequest("/fusion/set_vars", {hash_string: this.worksheet.hash_string, vars: vars}, function(_this) { return function(response) { 
+				_this.jQ.find('div.sync a').removeClass('grey');
+				if(response.duplicates)
+					showNotice("Warning, some parameters are set in other Swift Calcs documents, which may cause conflicts (" + response.duplicates + ")", "red");
+			} }(this), function(_this) { return function(response) { 
+			} }(this));
 		this.evaluateNext(evaluation_id, this.move_to_next);
 	}
 });
