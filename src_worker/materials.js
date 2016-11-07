@@ -72,9 +72,11 @@ var Material = P(SwiftCalcsObject, function(_, super_) {
   }
   _.toString = function() {
     var output = [["\\mathbf{\\underline{" + this.full_name.replace(/ /g, "\\whitespace ").replace(/%/g,"\\percentSymbol ").replace(/<sub>([a-z0-9]+)<\/sub>/gi,'_{$1}').replace(/<sup>([a-z0-9]+)<\/sup>/gi,'^{$1}').replace(/\<\/?[a-z0-9]+\/?\>/gi,'') + "}}"]];
-    for(var i = 0; i < this.propertyList.length; i++)
-      output.push([this.propertyList[i]]);
-    output.push(["\\textcolor{#aaaaaa}{use\\whitespace variable.property\\whitespace syntax\\whitespace to}"])
+    for(var i = 0; i < this.propertyList.length; i++) {
+      if(typeof secondaryNames[this.propertyList[i]] !== 'undefined')
+        output.push([this.propertyList[i]]);
+    }
+    output.push(["\\textcolor{#aaaaaa}{use\\whitespace variable:property\\whitespace syntax\\whitespace to}"])
     output.push(["\\textcolor{#aaaaaa}{access\\whitespace properties\\whitespace listed\\whitespace above}"])
     return toTable(output);
   }
