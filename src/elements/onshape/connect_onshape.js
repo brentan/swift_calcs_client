@@ -115,6 +115,7 @@ var connectOnshape_4 = P(Element, function(_, super_) {
 		super_.init.call(this);
 		this.part_name = name;
 		this.part_id = id;
+		this.get = get;
 		this.vars = var_list; 
 	}
 	_.innerHtml = function() {
