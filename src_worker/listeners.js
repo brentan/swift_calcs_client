@@ -259,8 +259,10 @@ var receiveMessage = function(command) {
           if(!errors[ii] && (output[ii].returned.indexOf('Incompatible units') === -1))
             warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit[1]);  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
         } */
-      } else 
+      } else if(command.commands[ii].approx)
         output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + 'usimplify(' + simplify_command + '(' + to_send + '))))' + end_command) });
+      else
+        output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + simplify_command + '(usimplify(' + to_send + '))))' + end_command) });
       // If evaluation resulted in an error, drop all of our additions (simplify, etc) and make sure that wasn't the problem
       var test_output = testError(output[ii],ii, to_send);
 			if(!test_output.success)
@@ -326,10 +328,10 @@ var testError = function(output, ii, to_send) {
   if(output.success === false) {
     if(output.returned.match(/line [0-9]+ col [0-9]+/i)) {
       //Column returned by giac.  Report it
-      output.error_index = output.returned.replace(/^.*line [0-9]+ col ([0-9]+).*$/i, "$1")*1-1;
+      output.error_index = output.returned.replace(/^.*line [0-9]+ col ([0-9]+).*$/i, "$1")*1-1-7;
       output.returned = output.returned.replace(/^(.*)line [0-9]+ col [0-9]+.*$/i, "$1");
     } else if(output.returned.match(/at end of input/i)) {
-      output.error_index = to_send.length-1;
+      output.error_index = to_send.length-1-8;
       output.returned = output.returned.replace(/^(.*)at end of input.*$/i, "$1");
     } else
       output.error_index = -1;
