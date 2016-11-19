@@ -456,8 +456,10 @@ Worksheet.open(function(_) {
 		if(window.currency_conversion[this.settings.currency_date]) this.setCurrencyConversion(recalculate);
 		else {
 			var _this = this;
+			startProgress('Loading Currency Conversion Data');
 			window.ajaxRequest("/currency", {date: this.settings.currency_date}, function(response) {
 				window.currency_conversion[response.date] = response.data;
+				setComplete();
 				_this.setCurrencyConversion(recalculate);
 			}, function(response) {
 				error_shown = true;
