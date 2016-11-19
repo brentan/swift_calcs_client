@@ -82,6 +82,10 @@ var receiveMessage = function(command) {
       Module.caseval('set_units(_' + command.set_units[i] + ')');
     return;
   }
+  if(command.setCurrencyConversion) {
+    Module.setCurrency(command.setCurrencyConversion.coeff > 0 ? 1/command.setCurrencyConversion.coeff : 0, command.setCurrencyConversion.index);
+    return
+  }
   if(command.varList) {
     // If we are asking for the variable list, we simply get that list and return it immediately
     var svars = Module.caseval('VARS').slice(1,-1).split(',');
@@ -343,7 +347,7 @@ var Module = {
   postRun: [],
   print: function(text) {
     if(!text || !text.match) return;
-  	if(text.match(/error/) && !text.match(/Warning/))
+  	if(text.match(/error/i) && !text.match(/Warning/))
   		errors[ii] = fix_message(text);
   	else if((text.trim() != '') && (text.indexOf('Success') === -1) && (text.indexOf('Timeout') === -1) && !text.match(/declared as global/) && !text.match(/No check were made for singular points/))
   		warnings[ii].push(fix_message(text));
@@ -356,6 +360,7 @@ var Module = {
     sendMessage({command: 'setStatus', value: text});
     if(text === '') {
   		Module.caseval_direct = Module.cwrap('caseval', 'string', ['string']);    
+      Module.setCurrency = Module.cwrap('setCurrency', 'void', ['number','number']);
       // Initialize timeout
       // Module.caseval('timeout ' + timeout_length);
       // Module.caseval('ckevery 10000');

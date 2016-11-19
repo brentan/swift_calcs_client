@@ -1216,6 +1216,40 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 					{name: 'Curie', unit: 'Curie'}
 				]
 			},
+			{
+				id: 'Currency',
+				sub: [		
+					{ name: 'United States Dollar', unit: 'USD'},
+			    { name: 'Euro', unit: 'EUR'},
+			    { name: 'British Pound Sterling', unit: 'GBP'},
+			    { name: 'Chinese Yuan', unit: 'CNY'},
+					{ name: 'Brazilian Real', unit: 'BRL'},
+					{ name: 'Bitcoin', unit: 'BTC'},
+					{ name: 'Bhutanese Ngultrum', unit: 'BTN'},
+					{ name: 'Canadian Dollar', unit: 'CAD'},
+					{ name: 'Swiss Franc', unit: 'CHF'},
+					{ name: 'Danish Krone', unit: 'DKK'},
+					{ name: 'Egyptian Pound', unit: 'EGP'},
+					{ name: 'Hong Kong Dollar', unit: 'HKD'},
+					{ name: 'Israeli New Sheqel', unit: 'ILS'},
+					{ name: 'Indian Rupee', unit: 'INR'},
+			    { name: 'Japanese Yen', unit: 'JPY'},
+					{ name: 'South Korean Won', unit: 'KRW'},
+					{ name: 'Mexican Peso', unit: 'MXN'},
+					{ name: 'Norwegian Krone', unit: 'NOK'},
+					{ name: 'New Zealand Dollar', unit: 'NZD'},
+					{ name: 'Russian Ruble', unit: 'RUB'},
+					{ name: 'Swedish Krona', unit: 'SEK'},
+					{ name: 'Singapore Dollar', unit: 'SGD'},
+					{ name: 'Thai Baht', unit: 'THB'},
+					{ name: 'Turkish Lira', unit: 'TRY'},
+					{ name: 'New Taiwan Dollar', unit: 'TWD'},
+					{ name: 'Silver Ounce', unit: 'XAG'},
+					{ name: 'Gold Ounce', unit: 'XAU'},
+					{ name: 'Platinum Ounce', unit: 'XPT'},
+					{ name: 'South African Rand', unit: 'ZAR'}
+				]
+			},
 		];
 		var output = '';
 		for(var i=0; i < units.length; i++) {

@@ -211,7 +211,7 @@ var GiacHandler = P(function(_) {
 			if(this.evaluations[hash_string.eval_id] === false) return;
 			this.setEvaluationElement(hash_string.eval_id, el);
 		}
-		if(this.giac_ready && ((typeof hash_string.eval_id === 'undefined') || this.auto_evaluation || this.manual_evaluation[hash_string.eval_id])) {
+		if(this.giac_ready && (!SwiftCalcs.active_worksheet || (typeof hash_string.eval_id === 'undefined') || SwiftCalcs.active_worksheet.settings_loaded) && ((typeof hash_string.eval_id === 'undefined') || this.auto_evaluation || this.manual_evaluation[hash_string.eval_id])) {
 			//if(typeof window.start_time === 'undefined')
 	  	//	window.start_time = new Date().getTime();
 			if(this.compile_mode)
@@ -219,7 +219,7 @@ var GiacHandler = P(function(_) {
 			else
 				this.worker.postMessage(JSON.stringify(hash_string));
 		}	else {
-			if(this.giac_ready && ((SwiftCalcs.active_worksheet == null) || (SwiftCalcs.active_worksheet == undefined) || (SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded))) 
+			if(this.giac_ready && ((SwiftCalcs.active_worksheet == null) || (SwiftCalcs.active_worksheet == undefined) || (SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded && SwiftCalcs.active_worksheet.settings_loaded))) 
 				setManual('Auto-Evaluation is disabled.  <a href="#" onclick="SwiftCalcs.giac.manualEvaluation();$(this).html(\'Starting...\');return false;">Recalculate Now</a> &nbsp; <a href="#" onclick="SwiftCalcs.giac.manual_mode(false);$(this).html(\'Working...\');return false;">Re-enable Auto-Evaluation</a>');
 			window.setTimeout(function(_this) { return function() { _this.sendCommand(hash_string, el); }; }(this), 250);
 		}
