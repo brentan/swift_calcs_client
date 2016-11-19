@@ -59,6 +59,9 @@ var Element = P(function(_) {
 
 		this.ends = {};
 		this.commands = [];
+		this.independent_vars = [];
+		this.dependent_vars = [];
+		this.previous_independent_vars = [];
 		this.ends[R] = 0;
 		this.ends[L] = 0;
 
@@ -563,6 +566,7 @@ var Element = P(function(_) {
 		commands to send (array), and the string name of the callback that should be called when complete
 	*/
 	_.move_to_next = false;
+	_.altered_content = false;
 	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method) and whether we also need to evaluate ancesctor/succeeding blocks (fullEvaluation)
 	// This function assigns this evaluation stream a unique id, and registers it in Worksheet.  Other functions can cancel this evaluation stream with this unique id.
 	_.evaluate = function(force, force_full) {
@@ -571,9 +575,10 @@ var Element = P(function(_) {
 		if(typeof force_full === 'undefined') force_full = false;
 		if(this.mark_for_deletion) return;
 		if(!this.needsEvaluation && !force) return this;
+		this.altered_content = true; // We called evaluate on this element, so it was altered, which will force its evaluation
 		if(this.needsEvaluation) this.worksheet.save();
 		var fullEvaluation = force_full || this.fullEvaluation || this.forceFullEvaluation || (this.firstGenAncestor() instanceof programmatic_function);
-
+//BRENTAN: TODO HERE: MAY NEED TO THINK THROUGH IMPLICATIONS HERE SINCE WE ARE CHANGING THINGS
 	  // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue
 		var current_evaluations = giac.current_evaluations();
 		for(var i = 0; i < current_evaluations.length; i++) {
@@ -610,7 +615,7 @@ var Element = P(function(_) {
 			this.continueEvaluation(eval_id, fullEvaluation);
 			if(this.outputBox) this.outputBox.calculating();
 			if(fullEvaluation) {
-			//this.jQ.stop().css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
+				//this.jQ.stop().css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 				for(var el = this[R]; el !== 0; el = el[R]) 
 					window.setTimeout(function(el) { return function() { el.blurOutputBox() } }(el));
 			} 
@@ -683,13 +688,34 @@ var Element = P(function(_) {
 			} else {
 				if((this.commands.length === 0) || ($.map(this.commands, function(val) { return val.command; }).join('').trim() === '')) // Nothing to evaluate...
 					this.evaluateNext(evaluation_id, move_to_next)
-				else {
+				else if(this.altered(evaluation_id)) {
 					//this.startTime = new Date();
+					// We were altered, so lets evaluate
 					giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
-				}
+				} else if(this.scoped) {
+					// Not altered, but we are scoped, so we need to save scope
+					giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
+//BRENTAN: Probably need to 'ungray' results here...
+				} else
+					this.evaluateNext(evaluation_id, move_to_next)
 			}
 		} else 
 			this.evaluateNext(evaluation_id, move_to_next)
+	}
+
+	// Check for altered content or dependency on current list of altered variables: only evaluate if altered
+	_.altered = function(evaluation_id) {
+		if(this.altered_content || giac.check_altered(evaluation_id, this.dependent_vars)) {
+			this.altered_content = false;
+			giac.add_altered(evaluation_id, this.previous_independent_vars);
+			giac.add_altered(evaluation_id, this.independent_vars);
+			this.previous_independent_vars = this.independent_vars;
+this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
+			return true;
+		}
+this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
+		giac.remove_altered(evaluation_id, this.independent_vars);
+		return false;
 	}
 
 	// Callback from giac when an evaluation has completed and results are returned
@@ -721,6 +747,7 @@ var Element = P(function(_) {
 	_.childrenEvaluated = function(evaluation_id) {
 		var move_to_next = this.move_to_next;
 		// We need to save the scope?
+//BRENTAN: Do a check here for variables that have been changed to see if I need to be evaluated
 		if(this.scoped && giac.shouldEvaluate(evaluation_id))
 			giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
 		else

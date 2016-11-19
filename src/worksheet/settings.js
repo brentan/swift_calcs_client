@@ -357,15 +357,15 @@ Worksheet.open(function(_) {
 				switch(SwiftCalcs.active_worksheet.settings.units) {
 					case 'mks':
 						var base = ['m','kg','s','K'];
-						var derived = ['A','mol','cd','E','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'];
+						var derived = ['A','mol','cd','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'];
 						break;
 					case 'cgs':
 						var base = ['cm','g','s','K'];
-						var derived = ['mL','A','mol','cd','E','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'];
+						var derived = ['mL','A','mol','cd','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'];
 						break;
 					case 'ips':
 						var base = ['in','lb','s','Rankine'];
-						var derived = ['gal','A','mol','cd','E','lbf','Ohm','psi','Btu','T','C','F','H','Hz','V','hp','Wb'];
+						var derived = ['gal','A','mol','cd','lbf','Ohm','psi','Btu','T','C','F','H','Hz','V','hp','Wb'];
 						break;
 				}
 				SwiftCalcs.active_worksheet.settings.base_units = base;

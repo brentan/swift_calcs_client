@@ -10,6 +10,7 @@ var GiacHandler = P(function(_) {
 	  this.evaluation_full = [];
 	  this.manual_evaluation = [];
 	  this.variable_list = [];
+    this.altered_list = [];
 	  this.object_list = [];
 		this.giac_ready = false;
 		this.aborting = false;
@@ -21,10 +22,27 @@ var GiacHandler = P(function(_) {
 		this.evaluations.push(true);
 		this.manual_evaluation.push(!full); //We allow single line evaluations, even in manual mode
 		this.evaluation_full.push(full);
+    this.altered_list.push({});
 		this.errors_encountered = false;
 		this.setCompileMode(false, false);
 		return (this.evaluations.length-1);
 	}
+  _.add_altered = function(eval_id, altered) {
+    var l = altered.length;
+    for(var i = 0; i < l; i++)
+      this.altered_list[eval_id][altered[i]] = true;
+  }
+  _.remove_altered = function(eval_id, altered) {
+    var l = altered.length;
+    for(var i = 0; i < l; i++)
+      this.altered_list[eval_id][altered[i]] = false;
+  }
+  _.check_altered = function(eval_id, altered) {
+    var l = altered.length;
+    for(var i = 0; i < l; i++)
+      if(this.altered_list[eval_id][altered[i]] === true) return true;
+    return false;
+  }
 	_.setEvaluationElement = function(eval_id, el) {
 		if(this.evaluations[eval_id] === false) return this;
 		this.evaluations[eval_id] = el.firstGenAncestor().id;

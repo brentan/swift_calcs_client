@@ -106,8 +106,14 @@ var mixture = P(Element, function(_, super_) {
       this.addSpinner(evaluation_id);
       if(this.commands.length === 0) // Nothing to evaluate...
         this.evaluateNext(evaluation_id, move_to_next)
-      else 
+      else if(this.altered(evaluation_id)) {
+        // We were altered, so lets evaluate
         giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+      } else {
+        // Not altered, but we are scoped, so we need to save scope
+        giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
+//BRENTAN: Probably need to 'ungray' results here...
+      } 
     } else 
       this.evaluateNext(evaluation_id, move_to_next)
   }

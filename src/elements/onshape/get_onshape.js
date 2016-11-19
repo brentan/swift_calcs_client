@@ -93,19 +93,25 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 	_.continueEvaluation = function(evaluation_id, move_to_next) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
-			window.ajaxRequest("/onshape/get_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id}, function(_this) { return function(response) { 
-				if(response.var["name"]) {
-					_this.jQ.find(".var_name").html(response.var["name"]);
-					_this.commands = _this.genCommand(_this.varField.text() + ' := ' + response.var["value"].trim().replace(/  /g,' ').replace(/ /g,'_'));
-					_this.continueEvaluation2(evaluation_id, move_to_next);
-				} else {
-					_this.setError("The requested variable was not found...it may have been removed.");
+			if(this.altered(evaluation_id)) {
+				window.ajaxRequest("/onshape/get_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id}, function(_this) { return function(response) { 
+					if(response.var["name"]) {
+						_this.jQ.find(".var_name").html(response.var["name"]);
+						_this.commands = _this.genCommand(_this.varField.text() + ' := ' + response.var["value"].trim().replace(/  /g,' ').replace(/ /g,'_'));
+						_this.continueEvaluation2(evaluation_id, move_to_next);
+					} else {
+						_this.setError("The requested variable was not found...it may have been removed.");
+						_this.evaluateNext(evaluation_id, move_to_next)
+					}
+				}}(this), function(_this) { return function(response) { 
+					_this.setError(response.message)
 					_this.evaluateNext(evaluation_id, move_to_next)
-				}
-			}}(this), function(_this) { return function(response) { 
-				_this.setError(response.message)
-				_this.evaluateNext(evaluation_id, move_to_next)
-			}});
+				}});
+			} else  {
+				// Not altered, but we are scoped, so we need to save scope
+				giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
+//BRENTAN: Probably need to 'ungray' results here...
+			} 
 		} else 
 			this.evaluateNext(evaluation_id, move_to_next)
 	}

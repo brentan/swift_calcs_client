@@ -152,6 +152,31 @@ var SwiftCalcs = {};
       return ((result * 1) != 0);
     return false;
   }
+
+  var GetDependentVars = function(command) {
+    var function_vars = {};
+    if(command.match(/^[\s]*[a-z][a-z0-9_]*\(.*\)*:=/i)) {
+      // Find function vars, these are not really dependent
+      var list = command.replace(/^[\s]*[a-z][a-z0-9_]*\((.*)\)[\s]*:=.*$/i,"$1").split(",");
+      for(var i = 0; i < list.length; i++)
+        function_vars[list[i].trim()] = true;
+    } 
+    if(command.match(/^.*:=.*$/i)) command = command.replace(/^.*:=(.*)$/i,"$1");
+    var dependent_var = command.replace(/[^a-zA-Z_0-9]/g," ").replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
+    var dependent_vars = [];
+    var reg = /([a-z][a-z0-9]*(_[a-z0-9]*)?)/gi;
+    var result;
+    while((result = reg.exec(dependent_var)) !== null) {
+      if(function_vars[result[1]] !== true) dependent_vars.push(result[1]);
+    }
+    return dependent_vars;
+  }
+  var GetIndependentVars = function(command) {
+    if(command.match(/^[\s]*[a-z][a-z0-9_]*(\(.*\))?(\[.*\])?[\s]*:=/i)) 
+      return [command.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?(\[.*\])?[\s]*:=.*$/i,"$1")];
+    else
+      return [];
+  }
     
   $(window).on('resize', function() {
     window.resizeResults();

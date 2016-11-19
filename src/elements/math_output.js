@@ -29,8 +29,16 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		return this;
 	}
 	_.genCommand = function(to_compute) {
+		//Find Independant Var:
+//console.log("========");
+//console.log(to_compute);
+		this.independent_vars = GetIndependentVars(to_compute);
+		this.dependent_vars = GetDependentVars(to_compute);
+//console.log("IND: " + this.independent_vars.join(", "));
+//console.log("DEP: " + this.dependent_vars.join(", "));
+
 		//Perform unit check
-		reg = /([^a-zA-Z0-9_]|^)_([a-zA-Zµ2]+)/g;
+		var reg = /([^a-zA-Z0-9_]|^)_([a-zA-Zµ2]+)/g;
 		var result;
 		while((result = reg.exec(to_compute)) !== null) {
     	if(!window.checkForValidUnit(result[2])) {

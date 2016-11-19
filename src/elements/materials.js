@@ -281,6 +281,7 @@ var material_holder = P(EditableBlock, function(_, super_) {
     };
   }
   _.genCommand = function() {
+    this.independent_vars = this.varStoreField.text().trim();
     this.commands = [{command: "1", setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: this.data, last_name: this.last_name} }];    
   }
   _.shouldBeEvaluated = function(evaluation_id) {

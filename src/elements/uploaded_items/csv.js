@@ -71,15 +71,21 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 				this.testName(name);
 			if(this.validVarName) {
 				this.addSpinner(evaluation_id);
-				var commands = [];
-				for(var i = 0; i < this.commands.length; i++) {
-					commands.push({
-						command: name + (this.commands[i].sub.length ? ('_' + this.commands[i].sub) : '')
-							+ ' := ' + this.commands[i].data, 
-						nomarkup: true
-					})
-				}
-				giac.execute(evaluation_id, move_to_next, commands, this, 'evaluationFinished');
+				if(this.altered(evaluation_id)) {
+					var commands = [];
+					for(var i = 0; i < this.commands.length; i++) {
+						commands.push({
+							command: name + (this.commands[i].sub.length ? ('_' + this.commands[i].sub) : '')
+								+ ' := ' + this.commands[i].data, 
+							nomarkup: true
+						})
+					}
+					giac.execute(evaluation_id, move_to_next, commands, this, 'evaluationFinished');
+				} else  {
+					// Not altered, but we are scoped, so we need to save scope
+					giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
+//BRENTAN: Probably need to 'ungray' results here...
+				} 
 			} else
 				this.evaluateNext(evaluation_id, move_to_next)
 		} else 
