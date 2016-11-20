@@ -4,6 +4,7 @@ var GiacHandler = P(function(_) {
 	_.auto_evaluation = true;
 	_.compile_mode = false;
 	_.compile_callback = false;
+  _.suppress = false;
 	// Evaluation handling functions.  Each array element keeps track of which first Gen element, by id, is currently being evaluated.  Set to false to stop evaluation or when complete
 	_.init = function() {
 		this.evaluations = [];
@@ -11,18 +12,22 @@ var GiacHandler = P(function(_) {
 	  this.manual_evaluation = [];
 	  this.variable_list = [];
     this.altered_list = [];
+    this.altered_list_additions = [];
+    this.element_stop_id = [];
 	  this.object_list = [];
 		this.giac_ready = false;
 		this.aborting = false;
 		this.errors_encountered = false;
 		this.varCallbackCounter = 0;
 	}
-	_.registerEvaluation = function(full) {
+	_.registerEvaluation = function(el_id) {
 		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.ready_to_print = false;
 		this.evaluations.push(true);
-		this.manual_evaluation.push(!full); //We allow single line evaluations, even in manual mode
-		this.evaluation_full.push(full);
+		this.manual_evaluation.push(el_id ? true : false); //We allow single line evaluations, even in manual mode
+		this.evaluation_full.push(el_id ? false : true);
+    this.element_stop_id.push(el_id);
     this.altered_list.push({});
+    this.altered_list_additions.push([]);
 		this.errors_encountered = false;
 		this.setCompileMode(false, false);
 		return (this.evaluations.length-1);
@@ -30,22 +35,34 @@ var GiacHandler = P(function(_) {
   _.add_altered = function(eval_id, altered) {
     var l = altered.length;
     for(var i = 0; i < l; i++)
-      this.altered_list[eval_id][altered[i]] = true;
+      this.altered_list[eval_id][altered[i].trim()] = true;
   }
   _.remove_altered = function(eval_id, altered) {
     var l = altered.length;
     for(var i = 0; i < l; i++)
-      this.altered_list[eval_id][altered[i]] = false;
+      this.altered_list[eval_id][altered[i].trim()] = false;
   }
-  _.check_altered = function(eval_id, altered) {
-    var l = altered.length;
+  _.check_altered = function(eval_id, el) {
+    // Test for any canceled evaluations that need us to merge in some vars
+    for(var i = this.altered_list_additions[eval_id].length - 1; i >= 0; i--) {
+      if(el.id == this.altered_list_additions[eval_id][i].el_id) {
+        //MERGE IN VARS
+        var _this = this;
+        $.each(this.altered_list_additions[eval_id][i].vars, function(k,v) {
+          _this.altered_list[eval_id][k] = true;
+        });
+        this.altered_list_additions[eval_id].splice(i,1);
+      }
+    }
+    var l = el.dependent_vars.length;
     for(var i = 0; i < l; i++)
-      if(this.altered_list[eval_id][altered[i]] === true) return true;
+      if(this.altered_list[eval_id][el.dependent_vars[i]] === true) return true;
     return false;
   }
 	_.setEvaluationElement = function(eval_id, el) {
-		if(this.evaluations[eval_id] === false) return this;
-		this.evaluations[eval_id] = el.firstGenAncestor().id;
+    if(this.evaluations[eval_id] === false) return this;
+    if(this.evaluation_full[eval_id] === false) return this;
+		this.evaluations[eval_id] = el.id;
 		if(!this.giac_ready) return this; // Don't update status bar until computation is complete!
 		startProgress();
 		if(this.evaluation_full[eval_id] && (el.depth == 0)) {
@@ -66,10 +83,30 @@ var GiacHandler = P(function(_) {
 		if(this.errors_encountered) return false;
 		return (this.evaluations[eval_id] !== false);
 	}
-	_.cancelEvaluation = function(eval_id) {
+	_.cancelEvaluation = function(eval_id, new_eval_id) {
+    if(new_eval_id && this.evaluations[eval_id]) {
+      // Move all pending alterations over to the new evaluation chain
+      if(this.altered_list[eval_id].length)
+        this.altered_list_additions[new_eval_id].push({el_id: this.evaluations[eval_id], vars: this.altered_list[eval_id]});
+      for(var i = this.altered_list_additions[eval_id].length - 1; i >= 0; i--) {
+        this.altered_list_additions[new_eval_id].push(this.altered_list_additions[eval_id][i]);
+        this.altered_list_additions[eval_id].splice(i,1);
+      }
+    }
 		this.evaluations[eval_id]=false;
 		return this;
 	}
+  _.stopEvaluation = function(eval_id, el_id) {
+    //Check if I reached the desired element...note that we let the evaluation move upwards to the firstGenAncestor, so once we ask
+    //and get a yes, all future asks return 'true' as well so that we stop when we reach the top of the tree
+    if(this.element_stop_id[eval_id] && (this.element_stop_id[eval_id] == el_id)) {
+      this.element_stop_id[eval_id] = true;
+      return true;
+    } else if(this.element_stop_id[eval_id] === true)
+      return true;
+    else
+      return false;
+  }
 	_.manualEvaluation = function() {
 		var to_do = this.current_evaluations();
 		for(var i = 0; i < to_do.length; i++)
@@ -92,7 +129,7 @@ var GiacHandler = P(function(_) {
 		if(this.worker) return;
 		ahoy.track("Restart Giac Worker");
 		loadWorker(this);
-		SwiftCalcs.active_worksheet.ends[L].evaluate(true, true);
+		SwiftCalcs.active_worksheet.fullEvalNeeded().evaluate();
 	}
 	_.aborting = false;
 	_.cancelEvaluations = function(el) { 
@@ -101,7 +138,7 @@ var GiacHandler = P(function(_) {
 		if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) SwiftCalcs.active_worksheet.ready_to_print = true;
 		var to_cancel = this.current_evaluations();
 		for(var i = 0; i < to_cancel.length; i++)
-			this.cancelEvaluation(to_cancel[i]); 
+			this.cancelEvaluation(to_cancel[i], false); 
 		if(el) {
 			ahoy.track("Abort Computation");
 			var el_new = $('<span>Aborting...</span>');
@@ -212,17 +249,34 @@ var GiacHandler = P(function(_) {
 	- fourth option is the element being evaluated
 	- fifth is the name of the function in el to call (string)
 	*/
-	_.execute = function(eval_id, move_to_next, commands, el, callback) {
-		if(this.evaluations[eval_id] === true) {
-			var previous_el = el.previousScope();
-			var previous_scope = (previous_el instanceof Element) ? (previous_el.worksheet.id + '_' + previous_el.id) : false;
-			var restart = true;
-		} else {
-			var previous_scope = false;
-			var restart = false;
-		}
-		var next_scope = el.worksheet.id + '_' + el.id;
-		this.sendCommand({eval_id: eval_id, restart: restart, scoped: el.scoped, move_to_next: move_to_next, commands: commands, previous_scope: previous_scope, next_scope: next_scope, callback_id: el.id, focusable: el instanceof aFocusableItem, callback_function: callback}, el);
+  _.resetEngine = function() {
+    this.sendCommand({restart: true})
+  }
+  _.skipExecute = function(eval_id, el, callback) {
+    var to_send = {
+      eval_id: eval_id, 
+      commands: [], 
+      load_scope: el.worksheet.id + '_' + el.id, 
+      callback_id: el.id, 
+      var_list: el.independent_vars,
+      callback_function: callback
+    };
+    this.sendCommand(to_send, el);
+  }
+	_.execute = function(eval_id, commands, el, callback) {
+    var to_send = {
+      eval_id: eval_id, 
+      scoped: el.scoped, 
+      commands: commands, 
+      callback_id: el.id, 
+      focusable: el instanceof aFocusableItem, 
+      callback_function: callback
+    };
+    if(to_send.scoped) {
+  		to_send.next_scope = el.worksheet.id + '_' + el.id;
+      to_send.var_list   = el.independent_vars; 
+    }
+  	this.sendCommand(to_send, el);
 	}
 	_.sendCommand = function(hash_string, el) {
 		if(el) {
@@ -233,7 +287,7 @@ var GiacHandler = P(function(_) {
 			//if(typeof window.start_time === 'undefined')
 	  	//	window.start_time = new Date().getTime();
 			if(this.compile_mode)
-				this.compile_callback.compile_line(hash_string.commands, el, hash_string.eval_id, hash_string.move_to_next);
+				this.compile_callback.compile_line(hash_string.commands, el, hash_string.eval_id);
 			else
 				this.worker.postMessage(JSON.stringify(hash_string));
 		}	else {
@@ -287,8 +341,8 @@ var loadWorker = function(giacHandler) {
       	return;
     	case 'results':
     		if(response.focusable) {
-    			if(aFocusableItem.byId[response.callback_id]) aFocusableItem.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
-    		} else if(Element.byId[response.callback_id]) Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, response.move_to_next, cleanOutput(response.results));
+    			if(aFocusableItem.byId[response.callback_id]) aFocusableItem.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, cleanOutput(response.results));
+    		} else if(Element.byId[response.callback_id]) Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, cleanOutput(response.results));
     		else setComplete();
     		break;
     	case 'varList':

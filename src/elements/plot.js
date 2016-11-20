@@ -99,6 +99,7 @@ var plot = P(Element, function(_, super_) {
 			this.plotBox = this.plotBox.destroy();
 		return super_.destroy.call(this);
 	}
+//BRENTAN: Some way to undo this....
 	_.blurOutputBox = function() {
 		if(this.plotBox) {
 			var current = this.plotBox.data.colors();
@@ -116,20 +117,19 @@ var plot = P(Element, function(_, super_) {
 		super_.addSpinner.call(this, eval_id);
 		this.blurOutputBox();
 	}
-	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and then move to evaluate the next node.
+	_.continueEvaluation = function(evaluation_id) {
 		this.calc_x_max = false;
 		this.calc_x_min = false;
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
-			this.move_to_next = move_to_next;
 			this.getUnits = true;
 			if(this.ends[L]) 
 				this.ends[L].continueEvaluation(evaluation_id, true)
 			else 
 				this.childrenEvaluated(evaluation_id);
 		} else 
-			this.evaluateNext(evaluation_id, move_to_next);
+			this.evaluateNext(evaluation_id);
 	}
 	_.childrenEvaluated = function(evaluation_id) {
 		if(this.getUnits) {
@@ -192,13 +192,13 @@ var plot = P(Element, function(_, super_) {
 				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
 			}
 			if(this.shouldBeEvaluated(evaluation_id)) {
-				giac.execute(evaluation_id, this.move_to_next, this.commands, this, 'evaluationFinished');
+				giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
 			} else 
-				this.evaluateNext(evaluation_id, this.move_to_next);
+				this.evaluateNext(evaluation_id);
 		} else {
 			// Already have units set, just ran through all children to get data
 			this.drawPlot();
-			this.evaluateNext(evaluation_id, this.move_to_next);
+			this.evaluateNext(evaluation_id);
 		}
 	}
 	_.evaluationFinished = function(result, evaluation_id) {
@@ -799,14 +799,14 @@ var subplot = P(EditableBlock, function(_, super_) {
 			}
 		};
 	}
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			if(this.parent.getUnits)
 				this.commands = this.getUnitsCommands();
 			else
 				this.commands = this.createCommands();
 		}
-		return super_.continueEvaluation.call(this, evaluation_id, move_to_next);
+		return super_.continueEvaluation.call(this, evaluation_id);
 	}
 	_.preRemoveHandler = function() {
 		super_.preRemoveHandler.call(this);

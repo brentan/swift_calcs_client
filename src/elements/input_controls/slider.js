@@ -7,7 +7,6 @@ var slider = P(Element, function(_, super_) {
 	_.units = '';
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.fullEvaluation = true; 
 	_.scoped = true;
   _.interaction_level = INTERACTION_LEVELS.FORM_ELEMENTS;
 	_.lineNumber = true;
@@ -58,7 +57,8 @@ var slider = P(Element, function(_, super_) {
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
 			if(_this.needsEvaluation) {
-				_this.commands = [{command: _this.varStoreField.text() + " := " + _this.slider.text(), nomarkup: true}];				
+				_this.commands = [{command: _this.varStoreField.text() + " := " + _this.slider.text(), nomarkup: true}];	
+				_this.independent_vars = [_this.varStoreField.text().trim()];
 				_this.evaluate();
 				_this.needsEvaluation = false;
 			}

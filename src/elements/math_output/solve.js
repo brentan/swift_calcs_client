@@ -174,7 +174,6 @@ var solve = P(SettableMathOutput, function(_, super_) {
 					if(_this.ask_initial_guess) // insert guess into the equations to see if it causes a unit error
 						_this.commands.push({command: "((" + _this.varField.text() + ")->(" + _this.eqFields[0].text().replace(/==/g,'-') + "))(" + guess_text + ")", nomarkup: true});
 
-					_this.fullEvaluation = (_this.scoped || _this.was_scoped);
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}

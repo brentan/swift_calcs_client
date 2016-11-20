@@ -19,9 +19,17 @@ var outputBox = P(function(_) {
 		return this;
 	}
 	_.calculating = function() {
-		this.el.jQ.removeClass('warn error');
-		this.tableJQ.next("div." + css_prefix + "calculation_stopped").slideUp({duration: 250, always: function() { $(this).remove(); } });
 		this.jQ.addClass('calculating');
+		return this;
+	}
+	_.resetErrorWarning = function() {
+		this.el.jQ.removeClass('warn error');
+		this.jQ.removeClass('calculating warn error');
+		this.tableJQ.next("div." + css_prefix + "calculation_stopped").slideUp({duration: 250, always: function() { $(this).remove(); } });
+		return this;
+	}
+	_.uncalculating = function() {
+		this.jQ.removeClass('calculating');
 		return this;
 	}
 	_.setNormal = function(html, append) {
@@ -47,7 +55,7 @@ var outputBox = P(function(_) {
 	_.setError = function(html, append) {
 		if(!append) this.clearState();
 		window.trackEvent("Interaction", "Error", html);
-		if(this.el.fullEvaluation) { // Stop evaluation on scoped items
+		if(this.el.allIndependentVars().length) { // Stop evaluation on scoped items
 			giac.errors_encountered = true;
 			this.el.jQ.addClass('error'); 
 			$('<div class="' + css_prefix + 'calculation_stopped" style="display:none;">Computation halted.  Please correct error to resume.</div>').insertAfter(this.tableJQ).slideDown({duration: 400});

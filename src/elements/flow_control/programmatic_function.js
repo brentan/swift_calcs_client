@@ -2,7 +2,6 @@ var programmatic_function = P(Element, function(_, super_) {
 	_.klass = ['programmatic_function'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.fullEvaluation = true; 
 	_.scoped = true;
 	_.hasChildren = true;
 	_.lineNumber = true;
@@ -52,14 +51,14 @@ var programmatic_function = P(Element, function(_, super_) {
 			}
 		};
 	}
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.command_list = [];
 			giac.setCompileMode(true, this); //Enable compile mode
 		}
-		return super_.continueEvaluation.call(this, evaluation_id, move_to_next);
+		return super_.continueEvaluation.call(this, evaluation_id);
 	}
-	_.compile_line = function(commands, el, evaluation_id, move_to_next) {
+	_.compile_line = function(commands, el, evaluation_id) {
 		for(var i = 0; i < commands.length; i++) {
 			if(commands[i].pre_command) this.command_list.push(commands[i].pre_command);
 	    if(((i+1) < commands.length) && (commands[i+1].unit_convert)) { // A bit hacky, but we have to deal with the special mksavariable_mode being enabled/disabled
@@ -71,7 +70,7 @@ var programmatic_function = P(Element, function(_, super_) {
 	    } else
 	    	this.command_list.push(commands[i].command);
 		}
-		el.evaluateNext(evaluation_id, move_to_next);
+		el.evaluateNext(evaluation_id);
 	}
 	_.childrenEvaluated = function(evaluation_id) {
 		giac.setCompileMode(false, this); //Disable compile mode

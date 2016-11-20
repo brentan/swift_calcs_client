@@ -180,7 +180,6 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		this.outputBox.jQ.find('.error').remove();
 		this.outputBox.jQ.find('td.answer_menu').html('');
 		this.outputBox.tableJQ.next("div." + css_prefix + "calculation_stopped").slideUp({duration: 250, always: function() { $(this).remove(); } });
-		if(this.fullEvaluation && !this.scoped) this.was_scoped = true; // Reset was scoped for next evaluation.
 		this.outputBox.setError(error, true);
 		if(this.outputMode == 1) {
 			this.outputMathBox.clear();
@@ -213,24 +212,28 @@ var MathOutput = P(EditableBlock, function(_, super_) {
     this.approx_set = true;
 		this.approx = !this.approx;
 		this.needsEvaluation = true;
+		this.outputSettingsChange = true;
 		this.submissionHandler(this)();
 	}
 	_.toggleExpand = function() {
 		if(this.factor_expand == 'expand') this.factor_expand = false;
 		else this.factor_expand = 'expand';
 		this.needsEvaluation = true;
+		this.outputSettingsChange = true;
 		this.submissionHandler(this)();
 	}
 	_.toggleFactor = function() {
 		if(this.factor_expand == 'factor') this.factor_expand = false;
 		else this.factor_expand = 'factor';
 		this.needsEvaluation = true;
+		this.outputSettingsChange = true;
 		this.submissionHandler(this)();
 	}
 	_.toggleSimplify = function() {
 		if(this.factor_expand == 'simplify') this.factor_expand = false;
 		else this.factor_expand = 'simplify';
 		this.needsEvaluation = true;
+		this.outputSettingsChange = true;
 		this.submissionHandler(this)();
 	}
 	_.setDigits = function() {
@@ -239,6 +242,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		if(digits.trim() == '') {
 			this.digits = 0;
 			this.needsEvaluation = true;
+			this.outputSettingsChange = true;
 			this.submissionHandler(this)();
 			return;
 		} 
@@ -259,6 +263,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		this.needsEvaluation = true;
     this.approx_set = true;
 		this.approx = true;
+		this.outputSettingsChange = true;
 		this.submissionHandler(this)();
 	}
 	_.mouseUp = function(e) {
@@ -316,6 +321,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		this.outputBox.jQ.removeClass('unit_input').find(".unit_add").remove();
 		this.unitMode = false;
 		this.needsEvaluation = true;
+		this.outputSettingsChange = true;
 		this.submissionHandler(this)();
 	}
 	_.blur = function(to_focus) {

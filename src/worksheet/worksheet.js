@@ -382,38 +382,37 @@ var Worksheet = P(function(_) {
       ajaxQueue.save_div = $('<span/>').addClass('save_span').appendTo($('div.header'));
     else
 		  ajaxQueue.save_div = $('<span/>').addClass('save_span').insertAfter(name_span).add($('<span/>').addClass('save_span').appendTo('nav.menu .save_message'));
-		var auto_evaluation = giac.auto_evaluation;
 		ajaxQueue.suppress = true;
-		giac.auto_evaluation = false;
+		giac.suppress = true;
 		var blocks = parse(to_parse);
 		if(blocks.length > 0) {
 			blocks[0].appendTo(this).show(200);
 			if(blocks.length > 1)
-    		window.setTimeout(function(_this) { return function() { _this.continueLoad(auto_evaluation, to_parse, blocks, _this.ends[-1], 1); }; }(this));
+    		window.setTimeout(function(_this) { return function() { _this.continueLoad(to_parse, blocks, _this.ends[-1], 1); }; }(this));
     	else
-    		this.completeLoad(auto_evaluation, to_parse);
+    		this.completeLoad(to_parse);
 	  } else {
 			math().appendTo(this).show(200);
-			this.completeLoad(auto_evaluation, to_parse);
+			this.completeLoad(to_parse);
 	  }
 	}
-	_.continueLoad = function(auto_evaluation, to_parse, blocks, after, i) {
-		if(!this.bound) this.completeLoad(auto_evaluation, to_parse);
+	_.continueLoad = function(to_parse, blocks, after, i) {
+		if(!this.bound) this.completeLoad(to_parse);
     blocks[i].insertAfter(after).show(200);
     after = blocks[i];
     i++;
-    if(i == blocks.length) this.completeLoad(auto_evaluation, to_parse);
-    else window.setTimeout(function(_this) { return function() { _this.continueLoad(auto_evaluation, to_parse, blocks, after, i); }; }(this));
+    if(i == blocks.length) this.completeLoad(to_parse);
+    else window.setTimeout(function(_this) { return function() { _this.continueLoad(to_parse, blocks, after, i); }; }(this));
 	}
-	_.completeLoad = function(auto_evaluation, to_parse) {
-	  giac.auto_evaluation = auto_evaluation;
+	_.completeLoad = function(to_parse) {
 		if(!this.bound) return;
 		if(giac.giac_ready) setComplete();
     if(this.jQ.next().hasClass('loader')) this.jQ.next().slideUp({duration: 200, always: function() { $(this).remove(); }});
 	  this.commandChildren(function(_this) { _this.needsEvaluation = false }); // Set to false as we are loading a document and dont want to trigger a save
 	  ajaxQueue.suppress = false;
 	  ajaxQueue.jQ.html(ajaxQueue.save_message);
-	  this.ends[L].evaluate(true, true);
+    giac.suppress = false;
+	  this.fullEvalNeeded().evaluate();
 	  if((this.ends[L] instanceof math) && (this.ends[L].mathField.text().trim() == "")) this.ready_to_print = true;
 	  this.updateUploads();
 	  this.reset_server_base(to_parse);
@@ -542,6 +541,26 @@ var Worksheet = P(function(_) {
   		ajaxQueue.jQ.html('Create a duplicate to save your changes');
   	else
   		ajaxQueue.jQ.html('This document is view only.  Changes will not be saved.')
+  }
+  _.fullEvalNeeded = function() {
+    // Set all items to altered
+    this.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true; } });
+    return this;
+  }
+  // Evaluate the worksheet.  If var_list is set (array), these variables should be placed into the 'altered' list from the start
+  _.evaluate = function(var_list, stop_id) {
+    if(giac.suppress) return this;
+    giac.resetEngine();
+    if(this.ends[L]) {
+      // Check for other evaluations in progress....
+      var current_evaluations = giac.current_evaluations();
+      var eval_id = giac.registerEvaluation(stop_id);
+      for(var i = 0; i < current_evaluations.length; i++) 
+        giac.cancelEvaluation(current_evaluations[i], eval_id); // This evaluation should replace the previous one
+      if(var_list) giac.add_altered(eval_id, var_list)
+      window.setTimeout(function(_this) { return function() { _this.ends[L].continueEvaluation(eval_id); }; }(this), 1);
+    }
+    return eval_id;
   }
   _.toString = function() {
 		var out = [];

@@ -19,7 +19,6 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 	_.var_name = "";
 	_.var_id = "";
 	_.needsEvaluation = false;
-	_.fullEvaluation = true;
 	_.scoped = true;
 	_.savedProperties = ['part_name','part_id','var_name','var_id'];
 
@@ -90,7 +89,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 		this.needsEvaluation = !this.varField.empty();
 	}
 	// Hijack the evaluation chain and do what I need to do
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
 			if(this.altered(evaluation_id)) {
@@ -98,25 +97,24 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 					if(response.var["name"]) {
 						_this.jQ.find(".var_name").html(response.var["name"]);
 						_this.commands = _this.genCommand(_this.varField.text() + ' := ' + response.var["value"].trim().replace(/  /g,' ').replace(/ /g,'_'));
-						_this.continueEvaluation2(evaluation_id, move_to_next);
+						_this.continueEvaluation2(evaluation_id);
 					} else {
 						_this.setError("The requested variable was not found...it may have been removed.");
-						_this.evaluateNext(evaluation_id, move_to_next)
+						_this.evaluateNext(evaluation_id)
 					}
 				}}(this), function(_this) { return function(response) { 
 					_this.setError(response.message)
-					_this.evaluateNext(evaluation_id, move_to_next)
+					_this.evaluateNext(evaluation_id)
 				}});
 			} else  {
 				// Not altered, but we are scoped, so we need to save scope
-				giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
-//BRENTAN: Probably need to 'ungray' results here...
+				giac.skipExecute(evaluation_id, this, 'scopeSaved');
 			} 
 		} else 
-			this.evaluateNext(evaluation_id, move_to_next)
+			this.evaluateNext(evaluation_id)
 	}
-	_.continueEvaluation2 = function(evaluation_id, move_to_next) {
-		giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+	_.continueEvaluation2 = function(evaluation_id) {
+		giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
 	}
 
 });

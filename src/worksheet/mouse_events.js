@@ -318,26 +318,9 @@ Worksheet.open(function(_) {
 		  		// Begin moving the selected elements to the new target
           _this.startUndoStream();
 		  		_this.clearSelection(true);
-          var eval_target = false;
-          if(_this.selection.length > 0) {
-            var full_eval = false;
-            for(var i = 0; i < _this.selection.length; i++) {
-              if(_this.selection[i].fullEvaluation) { full_eval = true; break; }
-            }
-            if(full_eval) {
-              var top_move = _this.selection[0].firstGenAncestor();
-              var target = el.firstGenAncestor();
-              var moving_up = false;
-              for(var temp_el = top_move[L]; temp_el instanceof Element; temp_el = temp_el[L]) {
-                if(temp_el.id === target.id) { moving_up = true; break; }
-              }
-              if(!moving_up) {
-                // Because we are moving downwards, we need to recompute from the original location
-                var eval_target = _this.selection[_this.selection.length - 1].firstGenAncestor()[R];
-              }
-            }
-          }
-
+          
+          if(_this.selection.length > 0) 
+            var impact_vars = _this.moveImpact(el, into, dir, _this.selection);
 		  		if(dir === R) _this.selection.reverse();
 		  		var active_elements = $();
 		  		for(var i = 0; i < _this.selection.length; i++) {
@@ -345,10 +328,24 @@ Worksheet.open(function(_) {
 		  			active_elements = active_elements.add(_this.selection[i].jQ);
 		  		}
 		  		if(dir === R) _this.selection.reverse();
-          if(eval_target)
-            eval_target.evaluate(true,true);
-          for(var i = 0; i < _this.selection.length; i++) 
-            _this.selection[i].evaluate(true); // Evaluate the moved blocks
+          if(_this.selection.length > 0) {
+            var eval_id = _this.evaluate();
+            var target = impact_vars.el_id;
+            while(true) {
+              if(target[R]) {
+                target = target[R];
+                break;
+              }else if(target.parent) {
+                target = target.parent;
+                if(target instanceof Loop) break;
+              }else{
+                target = false;
+                break;
+              }
+            }
+            if(target)
+              giac.altered_list_additions[eval_id].push({el_id: target.id, vars: impact_vars.vars}); // Let evaluator know about all altered vars in move operation
+          }
 		  		_this.createSelection(active_elements);
 		  		_this.focus();
           _this.endUndoStream();
@@ -428,4 +425,121 @@ Worksheet.open(function(_) {
     };
   }
   _.unbindMouse = function() { return this; };	
+  _.moveImpact = function(el, into, dir, selection) {
+    /*
+    Move Strategy
+    - Find all independent vars in selection
+    - Find all independent vars in skipped elements
+    - Any elements in selection dependent on independent vars in skipped elements much be recalced
+    - Any elements in skipped section dependent on independent vars in selection elements must be recalced
+    */
+    //Find all elements between old and new location
+    var target = el;
+    var top_move = selection[0];
+    var impacted_els = [];
+    //Assume moving upwards (initial guess)
+    var move_up = true;
+    //Adjust target to be the element just below where we are inserting (target is first impacted el)
+    if(into) {
+      if(target instanceof Loop) impacted_els.push(target);
+      if((dir === L) && (target.ends[L])) target = target.ends[L];
+      else target = target[R];
+    } else if(dir === R) target = target[R];
+    var first_item = target;
+    // Start marching downwards until we reach the first selection item
+    while(true) {
+      if(target == 0) { move_up = false; break; } // End of the road, no match was ever found
+      if(target.id == top_move.id) { break; } // Done!
+      impacted_els.push(target);
+      if(target.hasChildren && target.ends[L])
+        target = target.ends[L];
+      else if(target[R]) 
+        target = target[R];
+      else if(target.parent) {
+        if(target.parent instanceof Loop) impacted_els.push(target.parent);
+        target = target.parent[R];
+      } else { move_up = false; break; } // End of the road, no match was ever found
+    } 
+    if(!move_up) {
+      // First guess was wrong!  Try again...adjust target to be the element just above where we are inserting (target is first impacted el)
+      target = el;
+      bot_move = selection[selection.length - 1];
+      var impacted_els = [];
+      var move_down = true;
+      if(into) {
+        if(target instanceof Loop) impacted_els.push(target);
+        if((dir === R) && (target.ends[R])) target = target.ends[R];
+        else target = target[L];
+      } else if(dir === L) target = target[L];
+      // Start marching upwards until we reach the last selection item
+      while(true) {
+        if(target == 0) { move_down = false; break; } // End of the road, no match was ever found
+        if(target.id == top_move.id) { break; } // Done!
+        impacted_els.push(target);
+        if(target.hasChildren && target.ends[R])
+          target = target.ends[R];
+        else if(target[L]) 
+          target = target[L];
+        else if(target.parent) {
+          if(target.parent instanceof Loop) impacted_els.push(target.parent);
+          target = target.parent[L];
+        } else { move_down = false; break; } // End of the road, no match was ever found
+      } 
+    }
+    if(move_up) {
+      target = el;
+    } else if(move_down)
+    if(!move_up && !move_down) {
+      // THIS SHOULD NEVER HAPPEN
+      impacted_els = [];
+    }
+
+    //Create a list of all independent vars in impacted els
+    var impacted_el_vars = {};
+    var selection_vars = {};
+    var all_independent_vars = {};
+    var add_vars = function(vars, impacted) {
+      if(impacted) {
+        for(var j=0; j<vars.length; j++) {
+          impacted_el_vars[vars[j].trim()]=true;
+          all_independent_vars[vars[j].trim()]=true;
+        }
+      } else {
+        for(var j=0; j<vars.length; j++) {
+          selection_vars[vars[j].trim()]=true;
+          all_independent_vars[vars[j].trim()]=true;
+        }
+      }
+    }
+    for(var i = 0; i < impacted_els.length; i++)
+      add_vars(impacted_els[i].independent_vars, true);
+    for(var i = 0; i < selection.length; i++)
+      add_vars(selection[i].allIndependentVars(), false);
+
+    //Check each selection element against list to see if recalculation is needed
+    var checker = function(impacted_el_vars) { return function(_this) { 
+      for(var k = 0; k < _this.dependent_vars.length; k++) {
+        if(impacted_el_vars[_this.dependent_vars[k].trim()]) {
+          _this.altered_content = true;
+          _this.previous_commands = [];
+          break;
+        }
+      }
+    }; }(impacted_el_vars);
+    for(var i = 0; i < selection.length; i++)
+      selection[i].commandChildren(checker);
+
+    //Check impacted els against list to see if recalculation is needed
+    for(var i = 0; i < impacted_els.length; i++) {
+      for(var k = 0; k < impacted_els[i].dependent_vars.length; k++) {
+        if(selection_vars[impacted_els[i].dependent_vars[k].trim()]) {
+          impacted_els[i].previous_commands = [];
+          impacted_els[i].altered_content = true;
+          break;
+        }
+      }
+    }
+    //Whew!  That was a mess.  But recalculation should now proceed swimmingly
+    return { el_id: (move_down ? selection[selection.length - 1] : impacted_els[impacted_els.length - 1]), vars: all_independent_vars};
+  }
 });

@@ -5,7 +5,6 @@ var material_holder = P(EditableBlock, function(_, super_) {
   _.klass = ['material','material_holder'];
   _.needsEvaluation = false; 
   _.evaluatable = true;
-  _.fullEvaluation = true; 
   _.scoped = true;
   _.lineNumber = true;
   _.data_type = false;

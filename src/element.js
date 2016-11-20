@@ -39,10 +39,8 @@ var Element = P(function(_) {
 	_.toParse = false;
 	_.lineNumber = false;
 	_.myLineNumber = false;
-	_.needsEvaluation = false; // This is whether an evaluatable element, when evaluated directly (not in a queue through fullEvaluation), should be evaluated
+	_.needsEvaluation = false; // This is whether an evaluatable element, when evaluated directly, should be evaluated
 	_.evaluatable = false;     // Is this element evaluatable?  If not, just skip it
-	_.fullEvaluation = false;  // When evaluated, should this element evaluate ancestors and suceeding elements?
-	_.forceFullEvaluation = false; // Used by remove method to set later blocks to act like a full evaluation block temporarily
 	_.scoped = false;          // Can this element change the scope (set/change variables).  If so, we need to keep track of scope here
 	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
 	_.inTree = false;
@@ -59,6 +57,7 @@ var Element = P(function(_) {
 
 		this.ends = {};
 		this.commands = [];
+		this.previous_commands = [];
 		this.independent_vars = [];
 		this.dependent_vars = [];
 		this.previous_independent_vars = [];
@@ -139,7 +138,6 @@ var Element = P(function(_) {
 	// Essentially the reverse of preRemoveHandler.
 	_.preReinsertHandler = function() {
 		this.mark_for_deletion = false;
-		this.forceFullEvaluation = false;
 		this.jQ.show();
 		jQuery.each(this.children(), function(i, child) {
 			child.preReinsertHandler();
@@ -393,17 +391,27 @@ var Element = P(function(_) {
 		this.inTree = false;
 		duration = typeof duration === 'undefined' ? 200 : duration;
 		this.preRemoveHandler();
-		if(this.fullEvaluation || this.forceFullEvaluation) {
-			if((this.depth == 0) && this[R]) {
-				var to_eval = this[R];
-				if(to_eval.mark_for_deletion) to_eval.forceFullEvaluation = true;
-				else window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
-			} else if(this.depth > 0) {
-				var to_eval = this.firstGenAncestor();
-				if(to_eval.mark_for_deletion) to_eval.forceFullEvaluation = true;
-				else window.setTimeout(function() { to_eval.evaluate(true, true); }, 100);
-			}
-		}
+		var independent_vars = this.allIndependentVars();
+		var do_eval = false;
+		if(independent_vars.length) {
+			var impact_vars = {}
+			for(var i = 0; i < independent_vars.length; i++)
+				impact_vars[independent_vars[i].trim()]=true;
+	    var target = this;
+	    while(true) {
+	      if(target[R]) {
+	        target = target[R];
+	        break;
+	      } else if(target.parent) {
+	        target = target.parent;
+	        if(target instanceof Loop) break;
+	      } else {
+	        target = false;
+	        break;
+	      }
+	    }
+	    if(target) do_eval = true;
+	   }
 		if(this[L] !== 0) 
 			this[L][R] = this[R];
 		else
@@ -432,6 +440,10 @@ var Element = P(function(_) {
 		this[R] = 0;
 		this.worksheet.renumber();
 		if(!this.implicit) this.worksheet.save();
+		if(do_eval) {
+			var eval_id = this.worksheet.evaluate();
+      giac.altered_list_additions[eval_id].push({el_id: target.id, vars: impact_vars}); // Let evaluator know about all altered vars in move operation
+    }
 		return this;
 	}
 	// Undo/Redo restore
@@ -449,21 +461,29 @@ var Element = P(function(_) {
 				this.remove(0);
 				break;
 			case 'move':
-				// BRENTAN: Move restores are inefficient.  We may end up calling lots of forced full evaluations on elements
-				// that get canceled out, but only after starting evaluation.  This should work more like the mouse drag
-				// move, but that 'knows' about all the elements in the move, while here we only know about ourself...
-				if(this.fullEvaluation) {
-					//In a full evaluation scenario, we should evaluate the neighbor above as well...
-					var first = this.firstGenAncestor();
-					if(first == this) first = first[L];
-					if(first)
-						window.setTimeout(function(to_eval) { return function() { to_eval.evaluate(true, true); }; }(first), 100);
-				}
-				if(action.L)
+				if(action.L) {
+        	var impact_vars = this.worksheet.moveImpact(action.L, false, R, [this]);
 					this.move(action.L, R, false);
-				else
+				} else {
+        	var impact_vars = this.worksheet.moveImpact(action.parent, true, L, [this]);
 					this.move(action.parent, L, true);
-				window.setTimeout(function(to_eval) { return function() { to_eval.evaluate(true); }; }(this), 100);
+				}
+		    var eval_id = this.worksheet.evaluate();
+        var target = impact_vars.el_id;
+        while(true) {
+          if(target[R]) {
+            target = target[R];
+            break;
+          }else if(target.parent) {
+            target = target.parent;
+            if(target instanceof Loop) break;
+          }else{
+            target = false;
+            break;
+          }
+        }
+        if(target)
+          giac.altered_list_additions[eval_id].push({el_id: target.id, vars: impact_vars.vars}); // Let evaluator know about all altered vars in move operation
 				break;
 		}
 	}
@@ -556,90 +576,65 @@ var Element = P(function(_) {
 
 	/*
 	Evaluation functions. 
+	Evaluation always starts at the top of a worksheet, resetting the engine and then moving down.
+	For items that have not been altered, we just skip (if not scoped) or load the archived value for the independent variable.
+	When we hit an altered element (test this.altered(eval_id)) we evaluation it and then continue to march downwards
 
 	Most of these functions work on their own, but elements can override:
 	continueEvaluation: What should happen when this element is evaluated
 	evaluationFinished: the default callback from continueEvaluation, although other callbacks can be defined (assumes commands are in the 'commands' property of this element)
 	childrenEvaluated: the callback that is called when all children of the element have been evaluated (if any)
+	altered will check the list of dependent vars for an item against the currently altered list.  If it matches, we need to evaluate, if
+	  it doesn't match, this item did not change.  If we are not scoped, we just move on, otherwise we have to unarchive the independent vars
+	  for this item, which is done with the giac.skipExecute command.  callback is scopeSaved from this item.
+
 	When continueEvaluation and childrenEvaluated are overrident, they should be called through super_, it may make sense to call them with super_ after some work is done
 	The giac function 'execute' is provided to send commands to giac.  Execute is called with various options, including 
 		commands to send (array), and the string name of the callback that should be called when complete
 	*/
-	_.move_to_next = false;
 	_.altered_content = false;
-	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method) and whether we also need to evaluate ancesctor/succeeding blocks (fullEvaluation)
+	_.outputSettingsChange = false;
+
+	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method) 
 	// This function assigns this evaluation stream a unique id, and registers it in Worksheet.  Other functions can cancel this evaluation stream with this unique id.
-	_.evaluate = function(force, force_full) {
-		//console.log("=========================");
+	// If we need an evaluation, we start at the top of the worksheet.
+	_.evaluate = function(force) {
 		if(typeof force === 'undefined') force = false;
-		if(typeof force_full === 'undefined') force_full = false;
+		if(force === 0) force = false;
 		if(this.mark_for_deletion) return;
-		if(!this.needsEvaluation && !force) return this;
+		if(!this.needsEvaluation && (force === false)) return this;
+		if(!this.newCommands() && !this.outputSettingsChange && (force === false)) return this;
 		this.altered_content = true; // We called evaluate on this element, so it was altered, which will force its evaluation
 		if(this.needsEvaluation) this.worksheet.save();
-		var fullEvaluation = force_full || this.fullEvaluation || this.forceFullEvaluation || (this.firstGenAncestor() instanceof programmatic_function);
-//BRENTAN: TODO HERE: MAY NEED TO THINK THROUGH IMPLICATIONS HERE SINCE WE ARE CHANGING THINGS
-	  // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue
-		var current_evaluations = giac.current_evaluations();
-		for(var i = 0; i < current_evaluations.length; i++) {
-			var location = L;
-			var current_evaluation = giac.evaluations[current_evaluations[i]];
-			var current_evaluation_full = giac.evaluation_full[current_evaluations[i]];
-			if(current_evaluation !== true) {
-				var el = this.firstGenAncestor();
-				if(el.id == current_evaluation) 
-					location = 0;
-				else {
-					for(el = el[L]; el instanceof Element; el = el[L]) {
-						if(el.id == current_evaluation) { location = R; break; }
-					}
-				}
-			}
-			if(location === L) {
-				// I am above the currently evaluating block
-				if(fullEvaluation) giac.cancelEvaluation(current_evaluations[i]); // Ill get to the other block through this one.
-			} else if(location === 0) {
-				// I am in the same parent (first gen) block as currently evaluating block
-				if(current_evaluation_full && fullEvaluation) { giac.cancelEvaluation(current_evaluations[i]); } // We need to redo, as we don't know where in the block the other evaluation is
-				else if(current_evaluation_full) { fullEvaluation = true; giac.cancelEvaluation(current_evaluations[i]); } // Restart the evaluation, in full, at this parent
-				else if(fullEvaluation) { giac.cancelEvaluation(current_evaluations[i]); } // This evaluation will reach, fix whatever is currently being evaluated
-				// Else both are independant evaluations, so let that one do its thing and this will do its thing.
-			}	else {
-				// I am below the currently evaluating block
-				if(current_evaluation_full) return this; // The other calculation is a 'full' calculation and will eventually reach me.
-			}
-		}
-		if(this.depth == 0) {
-			//this.jQ.stop().css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, {duration: 1500, complete: function() { $(this).css('background-color','')} } );
-			var eval_id = giac.registerEvaluation(fullEvaluation);
-			this.continueEvaluation(eval_id, fullEvaluation);
-			if(this.outputBox) this.outputBox.calculating();
-			if(fullEvaluation) {
-				//this.jQ.stop().css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
-				for(var el = this[R]; el !== 0; el = el[R]) 
-					window.setTimeout(function(el) { return function() { el.blurOutputBox() } }(el));
-			} 
-		} else {
-			// If this is a 'full evaluation', we should find the first generation ancestor and do it there
-			if(fullEvaluation) return this.firstGenAncestor().evaluate(true, true);
-			//this.jQ.stop().css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
-			var eval_id = giac.registerEvaluation(false);
-			this.continueEvaluation(eval_id, false);
-			if(this.outputBox) this.outputBox.calculating();
-		}
+		if(this.outputBox) this.outputBox.calculating();
+		var el_id = false;
+		if(!this.outputSettingsChange && (this.scoped || this.allIndependentVars().length)) {
+			for(var el = this[R]; el !== 0; el = el[R]) 
+				el.blurOutputBox();
+		} else 
+			el_id = this.id; //not scoped, so stop when we reach this guy
+		this.outputSettingsChange = false;
+		this.worksheet.evaluate([], el_id);
 		return this;
 	}
 	_.blurOutputBox = function() {
 		if(this.outputBox) this.outputBox.calculating();
 		if(this.jQ && (typeof this.jQ.find === 'function')) {
 			this.jQ.find('i.fa-spinner').remove();
-			this.jQ.find('div.' + css_prefix + 'element.error').removeClass('error');
-			this.jQ.find('div.' + css_prefix + 'element.warn').removeClass('warn');
+			//this.jQ.find('div.' + css_prefix + 'element.error').removeClass('error');
+			//this.jQ.find('div.' + css_prefix + 'element.warn').removeClass('warn');
 		}
 		if(this.hasChildren) {
 			var children = this.children();
-			for(var i = 0; i < children.length; i++) window.setTimeout(function(i) { return function() { children[i].blurOutputBox(); }; }(i));
+			for(var i = 0; i < children.length; i++) children[i].blurOutputBox();
 		}
+	}
+	_.unblurOutputBox = function() {
+		if(this.outputBox) this.outputBox.uncalculating();
+		/*if(this.hasChildren) {
+			var children = this.children();
+			for(var i = 0; i < children.length; i++) window.setTimeout(function(i) { return function() { children[i].unblurOutputBox(); }; }(i));
+		}*/
 	}
 	_.shouldBeEvaluated = function(evaluation_id) {
 		if(!this.evaluatable || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;
@@ -674,57 +669,80 @@ var Element = P(function(_) {
 				this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse calculation_spinner"></i>');
 		}
 	}
-	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
+	// Continue evaluation is called within an evaluation chain.  It will evaluate this node then move to evaluate the next node.
 	//_.startTime = 0;
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
 			if(this.hasChildren) {
-				this.move_to_next = move_to_next;
 				if(this.ends[L])
 					this.ends[L].continueEvaluation(evaluation_id, true)
 				else
 					this.childrenEvaluated(evaluation_id);
 			} else {
 				if((this.commands.length === 0) || ($.map(this.commands, function(val) { return val.command; }).join('').trim() === '')) // Nothing to evaluate...
-					this.evaluateNext(evaluation_id, move_to_next)
+					this.evaluateNext(evaluation_id)
 				else if(this.altered(evaluation_id)) {
 					//this.startTime = new Date();
 					// We were altered, so lets evaluate
-					giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+					giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
 				} else if(this.scoped) {
 					// Not altered, but we are scoped, so we need to save scope
-					giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
-//BRENTAN: Probably need to 'ungray' results here...
+					giac.skipExecute(evaluation_id, this, 'scopeSaved');
 				} else
-					this.evaluateNext(evaluation_id, move_to_next)
+					this.evaluateNext(evaluation_id)
 			}
 		} else 
-			this.evaluateNext(evaluation_id, move_to_next)
+			this.evaluateNext(evaluation_id)
 	}
-
+	_.newCommands = function() {
+		var equal = true;
+		if(this.commands.length == this.previous_commands.length) {
+			for(var i = 0; i < this.commands.length; i++) {
+				if(this.commands[i].command != this.previous_commands[i]) {
+					equal = false;
+					break;
+				}
+			}
+		} else
+			equal = false;
+		return !equal;
+	}
 	// Check for altered content or dependency on current list of altered variables: only evaluate if altered
 	_.altered = function(evaluation_id) {
-		if(this.altered_content || giac.check_altered(evaluation_id, this.dependent_vars)) {
+		if(this.altered_content || giac.check_altered(evaluation_id, this)) {
 			this.altered_content = false;
 			giac.add_altered(evaluation_id, this.previous_independent_vars);
 			giac.add_altered(evaluation_id, this.independent_vars);
 			this.previous_independent_vars = this.independent_vars;
+			this.previous_commands = [];
+			for(var i = 0; i < this.commands.length; i++) 
+				this.previous_commands.push(this.commands[i].command);
 this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 			return true;
 		}
 this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 		giac.remove_altered(evaluation_id, this.independent_vars);
-		return false;
+		return giac.compile_mode; // In compile mode, we need to know the commands that are sent
+	}
+	_.allIndependentVars = function() {
+		var arr = this.independent_vars.concat(this.previous_independent_vars);
+		if(this.hasChildren) {
+			var kids = this.children();
+			for(var i = 0; i < kids.length; i++)
+				arr.concat(kids.allIndependentVars());
+		}
+		return arr;
 	}
 
 	// Callback from giac when an evaluation has completed and results are returned
-	_.evaluationCallback = function(evaluation_id, evaluation_callback, move_to_next, results) {
+	_.evaluationCallback = function(evaluation_id, evaluation_callback, results) {
 		//var endTime = new Date();
 		//console.log(this.leftJQ.children('span').html() + " - Elapsed Time: " + (endTime - this.startTime)/1000);
 		if(!giac.shouldEvaluate(evaluation_id)) return;
-		if(this[evaluation_callback](results, evaluation_id, move_to_next)) 
-			this.evaluateNext(evaluation_id, move_to_next);
+		if(this.outputBox) this.outputBox.resetErrorWarning();
+		if(this[evaluation_callback](results, evaluation_id)) 
+			this.evaluateNext(evaluation_id);
 	}
 
 	// Callback function.  should return true if this is the end of the element evaluation, false if more evaluation is happening
@@ -733,27 +751,30 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 	}
 
 	// Call the next item
-	_.evaluateNext = function(evaluation_id, move_to_next) {
+	_.evaluateNext = function(evaluation_id) {
 		this.leftJQ.find('i.fa-spinner').remove();
+		this.unblurOutputBox();
+		var move_to_next = !giac.stopEvaluation(evaluation_id,this.id); //Should we stop calculating at this point?
 		if(this[R] && move_to_next)
-			this[R].continueEvaluation(evaluation_id, move_to_next)
-		else if(move_to_next && (this.parent instanceof Element))
+			this[R].continueEvaluation(evaluation_id)
+		else if(this.parent instanceof Element)
 			this.parent.childrenEvaluated(evaluation_id);
 		else 
 			giac.evaluationComplete(evaluation_id);
 	}
 
-	// Called by the last child node of this element after it is evaluated.  This node should move onwards to next nodes if 'move_to_next' is true
+	// Called by the last child node of this element after it is evaluated.  This node should move onwards to next nodes 
 	_.childrenEvaluated = function(evaluation_id) {
-		var move_to_next = this.move_to_next;
 		// We need to save the scope?
-//BRENTAN: Do a check here for variables that have been changed to see if I need to be evaluated
+//BRENTAN: NEED TO CHECK ON THINGS LIKE PLOTS, ETC TO SEE WHAT HAPPENS.  THEN FOR/IF LOOPS
 		if(this.scoped && giac.shouldEvaluate(evaluation_id))
-			giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
+			giac.skipExecute(evaluation_id, this, 'scopeSaved');
 		else
-			this.evaluateNext(evaluation_id, move_to_next);
+			this.evaluateNext(evaluation_id);
 	}
+	// Called on items that weren't evaluated, but had their value retrieved via unarchive.
 	_.scopeSaved = function(result) {
+		// Remove grey-out
 		return true;
 	}
 	// Find the nearest previous element that has a scope we should use
@@ -1370,7 +1391,6 @@ var LogicBlock = P(Element, function(_, super_) {
 var LogicCommand = P(Element, function(_, super_) {
 	_.klass = ['logic_command'];
 	_.logicResult = false;
-	_.fullEvaluation = true;
 	_.init = function() {
 		super_.init.call(this);
 	}

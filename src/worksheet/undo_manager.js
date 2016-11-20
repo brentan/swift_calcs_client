@@ -128,7 +128,7 @@ Worksheet.open(function(_) {
 		for(var i = 0; i < (action.length - 1); i++) {
 			if(!(action[i].el instanceof Element)) //FocusableItem...just grab current state
 				reverseAction.push({ el: action[i].el, state: action[i].el.currentState() })
-			else
+			else 
 				action[i].el.undo_count--;
 			// No else because the actual act of performing the undo/redo will create the redo/undo action for Elements
 			// Restore the state:

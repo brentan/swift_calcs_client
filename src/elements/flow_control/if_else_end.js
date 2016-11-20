@@ -2,7 +2,6 @@ var if_block = P(LogicBlock, function(_, super_) {
 	_.klass = ['if', 'logic_block'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.fullEvaluation = true; 
 	_.scoped = true;
 	_.hasChildren = true;
 	_.mathField = 0;
@@ -46,8 +45,8 @@ var if_block = P(LogicBlock, function(_, super_) {
 			}
 		};
 	}
-	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and then move to evaluate the next node.
+	_.continueEvaluation = function(evaluation_id) {
 		// Build command list
 		this.commands = [{ command: 'evalf(' + this.mathField.text() + ')' }];
 		this.else_blocks = [];
@@ -60,10 +59,9 @@ var if_block = P(LogicBlock, function(_, super_) {
 		}
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
-			this.move_to_next = move_to_next;
-			giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+			giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
 		} else 
-			this.evaluateNext(evaluation_id, move_to_next);
+			this.evaluateNext(evaluation_id);
 	}
 	_.evaluationFinished = function(result, evaluation_id) {
 		var any_yet = false;
@@ -117,9 +115,9 @@ var else_block = P(LogicCommand, function(_, super_) {
 	_.attachItems = function() {
 		this.focusableItems = [[registerFocusable(CodeBlock,this, 'else', { allowDelete: true})]];
 	}
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	_.continueEvaluation = function(evaluation_id) {
 		this.rightParent();
-		this.evaluateNext(evaluation_id, move_to_next);
+		this.evaluateNext(evaluation_id);
 	}
 	_.rightParent = function() {
 		if(this.parent instanceof if_block) {

@@ -2,7 +2,6 @@ var for_loop = P(Loop, function(_, super_) {
 	_.klass = ['for'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.fullEvaluation = true; 
 	_.scoped = true;
 	_.hasChildren = true;
 	_.varField = 0;
@@ -75,16 +74,15 @@ var for_loop = P(Loop, function(_, super_) {
 			}
 		};
 	}
-	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and if 'move_to_next' is true, then move to evaluate the next node.
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and then move to evaluate the next node.
+	_.continueEvaluation = function(evaluation_id) {
 		// Build command list
 		this.commands = [{ command: 'evalf(' + this.startField.text() + ')' },{ command: 'evalf(' + this.finishField.text() + ')' },{ command: 'evalf(' + this.stepField.text() + ')' }];
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
-			this.move_to_next = move_to_next;
-			giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+			giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
 		} else 
-			this.evaluateNext(evaluation_id, move_to_next);
+			this.evaluateNext(evaluation_id);
 	}
 	_.evaluationFinished = function(result, evaluation_id) {
 		this.iterator = this.varField.text().trim();
@@ -157,10 +155,10 @@ var for_loop = P(Loop, function(_, super_) {
 					this.outputBox.expand();
 				} else
 					this.outputBox.collapse();
-				giac.execute(evaluation_id, this.move_to_next, [], this, 'scopeSaved');
+				giac.skipExecute(evaluation_id, this, 'scopeSaved');
 			}
 		} else
-			this.evaluateNext(evaluation_id, this.move_to_next);
+			this.evaluateNext(evaluation_id);
 	}
 	_.startIteration = function(evaluation_id) {
 		giac.execute(evaluation_id, true, [{ command: this.iterator + ':=' + this.start_val }], this, 'startIterationCallback');
@@ -203,12 +201,12 @@ var continue_block = P(Element, function(_, super_) {
 		super_.postInsertHandler.call(this);
 		return this;
 	}
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	_.continueEvaluation = function(evaluation_id) {
 		var parentLoop = this.parentLoop();
 		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) 
 			parentLoop.childrenEvaluated(evaluation_id);
 		else
-			this.evaluateNext(evaluation_id, move_to_next);
+			this.evaluateNext(evaluation_id);
 	}
 	_.parentLoop = function(skip_spinner_removal) {
 		var found_loop = false;
@@ -254,12 +252,12 @@ var continue_block = P(Element, function(_, super_) {
 var break_block = P(continue_block, function(_, super_) {
 	_.command_name = 'break';
 	_.helpText = "<<break>>\nWithin a loop, a break command will immediately cease all iterations and exit the loop.";
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	_.continueEvaluation = function(evaluation_id) {
 		var parentLoop = this.parentLoop();
 		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) {
 			parentLoop.start_val = parentLoop.finish_val; // Force loop to be complete
 			parentLoop.childrenEvaluated(evaluation_id);
 		}	else
-			this.evaluateNext(evaluation_id, move_to_next);
+			this.evaluateNext(evaluation_id);
 	}
 });

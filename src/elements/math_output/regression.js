@@ -152,7 +152,6 @@ var regression = P(SettableMathOutput, function(_, super_) {
 				} else {
 					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
 					_this.commands.unshift({command: command, nomarkup: true, pre_command: 'mksareduce_mode(1);' }); 
-					_this.fullEvaluation = (_this.scoped || _this.was_scoped);
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}

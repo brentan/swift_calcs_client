@@ -2,7 +2,6 @@ var purge = P(Element, function(_, super_) {
 	_.klass = ['purge'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.fullEvaluation = true; 
 	_.scoped = true;
 	_.lineNumber = true;
 	_.helpText = "<<purge <[VARS]>>>\nPurge the variable (or comma seperated list of variables) from memory.  The values of these variables is forgotten at this step for all following calculations.";
@@ -33,7 +32,9 @@ var purge = P(Element, function(_, super_) {
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
 			if(_this.needsEvaluation) {
-				_this.commands = [{command: "purge(" + _this.varField.text() + ")", nomarkup: true}];				
+				_this.commands = [{command: "purge(" + _this.varField.text() + ")", nomarkup: true}];			
+				_this.independent_vars = _this.varField.text().split(",");
+				_this.dependent_vars = _this.varField.text().split(",");
 				_this.evaluate();
 				_this.needsEvaluation = false;
 			}

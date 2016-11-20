@@ -4,7 +4,6 @@ var mixture = P(Element, function(_, super_) {
   _.lineNumber = true;
   _.hasChildren = true;
   _.evaluatable = true;
-  _.fullEvaluation = true; 
   _.scoped = true;
   _.data_type = 2;
   _.number_of_species = 0;
@@ -99,23 +98,22 @@ var mixture = P(Element, function(_, super_) {
     return true;
   }
   // Hijack continueEvaluation.  We have children, but we zip them up into our own commands, so we want to ignore the children at this point
-  _.continueEvaluation = function(evaluation_id, move_to_next) {
+  _.continueEvaluation = function(evaluation_id) {
     this.genCommand(); // Make sure we have most up to date children info
     if(this.jQ) this.insertJQ.find('i.fa-spinner').remove();
     if(this.shouldBeEvaluated(evaluation_id)) {
       this.addSpinner(evaluation_id);
       if(this.commands.length === 0) // Nothing to evaluate...
-        this.evaluateNext(evaluation_id, move_to_next)
+        this.evaluateNext(evaluation_id)
       else if(this.altered(evaluation_id)) {
         // We were altered, so lets evaluate
-        giac.execute(evaluation_id, move_to_next, this.commands, this, 'evaluationFinished');
+        giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
       } else {
         // Not altered, but we are scoped, so we need to save scope
-        giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
-//BRENTAN: Probably need to 'ungray' results here...
+        giac.skipExecute(evaluation_id, this, 'scopeSaved');
       } 
     } else 
-      this.evaluateNext(evaluation_id, move_to_next)
+      this.evaluateNext(evaluation_id)
   }
   _.changed = function(el) {
     this.needsEvaluation = this.varStoreField.empty() ? false : true;

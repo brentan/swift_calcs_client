@@ -60,7 +60,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 			this.outputBox.clearState().collapse();
 		} 
 	}
-	_.continueEvaluation = function(evaluation_id, move_to_next) {
+	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			var name = this.varName.text().trim();
 			this.testName(name);
@@ -80,16 +80,15 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 							nomarkup: true
 						})
 					}
-					giac.execute(evaluation_id, move_to_next, commands, this, 'evaluationFinished');
+					giac.execute(evaluation_id, commands, this, 'evaluationFinished');
 				} else  {
 					// Not altered, but we are scoped, so we need to save scope
-					giac.execute(evaluation_id, move_to_next, [], this, 'scopeSaved');
-//BRENTAN: Probably need to 'ungray' results here...
+					giac.skipExecute(evaluation_id, this, 'scopeSaved');
 				} 
 			} else
-				this.evaluateNext(evaluation_id, move_to_next)
+				this.evaluateNext(evaluation_id)
 		} else 
-			this.evaluateNext(evaluation_id, move_to_next)
+			this.evaluateNext(evaluation_id)
 	}
 	_.empty = function() {
 		return false;
@@ -200,13 +199,11 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 		}
 		this.colList = false;
 		this.needsEvaluation = false;
-		this.fullEvaluation = false;  
 		this.evaluatable = false;
 	}
 	_.loadData = function() {
 		var results = this.data;
 		this.needsEvaluation = true;
-		this.fullEvaluation = true;  
 		this.evaluatable = true;
 		this.insertJQ.html('');
 		var $div = $('<div/>').addClass('explain').append('<a href="#">Update Import Settings</a>');

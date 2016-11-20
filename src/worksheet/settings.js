@@ -489,7 +489,7 @@ Worksheet.open(function(_) {
 			if(this.rights >= 3) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {hash_string: this.hash_string, settings: this.settings } });
 			$('.apply_now').removeClass('shown').hide();
 			if(SwiftCalcs.active_worksheet == this) 
-				this.ends[-1].evaluate(true, true); if(!SwiftCalcs.giac.auto_evaluation) { SwiftCalcs.giac.manualEvaluation(); }
+				this.fullEvalNeeded().evaluate(); if(!SwiftCalcs.giac.auto_evaluation) { SwiftCalcs.giac.manualEvaluation(); }
 		}
 	}
 });

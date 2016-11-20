@@ -131,8 +131,8 @@ var Slider = P(aFocusableItem, function(_, super_) {
 		if(this.unit.length > 0) 
 			command.push({command: "convert(" + to_execute + "," + this.unit + ")", nomarkup: true});
 		command.push({command: to_execute, nomarkup: true});
-		var eval_id = giac.registerEvaluation(false);
-		giac.execute(eval_id, true, command, this);
+		var eval_id = giac.registerEvaluation(true);
+		giac.execute(eval_id, command, this);
 		this.setVal('<span class="fa fa-spinner fa-pulse"></span>');
 	}	
 	_.previousScope = function() { 
@@ -141,7 +141,7 @@ var Slider = P(aFocusableItem, function(_, super_) {
 	_.firstGenAncestor = function() { 
 		return this.element.firstGenAncestor();
 	}
-	_.evaluationCallback = function(evaluation_id, evaluation_callback, move_to_next, results) { 
+	_.evaluationCallback = function(evaluation_id, evaluation_callback, results) { 
 		giac.evaluationComplete(evaluation_id);
 		var ind = 0;
 		if((results.length == 2) && (!results[0].success) && (results[1].success)) //if unit conversion fails, try no conversion at all

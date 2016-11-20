@@ -147,14 +147,11 @@ var math = P(MathOutput, function(_, super_) {
 				if(to_compute.match(/(:=|\+\+|--)/)) {
 					_this.scoped = true;
 					_this.was_scoped = true;
-					_this.fullEvaluation = true;
 				}	else if(_this.was_scoped) {
 					_this.scoped = false;
 					_this.was_scoped = false;
-					_this.fullEvaluation = true;
 				} else {
 					_this.scoped = false;
-					_this.fullEvaluation = false;
 					if(to_compute.trim() === '') {
 						_this.needsEvaluation = false;
 						_this.worksheet.save();

@@ -94,7 +94,6 @@ var createGiacElement = function(options) {
 						_this.commands[0].restore_vars = _this.items[_this.options.protect_vars-1].text();
 						_this.commands[0].protect_vars = _this.items[_this.options.protect_vars-1].text();
 					}
-					_this.fullEvaluation = (_this.scoped || _this.was_scoped);
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}

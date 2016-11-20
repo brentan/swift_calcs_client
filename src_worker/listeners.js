@@ -110,16 +110,20 @@ var receiveMessage = function(command) {
     return sendMessage({command: 'varList', userVarList: uvars, totalVarList: vars, objects: objects})
   }
   // If we are starting a new evaluation, restart giac to reset everything
-	if(command.restart)
+	if(command.restart) {
 		Module.caseval('restart;srand;' + restart_string);
+    return;
+  }
 	var output = [];
   // Errors and warnings are sometimes (but not always!) caught with Module.printErr (they are sometimes also just returned by caseval directly)
   // to deal with that we define these in the global scope and set them with printErr as things happen
 	errors = [];
 	warnings = [];
   // If we need to load a scope, do it here
-	if(command.previous_scope)
-		Module.caseval('unarchive("' + command.previous_scope + '");srand;');
+	if(command.load_scope) {
+    for(var i = 0; i < command.var_list.length; i++)
+      Module.caseval(command.var_list[i] + ':=unarchive("' + command.load_scope + "_" + command.var_list[i] + '")');
+  }
   // Iterate over the command list
 	for(ii = 0; ii < command.commands.length; ii++) {
     if(command.commands[ii].genError) {
@@ -286,13 +290,15 @@ var receiveMessage = function(command) {
     if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
 	}
   // If we are scoped evaluation, we should save the scope now for future retreival
-	if(command.scoped) 
-		Module.caseval('archive("' + command.next_scope + '")');
+	if(command.scoped) {
+    for(var i = 0; i < command.var_list.length; i++)
+		  Module.caseval('archive("' + command.next_scope + "_" + command.var_list[i] + '", ' + command.var_list[i] + ')');
+  }
   // Return the result to the window thread
   if(command.variable)
     sendMessage({command: 'variable', results: output, callback_id: command.callback_id})
   else
-	  sendMessage({command: 'results', results: output, eval_id: command.eval_id, move_to_next: command.move_to_next, callback_id: command.callback_id, focusable: command.focusable, callback_function: command.callback_function});
+	  sendMessage({command: 'results', results: output, eval_id: command.eval_id, callback_id: command.callback_id, focusable: command.focusable, callback_function: command.callback_function});
 }
 this.addEventListener("message", function (evt) {
   receiveMessage(JSON.parse(evt.data));

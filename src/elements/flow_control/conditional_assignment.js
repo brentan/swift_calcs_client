@@ -2,7 +2,6 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 	_.klass = ['conditional_assignment'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.fullEvaluation = true; 
 	_.scoped = true;
 	_.lineNumber = true;
 	_.number_of_conditions = 2;
