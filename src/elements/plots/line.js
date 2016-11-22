@@ -49,7 +49,6 @@ var plot_line = P(subplot, function(_, super_) {
 		return commands;
 	}
 	_.createCommands = function() {
-		this.plot_me = false;
 		var xs = this.eq0.text().trim();
 		var commands = [
 				{command: "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))", nomarkup: true}
@@ -59,6 +58,10 @@ var plot_line = P(subplot, function(_, super_) {
 			commands.push({command: "mksa_remove(evalf(" + this.eq0.text({check_for_array: true}) + "))", nomarkup: true});
 		} else
 			this.x_provided = false;
+
+		this.dependent_vars = [];
+		for(var i = 0; i < commands.length; i++)
+			this.dependent_vars = this.dependent_vars.concat(GetDependentVars(commands[i].command));
 		return commands;
 	}
 	_.evaluationFinished = function(result) {

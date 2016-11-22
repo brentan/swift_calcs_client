@@ -19,7 +19,6 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 	_.var_name = "";
 	_.var_id = "";
 	_.needsEvaluation = false;
-	_.scoped = true;
 	_.savedProperties = ['part_name','part_id','var_name','var_id'];
 
 	_.init = function(part_name, part_id, var_name, var_id) {
@@ -53,6 +52,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 		var target = $(e.target);
 		if(target.hasClass(css_prefix + 'add_equation')) {
 			this.needsEvaluation = true;
+			this.altered_content = true;
 			this.submissionHandler(this)(this.varField);
 			return false;
 		}
@@ -69,6 +69,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {
+					_this.independent_vars = [_this.varField.text().trim()];
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}
@@ -106,7 +107,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 					_this.setError(response.message)
 					_this.evaluateNext(evaluation_id)
 				}});
-			} else  {
+			} else {
 				// Not altered, but we are scoped, so we need to save scope
 				giac.skipExecute(evaluation_id, this, 'scopeSaved');
 			} 

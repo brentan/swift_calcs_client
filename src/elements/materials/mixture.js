@@ -4,7 +4,6 @@ var mixture = P(Element, function(_, super_) {
   _.lineNumber = true;
   _.hasChildren = true;
   _.evaluatable = true;
-  _.scoped = true;
   _.data_type = 2;
   _.number_of_species = 0;
   _.last_name = "";
@@ -68,14 +67,24 @@ var mixture = P(Element, function(_, super_) {
   _.genCommand = function() {
     var species = []
     var children = this.children();
-    for(var i = 0; i < children.length; i++)
-      if(children[i].data !== false) species.push(children[i].speciesData());
-    this.commands = [{command: "1", setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: species, last_name: this.last_name} }];    
+    var command = "";
+    this.dependent_vars = [];
+    for(var i = 0; i < children.length; i++) {
+      if(children[i].data !== false) {
+        var to_store = children[i].speciesData();
+        species.push(to_store);
+        command += to_store.quantity + "->" + to_store.data.full_name + ";";
+        this.dependent_vars = this.dependent_vars.concat(GetDependentVars(to_store.quantity));
+      }
+    }
+    this.independent_vars = [this.varStoreField.text().trim()];
+    this.commands = [{command: this.independent_vars + "=" + command, setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: species, last_name: this.last_name} }];    
   }
 
   _.shouldBeEvaluated = function(evaluation_id) {
+    var super_call = super_.shouldBeEvaluated.call(this, evaluation_id);
     if(this.commands.length && (this.commands[0].setMaterial.data.length == 0)) return false; // Test for valid species in mixture
-    if(super_.shouldBeEvaluated.call(this, evaluation_id)) {
+    if(super_call) {
       var children = this.children();
       if(children.length != this.number_of_species) return true;
       for(var i = 0; i < children.length; i++)
@@ -174,6 +183,13 @@ var mixture_component = P(material_holder, function(_, super_) {
       else
         math().setImplicit().insertAfter(_this.parent).show().focus(0);
     };
+  }
+  // Override: since we dont actually evaluate inside we should return unarchive list of the parent, and evaluate should eval parent
+  _.evaluate = function(force) {
+    if(this.parent) this.parent.evaluate(force);
+  }
+  _.getUnarchiveList = function() {
+    return this.parent ? this.parent.previousUnarchivedList() : [];
   }
 
 });

@@ -224,9 +224,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		if(typeof text !== "string") text = "";
 		if((text.trim() == '') && !this.editable) return this.flash();
 		if(this.editable && text.match(/({|})/)) return this.flash(); // Don't allow some special characters?
-		if((text == '=') && (this.location == 0) && (this.element.storeAsVariable) && !this.element.scoped)
-    	this.element.storeAsVariable();
-  	else if(this.allowDelete || this.editable || this.element.empty()) {
+		if(this.allowDelete || this.editable || this.element.empty()) {
     	this.scheduleUndoPoint();
 			if(this.children().hasClass('highlighted')) {
 				this.children().slice(min(this.location, this.anchor), max(this.location,this.anchor)).remove();

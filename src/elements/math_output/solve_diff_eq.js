@@ -172,12 +172,10 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
-			if((mathField === _this.varStoreField) && _this.varStoreField.empty()) 
-				_this.clearVariableStore();
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
+				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
 				for(var i = 0; i < _this.eqFields.length; i++)
 					if(_this.eqFields[i].empty()) errors.push('Equation ' + _this.numeric_mode ? ('y\'<sub>' + i + '</sub>') : (y+1) + ' is currently empty.  Please add an equation.');
@@ -245,6 +243,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {
+					_this.dependent_vars = GetDependentVars(command, step_var.split(","));
 					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
 					_this.commands.unshift({command: command, protect_vars: step_var, nomarkup: true, pre_command: (_this.numeric_mode ? 'mksareduce_mode(1);' : 'mksavariable_mode(1);') }); 
 					_this.evaluate();
@@ -255,7 +254,6 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 	}
 	_.evaluationFinished = function(result) {
 		if(result[1].returned && result[1].success) {
-			this.was_scoped = false;
 			// Test for no result
 			if(result[1].returned.match(/[\s]*\\begin{bmatrix[0-9]+}\\end{bmatrix[0-9]+}[\s]*/)) { 
 				result[1].returned = ''; 

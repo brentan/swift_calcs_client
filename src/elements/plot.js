@@ -99,7 +99,6 @@ var plot = P(Element, function(_, super_) {
 			this.plotBox = this.plotBox.destroy();
 		return super_.destroy.call(this);
 	}
-//BRENTAN: Some way to undo this....
 	_.blurOutputBox = function() {
 		if(this.plotBox) {
 			var current = this.plotBox.data.colors();
@@ -123,11 +122,20 @@ var plot = P(Element, function(_, super_) {
 		this.calc_x_min = false;
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
-			this.getUnits = true;
-			if(this.ends[L]) 
-				this.ends[L].continueEvaluation(evaluation_id, true)
-			else 
-				this.childrenEvaluated(evaluation_id);
+			var any_altered = false;
+			var children = this.children();
+			for(var i = 0; i < children.length; i++) 
+				if(children[i].altered_content || giac.check_altered(evaluation_id, children[i])) { any_altered = true; break; }
+			if(any_altered) {
+				this.getUnits = true;
+				if(this.ends[L]) 
+					this.ends[L].continueEvaluation(evaluation_id)
+				else 
+					this.childrenEvaluated(evaluation_id);
+			} else {
+				this.drawPlot();
+				this.evaluateNext(evaluation_id);
+			}
 		} else 
 			this.evaluateNext(evaluation_id);
 	}
@@ -212,7 +220,7 @@ var plot = P(Element, function(_, super_) {
 		this.y2_unit = result[7].returned;
 		this.y2_unit_label = this.y2_units ? this.y2_units : result[8].returned;
 		if(this.ends[L]) 
-			this.ends[L].continueEvaluation(evaluation_id, true)
+			this.ends[L].continueEvaluation(evaluation_id)
 		else 
 			this.childrenEvaluated(evaluation_id);
 		return false;
@@ -795,9 +803,13 @@ var subplot = P(EditableBlock, function(_, super_) {
 		return function(mathField) {
 			if(_this.needsEvaluation) {
 				_this.commands = _this.createCommands();
+				_this.altered_content = _this.newCommands();
 				_this.parent.evaluate(true);
 			}
 		};
+	}
+	_.evaluate = function(force) {
+		this.parent.evaluate(force);
 	}
 	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
@@ -807,6 +819,21 @@ var subplot = P(EditableBlock, function(_, super_) {
 				this.commands = this.createCommands();
 		}
 		return super_.continueEvaluation.call(this, evaluation_id);
+	}
+	_.altered = function(evaluation_id) {
+		if(this.altered_content || giac.check_altered(evaluation_id, this)) {
+			if(!this.parent.getUnits) {
+				this.setPreviousCommands();
+				this.altered_content = false;
+				this.plot_me = false;
+			}
+			return true;
+		} else if(!this.parent.getUnits && this.newCommands()) {
+			this.setPreviousCommands();
+			this.plot_me = false;
+			return true;
+		}
+		return giac.compile_mode; // In compile mode, we need to know the commands that are sent...even though plots should be ignored in compile_mode, but still
 	}
 	_.preRemoveHandler = function() {
 		super_.preRemoveHandler.call(this);
@@ -908,6 +935,11 @@ var subplot = P(EditableBlock, function(_, super_) {
 	}
 	_.evaluationFinished = function(result) {
 		return true;
+	}
+	_.setPreviousCommands = function() {
+		this.previous_commands = [];
+		for(var i = 0; i < this.commands.length; i++) 
+			this.previous_commands.push(this.commands[i].command);
 	}
 	_.focus = function(dir) {
 		super_.focus.call(this, dir);

@@ -2,7 +2,6 @@ var programmatic_function = P(Element, function(_, super_) {
 	_.klass = ['programmatic_function'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.scoped = true;
 	_.hasChildren = true;
 	_.lineNumber = true;
 	_.helpText = "<<<[var]> = function>>\nProgrammatic Function Definition.  Return an output from the function based on provided inputs by following the computation put forth in the function.";
@@ -141,7 +140,6 @@ var programmatic_function = P(Element, function(_, super_) {
 var return_block = P(Element, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
-	_.scoped = true;
 	_.needsEvaluation = false;
 	_.helpText = "<<return>>\nWithin a function, a return command will immediately cease execution and return the value following the call to 'return'.";
 	_.innerHtml = function() {

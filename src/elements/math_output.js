@@ -69,7 +69,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		this.outputBox.jQ.find('td.answer_menu').html('');
 		this.outputBox.tableJQ.next("div." + css_prefix + "calculation_stopped").slideUp({duration: 250, always: function() { $(this).remove(); } });
 		if(result[0].success) {
-			if((this.scoped && (this.outputMode != 2)) || (result[0].returned.trim() === '') || (this.outputMode == 1)) {
+			if((this.scoped() && (this.outputMode != 2)) || (result[0].returned.trim() === '') || (this.outputMode == 1)) {
 				this.outputMathBox.clear();
 				this.outputMathBox.jQ.hide();
 				this.outputBox.collapse();
@@ -118,7 +118,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 					} else {
 						// Create the pulldown menu
 						menu.append('<div class="pulldown_item" data-action="copyAnswer">Copy to new line&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>');
-						if(!this.scoped && this.storeAsVariable)
+						if(!this.scoped() && this.storeAsVariable)
 							menu.append('<div class="pulldown_item" data-action="storeAsVariable">Assign to variable</div>');
 						if(result[0].returned.indexOf('\\Unit') > -1)
 							menu.append('<div class="pulldown_item" data-action="enableUnitMode">Change units</div>');
@@ -375,10 +375,9 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 // Mathoutput Block but also adds a [ans]= to the beggining.  The innerHTML should call wrapHTML with its HTML to add the necessary code.
 var SettableMathOutput = P(MathOutput, function(_, super_) {
 	//_.savedProperties = hard-coded in to element.js, since this is an overridden class.  Add them there
-	_.scoped = false;
-	_.was_scoped = false;
 	_.function_of = false; 
 	_.outputMode = 2;
+	_.var_field_value = false; //Only used by save/load of this element.
 
 	_.postInsertHandler = function() {
 		this.varStoreField = registerFocusable(MathQuill, this, 'var_store', { ghost: 'ans', noWidth: true, handlers: {
@@ -433,7 +432,6 @@ var SettableMathOutput = P(MathOutput, function(_, super_) {
 		};
 	}
 	_.storeAsVariable = function(var_name) {
-		this.scoped = true;
 		if(var_name) 
 			this.varStoreField.paste(var_name.replace(/_(.*)/,"_{$1}"));
 		else if(this.function_of)
@@ -442,14 +440,11 @@ var SettableMathOutput = P(MathOutput, function(_, super_) {
 			this.varStoreField.clear().focus(1).moveToLeftEnd().write("latex{ans_{" + this.uniqueAnsId() + "}}").closePopup().keystroke('Shift-Home', { preventDefault: function() { } });
 		this.outputBox.setWidth();
 	}
-	_.clearVariableStore = function(focus_next) {
-		this.scoped = false;
-		this.was_scoped = true;
-		if(focus_next) this.focusableItems[0][0].focus(L);
-	}
 	_.genCommand = function(command) {
-		this.scoped = this.varStoreField.text().trim().length > 0;
-		if(this.scoped) command = this.varStoreField.text() + ' := ' + command;
+		if(this.varStoreField.text().trim().length > 0) {
+			this.var_field_value = true;
+			command = this.varStoreField.text() + ' := ' + command;
+		} else this.var_field_value = false;
 		return super_.genCommand.call(this, command);
 	}
   _.toString = function() {

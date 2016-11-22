@@ -7,7 +7,6 @@ var slider = P(Element, function(_, super_) {
 	_.units = '';
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.scoped = true;
   _.interaction_level = INTERACTION_LEVELS.FORM_ELEMENTS;
 	_.lineNumber = true;
 	_.helpText = "<<slider>>\nThe slider provides a user visual slider that a user can click and manipulate in order to change an input.\nClick the <i class='fa fa-wrench'></i> icon to customize the minimum, maximum, step size, and units of the slider.";

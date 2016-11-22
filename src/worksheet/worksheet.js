@@ -332,6 +332,7 @@ var Worksheet = P(function(_) {
 	// Load function is broken up since the parser can take on order of 1 second, and delay is noticeable.  Instead, have parser insert block by block so there is visual feedback to user that 
 	// document is loading.
 	_.load = function(response) {
+    startProgress("Loading Worksheet");
 		if(this.rights == -2) {
 			this.revision_hash = response.revision_hash;
 			this.revision_rights_level = response.revision_rights_level;
@@ -401,6 +402,7 @@ var Worksheet = P(function(_) {
     blocks[i].insertAfter(after).show(200);
     after = blocks[i];
     i++;
+    //setProgress(i/blocks.length);
     if(i == blocks.length) this.completeLoad(to_parse);
     else window.setTimeout(function(_this) { return function() { _this.continueLoad(to_parse, blocks, after, i); }; }(this));
 	}
@@ -412,6 +414,7 @@ var Worksheet = P(function(_) {
 	  ajaxQueue.suppress = false;
 	  ajaxQueue.jQ.html(ajaxQueue.save_message);
     giac.suppress = false;
+    setComplete();
 	  this.fullEvalNeeded().evaluate();
 	  if((this.ends[L] instanceof math) && (this.ends[L].mathField.text().trim() == "")) this.ready_to_print = true;
 	  this.updateUploads();
@@ -548,19 +551,119 @@ var Worksheet = P(function(_) {
     return this;
   }
   // Evaluate the worksheet.  If var_list is set (array), these variables should be placed into the 'altered' list from the start
-  _.evaluate = function(var_list, stop_id) {
+  _.evaluate = function(var_list, start_element, stop_id) {
     if(giac.suppress) return this;
-    giac.resetEngine();
-    if(this.ends[L]) {
-      // Check for other evaluations in progress....
+    if(start_element || this.ends[L]) {
+      if(!(start_element instanceof Element)) 
+        start_element = this.ends[L];
+      if(!stop_id) {
+        for(var to_blur = start_element; to_blur !== 0; to_blur = to_blur[R]) 
+          to_blur.blurOutputBox();
+      }
+      // Check for other evaluations in progress....if found, we should decide whether we need to evaluate, whether we should stop the other, or whether both should continue
+      // Start by building a struct with all ids for previous elements
+      var previous_element_ids = {}
+      var el = start_element;
+      while(true) {
+        if(el[L]) el = el[L];
+        else if(el.parent && el.parent[L]) el = el.parent[L];
+        else break;
+        if(el.hasChildren && el.ends[R]) el = el.ends[R];
+        previous_element_ids[el.id] = true;
+      }
+      // Load list of all evaluations
       var current_evaluations = giac.current_evaluations();
-      var eval_id = giac.registerEvaluation(stop_id);
-      for(var i = 0; i < current_evaluations.length; i++) 
-        giac.cancelEvaluation(current_evaluations[i], eval_id); // This evaluation should replace the previous one
-      if(var_list) giac.add_altered(eval_id, var_list)
-      window.setTimeout(function(_this) { return function() { _this.ends[L].continueEvaluation(eval_id); }; }(this), 1);
+      var eval_id = giac.registerEvaluation(stop_id, start_element, true);
+      var new_evaluation = true;
+      if(var_list && var_list.length) giac.add_altered(eval_id, var_list, start_element.id);
+      for(var i = 0; i < current_evaluations.length; i++) {
+        var current_evaluation = giac.evaluations[current_evaluations[i]];
+        if(current_evaluation.active_id == -1) continue; //non worksheet related calculation, let it be
+        // Determine action depending on relative location in worksheet of the two calculations:
+        if(previous_element_ids[current_evaluation.active_id]) {
+          // start_element is below the currently evaluating block
+          if(previous_element_ids[current_evaluation.element_stop_id]) {
+            // this evaluation is above me but will stop before reaching me.  I can simply ignore it
+            continue;
+          } else if(stop_id && current_evaluation.element_stop_id) {
+            // the other evaluation will reach me.  Great!  Now I need to figure out which one has the 'later' stop id
+            var el = Element.byId[current_evaluation.element_stop_id];
+            var lower_stop_id = false;
+            while(true) {
+              if(el[L]) el = el[L];
+              else if(el.parent && el.parent[L]) el = el.parent[L];
+              else break;
+              if(el.hasChildren && el.ends[R]) el = el.ends[R];
+              if(el.id == stop_id) { lower_stop_id = true; break; }
+              if(el.id == start_element.id)  break; 
+            }
+            if(!lower_stop_id) // I have the lower stop id.  I therefore need to adjust stop_id downwards
+              giac.evaluations[current_evaluations[i]].element_stop_id = stop_id;
+          } else if(current_evaluation.element_stop_id) {
+            // Other calculation has a stop id, but i dont, so update it to not have a stop id
+            giac.evaluations[current_evaluations[i]].element_stop_id = undefined;
+            giac.evaluations[current_evaluations[i]].evaluation_full=true;
+            giac.evaluations[current_evaluations[i]].manual_evaluation=false;
+          } 
+          // cancel myself evaluation, and make the requested eval look like that one
+          new_evaluation = false;
+          giac.cancelEvaluation(eval_id,current_evaluations[i]);
+          start_element = Element.byId[current_evaluation.active_id];
+          stop_id = giac.evaluations[current_evaluations[i]].element_stop_id;
+          eval_id = current_evaluations[i];
+        } else {
+          // start_element is at or above the currently evaluating block
+          if(stop_id && Element.byId[current_evaluation.active_id]) {
+            // Determine if my stop id is above the current calculation
+            var el = Element.byId[current_evaluation.active_id];
+            var below_stop_id = false;
+            while(true) {
+              if(el[L]) el = el[L];
+              else if(el.parent && el.parent[L]) el = el.parent[L];
+              else break;
+              if(el.hasChildren && el.ends[R]) el = el.ends[R];
+              if(el.id == stop_id) { below_stop_id = true; break; }
+            }
+            if(below_stop_id) {
+              // Im above, but so is my stop id, so i will never interact with the other evaluation.  Move along...
+              continue;
+            } else if(current_evaluation.element_stop_id){
+              // We overlap.  But which one has the later stop id?  
+              var el = Element.byId[current_evaluation.element_stop_id];
+              var lower_stop_id = false;
+              while(true) {
+                if(el[L]) el = el[L];
+                else if(el.parent && el.parent[L]) el = el.parent[L];
+                else break;
+                if(el.hasChildren && el.ends[R]) el = el.ends[R];
+                if(el.id == stop_id) { lower_stop_id = true; break; }
+                if(el.id == start_element.id)  break; 
+              }
+              if(lower_stop_id) {// Other evaluation has the lower stop id.  Need to adjust current stop_id downwards
+                giac.evaluations[eval_id].element_stop_id=current_evaluation.element_stop_id;
+                stop_id = current_evaluation.element_stop_id;
+              }
+              // Now cancel the other evaluation.  I have either updated my stop id to match it, or my stop id already encompasses it
+              giac.cancelEvaluation(current_evaluations[i], eval_id);
+            } else {
+              // We overlap, and other calculation will continue to end.  We kill that calculation and remove the stop id from this one
+              giac.evaluations[eval_id].evaluation_full=true;
+              giac.evaluations[eval_id].manual_evaluation=false;
+              giac.evaluations[eval_id].element_stop_id=undefined;
+              stop_id = undefined;
+              giac.cancelEvaluation(current_evaluations[i], eval_id);
+            }
+          } else {
+            // I wil reach the other calculation and do its work, whether it has a stop id or not, since this request has no stop request
+            // I simply kill the other evaluation
+            giac.cancelEvaluation(current_evaluations[i], eval_id);
+          }
+        } 
+      }
+      if(new_evaluation) window.setTimeout(function(start_element) { return function() { start_element.continueEvaluation(eval_id); }; }(start_element), 1);
+      return eval_id;
     }
-    return eval_id;
+    return "-1";
   }
   _.toString = function() {
 		var out = [];

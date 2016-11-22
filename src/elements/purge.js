@@ -2,7 +2,6 @@ var purge = P(Element, function(_, super_) {
 	_.klass = ['purge'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.scoped = true;
 	_.lineNumber = true;
 	_.helpText = "<<purge <[VARS]>>>\nPurge the variable (or comma seperated list of variables) from memory.  The values of these variables is forgotten at this step for all following calculations.";
 

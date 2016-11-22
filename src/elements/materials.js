@@ -5,7 +5,6 @@ var material_holder = P(EditableBlock, function(_, super_) {
   _.klass = ['material','material_holder'];
   _.needsEvaluation = false; 
   _.evaluatable = true;
-  _.scoped = true;
   _.lineNumber = true;
   _.data_type = false;
   _.data = false;
@@ -280,12 +279,14 @@ var material_holder = P(EditableBlock, function(_, super_) {
     };
   }
   _.genCommand = function() {
-    this.independent_vars = this.varStoreField.text().trim();
-    this.commands = [{command: "1", setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: this.data, last_name: this.last_name} }];    
+    this.independent_vars = [this.varStoreField.text().trim()];
+    //Command in below never actually run, but is instead there to ensure a change to this block is evaluated by eval engine
+    this.commands = [{command: this.independent_vars[0]+"="+this.full_name, setMaterial: {data_type: this.data_type, var_name: this.independent_vars[0], data: this.data, last_name: this.last_name} }];    
   }
   _.shouldBeEvaluated = function(evaluation_id) {
+    var super_call = super_.shouldBeEvaluated.call(this, evaluation_id);
     if(this.string_data === false) return false;
-    if(super_.shouldBeEvaluated.call(this, evaluation_id))
+    if(super_call)
       return (this.varStoreField.text() != this.last_name)
     return false;
   }

@@ -82,12 +82,18 @@ var SwiftCalcs = {};
     return [text(output)];
   }
   var status_bar = $(window.embedded ? '.status_bar_embed' : '.status_bar');
+  var delayed_status = false;
+  var delayed_progress = 0;
   // Status bar helper functions
   var clearBar = function() {
     status_bar.removeClass(css_prefix + 'clear ' + css_prefix + 'complete ' + css_prefix + 'error ' + css_prefix + 'warn ' + css_prefix + 'manual');
     status_bar.html('');
   }
-  var startProgress = function(message) {
+  var startProgress = function(message, from_giac) {
+    if(!(giac && giac.giac_ready) && !from_giac) {
+      delayed_status = message;
+      return;
+    }
     if(status_bar.children('.progress_bar').length > 0) return;
     clearBar();
     message = message || 'Calculating... <a href="#"><i>Abort</i></a>';
@@ -99,7 +105,11 @@ var SwiftCalcs = {};
     });
   }
   var progressTimeout = false;
-  var setProgress = function(percent) {
+  var setProgress = function(percent, from_giac) {
+    if(!(giac && giac.giac_ready) && !from_giac) {
+      delayed_progress = percent;
+      return;
+    }
     if(progressTimeout) window.clearTimeout(progressTimeout);
     progressTimeout = false;
     status_bar.children('.progress_bar').css('width', Math.floor(percent * 100) + '%'); 
@@ -117,13 +127,28 @@ var SwiftCalcs = {};
     }
     doTimeout(start_percent);
   }
-  var changeMessage = function(text) {
+  var changeMessage = function(text, from_giac) {
+    if(!(giac && giac.giac_ready) && !from_giac) {
+      delayed_status = text;
+      return;
+    }
     status_bar.find('.message_text').html('<i class="fa fa-spinner fa-pulse"></i>&nbsp;' + text);
   }
   var setComplete = function() {
+    if(!(giac && giac.giac_ready)) {
+      delayed_status = false;
+      return;
+    }
     clearBar();
-    status_bar.addClass(css_prefix + 'complete');
-    status_bar.html('Ready to Calculate');
+    if(delayed_status && giac && giac.giac_ready) {
+      var to_send = delayed_status;
+      delayed_status = false;
+      startProgress(to_send);
+      setProgress(delayed_progress);
+    } else {
+      status_bar.addClass(css_prefix + 'complete');
+      status_bar.html('Ready to Calculate');
+    }
   }
   var setWarning = function(warn) {
     clearBar();
@@ -153,8 +178,13 @@ var SwiftCalcs = {};
     return false;
   }
 
-  var GetDependentVars = function(command) {
+  var GetDependentVars = function(command, ignore) {
+    if(typeof ignore === 'undefined') ignore = [];
+    command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
     var function_vars = {};
+    //Add in ignore vars to function vars, as they serve same purpose
+    for(var i = 0; i < ignore.length; i++)
+      function_vars[ignore[i].trim()] = true;
     if(command.match(/^[\s]*[a-z][a-z0-9_]*\(.*\)*:=/i)) {
       // Find function vars, these are not really dependent
       var list = command.replace(/^[\s]*[a-z][a-z0-9_]*\((.*)\)[\s]*:=.*$/i,"$1").split(",");
@@ -162,7 +192,7 @@ var SwiftCalcs = {};
         function_vars[list[i].trim()] = true;
     } 
     if(command.match(/^.*:=.*$/i)) command = command.replace(/^.*:=(.*)$/i,"$1");
-    var dependent_var = command.replace(/[^a-zA-Z_0-9]/g," ").replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
+    var dependent_var = command.replace(/[^a-zA-Z_0-9]/g," ");
     var dependent_vars = [];
     var reg = /([a-z][a-z0-9]*(_[a-z0-9]*)?)/gi;
     var result;
@@ -172,6 +202,7 @@ var SwiftCalcs = {};
     return dependent_vars;
   }
   var GetIndependentVars = function(command) {
+    command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
     if(command.match(/^[\s]*[a-z][a-z0-9_]*(\(.*\))?(\[.*\])?[\s]*:=/i)) 
       return [command.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?(\[.*\])?[\s]*:=.*$/i,"$1")];
     else

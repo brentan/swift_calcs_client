@@ -55,7 +55,7 @@ var outputBox = P(function(_) {
 	_.setError = function(html, append) {
 		if(!append) this.clearState();
 		window.trackEvent("Interaction", "Error", html);
-		if(this.el.allIndependentVars().length) { // Stop evaluation on scoped items
+		if(this.el.scoped()) { // Stop evaluation on scoped items
 			giac.errors_encountered = true;
 			this.el.jQ.addClass('error'); 
 			$('<div class="' + css_prefix + 'calculation_stopped" style="display:none;">Computation halted.  Please correct error to resume.</div>').insertAfter(this.tableJQ).slideDown({duration: 400});

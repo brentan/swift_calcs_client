@@ -83,8 +83,6 @@ var createGiacElement = function(options) {
 		}
 		_.submissionHandler = function(_this) {
 			return function(mathField) {
-				if((mathField === _this.varStoreField) && _this.varStoreField.empty()) 
-					_this.clearVariableStore();
 				if(_this.needsEvaluation) {
 					var command = _this.options.command;
 					for(var i = 0; i < _this.items.length; i++) 

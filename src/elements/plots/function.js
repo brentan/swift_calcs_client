@@ -62,9 +62,7 @@ var plot_func = P(subplot, function(_, super_) {
     return [{command: command1, nomarkup: true},{command: command2, nomarkup: true}];
   }
 	_.createCommands = function() {
-		this.plot_me = false;
 		if(this.eq0.text().trim() == '') return [];
-		this.xs = [];
 		var min_val = this.parent.x_min === false ? (this.parent.calc_x_min === false ? (-5 * this.parent.x_unit_conversion) : this.parent.calc_x_min) : (this.parent.x_min * this.parent.x_unit_conversion);
 		var max_val = this.parent.x_max === false ? (this.parent.calc_x_max === false ? ( 5 * this.parent.x_unit_conversion) : this.parent.calc_x_max) : (this.parent.x_max * this.parent.x_unit_conversion);
 		var unit_command = this.show_unit && this.unit_box.text().length ? this.unit_box.text() : '1';
@@ -80,6 +78,7 @@ var plot_func = P(subplot, function(_, super_) {
 		} else
 			var command3 = "plotfunc(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + ")..(" + max_val +"),nstep=400)"; 
 		var command4 = "latex(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[0.0000000016514245*" + unit_command + "])[0])";
+		this.dependent_vars = GetDependentVars(command3, [this.eq1.text()]);
 		return [{command: command3, nomarkup: true, pre_command: 'mksareduce_mode(1);' },{command: command4, nomarkup: true, pre_command: 'mksareduce_mode(0);'}]
 	}
 	_.evaluationFinished = function(result) {

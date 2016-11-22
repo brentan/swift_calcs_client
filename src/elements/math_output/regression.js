@@ -88,12 +88,10 @@ var regression = P(SettableMathOutput, function(_, super_) {
   }
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
-			if((mathField === _this.varStoreField) && _this.varStoreField.empty()) 
-				_this.clearVariableStore();
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
+				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
 				var xdata_text = _this.xdata.text({});
 				var ydata_text = _this.ydata.text({});
@@ -119,7 +117,7 @@ var regression = P(SettableMathOutput, function(_, super_) {
 					command = '[' + command + ']';
 				var x_unit = 'mksa_base((' + _this.xdata.text({check_for_array: true}) + ')[0])';
 				var y_unit = 'mksa_base((' + _this.ydata.text({check_for_array: true}) + ')[0])';
-				var x = (_this.scoped && _this.varStoreField.text().match(/\(/)) ? "x" : "'x'";
+				var x = _this.varStoreField.text().match(/\(/) ? "x" : "'x'";
 				var out_command;
 				switch(_this.mode) {
 					case 'polynomial':
@@ -150,6 +148,9 @@ var regression = P(SettableMathOutput, function(_, super_) {
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {
+
+					_this.dependent_vars = GetDependentVars(command);
+
 					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
 					_this.commands.unshift({command: command, nomarkup: true, pre_command: 'mksareduce_mode(1);' }); 
 					_this.evaluate();
@@ -161,7 +162,6 @@ var regression = P(SettableMathOutput, function(_, super_) {
 	_.evaluationFinished = function(result) {
 		// BRENTAN: Deal with different modes and rebuild them into functions, and add units along the way
 		if(result[1].returned && result[1].success) {
-			this.was_scoped = false;
 			var warnings = [];
 			for(var i = 0; i < result[1].warnings; i++) 
 				if(!result[1].warnings[i].match(/assignation is x_unit/) && !result[1].warnings[i].match(/declared as global/))

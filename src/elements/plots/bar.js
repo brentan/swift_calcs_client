@@ -33,9 +33,10 @@ var plot_bar = P(barplot, function(_, super_) {
 		];
 	}
 	_.createCommands = function() {
-		this.plot_me = false;
+		var command = "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))";
+		this.dependent_vars = GetDependentVars(command);
 		return [
-			{command: "mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + "))", nomarkup: true}
+			{command: command, nomarkup: true}
 		];
 	}
 	_.evaluationFinished = function(result) {

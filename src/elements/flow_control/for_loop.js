@@ -2,7 +2,6 @@ var for_loop = P(Loop, function(_, super_) {
 	_.klass = ['for'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.scoped = true;
 	_.hasChildren = true;
 	_.varField = 0;
 	_.startField = 0;

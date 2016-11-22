@@ -41,10 +41,10 @@ var Element = P(function(_) {
 	_.myLineNumber = false;
 	_.needsEvaluation = false; // This is whether an evaluatable element, when evaluated directly, should be evaluated
 	_.evaluatable = false;     // Is this element evaluatable?  If not, just skip it
-	_.scoped = false;          // Can this element change the scope (set/change variables).  If so, we need to keep track of scope here
 	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
 	_.inTree = false;
 	_.storeAsVariable = false; // Override with function that 'sets' the variable name for blocks with a '[x] = block' syntax
+	_.unarchiveListSet = false;
 
 	//Give each element a unique ID, this is just for tracking purposes
   var id = 0;
@@ -59,8 +59,11 @@ var Element = P(function(_) {
 		this.commands = [];
 		this.previous_commands = [];
 		this.independent_vars = [];
+		this.independent_objects = [];
 		this.dependent_vars = [];
 		this.previous_independent_vars = [];
+		this.unarchive_list = [];
+		this.autocomplete_list = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
 
@@ -194,6 +197,7 @@ var Element = P(function(_) {
 		if(this.implicit && (this[L] == 0) && (this[R] == 0))
 			this.implicit = false;
 		if(this.worksheet && !this.implicit) this.worksheet.save();
+		this.setAutocomplete(this.previousUnarchivedList());
 		return this;
 	}
 	_.insertAfter = function(sibling) {
@@ -241,6 +245,7 @@ var Element = P(function(_) {
 		if(this.implicit && (this[L] == 0) && (this[R] == 0))
 			this.implicit = false;
 		if(this.worksheet && !this.implicit) this.worksheet.save();
+		this.setAutocomplete(this.previousUnarchivedList());
 		return this;
 	}
 	_.prependTo = function(parent) {
@@ -441,8 +446,8 @@ var Element = P(function(_) {
 		this.worksheet.renumber();
 		if(!this.implicit) this.worksheet.save();
 		if(do_eval) {
-			var eval_id = this.worksheet.evaluate();
-      giac.altered_list_additions[eval_id].push({el_id: target.id, vars: impact_vars}); // Let evaluator know about all altered vars in move operation
+			var eval_id = this.worksheet.evaluate([], target);
+      giac.evaluations[eval_id].altered_list_additions.push({el_id: target.id, vars: impact_vars}); // Let evaluator know about all altered vars in move operation
     }
 		return this;
 	}
@@ -468,8 +473,8 @@ var Element = P(function(_) {
         	var impact_vars = this.worksheet.moveImpact(action.parent, true, L, [this]);
 					this.move(action.parent, L, true);
 				}
-		    var eval_id = this.worksheet.evaluate();
-        var target = impact_vars.el_id;
+		    var eval_id = this.worksheet.evaluate([], impact_vars.start_el);
+        var target = impact_vars.next_el;
         while(true) {
           if(target[R]) {
             target = target[R];
@@ -483,7 +488,7 @@ var Element = P(function(_) {
           }
         }
         if(target)
-          giac.altered_list_additions[eval_id].push({el_id: target.id, vars: impact_vars.vars}); // Let evaluator know about all altered vars in move operation
+          giac.evaluations[eval_id].altered_list_additions.push({el_id: target.id, vars: impact_vars.vars}); // Let evaluator know about all altered vars in move operation
 				break;
 		}
 	}
@@ -544,8 +549,10 @@ var Element = P(function(_) {
 	_.children = function() {
 		var out = [];
 		if(!this.hasChildren) return out;
-		for(var ac = this.ends[L]; ac !== 0; ac = ac[R])
-			out.push(ac);
+		if(this.ends[L]) {
+			for(var ac = this.ends[L]; ac !== 0; ac = ac[R])
+				out.push(ac);
+		}
 		return out;
 	}
 	_.commandChildren = function(func) {
@@ -576,9 +583,11 @@ var Element = P(function(_) {
 
 	/*
 	Evaluation functions. 
-	Evaluation always starts at the top of a worksheet, resetting the engine and then moving down.
-	For items that have not been altered, we just skip (if not scoped) or load the archived value for the independent variable.
-	When we hit an altered element (test this.altered(eval_id)) we evaluation it and then continue to march downwards
+	Evaluation depends on whether item is 'scoped' or not.  Scoped items alter a variable
+	Scoped evaluations start at the first_gen_ancestor of the element, otherwise evaluation is in-place just for the element in question.
+	Evaluation starts with a reset of the environment, followed by a reload of all variables defined prior to the evaluation point.
+	From the point onwards, for items that have not been altered, we just skip (if not scoped) or load the archived value for the
+	independent variable.  When we hit an altered element (test this.altered(eval_id)) we evaluation it and then continue to march downwards
 
 	Most of these functions work on their own, but elements can override:
 	continueEvaluation: What should happen when this element is evaluated
@@ -607,14 +616,15 @@ var Element = P(function(_) {
 		this.altered_content = true; // We called evaluate on this element, so it was altered, which will force its evaluation
 		if(this.needsEvaluation) this.worksheet.save();
 		if(this.outputBox) this.outputBox.calculating();
-		var el_id = false;
-		if(!this.outputSettingsChange && (this.scoped || this.allIndependentVars().length)) {
-			for(var el = this[R]; el !== 0; el = el[R]) 
-				el.blurOutputBox();
-		} else 
-			el_id = this.id; //not scoped, so stop when we reach this guy
+
+		var el = this;
+		var stop_id = false;
+		if(!this.outputSettingsChange && this.scoped()) 
+			el = this.firstGenAncestor(); // Scoped items should start at first gen ancestor
+		else 
+			stop_id = this.id; //not scoped, so start here and stop when we reach this guy
 		this.outputSettingsChange = false;
-		this.worksheet.evaluate([], el_id);
+		this.worksheet.evaluate([], el, stop_id);
 		return this;
 	}
 	_.blurOutputBox = function() {
@@ -637,8 +647,9 @@ var Element = P(function(_) {
 		}*/
 	}
 	_.shouldBeEvaluated = function(evaluation_id) {
+		if(giac.evaluations[evaluation_id]) giac.evaluations[evaluation_id].active_id = this.id;
 		if(!this.evaluatable || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;
-		if(giac.compile_mode && !this.scoped) return false; // In compile mode, we only care about scoped lines
+		if(giac.compile_mode && !this.scoped()) return false; // In compile mode, we only care about scoped lines
 		// Logic Blocks: Make sure I'm not a children of any block that is not currently activated
 		for(var el = this; el instanceof Element; el = el.parent) {
 			if(el.parent instanceof LogicBlock) {
@@ -663,7 +674,7 @@ var Element = P(function(_) {
 	_.addSpinner = function(eval_id) {
 		if(this.allowOutput() && this.leftJQ) {
 			this.leftJQ.find('i.fa-spinner').remove();
-			if((typeof eval_id !== 'undefined') && giac.manual_evaluation[eval_id])
+			if((typeof eval_id !== 'undefined') && giac.evaluations[eval_id] && giac.evaluations[eval_id].manual_evaluation)
 				this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse"></i>'); // Manual mode spinner should not be hidden
 			else
 				this.leftJQ.prepend('<i class="fa fa-spinner fa-pulse calculation_spinner"></i>');
@@ -686,7 +697,7 @@ var Element = P(function(_) {
 					//this.startTime = new Date();
 					// We were altered, so lets evaluate
 					giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
-				} else if(this.scoped) {
+				} else if(this.scoped()) {
 					// Not altered, but we are scoped, so we need to save scope
 					giac.skipExecute(evaluation_id, this, 'scopeSaved');
 				} else
@@ -712,6 +723,7 @@ var Element = P(function(_) {
 	_.altered = function(evaluation_id) {
 		if(this.altered_content || giac.check_altered(evaluation_id, this)) {
 			this.altered_content = false;
+//BRENTAN: change next two lines to add to eval chain at NEXT element to be evaled!  And if in manual mode, think through whether to unset 'altered_content (my guess: NO!)'
 			giac.add_altered(evaluation_id, this.previous_independent_vars);
 			giac.add_altered(evaluation_id, this.independent_vars);
 			this.previous_independent_vars = this.independent_vars;
@@ -730,16 +742,45 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 		if(this.hasChildren) {
 			var kids = this.children();
 			for(var i = 0; i < kids.length; i++)
-				arr.concat(kids.allIndependentVars());
+				arr.concat(kids[i].allIndependentVars());
 		}
 		return arr;
+	}
+	_.scoped = function() {
+		return this.allIndependentVars().length > 0;
+	}
+	//_.overrideUnarchivedListForChildren = function() {
+		// To be defined by parent elements that want to pass a special list to children.
+		// Example: For loop (Add in iterator)
+		// Example: Function (drop all vars and only show function vars)
+		// Output is the new array to pass
+	//}
+	// Find the nearest previous element and return its unarchive list...this is what we should be loading
+	_.previousUnarchivedList = function() {
+		var el = this;
+		while(el instanceof Element) {
+			if((el !== this) && el.hasChildren && el.ends[R]) el = el.ends[R]
+			else if(el[L]) el = el[L];
+			else {
+				for(el = el.parent; el instanceof Element; el = el.parent) {
+					if(el.overrideUnarchivedListForChildren) return el.overrideUnarchivedListForChildren();
+					if(el[L]) { el = el[L]; break; }
+				}
+				if(!(el instanceof Element)) return [];
+			}
+			if(el.unarchiveListSet) return el.getUnarchiveList();
+		}
+		return [];
+	}
+	// Override if this element should return a different archive list for some reason
+	_.getUnarchiveList = function() {
+		return this.unarchive_list;
 	}
 
 	// Callback from giac when an evaluation has completed and results are returned
 	_.evaluationCallback = function(evaluation_id, evaluation_callback, results) {
 		//var endTime = new Date();
 		//console.log(this.leftJQ.children('span').html() + " - Elapsed Time: " + (endTime - this.startTime)/1000);
-		if(!giac.shouldEvaluate(evaluation_id)) return;
 		if(this.outputBox) this.outputBox.resetErrorWarning();
 		if(this[evaluation_callback](results, evaluation_id)) 
 			this.evaluateNext(evaluation_id);
@@ -754,8 +795,13 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 	_.evaluateNext = function(evaluation_id) {
 		this.leftJQ.find('i.fa-spinner').remove();
 		this.unblurOutputBox();
+		this.unarchive_list = this.previousUnarchivedList().slice(0);
+		this.unarchiveListSet = true;
+		if(this.independent_vars.length) this.unarchive_list.push([this.worksheet.id + "_" + this.id, this.independent_vars]); // Update my unarchive list
+		this.setAutocomplete(this.unarchive_list);
+
 		var move_to_next = !giac.stopEvaluation(evaluation_id,this.id); //Should we stop calculating at this point?
-		if(this[R] && move_to_next)
+		if(this[R] && move_to_next) 
 			this[R].continueEvaluation(evaluation_id)
 		else if(this.parent instanceof Element)
 			this.parent.childrenEvaluated(evaluation_id);
@@ -767,7 +813,7 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 	_.childrenEvaluated = function(evaluation_id) {
 		// We need to save the scope?
 //BRENTAN: NEED TO CHECK ON THINGS LIKE PLOTS, ETC TO SEE WHAT HAPPENS.  THEN FOR/IF LOOPS
-		if(this.scoped && giac.shouldEvaluate(evaluation_id))
+		if(this.scoped() && giac.shouldEvaluate(evaluation_id))
 			giac.skipExecute(evaluation_id, this, 'scopeSaved');
 		else
 			this.evaluateNext(evaluation_id);
@@ -776,22 +822,6 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 	_.scopeSaved = function(result) {
 		// Remove grey-out
 		return true;
-	}
-	// Find the nearest previous element that has a scope we should use
-	_.previousScope = function() {
-		var el = this;
-		while(el instanceof Element) {
-			if((el !== this) && el.hasChildren && el.ends[R]) el = el.ends[R]
-			else if(el[L] && !(el[L] instanceof LogicCommand)) el = el[L];
-			else {
-				for(el = el.parent; el instanceof Element; el = el.parent) {
-					if(el[L]) { el = el[L]; break; }
-				}
-				if(!(el instanceof Element)) return false;
-			}
-			if(el.scoped) return el;
-		}
-		return false;
 	}
 
 	// Journey up parents to the worksheet.  Evaluation is linear in the first generation children of worksheet.  Below that level,
@@ -1212,11 +1242,24 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 		if(this.focusedItem === ob) this.focusedItem = 0;  
 	}
 	// Autocomplete helpers.  Overwrite if the autocomplete in this element should not populate
+	_.setAutocomplete = function(list) {
+		// list is assumed to have same format as unarchived_list
+		this.autocomplete_list = {};
+		for(var i = 0; i < list.length; i++) {
+			for(var j = 0; j < list[i][1].length; j++)
+				this.autocomplete_list[list[i][1][j]] = true;
+		}
+	}
 	_.autocomplete = function() {
-		return giac.variable_list;
+		var var_list = Object.keys(this.autocomplete_list);
+		if(giac && giac.object_names) {
+			for(var i = 0; i < giac.object_names.length; i++) 
+				if(this.autocomplete_list[giac.object_names[i]]) var_list.push(giac.object_names[i] + ":");
+		}
+		return var_list;
 	}
 	_.autocompleteObject = function(name) {
-		return giac.object_list[name];
+		return giac.object_methods[name];
 	}
 	/* 
 	 Keyboard events.  Will forward the event to whatever item is focusable.  The focusable item should respond to:
@@ -1279,7 +1322,7 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 	  } else
 	  	var k = 0;
   	var count = 0;
-  	var start_index = ((this instanceof SettableMathOutput) && !this.scoped) ? 1 : 0; // Ignore varStoreField for SettableMathOutput, if not scoped.  This sucks, but done for backwards compatibility.
+  	var start_index = ((this instanceof SettableMathOutput) && !this.var_field_value) ? 1 : 0; // Ignore varStoreField for SettableMathOutput, if not stored.
   	for(var i = 0; i < this.focusableItems.length; i++) {
   		for(var j = start_index; j < this.focusableItems[i].length; j++) {
 	  		if((this.focusableItems[i][j] instanceof CommandBlock) && !this.focusableItems[i][j].editable) continue; //Ignore command blocks, those are created with the block and have no saveable options
@@ -1301,6 +1344,7 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 		var arg_list = args.split(',');
   	for(var j = 0; j < arg_list.length; j++) {
   		var name = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$1");
+  		if(name == "scoped") name = "var_field_value"; // Backwards compatibility: used to be a parameter called scoped
   		var val = arg_list[j].replace(/^[\s]*([a-zA-Z0-9_]+)[\s]*:(.*)$/,"$2").trim();
   		if(val.match(/^[+-]?(?:\d*\.)?\d+$/)) val = 1.0 * val;
   		if(val === "false") val = false;
@@ -1323,10 +1367,10 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
   		arg_list.push('digits: ' + this.digits);
   	}
   	if(this instanceof SettableMathOutput) 
-  		arg_list.push('scoped: ' + this.scoped);
+  		arg_list.push('var_field_value: ' + this.var_field_value);
   	if(arg_list.length)
   		output.push(arg_list.join(', '));
-  	var start_index = ((this instanceof SettableMathOutput) && !this.scoped) ? 1 : 0; // Ignore varStoreField for SettableMathOutput, if not scoped.  This sucks, but done for backwards compatibility.
+  	var start_index = ((this instanceof SettableMathOutput) && !this.var_field_value) ? 1 : 0; // Ignore varStoreField for SettableMathOutput, if not scoped, to simplify item in storage
   	for(var i = 0; i < this.focusableItems.length; i++) {
   		for(var j = start_index; j < this.focusableItems[i].length; j++) {
 	  		if((this.focusableItems[i][j] instanceof CommandBlock) && !this.focusableItems[i][j].editable) continue; //Ignore command blocks, those are created with the block and have no saveable options

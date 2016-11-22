@@ -118,7 +118,6 @@ var math = P(MathOutput, function(_, super_) {
 		if(!stream) this.worksheet.endUndoStream();
 		return true;
 	}
-	_.was_scoped = false;
 	_.submissionHandler = function(_this) {
 		return function() {
 			if(_this.empty()) {
@@ -143,19 +142,6 @@ var math = P(MathOutput, function(_, super_) {
 					_this.remove(0);
 					if(!stream) _this.worksheet.endUndoStream();
 					return;
-				}
-				if(to_compute.match(/(:=|\+\+|--)/)) {
-					_this.scoped = true;
-					_this.was_scoped = true;
-				}	else if(_this.was_scoped) {
-					_this.scoped = false;
-					_this.was_scoped = false;
-				} else {
-					_this.scoped = false;
-					if(to_compute.trim() === '') {
-						_this.needsEvaluation = false;
-						_this.worksheet.save();
-					}
 				}
 				_this.commands = _this.genCommand(to_compute);
 				_this.evaluate();

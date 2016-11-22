@@ -2,7 +2,6 @@ var if_block = P(LogicBlock, function(_, super_) {
 	_.klass = ['if', 'logic_block'];
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
-	_.scoped = true;
 	_.hasChildren = true;
 	_.mathField = 0;
 	_.lineNumber = true;

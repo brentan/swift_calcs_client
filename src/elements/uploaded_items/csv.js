@@ -9,7 +9,6 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 	_.headerRow = false;
 	_.colList = false;
 	_.maxCols = 0;
-	_.scoped = true;
 	_.lineNumber = true;
 	_.savedProperties = ['url', 'upload_id', 'upload_name', 'headerRow', 'colList', 'maxCols'];
 	_.data = "";
@@ -38,6 +37,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
 			var name = mathField.text().trim();
+			_this.setIndependentVars(name);
 			_this.validVarName = false;
 			_this.testName(name);
 			if(_this.needsEvaluation && _this.evaluatable) {
@@ -59,6 +59,11 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 			this.validVarName = true;
 			this.outputBox.clearState().collapse();
 		} 
+	}
+	_.setIndependentVars = function(name) {
+		this.independent_vars = [];
+		for(var i = 0; i < this.commands.length; i++) 
+			this.independent_vars.push(name + (this.commands[i].sub.length ? ('_' + this.commands[i].sub) : ''));
 	}
 	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
@@ -253,6 +258,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 				this.commands.push({sub: sub, data: '[' + rows.join(',') + ']'});
 			}
 		}
+		this.setIndependentVars(this.varName.text().trim());
 	}
 	_.setURL = function(url) {
 		this.url = url;

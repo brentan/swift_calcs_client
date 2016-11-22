@@ -110,12 +110,10 @@ var solve = P(SettableMathOutput, function(_, super_) {
 
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
-			if((mathField === _this.varStoreField) && _this.varStoreField.empty()) 
-				_this.clearVariableStore();
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
+				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
 				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*(,[a-z][a-z0-9_]*)*$/i))
 					errors.push('Invalid variable list (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid comma-seperated list of variables');
@@ -174,6 +172,7 @@ var solve = P(SettableMathOutput, function(_, super_) {
 					if(_this.ask_initial_guess) // insert guess into the equations to see if it causes a unit error
 						_this.commands.push({command: "((" + _this.varField.text() + ")->(" + _this.eqFields[0].text().replace(/==/g,'-') + "))(" + guess_text + ")", nomarkup: true});
 
+					_this.dependent_vars = GetDependentVars(command, _this.varField.text().split(","));
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}
@@ -188,7 +187,6 @@ var solve = P(SettableMathOutput, function(_, super_) {
 				result[1].warnings.push(result[2].returned);
 		}
 		if(result[1].returned && result[1].success) {
-			this.was_scoped = false;
 			// Test for no result
 			if(result[1].returned.match(/[\s]*\\begin{bmatrix[0-9]+}\\end{bmatrix[0-9]+}[\s]*/)) { 
 				result[1].returned = ''; 

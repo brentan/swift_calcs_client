@@ -329,8 +329,8 @@ Worksheet.open(function(_) {
 		  		}
 		  		if(dir === R) _this.selection.reverse();
           if(_this.selection.length > 0) {
-            var eval_id = _this.evaluate();
-            var target = impact_vars.el_id;
+            var eval_id = _this.evaluate([], impact_vars.start_el);
+            var target = impact_vars.next_el;
             while(true) {
               if(target[R]) {
                 target = target[R];
@@ -344,7 +344,7 @@ Worksheet.open(function(_) {
               }
             }
             if(target)
-              giac.altered_list_additions[eval_id].push({el_id: target.id, vars: impact_vars.vars}); // Let evaluator know about all altered vars in move operation
+              giac.evaluations[eval_id].altered_list_additions.push({el_id: target.id, vars: impact_vars.vars}); // Let evaluator know about all altered vars in move operation
           }
 		  		_this.createSelection(active_elements);
 		  		_this.focus();
@@ -474,7 +474,7 @@ Worksheet.open(function(_) {
       // Start marching upwards until we reach the last selection item
       while(true) {
         if(target == 0) { move_down = false; break; } // End of the road, no match was ever found
-        if(target.id == top_move.id) { break; } // Done!
+        if(target.id == bot_move.id) { break; } // Done!
         impacted_els.push(target);
         if(target.hasChildren && target.ends[R])
           target = target.ends[R];
@@ -540,6 +540,6 @@ Worksheet.open(function(_) {
       }
     }
     //Whew!  That was a mess.  But recalculation should now proceed swimmingly
-    return { el_id: (move_down ? selection[selection.length - 1] : impacted_els[impacted_els.length - 1]), vars: all_independent_vars};
+    return { start_el: (move_down ? impacted_els[impacted_els.length - 1] : selection[0]),next_el: (move_down ? selection[selection.length - 1] : impacted_els[impacted_els.length - 1]), vars: all_independent_vars};
   }
 });

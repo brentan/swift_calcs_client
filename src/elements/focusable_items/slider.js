@@ -125,6 +125,7 @@ var Slider = P(aFocusableItem, function(_, super_) {
 		this.input_open = input;
     this.valJQ.addClass('no_border');
 	}
+  _.scoped = function() { return false; }
 	_.itemChosen = function(output) { // Since we put the box in unit mode
 		var to_execute =  "evalf(" + this.input_open.text() + ")";
 		var command = [];
@@ -132,12 +133,10 @@ var Slider = P(aFocusableItem, function(_, super_) {
 			command.push({command: "convert(" + to_execute + "," + this.unit + ")", nomarkup: true});
 		command.push({command: to_execute, nomarkup: true});
 		var eval_id = giac.registerEvaluation(true);
+//BRENTAN: NEED TO LOAD CORRECT SCOPE HERE
 		giac.execute(eval_id, command, this);
 		this.setVal('<span class="fa fa-spinner fa-pulse"></span>');
 	}	
-	_.previousScope = function() { 
-		return this.element.previousScope();
-	}
 	_.firstGenAncestor = function() { 
 		return this.element.firstGenAncestor();
 	}

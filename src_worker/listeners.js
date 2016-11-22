@@ -86,32 +86,23 @@ var receiveMessage = function(command) {
     Module.setCurrency(command.setCurrencyConversion.coeff > 0 ? 1/command.setCurrencyConversion.coeff : 0, command.setCurrencyConversion.index);
     return
   }
-  if(command.varList) {
-    // If we are asking for the variable list, we simply get that list and return it immediately
-    var svars = Module.caseval('VARS').slice(1,-1).split(',');
-    var vars = [];
-    if((svars.length > 1) || (svars[0] != '')) {
-      for(var i = 0; i < svars.length; i++) {
-        if(!svars[i].match(/__/)) vars.push(svars[i]);
-      }
-    }
-    var uvars = vars.slice(0);
-    var objects = {};
+  if(command.objectList) {
+    // If we are asking for the object list, we simply get that list and return it immediately
+    var object_names = [];
+    var object_methods = {};
     for(var key in constants) {// BRENTAN: Maybe change later to 'user_vars' if the constants list grows too large?
-      vars.push(key);
-      vars.push(key + ':');
-      objects[key] = {propertyList:constants[key].propertyList, methodList: constants[key].methodList};
+      object_names.push(key);
+      object_methods[key] = {propertyList:constants[key].propertyList, methodList: constants[key].methodList};
     }
-    for(var key in user_vars) {
-      uvars.push(key);
-    }
-    vars = uniq(vars).sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
-    uvars = uniq(uvars).sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
-    return sendMessage({command: 'varList', userVarList: uvars, totalVarList: vars, objects: objects})
+    object_names = uniq(object_names).sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+    return sendMessage({command: 'objectList', object_names: object_names, object_methods: object_methods})
   }
   // If we are starting a new evaluation, restart giac to reset everything
 	if(command.restart) {
-		Module.caseval('restart;srand;' + restart_string);
+    var unarchive_string = "";
+    for(var i = 0; i < command.unarchive_list.length; i++) 
+      unarchive_string += command.unarchive_list[i][1].join(";").replace(/([^;]+)/g,"$1:=unarchive(\"" + command.unarchive_list[i][0] + "_$1\")") + ";";
+    Module.caseval('restart;srand;' + restart_string + unarchive_string);
     return;
   }
 	var output = [];
