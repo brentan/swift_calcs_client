@@ -127,6 +127,10 @@ var mixture = P(Element, function(_, super_) {
   _.changed = function(el) {
     this.needsEvaluation = this.varStoreField.empty() ? false : true;
   }
+  _.getUnarchiveList = function() {
+    if(this.unarchive_list_set) return this.unarchive_list;
+    return this.previousUnarchivedList();
+  }
 });
 
 
@@ -189,7 +193,7 @@ var mixture_component = P(material_holder, function(_, super_) {
     if(this.parent) this.parent.evaluate(force);
   }
   _.getUnarchiveList = function() {
-    return this.parent ? this.parent.previousUnarchivedList() : [];
+    return this.parent ? this.parent.getUnarchiveList() : [];
   }
 
 });

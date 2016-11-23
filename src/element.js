@@ -44,7 +44,7 @@ var Element = P(function(_) {
 	_.hasChildren = false; // Doesn't imply there are children elements, implies children elements are allowed
 	_.inTree = false;
 	_.storeAsVariable = false; // Override with function that 'sets' the variable name for blocks with a '[x] = block' syntax
-	_.unarchiveListSet = false;
+	_.unarchive_list_set = false;
 
 	//Give each element a unique ID, this is just for tracking purposes
   var id = 0;
@@ -313,6 +313,118 @@ var Element = P(function(_) {
 				return this;
 			}
 		}
+
+    /*
+    Move Evaluation Strategy
+    - Find all independent vars in this item
+    - Find all independent vars in skipped elements
+    - Any elements in this item dependent on independent vars in skipped elements much be recalced
+    - Any elements in skipped section dependent on independent vars in this item must be recalced
+    */
+    //Find all elements between old and new location
+    var target_el = target;
+    var impacted_els = [];
+    //Assume moving upwards (initial guess)
+    var move_up = true;
+    //Adjust target_el to be the element just below where we are inserting (target_el is first impacted el)
+    if(insertInto) {
+      if(target_el instanceof Loop) impacted_els.push(target_el);
+      if((location === L) && (target_el.ends[L])) target_el = target_el.ends[L];
+      else target_el = target_el[R];
+    } else if(location === R) target_el = target_el[R];
+    var first_item = target_el;
+    // Start marching downwards until we reach the this item
+    while(true) {
+      if(target_el == 0) { move_up = false; break; } // End of the road, no match was ever found
+      if(target_el.id == this.id) { break; } // Done!
+      impacted_els.push(target_el);
+      if(target_el.hasChildren && target_el.ends[L])
+        target_el = target_el.ends[L];
+      else if(target_el[R]) 
+        target_el = target_el[R];
+      else if(target_el.parent) {
+        if(target_el.parent instanceof Loop) impacted_els.push(target_el.parent);
+        target_el = target_el.parent[R];
+      } else { move_up = false; break; } // End of the road, no match was ever found
+    } 
+    if(!move_up) {
+      // First guess was wrong!  Try again...adjust target_el to be the element just above where we are inserting (target_el is first impacted el)
+      target_el = target;
+      var impacted_els = [];
+      var move_down = true;
+      if(insertInto) {
+        if(target_el instanceof Loop) impacted_els.push(target_el);
+        if((location === R) && (target_el.ends[R])) target_el = target_el.ends[R];
+        else target_el = target_el[L];
+      } else if(location === L) target_el = target_el[L];
+      // Start marching upwards until we reach the this item
+      while(true) {
+        if(target_el == 0) { move_down = false; break; } // End of the road, no match was ever found
+        if(target_el.id == this.id) { break; } // Done!
+        impacted_els.push(target_el);
+        if(target_el.hasChildren && target_el.ends[R])
+          target_el = target_el.ends[R];
+        else if(target_el[L]) 
+          target_el = target_el[L];
+        else if(target_el.parent) {
+          if(target_el.parent instanceof Loop) impacted_els.push(target_el.parent);
+          target_el = target_el.parent[L];
+        } else { move_down = false; break; } // End of the road, no match was ever found
+      } 
+    }
+    if(!move_up && !move_down) {
+      // THIS SHOULD NEVER HAPPEN
+      impacted_els = [];
+    }
+
+    //Create a list of all independent vars in impacted els
+    var impacted_el_vars = {};
+    var selection_vars = {};
+    var all_independent_vars = [];
+    var add_vars = function(vars, impacted) {
+      if(impacted) {
+        for(var j=0; j<vars.length; j++) {
+          impacted_el_vars[vars[j].trim()]=true;
+          all_independent_vars.push(vars[j].trim());
+        }
+      } else {
+        for(var j=0; j<vars.length; j++) {
+          selection_vars[vars[j].trim()]=true;
+          all_independent_vars.push(vars[j].trim());
+        }
+      }
+    }
+    for(var i = 0; i < impacted_els.length; i++)
+      add_vars(impacted_els[i].independent_vars, true);
+    add_vars(this.allIndependentVars(), false);
+
+    //Check each selection element against list to see if recalculation is needed
+    var checker = function(impacted_el_vars) { return function(_this) { 
+      for(var k = 0; k < _this.dependent_vars.length; k++) {
+        if(impacted_el_vars[_this.dependent_vars[k].trim()]) {
+          _this.altered_content = true;
+          _this.previous_commands = [];
+          break;
+        }
+      }
+    }; }(impacted_el_vars);
+    this.commandChildren(checker);
+
+    //Check impacted els against list to see if recalculation is needed
+    for(var i = 0; i < impacted_els.length; i++) {
+      for(var k = 0; k < impacted_els[i].dependent_vars.length; k++) {
+        if(selection_vars[impacted_els[i].dependent_vars[k].trim()]) {
+          impacted_els[i].previous_commands = [];
+          impacted_els[i].altered_content = true;
+          break;
+        }
+      }
+    }
+    //Whew!  That was a mess.  But recalculation should now proceed swimmingly
+    var start_el = (move_down ? impacted_els[impacted_els.length - 1] : this)
+    var next_el  = (move_down ? this : impacted_els[impacted_els.length - 1])
+    var vars     = all_independent_vars;
+
 		// First, basically remove this item from the tree
 		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'move', L: this[L], parent: this.parent });
 		if(this[L] !== 0) 
@@ -362,6 +474,11 @@ var Element = P(function(_) {
 		if(this.implicit && (this[L] == 0) && (this[R] == 0))
 			this.implicit = false;
 		if(this.worksheet && !this.implicit) this.worksheet.save();
+
+    var eval_id = this.worksheet.evaluate([], start_el);
+    if(next_el) next_el = next_el.nextEvaluateElement();
+    if(next_el) giac.add_altered(eval_id, vars, next_el.id); // Let evaluator know about all altered vars in move operation
+
 		return this;
 	}
 	/* Destroy methods.
@@ -399,22 +516,8 @@ var Element = P(function(_) {
 		var independent_vars = this.allIndependentVars();
 		var do_eval = false;
 		if(independent_vars.length) {
-			var impact_vars = {}
-			for(var i = 0; i < independent_vars.length; i++)
-				impact_vars[independent_vars[i].trim()]=true;
-	    var target = this;
-	    while(true) {
-	      if(target[R]) {
-	        target = target[R];
-	        break;
-	      } else if(target.parent) {
-	        target = target.parent;
-	        if(target instanceof Loop) break;
-	      } else {
-	        target = false;
-	        break;
-	      }
-	    }
+	    var target = this.nextEvaluateElement();
+	    var eval_target = this.parent ? this.parent : target;
 	    if(target) do_eval = true;
 	   }
 		if(this[L] !== 0) 
@@ -446,8 +549,8 @@ var Element = P(function(_) {
 		this.worksheet.renumber();
 		if(!this.implicit) this.worksheet.save();
 		if(do_eval) {
-			var eval_id = this.worksheet.evaluate([], target);
-      giac.evaluations[eval_id].altered_list_additions.push({el_id: target.id, vars: impact_vars}); // Let evaluator know about all altered vars in move operation
+			var eval_id = this.worksheet.evaluate([], eval_target);
+			giac.add_altered(eval_id, independent_vars, target.id); // Let evaluator know about all altered vars in move operation
     }
 		return this;
 	}
@@ -460,35 +563,20 @@ var Element = P(function(_) {
 					this.insertAfter(action.L);
 				else
 					this.prependTo(action.parent);
-				window.setTimeout(function(to_eval) { return function() { to_eval.evaluate(true); }; }(this), 100);
+				if(this.hasChildren && this.ends[L]) {
+					for(var el = this.ends[L]; el instanceof Element; el = el[R])
+						el.commandChildren(function(_this) { if(_this.scoped()) { _this.altered_content = true; } });
+				}
+				this.evaluate(true);
 				break;
 			case 'insert':
 				this.remove(0);
 				break;
 			case 'move':
-				if(action.L) {
-        	var impact_vars = this.worksheet.moveImpact(action.L, false, R, [this]);
+				if(action.L) 
 					this.move(action.L, R, false);
-				} else {
-        	var impact_vars = this.worksheet.moveImpact(action.parent, true, L, [this]);
+				else 
 					this.move(action.parent, L, true);
-				}
-		    var eval_id = this.worksheet.evaluate([], impact_vars.start_el);
-        var target = impact_vars.next_el;
-        while(true) {
-          if(target[R]) {
-            target = target[R];
-            break;
-          }else if(target.parent) {
-            target = target.parent;
-            if(target instanceof Loop) break;
-          }else{
-            target = false;
-            break;
-          }
-        }
-        if(target)
-          giac.evaluations[eval_id].altered_list_additions.push({el_id: target.id, vars: impact_vars.vars}); // Let evaluator know about all altered vars in move operation
 				break;
 		}
 	}
@@ -719,18 +807,32 @@ var Element = P(function(_) {
 			equal = false;
 		return !equal;
 	}
+	_.nextEvaluateElement = function() {
+		next_id = this;
+		while(true) {
+// BRENTAN: How will this work with LOOPS!!!
+			if(next_id[R] && !(next_id[R] instanceof LogicCommand)) { next_id = next_id[R]; break; }
+			else if(next_id.parent) { next_id = next_id.parent; }
+			else { next_id = false; break; }
+		}
+		return next_id;
+	}
 	// Check for altered content or dependency on current list of altered variables: only evaluate if altered
 	_.altered = function(evaluation_id) {
 		if(this.altered_content || giac.check_altered(evaluation_id, this)) {
 			this.altered_content = false;
-//BRENTAN: change next two lines to add to eval chain at NEXT element to be evaled!  And if in manual mode, think through whether to unset 'altered_content (my guess: NO!)'
-			giac.add_altered(evaluation_id, this.previous_independent_vars);
-			giac.add_altered(evaluation_id, this.independent_vars);
+			// Find next element to evaluate:
+			var next_id = this.nextEvaluateElement();
+			// Register the variable change with the next item (why not register now? in case we hijack this evaluation with another, we need to ensure the change gets loaded)
+			if(next_id) {
+				giac.add_altered(evaluation_id, this.previous_independent_vars, next_id.id);
+				giac.add_altered(evaluation_id, this.independent_vars, next_id.id);
+			}
 			this.previous_independent_vars = this.independent_vars;
 			this.previous_commands = [];
 			for(var i = 0; i < this.commands.length; i++) 
 				this.previous_commands.push(this.commands[i].command);
-this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
+this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );var date = new Date();
 			return true;
 		}
 this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
@@ -742,7 +844,7 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 		if(this.hasChildren) {
 			var kids = this.children();
 			for(var i = 0; i < kids.length; i++)
-				arr.concat(kids[i].allIndependentVars());
+				arr = arr.concat(kids[i].allIndependentVars());
 		}
 		return arr;
 	}
@@ -758,23 +860,21 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 	// Find the nearest previous element and return its unarchive list...this is what we should be loading
 	_.previousUnarchivedList = function() {
 		var el = this;
-		while(el instanceof Element) {
-			if((el !== this) && el.hasChildren && el.ends[R]) el = el.ends[R]
-			else if(el[L]) el = el[L];
-			else {
-				for(el = el.parent; el instanceof Element; el = el.parent) {
-					if(el.overrideUnarchivedListForChildren) return el.overrideUnarchivedListForChildren();
-					if(el[L]) { el = el[L]; break; }
-				}
-				if(!(el instanceof Element)) return [];
+		if(el[L]) el = el[L];
+		else {
+			for(el = el.parent; el instanceof Element; el = el.parent) {
+				if(el.overrideUnarchivedListForChildren) return el.overrideUnarchivedListForChildren();
+				if(el[L]) { el = el[L]; break; }
 			}
-			if(el.unarchiveListSet) return el.getUnarchiveList();
+			if(!(el instanceof Element)) return [];
 		}
-		return [];
+		return el.getUnarchiveList();
 	}
-	// Override if this element should return a different archive list for some reason
+	// Override if this element should return a different archive list for some reason (function command, mostly)
 	_.getUnarchiveList = function() {
-		return this.unarchive_list;
+		if(this.hasChildren && this.ends[R]) return this.ends[R].getUnarchiveList();
+		if(this.unarchive_list_set) return this.unarchive_list;
+		return this.previousUnarchivedList();
 	}
 
 	// Callback from giac when an evaluation has completed and results are returned
@@ -792,11 +892,14 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 	}
 
 	// Call the next item
+	_.evaluateNext2 = function(eval_id) {
+		window.setTimeout(function(_this) { return function() { _this.evaluateNext2(eval_id); }; }(this),500);
+	}
 	_.evaluateNext = function(evaluation_id) {
 		this.leftJQ.find('i.fa-spinner').remove();
 		this.unblurOutputBox();
 		this.unarchive_list = this.previousUnarchivedList().slice(0);
-		this.unarchiveListSet = true;
+		this.unarchive_list_set = true;
 		if(this.independent_vars.length) this.unarchive_list.push([this.worksheet.id + "_" + this.id, this.independent_vars]); // Update my unarchive list
 		this.setAutocomplete(this.unarchive_list);
 
@@ -812,7 +915,6 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
 	// Called by the last child node of this element after it is evaluated.  This node should move onwards to next nodes 
 	_.childrenEvaluated = function(evaluation_id) {
 		// We need to save the scope?
-//BRENTAN: NEED TO CHECK ON THINGS LIKE PLOTS, ETC TO SEE WHAT HAPPENS.  THEN FOR/IF LOOPS
 		if(this.scoped() && giac.shouldEvaluate(evaluation_id))
 			giac.skipExecute(evaluation_id, this, 'scopeSaved');
 		else

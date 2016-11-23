@@ -565,10 +565,11 @@ var Worksheet = P(function(_) {
       var previous_element_ids = {}
       var el = start_element;
       while(true) {
-        if(el[L]) el = el[L];
-        else if(el.parent && el.parent[L]) el = el.parent[L];
+        if(el[L]) {
+          el = el[L];
+          if(el.hasChildren && el.ends[R]) el = el.ends[R];
+        } else if(el.parent) el = el.parent;
         else break;
-        if(el.hasChildren && el.ends[R]) el = el.ends[R];
         previous_element_ids[el.id] = true;
       }
       // Load list of all evaluations
@@ -590,10 +591,11 @@ var Worksheet = P(function(_) {
             var el = Element.byId[current_evaluation.element_stop_id];
             var lower_stop_id = false;
             while(true) {
-              if(el[L]) el = el[L];
-              else if(el.parent && el.parent[L]) el = el.parent[L];
+              if(el[L]) {
+                el = el[L];
+                if(el.hasChildren && el.ends[R]) el = el.ends[R];
+              } else if(el.parent) el = el.parent;
               else break;
-              if(el.hasChildren && el.ends[R]) el = el.ends[R];
               if(el.id == stop_id) { lower_stop_id = true; break; }
               if(el.id == start_element.id)  break; 
             }
@@ -618,10 +620,11 @@ var Worksheet = P(function(_) {
             var el = Element.byId[current_evaluation.active_id];
             var below_stop_id = false;
             while(true) {
-              if(el[L]) el = el[L];
-              else if(el.parent && el.parent[L]) el = el.parent[L];
-              else break;
-              if(el.hasChildren && el.ends[R]) el = el.ends[R];
+              if(el[L]) {
+                el = el[L];
+                if(el.hasChildren && el.ends[R]) el = el.ends[R];
+              } else if(el.parent) el = el.parent;
+              else break
               if(el.id == stop_id) { below_stop_id = true; break; }
             }
             if(below_stop_id) {
@@ -632,10 +635,11 @@ var Worksheet = P(function(_) {
               var el = Element.byId[current_evaluation.element_stop_id];
               var lower_stop_id = false;
               while(true) {
-                if(el[L]) el = el[L];
-                else if(el.parent && el.parent[L]) el = el.parent[L];
+                if(el[L]) {
+                  el = el[L];
+                  if(el.hasChildren && el.ends[R]) el = el.ends[R];
+                } else if(el.parent) el = el.parent;
                 else break;
-                if(el.hasChildren && el.ends[R]) el = el.ends[R];
                 if(el.id == stop_id) { lower_stop_id = true; break; }
                 if(el.id == start_element.id)  break; 
               }

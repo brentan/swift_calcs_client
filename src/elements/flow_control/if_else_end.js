@@ -39,48 +39,113 @@ var if_block = P(LogicBlock, function(_, super_) {
 		return function(mathField) {
 			if(_this.needsEvaluation) {
 				//console.log(mathField.latex());
+				_this.dependent_vars = GetDependentVars(mathField.text());
 				_this.evaluate();
 				_this.needsEvaluation = false;
 			}
 		};
 	}
+	_.newCommands = function() {
+		var new_command = [this.mathField.text()];
+		for(var el = this.ends[L]; el instanceof Element; el = el[R]) 
+			if(el instanceof LogicCommand) new_command.push(el.command());
+		var equal = true;
+		if(new_command.length == this.previous_commands.length) {
+			for(var i = 0; i < new_command.length; i++) {
+				if(new_command[i] != this.previous_commands[i]) {
+					equal = false;
+					break;
+				}
+			}
+		} else
+			equal = false;
+		return !equal;
+	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id) {
 		// Build command list
-		this.commands = [{ command: 'evalf(' + this.mathField.text() + ')' }];
-		this.else_blocks = [];
+		this.commands = [];
+		this.else_blocks = {};
+		this.all_blocks = [this];
+		var new_command = [this.mathField.text()];
+		if(this.altered(evaluation_id)) {
+			this.else_blocks[this.id] = this.commands.length;
+			this.commands.push({ command: 'evalf(' + this.mathField.text() + ')' });
+		}
 		for(var el = this.ends[L]; el instanceof Element; el = el[R]) {
-			if(el instanceof else_block) {
-				this.else_blocks.push(el);
+			if(el instanceof LogicCommand) new_command.push(el.command());
+			if((el instanceof LogicCommand) && el.altered(evaluation_id)) {
+				this.else_blocks[el.id] = this.commands.length;
 				this.commands.push({ command: 'evalf(' + el.command() + ')' });
+				this.all_blocks.push(el);
+			} else if(el instanceof LogicCommand) {
+				this.all_blocks.push(el);
+				el.jQ.addClass(css_prefix + 'greyout');
 			} else
 				el.jQ.addClass(css_prefix + 'greyout');
 		}
-		if(this.shouldBeEvaluated(evaluation_id)) {
+		this.previous_commands = new_command;
+		if(this.shouldBeEvaluated(evaluation_id) && this.commands.length) {
 			this.addSpinner(evaluation_id);
 			giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
-		} else 
+		} else if(this.shouldBeEvaluated(evaluation_id)) 
+			this.evaluationFinished([], evaluation_id);
+		else 
 			this.evaluateNext(evaluation_id);
 	}
+	_.lastTrueId = -1;
 	_.evaluationFinished = function(result, evaluation_id) {
 		var any_yet = false;
-		if(result[0].success) {
-			any_yet = this.logicResult = parseLogicResult(result[0].returned)
-			this.outputBox.collapse();
-		} else {
-			this.logicResult = false;
-			this.outputBox.setError(result[0].returned);
-			this.outputBox.expand();
+		for(var i = 0; i < this.all_blocks.length; i++) {
+			if(typeof this.else_blocks[this.all_blocks[i].id] != 'undefined')
+				any_yet = this.all_blocks[i].handle_response(result[this.else_blocks[this.all_blocks[i].id]], any_yet);
+			else if(any_yet) 
+				this.all_blocks[i].logicResult = false;
+			else {
+				any_yet = any_yet || this.all_blocks[i].returnedResult;
+				this.all_blocks[i].logicResult = any_yet;
+			}
 		}
-		for(var i = 1; i < result.length; i++) 
-			any_yet = this.else_blocks[i-1].handle_response(result[i], any_yet);
+		// Find the 'true' block
+		var new_true_id = -1;
+		for(var i = 0; i < this.all_blocks.length; i++) {
+			if(this.all_blocks[i].logicResult) { new_true_id = this.all_blocks[i].id; break; }
+		}
+		if(this.lastTrueId != new_true_id) {
+			// New item is 'true'.  Need to mark all things after it 'altered' to make sure they are recalced
+			if(new_true_id > -1) {
+				var el = new_true_id == this.id ? this.ends[L] : Element.byId[new_true_id][R];
+				for(el; (el instanceof Element) && !(el instanceof LogicCommand); el = el[R]) 
+	    		el.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true; } });
+	    }
+    	// Also need to go through and mark all variables that were set in old 'true' area as altered for the continuing calculation
+    	if(this.lastTrueId > -1) {
+				el = this.lastTrueId == this.id ? this.ends[L] : Element.byId[this.lastTrueId][R];
+				for(el; (el instanceof Element) && !(el instanceof LogicCommand); el = el[R]) 
+					giac.add_altered(evaluation_id, el.allIndependentVars());
+			}
+		}
+		this.lastTrueId = new_true_id;
 
-		// BRENTAN: If this guy is true, we should un-blur resultant stuff
 		if(this.ends[L])
-			this.ends[L].continueEvaluation(evaluation_id, true)
+			this.ends[L].continueEvaluation(evaluation_id)
 		else
 			this.childrenEvaluated(evaluation_id);
 		return false;
+	}
+	_.handle_response = function(result, any_yet) {
+		if(result.success) {
+			this.returnedResult = parseLogicResult(result.returned);
+			this.logicResult = this.returnedResult;
+			this.outputBox.collapse();
+			if(any_yet) this.logicResult = false;
+		}	else {
+			this.returnedResult = false;
+			this.logicResult = false;
+			this.outputBox.setError(result.returned);
+			this.outputBox.expand();
+		}
+		return this.logicResult || any_yet;
 	}
   _.toString = function() {
   	return '{if}{{' + this.argumentList().join('}{') + '}}';
@@ -153,6 +218,7 @@ var else_block = P(LogicCommand, function(_, super_) {
 		} 
 		return this;
 	}
+	_.returnedResult = true;
 	_.handle_response = function(result, any_yet) {
 		if(result.success) {
 			this.logicResult = parseLogicResult(result.returned);
@@ -167,6 +233,12 @@ var else_block = P(LogicCommand, function(_, super_) {
 	}
   _.toString = function() {
   	return '{else}{}';
+  }
+  _.scoped = function() {
+  	return (this.parent instanceof LogicBlock) ? this.parent.scoped() : false;
+  }
+  _.evaluate = function() {
+  	if(this.parent instanceof LogicBlock) this.parent.evaluate(true);
   }
 });
 var else_if_block = P(else_block, function(_, super_) {
@@ -194,13 +266,21 @@ var else_if_block = P(else_block, function(_, super_) {
 	_.enterPressed = function(_this) {
 		return function(mathField) {
 			_this.submissionHandler(_this)(mathField);
-			math().insertAfter(_this).show().focus();
+			if(!_this[R] || (_this[R] instanceof LogicCommand))
+				math().insertAfter(_this).show().focus(L);
+			else
+				_this[R].focus(L);
 		};
 	}
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
-			if(_this.parent instanceof if_block) 
-				_this.parent.submissionHandler(_this.parent)(_this.parent.mathField);
+			if(_this.needsEvaluation) {
+				//console.log(mathField.latex());
+				_this.dependent_vars = GetDependentVars(mathField.text());
+				_this.altered_content = true;
+				_this.evaluate();
+				_this.needsEvaluation = false;
+			}
 		};
 	}
   _.toString = function() {
@@ -208,13 +288,27 @@ var else_if_block = P(else_block, function(_, super_) {
   }
 	// Callback for math elements notifying that this element has been changed
 	_.changed = function(el) {
-		if(this.parent instanceof if_block)
-			this.parent.needsEvaluation = true;
+		this.needsEvaluation = true;
 	}
 	_.focus = function(dir) {
 		if(!this.inTree) return this;
 		super_.focus.call(this);
 		this.rightParent();
+		if(dir === 0) this.mathField.focus(0);
 		return this;
+	}
+	_.handle_response = function(result, any_yet) {
+		if(result.success) {
+			this.returnedResult = parseLogicResult(result.returned);
+			this.logicResult = this.returnedResult;
+			this.outputBox.collapse();
+			if(any_yet) this.logicResult = false;
+		}	else {
+			this.returnedResult = false;
+			this.logicResult = false;
+			this.outputBox.setError(result.returned);
+			this.outputBox.expand();
+		}
+		return this.logicResult || any_yet;
 	}
 });
