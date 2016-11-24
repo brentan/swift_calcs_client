@@ -31,6 +31,15 @@ var mixture = P(Element, function(_, super_) {
     }; }(this));
     return this;
   }
+  _.PrependBlankItem = function(el) {
+    if(el === this.focusableItems[0][0]) {
+      //add a blank block just before this one
+      math().insertBefore(this).show();
+      this.focus(L);
+      return true;
+    } else
+      return false;
+  }
   _.toString = function() {
     return '{mixture}{{' + this.argumentList().join('}{') + '}}';
   }
@@ -77,21 +86,15 @@ var mixture = P(Element, function(_, super_) {
         this.dependent_vars = this.dependent_vars.concat(GetDependentVars(to_store.quantity));
       }
     }
-    this.independent_vars = [this.varStoreField.text().trim()];
-    this.commands = [{command: this.independent_vars + "=" + command, setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: species, last_name: this.last_name} }];    
+    var var_name = this.varStoreField.text().trim();
+    this.independent_vars = [var_name, var_name + "_T__in", var_name + "_P__in"];
+    this.commands = [{command: this.independent_vars.join(",") + "=" + command, setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: species, last_name: this.last_name} }];    
   }
 
   _.shouldBeEvaluated = function(evaluation_id) {
     var super_call = super_.shouldBeEvaluated.call(this, evaluation_id);
     if(this.commands.length && (this.commands[0].setMaterial.data.length == 0)) return false; // Test for valid species in mixture
-    if(super_call) {
-      var children = this.children();
-      if(children.length != this.number_of_species) return true;
-      for(var i = 0; i < children.length; i++)
-        if(children[i].needsEvaluation) return true;
-      return (this.varStoreField.text() != this.last_name)
-    }
-    return false;
+    return super_call;
   }
   _.evaluationFinished = function(result) {
     this.last_name = this.varStoreField.text().trim();
@@ -173,8 +176,10 @@ var mixture_component = P(material_holder, function(_, super_) {
     return function(mathField) {
       if(_this.ignore_blur_eval) return;
       if(_this.needsEvaluation) {   
+        _this.parent.genCommand();
         _this.parent.needsEvaluation = true;
-        _this.parent.evaluate();
+        _this.parent.evaluate(true);
+        _this.needsEvaluation = false;
       }
     };
   }
@@ -194,6 +199,12 @@ var mixture_component = P(material_holder, function(_, super_) {
   }
   _.getUnarchiveList = function() {
     return this.parent ? this.parent.getUnarchiveList() : [];
+  }
+  _.changed = function() {
+    this.needsEvaluation = true;
+  }
+  _.PrependBlankItem = function(el) {
+    return false;
   }
 
 });

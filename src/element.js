@@ -328,7 +328,8 @@ var Element = P(function(_) {
     var move_up = true;
     //Adjust target_el to be the element just below where we are inserting (target_el is first impacted el)
     if(insertInto) {
-      if(target_el instanceof Loop) impacted_els.push(target_el);
+      if(target_el.independent_vars.length) impacted_els.push(target_el);
+      else if(target_el instanceof Loop) impacted_els.push(target_el);
       if((location === L) && (target_el.ends[L])) target_el = target_el.ends[L];
       else target_el = target_el[R];
     } else if(location === R) target_el = target_el[R];
@@ -343,7 +344,8 @@ var Element = P(function(_) {
       else if(target_el[R]) 
         target_el = target_el[R];
       else if(target_el.parent) {
-        if(target_el.parent instanceof Loop) impacted_els.push(target_el.parent);
+        if(target_el.independent_vars.length) impacted_els.push(target_el.parent);
+        else if(target_el instanceof Loop) impacted_els.push(target_el.parent);
         target_el = target_el.parent[R];
       } else { move_up = false; break; } // End of the road, no match was ever found
     } 
@@ -353,7 +355,8 @@ var Element = P(function(_) {
       var impacted_els = [];
       var move_down = true;
       if(insertInto) {
-        if(target_el instanceof Loop) impacted_els.push(target_el);
+        if(target_el.independent_vars.length) impacted_els.push(target_el);
+        else if(target_el instanceof Loop) impacted_els.push(target_el);
         if((location === R) && (target_el.ends[R])) target_el = target_el.ends[R];
         else target_el = target_el[L];
       } else if(location === L) target_el = target_el[L];
@@ -367,7 +370,8 @@ var Element = P(function(_) {
         else if(target_el[L]) 
           target_el = target_el[L];
         else if(target_el.parent) {
-          if(target_el.parent instanceof Loop) impacted_els.push(target_el.parent);
+          if(target_el.independent_vars.length) impacted_els.push(target_el.parent);
+          else if(target_el instanceof Loop) impacted_els.push(target_el.parent);
           target_el = target_el.parent[L];
         } else { move_down = false; break; } // End of the road, no match was ever found
       } 
@@ -833,10 +837,10 @@ var Element = P(function(_) {
 			this.previous_commands = [];
 			for(var i = 0; i < this.commands.length; i++) 
 				this.previous_commands.push(this.commands[i].command);
-//this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );var date = new Date();
+this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );var date = new Date();
 			return true;
 		}
-//this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
+this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 		giac.remove_altered(evaluation_id, this.independent_vars);
 		return giac.compile_mode; // In compile mode, we need to know the commands that are sent
 	}
@@ -1350,7 +1354,7 @@ var Element = P(function(_) {
 		this.autocomplete_list = {};
 		for(var i = 0; i < list.length; i++) {
 			for(var j = 0; j < list[i][1].length; j++)
-				this.autocomplete_list[list[i][1][j]] = true;
+				if(list[i][1][j].indexOf("__") == -1) this.autocomplete_list[list[i][1][j]] = true;
 		}
 	}
 	_.autocomplete = function() {

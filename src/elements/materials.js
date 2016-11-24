@@ -53,6 +53,15 @@ var material_holder = P(EditableBlock, function(_, super_) {
       this.last_name = "";
     }
   }
+  _.PrependBlankItem = function(el) {
+    if(el === this.focusableItems[0][0]) {
+      //add a blank block just before this one
+      math().insertBefore(this).show();
+      this.focus(L);
+      return true;
+    } else
+      return false;
+  }
 
   _.loadOptions = function(parent_id) {
     this.ignore_blur_eval = true;

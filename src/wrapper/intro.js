@@ -179,7 +179,10 @@ var SwiftCalcs = {};
   }
 
   var GetDependentVars = function(command, ignore) {
+    var dependent_vars = [];
     if(typeof ignore === 'undefined') ignore = [];
+    if(command.match(/^[\s]*[a-z][a-z0-9_]*SWIFTCALCSMETHOD.*:=.*$/i)) // by setting it, it is also dependent on it, because special objects are weird
+      dependent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)SWIFTCALCSMETHOD.*$/i, "$1"));
     command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
     var function_vars = {};
     //Add in ignore vars to function vars, as they serve same purpose
@@ -193,7 +196,6 @@ var SwiftCalcs = {};
     } 
     if(command.match(/^.*:=.*$/i)) command = command.replace(/^.*:=(.*)$/i,"$1");
     var dependent_var = command.replace(/[^a-zA-Z_0-9]/g," ");
-    var dependent_vars = [];
     var reg = /([a-z][a-z0-9]*(_[a-z0-9]*)?)/gi;
     var result;
     while((result = reg.exec(dependent_var)) !== null) {
@@ -202,11 +204,18 @@ var SwiftCalcs = {};
     return dependent_vars;
   }
   var GetIndependentVars = function(command) {
+    var independent_vars = [];
+    if(command.match(/^[\s]*[a-z][a-z0-9_]*SWIFTCALCSMETHOD.*:=.*$/i)) {// by setting it, it is also dependent on it, because special objects are weird
+      var method_name = command.replace(/^[\s]*([a-z][a-z0-9_]*)SWIFTCALCSMETHOD.*$/i, "$1");
+      // Objects also set vars with these suffixes...so we need to add those to our list here to ensure they are seen as 'altered'
+      independent_vars.push(method_name + "_T__in");
+      independent_vars.push(method_name + "_P__in");
+      independent_vars.push(method_name + "_rho__in");
+    }
     command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
     if(command.match(/^[\s]*[a-z][a-z0-9_]*(\(.*\))?(\[.*\])?[\s]*:=/i)) 
-      return [command.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?(\[.*\])?[\s]*:=.*$/i,"$1")];
-    else
-      return [];
+      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?(\[.*\])?[\s]*:=.*$/i,"$1"));
+    return independent_vars
   }
     
   $(window).on('resize', function() {
