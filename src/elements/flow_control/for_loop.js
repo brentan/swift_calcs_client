@@ -68,18 +68,41 @@ var for_loop = P(Loop, function(_, super_) {
 		return function(mathField) {
 			if(_this.needsEvaluation) {
 				//console.log(mathField.latex());
+				// Build command list
+				_this.commands = [{ command: 'evalf(' + _this.startField.text() + ')', nomarkup: true },{ command: 'evalf(' + _this.finishField.text() + ')', nomarkup: true },{ command: 'evalf(' + _this.stepField.text() + ')', nomarkup: true },{ command: _this.varField.text(), nomarkup: true }];
+				_this.independent_vars = [_this.varField.text().trim()];
+				_this.dependent_vars = GetDependentVars(_this.startField.text() + ' ' + _this.finishField.text() + ' ' + _this.stepField.text());
 				_this.evaluate();
 				_this.needsEvaluation = false;
 			}
 		};
 	}
+	// Ask every child of this if has been altered or if it depends on any of the altered variables.  If so, we need to re-evaluate the loop
+	_.childNeedsEvaluation = function(evaluation_id) {
+		var any_altered = false;
+		var test_function = function(_this) {
+			if(any_altered) return;
+			if(_this.altered_content || giac.check_altered(evaluation_id, _this)) any_altered = true;
+		}
+		for(var el = this.ends[L]; el instanceof Element; el = el[R]) 
+			el.commandChildren(test_function);
+		return any_altered;
+	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id) {
-		// Build command list
-		this.commands = [{ command: 'evalf(' + this.startField.text() + ')' },{ command: 'evalf(' + this.finishField.text() + ')' },{ command: 'evalf(' + this.stepField.text() + ')' }];
 		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.addSpinner(evaluation_id);
-			giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
+			if(this.altered(evaluation_id) || this.childNeedsEvaluation(evaluation_id)) {
+				this.single_run = false;
+				this.addSpinner(evaluation_id);
+				giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
+			} else {
+				// Basically, nothing in the loop changed or will change, but we need to walk through to do the restore on all vars in it, so we do one pass to allow for the unarchives
+				this.single_run = true;
+				if(this.ends[L])
+					this.ends[L].continueEvaluation(evaluation_id)
+				else
+					this.childrenEvaluated(evaluation_id);
+			}
 		} else 
 			this.evaluateNext(evaluation_id);
 	}
@@ -113,54 +136,64 @@ var for_loop = P(Loop, function(_, super_) {
 		if(errors.length) {
 			this.outputBox.setError(errors.join('<BR>'));
 			this.outputBox.expand();
+			this.evaluateNext(evaluation_id);
 		} else {
 			this.outputBox.collapse();
 			this.start_val -= this.step_val; // Seed first iteration value
 			this.count = 0;
+			this.childrenEvaluated(evaluation_id);
 		}
-		this.childrenEvaluated(evaluation_id);
 		return false;
 	}
 	// Called by the last child node of this element after it is evaluated.  Reloops if we have more loops to calculate
 	_.childrenEvaluated = function(evaluation_id) {
 		this.suppress_output = false;
-		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.start_val += this.step_val;
-			if(this.start_val < this.finish_val) {
-				this.count++;
-				if((this.start_val + this.step_val) >= this.finish_val) {
-					this.outputBox.collapse();
-				} else {
-					if(this.count == 20) {
-						this.outputBox.setWarning('Further output from this loop has been temporarily suppressed to increase computation speed.');
-						this.outputBox.expand();
-					}
-					if(this.count >= 20)
-						this.suppress_output = true;
-				}
-				if(this.count == 1000) {
-					this.outputBox.setWarning('This loop has processed over 1,000 iterations.  <a href="#">Abort Computation</a>');
-			    this.outputBox.jQinner.find('a').on('click', function(e) {
-			      giac.cancelEvaluations($(this));
-						$(this).closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
-			      return false;
-			    });
-					this.outputBox.expand();
-				}
-				this.startIteration(evaluation_id);
+		this.start_val += this.step_val;
+		if(this.single_run) {
+			var next_id = this.nextEvaluateElement();
+			giac.add_altered(evaluation_id, [this.iterator.trim()], next_id ? next_id.id : -1); 
+			giac.skipExecute(evaluation_id, this, 'scopeSaved');
+		} else if(this.start_val < this.finish_val) {
+			this.count++;
+			if((this.start_val + this.step_val) >= this.finish_val) {
+				this.outputBox.collapse();
 			} else {
-				if(this.count == 0) {
-					this.outputBox.setWarning('No iterations were performed for this loop.  Stop criterion was immediately reached.');
+				if(this.count == 20) {
+					this.outputBox.setWarning('Further output from this loop has been temporarily suppressed to increase computation speed.');
 					this.outputBox.expand();
-				} else
-					this.outputBox.collapse();
-				giac.skipExecute(evaluation_id, this, 'scopeSaved');
+				}
+				if(this.count >= 20)
+					this.suppress_output = true;
 			}
-		} else
-			this.evaluateNext(evaluation_id);
+			if(this.count == 1000) {
+				this.outputBox.setWarning('This loop has processed over 1,000 iterations.  <a href="#">Abort Computation</a>');
+		    this.outputBox.jQinner.find('a').on('click', function(e) {
+		      giac.cancelEvaluations($(this));
+					$(this).closest('div.' + css_prefix + 'answer_table').hide({ duration: 400 });
+		      return false;
+		    });
+				this.outputBox.expand();
+			}
+			this.startIteration(evaluation_id);
+		} else {
+			if(this.count == 0) {
+				this.outputBox.setWarning('No iterations were performed for this loop.  Stop criterion was immediately reached.');
+				this.outputBox.expand();
+			} else
+				this.outputBox.collapse();
+			var next_id = this.nextEvaluateElement();
+			giac.add_altered(evaluation_id, [this.iterator.trim()], next_id ? next_id.id : -1); 
+			giac.skipExecute(evaluation_id, this, 'scopeSaved');
+		}
 	}
 	_.startIteration = function(evaluation_id) {
-		giac.execute(evaluation_id, true, [{ command: this.iterator + ':=' + this.start_val }], this, 'startIterationCallback');
+		giac.add_altered(evaluation_id, [this.iterator.trim()], this.ends[L].id); // Add in iterator to 'altered' list
+		if(this.count > 1) {
+			// 2nd + iteration.  Need to load back in vars I just edited from the last iteration
+			var next_id = this.nextEvaluateElement();
+			giac.add_altered(evaluation_id, giac.get_and_wipe_altered(evaluation_id, next_id ? next_id.id : -1), this.ends[L].id); 
+		}
+		giac.execute(evaluation_id, [{ command: this.iterator + ':=' + this.start_val, nomarkup: true }], this, 'startIterationCallback');
 	}
 	_.startIterationCallback = function(result, evaluation_id) {
 		if(!result[0].success) {
@@ -168,7 +201,7 @@ var for_loop = P(Loop, function(_, super_) {
 			this.outputBox.expand();
 		}
 		if(this.ends[L])
-			this.ends[L].continueEvaluation(evaluation_id, true)
+			this.ends[L].continueEvaluation(evaluation_id)
 		else
 			this.childrenEvaluated(evaluation_id);
 		return false;
@@ -185,6 +218,11 @@ var for_loop = P(Loop, function(_, super_) {
 		if(this.touched[0] && this.touched[1] && this.touched[2] && this.touched[3])
 			this.needsEvaluation = true;
 	}
+	_.overrideUnarchivedListForChildren = function() {
+		var list = this.previousUnarchivedList().slice(0);
+		list.push([this.worksheet.id + "_" + this.id, [this.varField.text().trim()]]);
+		return list;
+	}
 
 });
 var continue_block = P(Element, function(_, super_) {
@@ -192,6 +230,10 @@ var continue_block = P(Element, function(_, super_) {
 	_.evaluatable = true;
 	_.command_name = 'continue';
 	_.helpText = "<<continue>>\nWithin a loop, a continue command will immediately cease the current loop iteration and return to the start of the loop to begin the next iteration.";
+
+	_.allIndependentVars = function() {
+		return [""]; // force to appear as scoped
+	}
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', this.command_name) + helpBlock() + '<BR>' + answerSpan() + '</div>';
 	}
@@ -202,9 +244,12 @@ var continue_block = P(Element, function(_, super_) {
 	}
 	_.continueEvaluation = function(evaluation_id) {
 		var parentLoop = this.parentLoop();
-		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) 
+		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) {
+			// Need to load the vars that I am being asked to load to the nextEvaluateElement instead (note, on next iteration the for loop will lift these and move them back to the start)
+			var next_id = parentLoop.nextEvaluateElement();
+			giac.add_altered(evaluation_id, giac.get_and_wipe_altered(evaluation_id, this.id), next_id ? next_id.id : -1); 
 			parentLoop.childrenEvaluated(evaluation_id);
-		else
+		} else
 			this.evaluateNext(evaluation_id);
 	}
 	_.parentLoop = function(skip_spinner_removal) {
@@ -255,8 +300,11 @@ var break_block = P(continue_block, function(_, super_) {
 		var parentLoop = this.parentLoop();
 		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) {
 			parentLoop.start_val = parentLoop.finish_val; // Force loop to be complete
+			// Need to load the vars that I am being asked to load to the nextEvaluateElement instead
+			var next_id = parentLoop.nextEvaluateElement();
+			giac.add_altered(evaluation_id, giac.get_and_wipe_altered(evaluation_id, this.id), next_id ? next_id.id : -1); 
 			parentLoop.childrenEvaluated(evaluation_id);
-		}	else
+		} else
 			this.evaluateNext(evaluation_id);
 	}
 });

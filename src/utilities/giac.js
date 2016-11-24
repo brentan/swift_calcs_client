@@ -50,14 +50,25 @@ var GiacHandler = P(function(_) {
         this.evaluations[eval_id].altered_list[altered[i].trim()] = true;
     }
   }
+  _.get_and_wipe_altered = function(eval_id, delay) {
+    if(!this.evaluations[eval_id]) return [];
+    var out = [];
+    for(var i = this.evaluations[eval_id].altered_list_additions.length - 1; i >= 0; i--) {
+      if(this.evaluations[eval_id].altered_list_additions[i].el_id == delay) {
+        out = out.concat(Object.keys(this.evaluations[eval_id].altered_list_additions[i].vars));
+        this.evaluations[eval_id].altered_list_additions.splice(i,1);
+      }
+    }
+    return out;
+  }
   _.remove_altered = function(eval_id, altered) {
     if(!this.evaluations[eval_id]) return;
     var l = altered.length;
     for(var i = 0; i < l; i++)
       this.evaluations[eval_id].altered_list[altered[i].trim()] = false;
   }
-  _.check_altered = function(eval_id, el) {
-    if(!this.evaluations[eval_id]) return false;
+  _.load_altered = function(eval_id, el) {
+    if(!this.evaluations[eval_id]) return;
     // Test for any canceled evaluations that need us to merge in some vars
     for(var i = this.evaluations[eval_id].altered_list_additions.length - 1; i >= 0; i--) {
       if(el.id == this.evaluations[eval_id].altered_list_additions[i].el_id) {
@@ -69,6 +80,9 @@ var GiacHandler = P(function(_) {
         this.evaluations[eval_id].altered_list_additions.splice(i,1);
       }
     }
+  }
+  _.check_altered = function(eval_id, el) {
+    if(!this.evaluations[eval_id]) return false;
     var l = el.dependent_vars.length;
     for(var i = 0; i < l; i++)
       if(this.evaluations[eval_id].altered_list[el.dependent_vars[i]] === true) return true;

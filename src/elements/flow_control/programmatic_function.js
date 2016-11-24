@@ -96,7 +96,7 @@ var programmatic_function = P(Element, function(_, super_) {
 		this.startCompilation(evaluation_id, prog);
 	}
 	_.startCompilation = function(evaluation_id, prog) {
-		giac.execute(evaluation_id, true, [{ command: prog, nomarkup: true }], this, 'compilationCallback');
+		giac.execute(evaluation_id, [{ command: prog, nomarkup: true }], this, 'compilationCallback');
 	}
 	_.compilationCallback = function(result, evaluation_id) {
 		if(!result[0].success) {

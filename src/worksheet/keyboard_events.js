@@ -265,7 +265,11 @@ Worksheet.open(function(_) {
           return this.activeElement.write(to_paste);
         else if(this.allow_interaction()) {
           this.startUndoStream();
-          var el = math().insertAfter(this.activeElement).show(0).focus(R).write(to_paste);
+          if(((this.activeElement instanceof SettableMathOutput) && (this.activeElement.focusedItem == this.activeElement.varStoreField) && this.activeElement.varStoreField.cursorInInitialPosition())
+            || ((this.activeElement instanceof math) && (this.activeElement.focusedItem == this.activeElement.mathField) && this.activeElement.mathField.cursorInInitialPosition())) 
+            var el = math().insertBefore(this.activeElement).show(0).focus(R).write(to_paste);
+          else
+            var el = math().insertAfter(this.activeElement).show(0).focus(R).write(to_paste);
           this.endUndoStream();
           return el;
         }
@@ -277,8 +281,16 @@ Worksheet.open(function(_) {
       if(this.allow_interaction()) {
         this.startUndoStream();
         var after = this.activeElement;
+        var first_insert_before = false;
+        if(((this.activeElement instanceof SettableMathOutput) && (this.activeElement.focusedItem == this.activeElement.varStoreField) && this.activeElement.varStoreField.cursorInInitialPosition())
+          || ((this.activeElement instanceof math) && (this.activeElement.focusedItem == this.activeElement.mathField) && this.activeElement.mathField.cursorInInitialPosition())) 
+          first_insert_before = true;// Cursor in initial position, so paste BEFORE element
         for(var i = 0; i < blocks.length; i++) {
-          blocks[i].insertAfter(after).show(0);
+          if(first_insert_before) {
+            blocks[i].insertBefore(after).show(0);
+            first_insert_before = false;
+          } else
+            blocks[i].insertAfter(after).show(0);
           after = blocks[i];
         }
         if((this.activeElement instanceof math) && (this.activeElement.mathField.text() == '')) this.activeElement.remove(0);

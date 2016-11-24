@@ -63,6 +63,7 @@ var if_block = P(LogicBlock, function(_, super_) {
 	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id) {
+		giac.load_altered(evaluation_id, this);
 		// Build command list
 		this.commands = [];
 		this.else_blocks = {};
@@ -70,13 +71,13 @@ var if_block = P(LogicBlock, function(_, super_) {
 		var new_command = [this.mathField.text()];
 		if(this.altered(evaluation_id)) {
 			this.else_blocks[this.id] = this.commands.length;
-			this.commands.push({ command: 'evalf(' + this.mathField.text() + ')' });
+			this.commands.push({ command: 'evalf(' + this.mathField.text() + ')', nomarkup: true });
 		}
 		for(var el = this.ends[L]; el instanceof Element; el = el[R]) {
 			if(el instanceof LogicCommand) new_command.push(el.command());
 			if((el instanceof LogicCommand) && el.altered(evaluation_id)) {
 				this.else_blocks[el.id] = this.commands.length;
-				this.commands.push({ command: 'evalf(' + el.command() + ')' });
+				this.commands.push({ command: 'evalf(' + el.command() + ')', nomarkup: true });
 				this.all_blocks.push(el);
 			} else if(el instanceof LogicCommand) {
 				this.all_blocks.push(el);
@@ -180,8 +181,12 @@ var else_block = P(LogicCommand, function(_, super_) {
 		this.focusableItems = [[registerFocusable(CodeBlock,this, 'else', { allowDelete: true})]];
 	}
 	_.continueEvaluation = function(evaluation_id) {
+		giac.load_altered(evaluation_id, this);
 		this.rightParent();
 		this.evaluateNext(evaluation_id);
+	}
+	_.allIndependentVars = function() {
+		return [""]; // force to appear as scoped
 	}
 	_.rightParent = function() {
 		if(this.parent instanceof if_block) {

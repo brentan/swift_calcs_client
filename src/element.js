@@ -396,7 +396,7 @@ var Element = P(function(_) {
     }
     for(var i = 0; i < impacted_els.length; i++)
       add_vars(impacted_els[i].independent_vars, true);
-    add_vars(this.allIndependentVars(), false);
+    add_vars(this.allIndependentVars(), false); // What is independent in the moved blocks?
 
     //Check each selection element against list to see if recalculation is needed
     var checker = function(impacted_el_vars) { return function(_this) { 
@@ -517,7 +517,11 @@ var Element = P(function(_) {
 		var do_eval = false;
 		if(independent_vars.length) {
 	    var target = this.nextEvaluateElement();
-	    var eval_target = this.parent ? this.parent : target;
+	    if(this.parent) {
+	    	var eval_target = this.parent;
+	    	this.parent.altered_content = true;
+	    } else
+	    	var eval_target = target;
 	    if(target) do_eval = true;
 	   }
 		if(this[L] !== 0) 
@@ -563,11 +567,9 @@ var Element = P(function(_) {
 					this.insertAfter(action.L);
 				else
 					this.prependTo(action.parent);
-				if(this.hasChildren && this.ends[L]) {
-					for(var el = this.ends[L]; el instanceof Element; el = el[R])
-						el.commandChildren(function(_this) { if(_this.scoped()) { _this.altered_content = true; } });
-				}
-				this.evaluate(true);
+		    var eval_id = this.worksheet.evaluate([], this);
+		    var next_el = this.nextEvaluateElement();
+		    if(next_el) giac.add_altered(eval_id, this.allIndependentVars(), next_el.id); // Let evaluator know about all altered vars in restore operation
 				break;
 			case 'insert':
 				this.remove(0);
@@ -735,6 +737,7 @@ var Element = P(function(_) {
 		}*/
 	}
 	_.shouldBeEvaluated = function(evaluation_id) {
+		giac.load_altered(evaluation_id, this);
 		if(giac.evaluations[evaluation_id]) giac.evaluations[evaluation_id].active_id = this.id;
 		if(!this.evaluatable || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;
 		if(giac.compile_mode && !this.scoped()) return false; // In compile mode, we only care about scoped lines
@@ -769,6 +772,7 @@ var Element = P(function(_) {
 		}
 	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node then move to evaluate the next node.
+	// If overriden, it MUST call 'shouldBeEvaluated' to ensure scope is loaded and if/then/else is correctly handled.
 	//_.startTime = 0;
 	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
@@ -810,7 +814,6 @@ var Element = P(function(_) {
 	_.nextEvaluateElement = function() {
 		next_id = this;
 		while(true) {
-// BRENTAN: How will this work with LOOPS!!!
 			if(next_id[R] && !(next_id[R] instanceof LogicCommand)) { next_id = next_id[R]; break; }
 			else if(next_id.parent) { next_id = next_id.parent; }
 			else { next_id = false; break; }
@@ -824,18 +827,16 @@ var Element = P(function(_) {
 			// Find next element to evaluate:
 			var next_id = this.nextEvaluateElement();
 			// Register the variable change with the next item (why not register now? in case we hijack this evaluation with another, we need to ensure the change gets loaded)
-			if(next_id) {
-				giac.add_altered(evaluation_id, this.previous_independent_vars, next_id.id);
-				giac.add_altered(evaluation_id, this.independent_vars, next_id.id);
-			}
+			giac.add_altered(evaluation_id, this.previous_independent_vars, next_id ? next_id.id : -1);
+			giac.add_altered(evaluation_id, this.independent_vars, next_id ? next_id.id : -1);
 			this.previous_independent_vars = this.independent_vars;
 			this.previous_commands = [];
 			for(var i = 0; i < this.commands.length; i++) 
 				this.previous_commands.push(this.commands[i].command);
-this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );var date = new Date();
+//this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );var date = new Date();
 			return true;
 		}
-this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
+//this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 		giac.remove_altered(evaluation_id, this.independent_vars);
 		return giac.compile_mode; // In compile mode, we need to know the commands that are sent
 	}

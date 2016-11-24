@@ -162,6 +162,7 @@ var math = P(MathOutput, function(_, super_) {
 	_.focus = function(dir) {
 		if(!this.inTree) return this;
 		super_.focus.call(this, dir);
+		if(!this.mathField) return this;
 		if(dir)
 			this.mathField.focus(dir);
 		else if(dir === 0)
