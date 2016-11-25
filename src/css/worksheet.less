@@ -500,10 +500,10 @@ div.sc_element_container {
               border-top-right-radius: 0px;
               z-index: 99;
               box-shadow: 0px 5px 5px #888888;
+              font-size: 11px;
+              color: #555555;
               div.pulldown_item {
                 white-space: nowrap;
-                font-size: 11px;
-                color: #555555;
                 cursor: pointer;
                 padding: 2px;
                 margin: 0px;
@@ -512,6 +512,42 @@ div.sc_element_container {
                 &:hover {
                   color: #222222;
                   background-color: #efefef;
+                }
+              }
+              div.pulldown_bubble {
+                white-space: nowrap;
+                font-size: 11px;
+                text-align: center;
+                color: #aaaaaa;
+                padding: 2px 2px 1px 2px;
+                margin: 0px;
+                border-width: 0px;
+                span.bubble_items {
+                  display: inline-block;
+                  border: 1px solid #888888;
+                  border-radius: 3px;
+                  margin-bottom: 2px;
+                  padding: 0px;
+                  span.bubble_item {
+                    color: #555555;
+                    display: inline-block;
+                    padding: 2px 5px;
+                    border-right: 1px solid #888888;
+                    cursor: pointer;
+                    &:last-child {
+                      border-right-width: 0px;
+                    }
+                    &.select {
+                      background-color: #888888;
+                      color: #ffffff;
+                      &:hover {
+                        background-color: #666666;
+                      }
+                    }
+                    &:hover {
+                      background-color: #dddddd;
+                    }
+                  }
                 }
               }
             }

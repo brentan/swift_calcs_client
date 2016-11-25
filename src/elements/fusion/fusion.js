@@ -213,6 +213,9 @@ var fusion_var = P(MathOutput, function(_, super_) {
 		super_.evaluationFinished.call(this, result);
 		return true;
 	}
+	_.findStartElement = function() {
+		return this.parent.findStartElement();
+	}
 	_.genCommand = function(to_compute) {
 		var out = super_.genCommand.call(this, to_compute);
 		out.push({command: "mksa_base(evalf(" + to_compute + "))", nomarkup: true});

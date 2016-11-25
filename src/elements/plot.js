@@ -949,6 +949,9 @@ var subplot = P(EditableBlock, function(_, super_) {
 			this.label.focus(L);
 		return this;
 	}
+	_.findStartElement = function() {
+		return this.parent.findStartElement();
+	}
 });
 var barplot = P(subplot, function(_, super_) {
 });

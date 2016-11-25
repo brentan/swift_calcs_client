@@ -481,7 +481,7 @@ Worksheet.open(function(_) {
 		$.each(data, function(k,v) {
 			giac.sendCommand({setCurrencyConversion: v});
 		});
-		giac.sendCommand({digits: this.settings.digits,restart_string: "complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";approx_mode:=" + (this.settings.approx == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units).concat([this.settings.currency_unit])});
+		giac.sendCommand({digits: this.settings.digits,approx_mode: this.settings.approx == 'on', restart_string: "complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units).concat([this.settings.currency_unit])});
 		this.settings_loaded = true;
 		if(recalculate !== false) {
 			error_shown = false;

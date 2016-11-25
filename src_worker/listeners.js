@@ -74,7 +74,8 @@ var receiveMessage = function(command) {
   }
   if(command.restart_string) {
     digits = command.digits;
-    restart_string = "DIGITS:=" + command.digits + ";" + command.restart_string;
+    approx_mode = command.approx_mode ? '1' : '0';
+    restart_string = "approx_mode:=" + approx_mode + ";DIGITS:=" + command.digits + ";" + command.restart_string;
   }
   if(command.set_units) {
     Module.caseval('clear_usual_units()');
@@ -236,19 +237,19 @@ var receiveMessage = function(command) {
       if(to_send.match(/(==|>|<|!=|<=|>=)/))
         var simplify_command = command.commands[ii].simplify ? command.commands[ii].simplify : '';
       else
-        var simplify_command = command.commands[ii].force_simplify ? command.commands[ii].force_simplify : (command.commands[ii].simplify ? command.commands[ii].simplify : 'factor');
+        var simplify_command = command.commands[ii].force_simplify ? command.commands[ii].force_simplify : (command.commands[ii].simplify ? command.commands[ii].simplify : 'regroup');
       if(simplify_command != '')
         simplify_command = simplify_command + '(usimplify_base';
       else
         simplify_command = '(';
-      if(command.commands[ii].approx) {
-        simplify_command = 'evalf((';
-      } else
-        simplify_command = '(' + simplify_command;
       if(command.commands[ii].digits > 0) 
-        Module.caseval("DIGITS:=" + command.commands[ii].digits + ";");        
+        Module.caseval("DIGITS:=" + command.commands[ii].digits + ";");  
+      if(command.commands[ii].approx === true) 
+        Module.caseval("approx_mode:=1;");    
+      else if(command.commands[ii].approx === false) 
+        Module.caseval("approx_mode:=0;");         
       if(command.commands[ii].unit) { // If provided, this is a 2 element array.  The first is the unit in evaluatable text, the second is an HTML representation
-        output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + 'ufactor(' + simplify_command + '(' + to_send + '))),' + command.commands[ii].unit[0] + ')' + end_command) });
+        output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + 'ufactor(' + simplify_command + '(' + to_send + ')),' + command.commands[ii].unit[0] + ')' + end_command) });
         /*if((errors[ii] && errors[ii].indexOf('Incompatible units') > -1) || (output[ii].returned.indexOf('Incompatible units') > -1)) {
           // Perhaps the auto-unit conversion messed this up...remove it
           // BRENTAN: FUTURE, we should be 'smarter' here and try to update the expected output unit based on the order of the input.  This should all probably be updated a bit...
@@ -258,16 +259,16 @@ var receiveMessage = function(command) {
           if(!errors[ii] && (output[ii].returned.indexOf('Incompatible units') === -1))
             warnings[ii].push('Incompatible Units: Ignoring requested conversion to ' + command.commands[ii].unit[1]);  // BRENTAN- pretty up the 'unit' output so that it is not in straight text mode
         } */
-      } else if(command.commands[ii].approx)
-        output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + 'usimplify(' + simplify_command + '(' + to_send + '))))' + end_command) });
-      else
-        output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + simplify_command + '(usimplify(' + to_send + '))))' + end_command) });
+      } else
+        output.push({ success: true, returned: Module.casevalWithTimeout(latex_command + simplify_command + '(usimplify(' + to_send + ')))' + end_command) });
       // If evaluation resulted in an error, drop all of our additions (simplify, etc) and make sure that wasn't the problem
       var test_output = testError(output[ii],ii, to_send);
 			if(!test_output.success)
 				output[ii] = { success: true, returned: Module.casevalWithTimeout(latex_command + to_send + end_command) }
       if(command.commands[ii].digits > 0) 
         Module.caseval("DIGITS:=" + digits + ";");   
+      if(command.commands[ii].approx !== null) 
+        Module.caseval("approx_mode:=" + approx_mode + ";");   
       // Change 1e-4 scientific notation to latex form: SHOULD BE DONE IN GIAC NOW??
       // output[ii].returned = output[ii].returned.replace(/([0-9\.]+)e(-?[0-9]+)/g, "\\scientificNotation{$1}{$2}");
     } else {

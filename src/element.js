@@ -824,6 +824,15 @@ var Element = P(function(_) {
 		}
 		return next_id;
 	}
+  _.findStartElement = function() {
+    var start_element = this;
+    for(var el = start_element.parent; el instanceof Element; el = el.parent)
+      if(el instanceof Loop) {
+        el.altered_content = true; // Force evaluation of this loop
+        start_element = el;
+      }
+    return start_element;
+  }
 	// Check for altered content or dependency on current list of altered variables: only evaluate if altered
 	_.altered = function(evaluation_id) {
 		if(this.altered_content || giac.check_altered(evaluation_id, this)) {
@@ -837,10 +846,10 @@ var Element = P(function(_) {
 			this.previous_commands = [];
 			for(var i = 0; i < this.commands.length; i++) 
 				this.previous_commands.push(this.commands[i].command);
-this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );var date = new Date();
+//this.jQ.css("background-color", "#00ff00").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );var date = new Date();
 			return true;
 		}
-this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
+//this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
 		giac.remove_altered(evaluation_id, this.independent_vars);
 		return giac.compile_mode; // In compile mode, we need to know the commands that are sent
 	}
@@ -1467,7 +1476,7 @@ this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}
   		arg_list.push(this.savedProperties[k] + ": " + this[this.savedProperties[k]]);
   	if(this instanceof MathOutput) {
   		arg_list.push('expectedUnits: ' + this.expectedUnits);
-  		arg_list.push('approx: ' + this.approx);
+      arg_list.push('approx: ' + this.approx);
   		arg_list.push('factor_expand: ' + this.factor_expand);
   		arg_list.push('outputMode: ' + this.outputMode);
   		arg_list.push('approx_set: ' + this.approx_set);

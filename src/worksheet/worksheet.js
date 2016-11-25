@@ -558,13 +558,7 @@ var Worksheet = P(function(_) {
         start_element = this.ends[L];
       // if start element is in a loop, back up to the loop, assuming no stop_id was provided
       if(!stop_id) {
-        for(var el = start_element.parent; el instanceof Element; el = el.parent)
-          if(el instanceof Loop) {
-            el.altered_content = true; // Force evaluation of this loop
-            start_element = el;
-          }
-      }
-      if(!stop_id) {
+        start_element = start_element.findStartElement();
         for(var to_blur = start_element; to_blur !== 0; to_blur = to_blur[R]) 
           to_blur.blurOutputBox();
       }

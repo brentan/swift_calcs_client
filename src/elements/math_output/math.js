@@ -149,6 +149,46 @@ var math = P(MathOutput, function(_, super_) {
 			}
 		};
 	}
+	_.genCommand = function(to_compute) {
+		var replacer = function(command) {
+			var new_latex = this.mathField.latex().trim().replace(new RegExp("^\\\\operatorname\\{" + command + "\\}\\\\left\\(\\{",''),"").replace(/\}\\right\)$/,"");
+			to_compute = this.mathField.clear().write(new_latex).text().trim();
+			showNotice(command + " function hidden in input and applied to the output.");
+		}
+		// Check for algebraic manipulations or approximation, and if found, force output mode (and remove from input)
+		if(to_compute.match(/^[/s]*factor\(.*\)[/s]*$/)) {
+			this.factor_expand = 'factor';
+			replacer.call(this, 'factor');
+		} else if(to_compute.match(/^[/s]*expand\(.*\)[/s]*$/)) {
+			this.factor_expand = 'expand';
+			replacer.call(this, 'expand');
+		} else if(to_compute.match(/^[/s]*simplify\(.*\)[/s]*$/)) {
+			this.factor_expand = 'simplify';
+			replacer.call(this, 'simplify');
+		} else if(to_compute.match(/^[/s]*regroup\(.*\)[/s]*$/)) {
+			this.factor_expand = false;
+			replacer.call(this, 'regroup');
+		} else if(to_compute.match(/^[/s]*normal\(.*\)[/s]*$/)) {
+			this.factor_expand = 'simplify';
+			replacer.call(this, 'normal');
+		} else if(to_compute.match(/^[/s]*simplify\(.*\)[/s]*$/)) {
+			this.factor_expand = 'simplify';
+			replacer.call(this, 'simplify');
+		} else if(to_compute.match(/^[/s]*evalf\(.*\)[/s]*$/)) {
+			this.approx = true;
+			this.approx_set = true;
+			replacer.call(this, 'evalf');
+		} else if(to_compute.match(/^[/s]*approx\(.*\)[/s]*$/)) {
+			this.approx = true;
+			this.approx_set = true;
+			replacer.call(this, 'approx');
+		} else if(to_compute.match(/^[/s]*exact\(.*\)[/s]*$/)) {
+			this.approx = false;
+			this.approx_set = true;
+			replacer.call(this, 'exact');
+		} 
+		return super_.genCommand.call(this,to_compute); 
+	}
 	_.highlightError = function(error_index) {
 		this.mathField.highlightError(error_index);
 		return this;

@@ -56,7 +56,7 @@ $(function() {
     ],
     Solvers: [
       {left: 'x=?', text: 'Solver', el: 'solve'},
-      {left: 'dx', text: 'ODE Solver', el: 'desolve'},
+      {left: 'dx', text: 'Diff Eq Solver', el: 'desolve'},
       {left: 'max', text: 'Function Maximum', el: 'fmax' },
       {left: 'min', text: 'Function Minimum', el: 'fmin' },
     ],

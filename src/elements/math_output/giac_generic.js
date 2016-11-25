@@ -45,7 +45,7 @@ var createGiacElement = function(options) {
 		if(i == 0) html += helpBlock();
 		html += "</div>";
 	}
-	options.two_line = (options.code.length > 12);
+	options.two_line = (options.code.length > 18);
 	giac_elements_to_add.push({key: options.name, el: P(SettableMathOutput, function(_, super_) {
 		_.klass = [options.name];
 		_.helpText = options.helpText;

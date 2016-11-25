@@ -30,12 +30,8 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 	}
 	_.genCommand = function(to_compute) {
 		//Find Independant Var:
-//console.log("========");
-//console.log(to_compute);
 		this.independent_vars = GetIndependentVars(to_compute);
 		this.dependent_vars = GetDependentVars(to_compute);
-//console.log("IND: " + this.independent_vars.join(", "));
-//console.log("DEP: " + this.dependent_vars.join(", "));
 
 		//Perform unit check
 		var reg = /([^a-zA-Z0-9_]|^)_([a-zA-Zµ2]+)/g;
@@ -47,7 +43,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
     	}
 		}
 
-		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: this.approx, digits: this.digits, simplify: (this.factor_expand === 'expand' ? 'expand' : false), nomarkup: this.nomarkup}];
+		var to_send = [{command: to_compute, unit: this.worksheet.latexToUnit(this.expectedUnits), approx: (this.approx && this.approx_set) ? true : (this.approx_set ? false : null), digits: this.digits, simplify: this.factor_expand, nomarkup: this.nomarkup}];
 		if(this.pre_command)
 			to_send.pre_command = this.pre_command;
 		return to_send;
@@ -62,6 +58,9 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 			return false;
 	}
 	_.evaluationFinished = function(result) {
+		return this.displayResults(result);
+	}
+	_.displayResults = function(result) {
 		this.last_result = result;
 		this.outputBox.jQ.removeClass('calculating error warn unit_input hide_pulldown');
 		this.outputBox.jQ.find('.warning').remove();
@@ -94,7 +93,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 						_this.last_result[0].force_display = true;
 						$(this).hide();
 						$("<div/>").html('<span class="fa fa-spinner fa-pulse"></span><i>working...</i>').insertAfter($(this));
-						window.setTimeout(function() { _this.evaluationFinished(_this.last_result); });
+						window.setTimeout(function() { _this.displayResults(_this.last_result); });
 					}; }(this));
 				} else {
 					try {
@@ -117,29 +116,12 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 						this.outputBox.jQ.addClass('hide_pulldown');
 					} else {
 						// Create the pulldown menu
-						menu.append('<div class="pulldown_item" data-action="copyAnswer">Copy to new line&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>');
+						menu.append('<div class="pulldown_item" data-action="copyAnswer">Copy to new line</div>');
 						if(!this.scoped() && this.storeAsVariable)
 							menu.append('<div class="pulldown_item" data-action="storeAsVariable">Assign to variable</div>');
-						if(result[0].returned.indexOf('\\Unit') > -1)
-							menu.append('<div class="pulldown_item" data-action="enableUnitMode">Change units</div>');
-						if(!(this.commands[0].command && this.commands[0].command.match(/^[\s]*[a-z][a-z0-9_]*\([a-z0-9_,]+\)[\s]*:=/i))) { // factor/expand break f(x) outputs and evalf does nothing, so dont offer this
-							if(this.worksheet.settings.approx != 'on') {
-								if(this.approx)
-									menu.append('<div class="pulldown_item" data-action="toggleApprox">Disable Approximation: 0.333 &#8594; 1/3</div>');
-								else {
-									menu.append('<div class="pulldown_item" data-action="toggleApprox">Enable Approximation: 1/3 &#8594; 0.333</div>');
-								//var factor = 'off';
-								//var simplify = 'off';
-									if(this.factor_expand === 'expand') 
-										menu.append('<div class="pulldown_item" data-action="toggleExpand">Factor Result: 2x+2 &#8594; 2(x+1)</div>');
-									else 
-										menu.append('<div class="pulldown_item" data-action="toggleExpand">Expand Result: 2(x+1) &#8594; 2x+2</div>');
-									//if(this.factor_expand === 'factor') factor = 'on';
-									//if(this.factor_expand === 'simplify') simplify = 'on';
-									//menu.append('<div class="pulldown_item" data-action="toggleFactor"><i class="fa fa-toggle-' + factor + ' fa-fw"></i>&nbsp; Factor</div>');
-									//menu.append('<div class="pulldown_item" data-action="toggleSimplify"><i class="fa fa-toggle-' + simplify + ' fa-fw"></i>&nbsp; Simplify</div>');
-								}
-							}
+						if(!(this.commands[0].command && this.commands[0].command.match(/^[\s]*[a-z][a-z0-9_]*\([a-z0-9_,]+\)[\s]*:=/i))) { // these dont do anything on function outputs
+							if(result[0].returned.indexOf('\\Unit') > -1)
+								menu.append('<div class="pulldown_item" data-action="enableUnitMode">Change units</div>');
 							if(this.digits == 0) {
 								// Use default precision
 									menu.append('<div class="pulldown_item" data-action="setDigits">Change precision (current: default)</div>');
@@ -147,6 +129,19 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 								// Use custom precision
 									menu.append('<div class="pulldown_item" data-action="setDigits">Change precision (current: ' + this.digits + ' digit' + (this.digits > 1 ? 's' : '') + ')</div>');
 							}
+							menu.append('<div class="pulldown_bubble">Output Display Mode</div>');
+							var bubble = '<div class="pulldown_bubble"><span class="bubble_items">'
+								+ '<span class="bubble_item' + ((this.approx_set && !this.approx) ? " select" : "") + '" data-action="toggleExact">Exact (1/3)</span>'
+								+ '<span class="bubble_item' + (this.approx ? " select" : "") + '" data-action="toggleApprox">Approximate (0.333)</span>'
+								+ '</span></div>';
+							menu.append(bubble);
+							menu.append('<div class="pulldown_bubble">Algebriac Manipulations</div>');
+							var bubble = '<div class="pulldown_bubble"><span class="bubble_items">'
+								+ '<span class="bubble_item' + ((this.factor_expand === 'simplify') ? " select" : "") + '" data-action="toggleSimplify">Simplify</span>'
+								+ '<span class="bubble_item' + ((this.factor_expand === 'factor') ? " select" : "") + '" data-action="toggleFactor">Factor</span>'
+								+ '<span class="bubble_item' + ((this.factor_expand === 'expand') ? " select" : "") + '" data-action="toggleExpand">Expand</span>'
+								+ '</span></div>';
+							menu.append(bubble);
 						}
 					}
 				}
@@ -210,7 +205,14 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 	}
 	_.toggleApprox = function() {
     this.approx_set = true;
-		this.approx = !this.approx;
+		this.approx = true;
+		this.needsEvaluation = true;
+		this.outputSettingsChange = true;
+		this.submissionHandler(this)();
+	}
+	_.toggleExact = function() {
+    this.approx_set = true;
+		this.approx = false;
 		this.needsEvaluation = true;
 		this.outputSettingsChange = true;
 		this.submissionHandler(this)();
@@ -282,6 +284,10 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 			if(this.outputBox.jQ.hasClass('unit_input')) return false;
 			if($el.closest('.pulldown_item').length) 
 				this[$el.closest('.pulldown_item').attr('data-action')]();
+			else if($el.closest('.bubble_item').length) 
+				this[$el.closest('.bubble_item').attr('data-action')]();
+			else if($el.closest('.pulldown_bubble').length) 
+				return false;
 			this.outputBox.jQ.addClass('hide_pulldown');
 			window.setTimeout(function(box) { return function() { box.removeClass('hide_pulldown'); }; }(this.outputBox.jQ), 250);
 		} else {

@@ -162,6 +162,9 @@ var mixture_component = P(material_holder, function(_, super_) {
       super_.convertData.call(this, this.data.data);
     }
   }
+  _.findStartElement = function() {
+    return this.parent.findStartElement();
+  }
 
   _.speciesData = function() {
     return {quantity: this.varStoreField.text().trim(), data: this.data};

@@ -55,7 +55,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 		this.varField.disableAutoUnit(true);
 		this.varFields[0].disableAutoUnit(true);
 		this.command = registerFocusable(CodeBlock, this, 'solve differential equation', { });
-		this.focusableItems = [[this.command, this.eqFields[0]] , [this.varField], [this.solver]];
+		this.focusableItems = [[], [this.eqFields[0]] , [this.varField], [this.solver]];
 		this.needsEvaluation = false;
 		super_.postInsertHandler.call(this);
 		return this;
@@ -102,13 +102,14 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 		if(focus) this.eqFields[this.number_of_equations-1].focus(1);
   }
   _.removeEquation = function(index) {
+  	index = index - 1;
   	if(this.eqFields[index].touched) this.changed();
   	this.eqFields.splice(index, 1);
   	this.startFields.splice(index, 1);
   	this.varFields.splice(index, 1);
   	this.jQ.find('.' + css_prefix + 'content').find('.' + css_prefix + 'focusableItems').each(function() {
   		var el = $(this);
-  		if((el.attr('data-id')*1) == index)
+  		if((el.attr('data-id')*1) == (index+1))
   			el.removeClass(css_prefix + 'focusableItems').slideUp({duration: 150, always: function() { el.remove(); } });
   	});
 		this.number_of_equations--;
@@ -122,7 +123,9 @@ var desolve = P(SettableMathOutput, function(_, super_) {
   	var init_cond = this.startField.latex() || '0';
   	var num = 0;
   	var _this = this;
+  	var first_line = true;
   	this.jQ.find('.' + css_prefix + 'content').find('.' + css_prefix + 'focusableItems').each(function() {
+  		if(first_line) { first_line = false; return; }
   		if(num >= _this.varFields.length) return;
   		$(this).find('.eqnum').html(_this.worksheet.latexToHtml(pre_syntax[0] + var_name + pre_syntax[1]));
   		$(this).find('.eqinit').html(_this.worksheet.latexToHtml(init_syntax[0] + _this.varFields[num].latex() + init_syntax[1] + init_cond + init_syntax[2]));
