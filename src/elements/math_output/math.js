@@ -184,8 +184,7 @@ var math = P(MathOutput, function(_, super_) {
 			replacer.call(this, 'approx');
 		} else if(to_compute.match(/^[/s]*exact\(.*\)[/s]*$/)) {
 			this.approx = false;
-			this.approx_set = true;
-			replacer.call(this, 'exact');
+			this.approx_set = true; // Exact we still actually need, as it does something, so dont call replacer
 		} 
 		return super_.genCommand.call(this,to_compute); 
 	}

@@ -17,6 +17,11 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 	// Output mode has three values: 0 is auto, 1 is force hide, 2 is force show
 	_.outputMode = 0
 
+	_.init = function() {
+		super_.init.call(this);
+    this.skipAutoUnit = {};
+    return this;
+	}
   _.uniqueAnsId = function() { return ans_id += 1; }
   _.setAnswerIdCounter = function(val) {
   	ans_id = max(ans_id, val);

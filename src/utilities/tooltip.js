@@ -39,9 +39,10 @@ $(function() {
     return true;
 	};
 
-	var destroyTooltip = SwiftCalcs.destroyTooltip = function() {
+	var destroyTooltip = SwiftCalcs.destroyTooltip = function(fade) {
 		if(exposed) {
-			$el.removeClass('high_z').detach();
+      if(!fade) fade = 250;
+			$el.removeClass('high_z').stop().fadeOut({duration:fade, complete: function() { $(this).detach(); } });
 			exposed = false;
 		}
 	}
@@ -63,11 +64,12 @@ $(function() {
       leftOffset -= ($el.width() - 26);
     } else
       $arrow.addClass('left');
-    $el.css({top: Math.ceil(topOffset) + 'px', left: Math.floor(leftOffset) + 'px'});
+    $el.css({top: Math.ceil(topOffset) + 'px', left: Math.floor(leftOffset) + 'px', display:'none'});
+    $el.stop().fadeIn({duration: 250});
     exposed = true;
 	};
 
-	var destroyHelpPopup = SwiftCalcs.destroyHelpPopup = function() {
-    destroyTooltip();
+	var destroyHelpPopup = SwiftCalcs.destroyHelpPopup = function(fade) {
+    destroyTooltip(fade);
 	}
 });

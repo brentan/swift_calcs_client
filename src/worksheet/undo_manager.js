@@ -153,8 +153,8 @@ Worksheet.open(function(_) {
 		// Set the correct focus
 		window.setTimeout(function(to_restore, worksheet) { return function() { 
 			worksheet.clearSelection(); // Wipe out whatever is selected, if anything
-		  if(worksheet.activeElement) worksheet.activeElement.blur(); // Blur if something else is focused
 			if(to_restore.selected.length) {
+		  	if(worksheet.activeElement) worksheet.activeElement.blur(); // Blur if something else is focused
 				worksheet.selection = to_restore.selected;
 				var to_highlight = $();
 		    for(var i = 0; i < to_restore.selected.length; i++) 
@@ -170,9 +170,4 @@ Worksheet.open(function(_) {
 		delete action;
 	}
 });
-
-/* TODO:
-- Re-calculate for elements after the undo event completes
-- TEST THIS
-*/
 

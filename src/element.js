@@ -1447,8 +1447,10 @@ var Element = P(function(_) {
 	  			var blocks = parse(args[count + k]);
 	  			for(var j=0; j < blocks.length; j++)
 	  				blocks[j].appendTo(this).show(0);
-	  		} else 
+	  		} else {
+          if(this.focusableItems[i][j].suppressAutoCommands) this.focusableItems[i][j].suppressAutoCommands(true);
 	  			this.focusableItems[i][j].clear().paste(args[count + k]);
+        }
 	  		count++;
 	  	}
 	  	start_index = 0;
@@ -1465,7 +1467,12 @@ var Element = P(function(_) {
   		if(val.match(/^[+-]?(?:\d*\.)?\d+$/)) val = 1.0 * val;
   		if(val === "false") val = false;
   		if(val === "true") val = true;
-  		this[name] = val;
+      if(name == 'skipAutoUnit') {
+        var units = val.split('|');
+        for(var i = 0; i < units.length; i++)
+          this.skipAutoUnit[units[i]] = true;
+      } else
+  		  this[name] = val;
   	}
   	return this;
   }
@@ -1481,6 +1488,7 @@ var Element = P(function(_) {
   		arg_list.push('outputMode: ' + this.outputMode);
   		arg_list.push('approx_set: ' + this.approx_set);
   		arg_list.push('digits: ' + this.digits);
+      arg_list.push('skipAutoUnit: ' + Object.keys(this.skipAutoUnit).join("|"));
   	}
   	if(this instanceof SettableMathOutput) 
   		arg_list.push('var_field_value: ' + this.var_field_value);
