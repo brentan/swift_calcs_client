@@ -80,6 +80,10 @@ var math = P(MathOutput, function(_, super_) {
 		} else if(to_text.match(/^[a-z][a-z0-9_]*(\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\))? := {[ ]*$/i)) {
 			// Turn in to a conditional statement
 			var varName = to_text.replace(/^([a-z][a-z0-9_]*(\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\))?) := .*$/i,"$1");
+			// Fix function names
+			if(varName.match(/^[a-z][a-z0-9_]*\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\)$/i))
+				varName = varName.replace(/^([a-z][a-z0-9_]*)\((([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*)\)$/i,"\\operatorname{$1}\\left({$2}\\right)");
+			varName = varName.replace(/_([a-z0-9]+)/ig,"_{$1}"); //Fix underscore
 			var stream = this.worksheet.trackingStream;
 			if(!stream) this.worksheet.startUndoStream();
   		// Good to go
