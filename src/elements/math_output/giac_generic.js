@@ -45,11 +45,13 @@ var createGiacElement = function(options) {
 		if(i == 0) html += helpBlock();
 		html += "</div>";
 	}
-	options.two_line = (options.code.length > 18);
+	options.two_line = (options.code.length > 23);
 	giac_elements_to_add.push({key: options.name, el: P(SettableMathOutput, function(_, super_) {
 		_.klass = [options.name];
 		_.helpText = options.helpText;
 		_.nomarkup = options.nomarkup;
+		_.no_approx = options.no_approx ? options.no_approx : false;
+		_.no_algebra = options.no_algebra ? options.no_algebra : false;
 		_.function_of = options.function_of ? options.function_of : false;
 		_.pre_command = options.pre_command ? options.pre_command : false;
 		var block_html = html;

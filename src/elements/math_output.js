@@ -134,19 +134,23 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 								// Use custom precision
 									menu.append('<div class="pulldown_item" data-action="setDigits">Change precision (current: ' + this.digits + ' digit' + (this.digits > 1 ? 's' : '') + ')</div>');
 							}
-							menu.append('<div class="pulldown_bubble">Output Display Mode</div>');
-							var bubble = '<div class="pulldown_bubble"><span class="bubble_items">'
-								+ '<span class="bubble_item' + ((this.approx_set && !this.approx) ? " select" : "") + '" data-action="toggleExact">Exact (1/3)</span>'
-								+ '<span class="bubble_item' + (this.approx ? " select" : "") + '" data-action="toggleApprox">Approximate (0.333)</span>'
-								+ '</span></div>';
-							menu.append(bubble);
-							menu.append('<div class="pulldown_bubble">Algebriac Manipulations</div>');
-							var bubble = '<div class="pulldown_bubble"><span class="bubble_items">'
-								+ '<span class="bubble_item' + ((this.factor_expand === 'simplify') ? " select" : "") + '" data-action="toggleSimplify">Simplify</span>'
-								+ '<span class="bubble_item' + ((this.factor_expand === 'factor') ? " select" : "") + '" data-action="toggleFactor">Factor</span>'
-								+ '<span class="bubble_item' + ((this.factor_expand === 'expand') ? " select" : "") + '" data-action="toggleExpand">Expand</span>'
-								+ '</span></div>';
-							menu.append(bubble);
+							if(this.no_approx !== true) {
+								menu.append('<div class="pulldown_bubble">Output Display Mode</div>');
+								var bubble = '<div class="pulldown_bubble"><span class="bubble_items">'
+									+ '<span class="bubble_item' + ((this.approx_set && !this.approx) ? " select" : "") + '" data-action="toggleExact">Exact (1/3)</span>'
+									+ '<span class="bubble_item' + (this.approx ? " select" : "") + '" data-action="toggleApprox">Approximate (0.333)</span>'
+									+ '</span></div>';
+								menu.append(bubble);
+							}
+							if(this.no_algebra !== true) {
+								menu.append('<div class="pulldown_bubble">Algebriac Manipulations</div>');
+								var bubble = '<div class="pulldown_bubble"><span class="bubble_items">'
+									+ '<span class="bubble_item' + ((this.factor_expand === 'simplify') ? " select" : "") + '" data-action="toggleSimplify">Simplify</span>'
+									+ '<span class="bubble_item' + ((this.factor_expand === 'factor') ? " select" : "") + '" data-action="toggleFactor">Factor</span>'
+									+ '<span class="bubble_item' + ((this.factor_expand === 'expand') ? " select" : "") + '" data-action="toggleExpand">Expand</span>'
+									+ '</span></div>';
+								menu.append(bubble);
+							}
 						}
 					}
 				}

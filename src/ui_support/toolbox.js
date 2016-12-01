@@ -18,6 +18,7 @@ $(function() {
     Data: [
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
       {left: 'fa-magic', text: 'Regression / fit line', el: 'regression'},
+      {left: '[x]', text: 'Create Matrix', el: 'matrix'},
     ],
     Onshape: [
       {left: 'get', text: 'Read Variable', el: 'connectOnshape', focus_right: true, option: true},
