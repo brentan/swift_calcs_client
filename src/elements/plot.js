@@ -123,7 +123,8 @@ var plot = P(Element, function(_, super_) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
 			this.commands = [{command: [this.x_min, this.y_min, this.y2_min, this.x_max, this.y_max, this.y2_max, this.x_log, this.y_log, this.y2_log, this.x_units, this.y_units, this.y2_units].join(",")}];
-			var any_altered = this.newCommands();
+			var any_altered = this.newCommands() || this.altered_content;
+			this.altered_content = false;
 			if(!any_altered) {
 				var children = this.children();
 				for(var i = 0; i < children.length; i++) 
@@ -132,8 +133,9 @@ var plot = P(Element, function(_, super_) {
 			if(any_altered) {
 				this.previous_commands = [this.commands[0].command];
 				this.getUnits = true;
-				if(this.ends[L]) 
-					this.ends[L].continueEvaluation(evaluation_id)
+				var kids = this.children();
+				if(kids.length) 
+					kids[0].continueEvaluation(evaluation_id)
 				else 
 					this.childrenEvaluated(evaluation_id);
 			} else {
@@ -223,8 +225,9 @@ var plot = P(Element, function(_, super_) {
 		this.y2_unit_conversion = result[6].returned*1;
 		this.y2_unit = result[7].returned;
 		this.y2_unit_label = this.y2_units ? this.y2_units : result[8].returned;
-		if(this.ends[L]) 
-			this.ends[L].continueEvaluation(evaluation_id)
+		var kids = this.children();
+		if(kids.length) 
+			kids[0].continueEvaluation(evaluation_id)
 		else 
 			this.childrenEvaluated(evaluation_id);
 		return false;
@@ -827,6 +830,12 @@ var subplot = P(EditableBlock, function(_, super_) {
 		}
 		return super_.continueEvaluation.call(this, evaluation_id);
 	}
+	_.custom_R = function() { 
+		var kids = this.parent.children();
+		for(var i = 0; i < (kids.length - 1); i++)
+			if(kids[i] == this) return kids[i+1];
+		return 0;
+	}
 	_.altered = function(evaluation_id) {
 		if(this.altered_content || giac.check_altered(evaluation_id, this)) {
 			if(!this.parent.getUnits) {
@@ -879,7 +888,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 		to_change.replace(this).show(0);
 		if(to_change.eq0 && this.eq0 && this.eq0.text().trim().length) { to_change.eq0.latex(this.eq0.latex()); to_change.eq0.touched = true; }
 		if(to_change.eq1 && this.eq1 && this.eq1.text().trim().length) { to_change.eq1.latex(this.eq1.latex()); to_change.eq1.touched = true; }
-		to_change.label.paste(this.label.toString());
+		to_change.label.clear().paste(this.label.toString());
 		var to_move = ['line_weight','marker_size','line_style','color', 'y_axis'];
 		for(var i = 0; i < to_move.length; i++)
 			to_change[to_move[i]] = this[to_move[i]];

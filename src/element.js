@@ -906,9 +906,6 @@ var Element = P(function(_) {
 	}
 
 	// Call the next item
-	_.evaluateNext2 = function(eval_id) {
-		window.setTimeout(function(_this) { return function() { _this.evaluateNext2(eval_id); }; }(this),500);
-	}
 	_.evaluateNext = function(evaluation_id) {
 		this.leftJQ.find('i.fa-spinner').remove();
 		this.unblurOutputBox();
@@ -918,8 +915,9 @@ var Element = P(function(_) {
 		this.setAutocomplete(this.unarchive_list);
 
 		var move_to_next = !giac.stopEvaluation(evaluation_id,this.id); //Should we stop calculating at this point?
-		if(this[R] && move_to_next) 
-			this[R].continueEvaluation(evaluation_id)
+    var next_el = this.custom_R ? this.custom_R() : this[R];
+		if(next_el && move_to_next) 
+			next_el.continueEvaluation(evaluation_id)
 		else if(this.parent instanceof Element)
 			this.parent.childrenEvaluated(evaluation_id);
 		else 

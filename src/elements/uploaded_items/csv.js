@@ -9,6 +9,9 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 	_.headerRow = false;
 	_.colList = false;
 	_.maxCols = 0;
+	_.last_name = false;
+	_.last_headerRow = -1;
+	_.last_colList = false;
 	_.lineNumber = true;
 	_.savedProperties = ['url', 'upload_id', 'upload_name', 'headerRow', 'colList', 'maxCols'];
 	_.data = "";
@@ -36,10 +39,8 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 	}
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
-			var name = mathField.text().trim();
+			var name = _this.varName.text().trim();
 			_this.setIndependentVars(name);
-			_this.validVarName = false;
-			_this.testName(name);
 			if(_this.needsEvaluation && _this.evaluatable) {
 				_this.evaluate();
 				_this.needsEvaluation = false;
@@ -47,18 +48,23 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 		};
 	}
 	_.testName = function(name) {
+		this.validVarName = false;
 		if(name.length == 0) 
 			this.outputBox.clearState().collapse();
 		else if(!name.match(/^[a-z][a-z0-9\_]*$/i)) {
 			this.outputBox.expand();
 			this.outputBox.setError('Invalid variable name');
-		} else if(this.headerRow && !name.match(/^[a-z][a-z0-9]*$/i)) {
+		} else if((this.headerRow !== false) && !name.match(/^[a-z][a-z0-9]*$/i)) {
 			this.outputBox.expand();
 			this.outputBox.setError('Invalid variable name.  When a header row is selected, variable names cannot contain subscripts.  Subscripts are automatically created for the variable name based on each column name');
 		} else {
 			this.validVarName = true;
 			this.outputBox.clearState().collapse();
 		} 
+	}
+	_.newCommands = function() {
+		// previous settings for columns, header row, var name.  if any changed, import
+		return !((this.last_name == this.varName.text().trim()) && (this.last_headerRow === this.headerRow) && (this.last_colList == this.colList))
 	}
 	_.setIndependentVars = function(name) {
 		this.independent_vars = [];
@@ -72,11 +78,13 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 			if(name.length == 0) {
 				this.outputBox.expand();
 				this.outputBox.setError('Please enter a variable name to store data input into');
-			} else
-				this.testName(name);
+			} 
 			if(this.validVarName) {
 				this.addSpinner(evaluation_id);
 				if(this.altered(evaluation_id)) {
+					this.last_name = name;
+					this.last_headerRow = this.headerRow;
+					this.last_colList = this.colList;
 					var commands = [];
 					for(var i = 0; i < this.commands.length; i++) {
 						commands.push({
@@ -191,7 +199,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 			e.stopPropagation();
 		});
 		this.insertJQ.append($sub_link);
-		if(this.headerRow) 
+		if(this.headerRow !== false) 
 			$table.find('tr').eq(this.headerRow+1).find('.fa-circle-o').click();
 		if(this.colList) {
 			this.colList = this.colList.split('_');
@@ -208,10 +216,12 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 	}
 	_.loadData = function() {
 		var results = this.data;
+		this.data_loaded = true;
 		this.needsEvaluation = true;
 		this.evaluatable = true;
 		this.insertJQ.html('');
-		var $div = $('<div/>').addClass('explain').append('<a href="#">Update Import Settings</a>');
+		var $div = $('<div/>').addClass('explain').addClass(css_prefix + 'hide_print').append('<a href="#">Update Import Settings</a>');
+		$div.css({marginLeft: '50px'});
 		var _this = this;
 		$div.find('a').click(function(e) {
 			_this.selectData();
