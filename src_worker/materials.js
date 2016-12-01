@@ -1327,7 +1327,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
 var setMaterial = function(data) {
   if(data.last_name.length > 0)
     destroyConstant(data.last_name);
-  if(!data.var_name.match(/^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)?$/))
+  if(!data.var_name.match(/^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)?$/i))
     return {success: false, returned: "Invalid variable name.  Please enter a valid variable name."};
   if(constants[data.var_name])
     return {success: false, returned: "Please choose another variable name, an object has already been assigned to this variable."};
