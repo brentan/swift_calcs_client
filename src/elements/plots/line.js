@@ -5,7 +5,7 @@ var plot_line = P(subplot, function(_, super_) {
 	_.helpText = "<<line plot>>\nPlot a line based on x and y data.  Provide the x and y data to plot.";
 
 	_.innerHtml = function() {
-		return super_.innerHtml.call(this).replace('YIELD','<div class="' + css_prefix + 'focusableItems" data-id="2">x data:&nbsp;' + focusableHTML('MathQuill',  'eq0') + '</div><div class="' + css_prefix + 'focusableItems" data-id="3">y data:&nbsp;' + focusableHTML('MathQuill',  'eq1') + '</div>');
+		return super_.innerHtml.call(this).replace('YIELD','<div class="' + css_prefix + 'focusableItems" data-id="1">x data:&nbsp;' + focusableHTML('MathQuill',  'eq0') + '</div><div class="' + css_prefix + 'focusableItems" data-id="2">y data:&nbsp;' + focusableHTML('MathQuill',  'eq1') + '</div>');
 	}
 	_.postInsertHandler = function() {
 		this.eq0 = registerFocusable(MathQuill, this, 'eq0', { ghost: '[1,2,3,...]', handlers: {

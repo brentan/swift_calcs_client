@@ -1066,7 +1066,7 @@ var Element = P(function(_) {
 	}
 	_.mouseOut = function(e) {
 		if(this.focusedItem) this.focusedItem.mouseOut(e);
-	}
+  }
 	_.mouseClick = function(e) {
 		if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'collapse').length) 
 			this.collapse();

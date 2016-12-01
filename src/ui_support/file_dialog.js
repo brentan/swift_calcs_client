@@ -1154,6 +1154,11 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
+	$('body').on('click', '.sharing_icon', function(e) {
+		window.openSharingDialog($(this).attr('data-hash'), $(this).attr('data-type'));
+		e.preventDefault();
+		return false;
+	});
 
 	$('body').on('click', 'nav.menu .fileopen', function(e) {
 		window.loadProject($(this).attr('data-cmd'));

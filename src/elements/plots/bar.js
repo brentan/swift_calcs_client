@@ -4,7 +4,7 @@ var plot_bar = P(barplot, function(_, super_) {
 	_.helpText = "<<bar plot>>\nPlot a Bar Graph based on data.  To assign labels to the data, click on the x-axis.";
 
 	_.innerHtml = function() {
-		return super_.innerHtml.call(this).replace('YIELD','<div class="' + css_prefix + 'focusableItems" data-id="2">data:&nbsp;' + focusableHTML('MathQuill',  'eq1') + '</div>');
+		return super_.innerHtml.call(this).replace('YIELD','<div class="' + css_prefix + 'focusableItems" data-id="1">data:&nbsp;' + focusableHTML('MathQuill',  'eq1') + '</div>');
 	}
 	_.postInsertHandler = function() {
 		this.eq1 = registerFocusable(MathQuill, this, 'eq1', { ghost: 'y data', handlers: {

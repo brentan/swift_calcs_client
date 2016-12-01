@@ -234,9 +234,9 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 			text = text.split('');
 			for(var i = 0; i < text.length; i++) {
 				if(this.location == 0)
-					$('<var/>').html(text[i]).prependTo(this.jQ);
+					$('<var/>').html(text[i] == ' ' ? "&nbsp;" : text[i]).prependTo(this.jQ);
 				else
-					$('<var/>').html(text[i]).insertAfter(this.children().eq(this.location-1));
+					$('<var/>').html(text[i] == ' ' ? "&nbsp;" : text[i]).insertAfter(this.children().eq(this.location-1));
 				this.location++;
 			}
 			if(this.allowDelete || this.element.empty())
@@ -277,6 +277,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		return out;
   }
 	_.mouseOut = function(e) {
+    super_.mouseOut.call(this,e);
 		this.clearCursor();
 	}
 	_.blur = function() {
@@ -322,20 +323,40 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		return location;
 	}
 	_.mouseMove = function(e) {
+    super_.mouseMove.call(this,e);
 		this.anchor = this.findTarget(e);
 		this.updateHighlight();
 	}
 	_.mouseUp = function(e) {
 		this.anchor = this.findTarget(e);
 		this.updateHighlight();
+    super_.mouseUp.call(this,e);
 	}
 	_.mouseDown = function(e) {
+    super_.mouseDown.call(this,e);
 		this.placeCursor(this.findTarget(e));
 	}
 	_.mouseUpShift = function(e) {
+    super_.mouseUpShift.call(this,e);
 		this.anchor = this.findTarget(e);
 		this.updateHighlight();
 	}
+  _.mouseDoubleClick = function() {
+    this.anchor = this.location;
+    var offset = 1;
+    while(true) {
+      if(this.anchor == 0) break;
+      if(this.jQ.children('var').eq(this.anchor-1).text().trim().length - offset) this.anchor--;
+      else break;
+      offset = 0;
+    }
+    while(true) {
+      if(this.location == this.children().length) break;
+      if(this.jQ.children('var').eq(this.location).text().trim().length) this.location++;
+      else break;
+    }
+    this.updateHighlight();
+  }
 	_.updateHighlight = function() {
 		this.clearCursor();
 		if(this.anchor == this.location) 

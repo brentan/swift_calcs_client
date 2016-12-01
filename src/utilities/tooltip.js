@@ -32,9 +32,10 @@ $(function() {
     	leftOffset -= ($el.width() - 26);
     } else
     	$arrow.addClass('left');
-    $el.css({top: Math.ceil(topOffset) + 'px', left: Math.floor(leftOffset) + 'px'});
+    $el.css({top: Math.ceil(topOffset) + 'px', left: Math.floor(leftOffset) + 'px', display:'none'});
     if(high_z)
       $el.addClass('high_z');
+    $el.stop().fadeIn({duration: 50});
     exposed = true;
     return true;
 	};

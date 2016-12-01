@@ -75,8 +75,6 @@ var aFocusableItem = P(function(_) {
   _.toString = function() {
 		return this.text();
   }
-	_.mouseOut = function(e) {
-	}
 	_.blur = function() {
     this.jQ.removeClass('focused');
 	}
@@ -87,12 +85,29 @@ var aFocusableItem = P(function(_) {
     this.jQ.addClass('focused');
 		this.element.setFocusedItem(this);
 	}
+  _.dblclick = false;
+  _.mouseOut = function(e) {
+    this.dblclick = false;
+  }
 	_.mouseMove = function(e) {
+    this.dblclick = false;
 	}
 	_.mouseUp = function(e) {
+    if(this.dblclick) {
+      this.dblclick = false;
+      this.mouseDoubleClick();
+    } else {
+      this.dblclick = true;
+      window.setTimeout(function(_this) { return function() { _this.dblclick = false; }; }(this), 500);
+    }
 	}
+  _.mouseUpShift = function(e) {
+    this.dblclick = false;
+  }
 	_.mouseDown = function(e) {
 	}
+  _.mouseDoubleClick = function() {
+  }
 	_.clear = function() {
 		return this;
 	}
