@@ -111,8 +111,11 @@ var plot_line = P(subplot, function(_, super_) {
 						return true;
 					}
 					// Set parent x_min/x_max
-					this.parent.calc_x_min = this.parent.calc_x_min === false ? Math.min.apply(Math, this.xs) : Math.min(Math.min.apply(Math, this.xs), this.parent.calc_x_min);
-					this.parent.calc_x_max = this.parent.calc_x_max === false ? Math.max.apply(Math, this.xs) : Math.max(Math.max.apply(Math, this.xs), this.parent.calc_x_max);
+					this.my_xmin = Math.min.apply(Math, this.xs);
+					this.my_xmax = Math.max.apply(Math, this.xs);
+					this.sets_x = true;
+					this.parent.calc_x_min = this.parent.calc_x_min === false ? this.my_xmin : Math.min(this.my_xmin, this.parent.calc_x_min);
+					this.parent.calc_x_max = this.parent.calc_x_max === false ? this.my_xmax : Math.max(this.my_xmax, this.parent.calc_x_max);
 					this.ys.unshift('data_' + this.id);
 					this.xs.unshift('x_' + this.id);
 					this.plot_me = true;

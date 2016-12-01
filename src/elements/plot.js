@@ -727,6 +727,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 	_.spline = false;
 	_.show_points = true;
 	_.line_weight = 1;
+	_.sets_x = false;
 	_.x_provided = false;
 	_.color = false;
 	_.x_unit = '1.0';
@@ -848,6 +849,10 @@ var subplot = P(EditableBlock, function(_, super_) {
 			this.setPreviousCommands();
 			this.plot_me = false;
 			return true;
+		}
+		if(this.sets_x) { //If we skip this block, we need to know its xmin/xmax to help with possible future blocks
+			this.parent.calc_x_min = this.parent.calc_x_min === false ? this.my_xmin : Math.min(this.my_xmin, this.parent.calc_x_min);
+			this.parent.calc_x_max = this.parent.calc_x_max === false ? this.my_xmax : Math.max(this.my_xmax, this.parent.calc_x_max);
 		}
 		return giac.compile_mode; // In compile mode, we need to know the commands that are sent...even though plots should be ignored in compile_mode, but still
 	}

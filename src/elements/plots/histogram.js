@@ -26,7 +26,7 @@ var plot_histogram = P(barplot, function(_, super_) {
 		];
 	}
 	_.createCommands = function() {
-		var command = "histogram(mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + ")),evalf(" + this.bins.text() + "))/length(flatten(evalf(" + this.eq1.text({check_for_array: true}) + ")))";
+		var command = "histogram(mksa_remove(evalf(" + this.eq1.text({check_for_array: true}) + ")),evalf(" + this.bins.text() + "))*[[1,0,0],[0,1,0],[0,0,1/length(flatten(evalf(" + this.eq1.text({check_for_array: true}) + ")))]]";
 		this.dependent_vars = GetDependentVars(command);
 		return [
 			{command: command, nomarkup: true}
