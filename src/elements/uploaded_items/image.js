@@ -5,13 +5,13 @@ var image = P(importData, function(_, super_) {
 
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', this.focuasableName) + helpBlock() + '</div>'
-			+ '<div class="' + css_prefix + 'focusableItems ' + css_prefix + 'upload_box" data-id="1">Insert from the web: <div class="' + css_prefix + 'command_border">' + focusableHTML('CommandBlock', 'image_url')  + '&nbsp;</div><BR>'  + answerSpan() + '</div>'
+			+ '<div class="' + css_prefix + 'focusableItems ' + css_prefix + 'upload_box" data-id="1">Insert from the web: ' + focusableHTML('CommandBlock', 'image_url')  + '&nbsp;<BR>'  + answerSpan() + '</div>'
 			+ '<div class="' + css_prefix + 'dropzone_box ' + css_prefix + 'upload_box">Click here or drag images to insert from your computer</div><div class="' + css_prefix + 'insert ' + css_prefix + 'hide_print"></div>';
 	}
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
 		var _this = this;
-		this.block = registerFocusable(CommandBlock, this, 'image_url', { editable: true, handlers: {blur: function(el) { _this.webImage(el.toString()); } } });
+		this.block = registerFocusable(CommandBlock, this, 'image_url', { editable: true, border: true, handlers: {blur: function(el) { _this.webImage(el.toString()); } } });
 		this.focusableItems = [[this.codeBlock],[this.block]];
 		return this;
 	}

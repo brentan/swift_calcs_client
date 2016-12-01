@@ -78,11 +78,13 @@ var aFocusableItem = P(function(_) {
 	_.mouseOut = function(e) {
 	}
 	_.blur = function() {
+    this.jQ.removeClass('focused');
 	}
 	_.windowBlur = function() {
 		this.blur();
 	}
 	_.focus = function(dir) {
+    this.jQ.addClass('focused');
 		this.element.setFocusedItem(this);
 	}
 	_.mouseMove = function(e) {

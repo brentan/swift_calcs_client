@@ -122,11 +122,15 @@ var plot = P(Element, function(_, super_) {
 		this.calc_x_min = false;
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.addSpinner(evaluation_id);
-			var any_altered = false;
-			var children = this.children();
-			for(var i = 0; i < children.length; i++) 
-				if(children[i].altered_content || giac.check_altered(evaluation_id, children[i])) { any_altered = true; break; }
+			this.commands = [{command: [this.x_min, this.y_min, this.y2_min, this.x_max, this.y_max, this.y2_max, this.x_log, this.y_log, this.y2_log, this.x_units, this.y_units, this.y2_units].join(",")}];
+			var any_altered = this.newCommands();
+			if(!any_altered) {
+				var children = this.children();
+				for(var i = 0; i < children.length; i++) 
+					if(children[i].altered_content || giac.check_altered(evaluation_id, children[i])) { any_altered = true; break; }
+			}
 			if(any_altered) {
+				this.previous_commands = [this.commands[0].command];
 				this.getUnits = true;
 				if(this.ends[L]) 
 					this.ends[L].continueEvaluation(evaluation_id)
@@ -377,186 +381,186 @@ var plot = P(Element, function(_, super_) {
 		if(this.y_unit_label && (this.y_unit_label != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
 		if(this.y2_unit_label && (this.y2_unit_label != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
 		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
-		if(columns.length) {
-			if(this.y_log) {
-				if(y_min === undefined) y_min = 1e-15;
-				if(y_max === undefined) y_max = 2e-15;
-				if(y_min <= 0) y_min = 1e-15;
-				if(y_max <= 0) y_max = 2e-15;
-				y_min = Math.log(y_min) / Math.LN10;
-				y_max = Math.log(y_max) / Math.LN10;
-				var exp_min = Math.ceil(y_min);
-				var exp_max = Math.floor(y_max);
-				var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
-				for(var i = exp_min; i <= exp_max; i = i + step) 
-					y_ticks.push(i);
-			}
-			if(this.y2_log) {
-				if(y2_min === undefined) y2_min = 1e-15;
-				if(y2_max === undefined) y2_max = 2e-15;
-				if(y2_min <= 0) y2_min = 1e-15;
-				if(y2_max <= 0) y2_max = 2e-15;
-				y2_min = Math.log(y2_min) / Math.LN10;
-				y2_max = Math.log(y2_max) / Math.LN10;
-				var exp_min = Math.ceil(y2_min);
-				var exp_max = Math.floor(y2_max);
-				var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
-				for(var i = exp_min; i <= exp_max; i = i + step) 
-					y2_ticks.push(i);
-			}
-			if(this.x_log) {
-				var exp_min = Math.ceil(x_min);
-				var exp_max = Math.floor(x_max);
-				var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
-				for(var i = exp_min; i <= exp_max; i = i + step) 
-					x_ticks.push(i);
-			} else {
-				for(var i = 0; i <= 20; i++) 
-					x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
-			}
-			try {
-				var x_tick_order = ((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2;
-			} catch(e) {
-				var x_tick_order = 0;
-			}
-			var _this = this;
-			this.jQ.find('.' + css_prefix + 'plot_box').prev('div.plot_title').remove();
-			var title_div = $('<div/>').addClass('plot_title');
-			if(this.chart_title === false) {
-				title_div.addClass('no_title').addClass(css_prefix + 'hide_print').html('<span class="title_span">Add a Title</span>');
-			} else {
-				title_div.html('<span class="title_span">' + this.chart_title + '</span>');
-			}
-			title_div.insertBefore(this.jQ.find('.' + css_prefix + 'plot_box'));
-			title_div.find('span.title_span').on('click', function(e) {
-				title_div.html('<input type="text">');
-				title_div.find('input').val(_this.chart_title === false ? '' : _this.chart_title).focus().on('blur', function() {
-					var title = $(this).val().trim();
-					if(title == '') title = false;
-					_this.chart_title = title;
-					_this.drawPlot();
-					_this.worksheet.save();
-				});
-				e.preventDefault();
-				e.stopPropagation();
-			});
-			this.jQ.find('.' + css_prefix + 'plot_box').html('');
-			var ceil10 = function(val, exp) {
-				if (typeof exp === 'undefined' || +exp === 0) 
-      		return Math.ceil(val);
-      	val = +val;
-      	exp = +exp;
-      	val = val.toString().split('e');
-      	val = Math.ceil(+(val[0] + 'e' + (val[1] ? (+val[1] - exp) : -exp)));
-      	val = val.toString().split('e');
-      	return +(val[0] + 'e' + (val[1] ? (+val[1] + exp) : exp));
-			}
-			if(hist_plot) {
-				var categories = [];
-				for(var i = 0; i < hist_plot.length; i++) 
-					categories.push(ceil10(hist_plot[i][0], x_tick_order) + ' to ' + ceil10(hist_plot[i][1], x_tick_order) + ((hist_plot_unit_label && (hist_plot_unit_label != '1.0')) ? (' [' + this.worksheet.latexToUnit(hist_plot_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']') : ''));
-			}	else if(this.x_labels && this.has_bar)
-				var categories = this.x_labels.split('__s__');
-			else 
-				var categories = [];
-			var plot_options = {
-				bindto: this.jQ.find('.' + css_prefix + 'plot_box')[0],
-				size: { height: this.height },
-				axis: {
-					rotated: this.rotated,
-					x: { 
-						tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { rotate: (this.x_log ? 90 : 0), values: x_ticks, format: this.x_log ? function (d) { return Math.pow(10,d).toPrecision(3)*1; } : function (d) { return ceil10(d, x_tick_order); } }),
-						label: { text: x_label, position: 'outer-center'}, 
-						min: ((this.x_min === false) || ignore_custom_xs ? undefined : (this.x_log ? Math.log(this.x_min) / Math.LN10 : this.x_min)),
-						max: ((this.x_max === false) || ignore_custom_xs ? undefined : (this.x_log ? Math.log(this.x_max) / Math.LN10 : this.x_max)),
-						categories: categories,
-						type: categories.length ? 'category' : 'indexed'
-					},
-					y: { 
-						label: { text: y_label, position: 'outer-middle'},
-						min: (this.y_min === false ? undefined : (this.y_log ? Math.log(this.y_min) / Math.LN10 : this.y_min)),
-						max: (this.y_max === false ? undefined : (this.y_log ? Math.log(this.y_max) / Math.LN10 : this.y_max)),
-						tick: (this.y_log ? { values: y_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {})
-					},
-					y2: { 
-						label: { text: y2_label, position: 'outer-middle'}, 
-						min: (this.y2_min === false ? undefined : (this.y2_log ? Math.log(this.y2_min) / Math.LN10 : this.y2_min)),
-						max: (this.y2_max === false ? undefined : (this.y2_log ? Math.log(this.y2_max) / Math.LN10 : this.y2_max)),
-						tick: (this.y2_log ? { values: y2_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {}),
-						show: show_y2
-					}
-				},
-				data: { 
-					xs: xs,
-					columns: columns,
-					types: types,
-					groups: [groups_y, groups_y2],
-					axes: axes,
-					names: names,
-					colors: colors,
-					onclick: function(d, el) { els[d.id].select(); }
-				},
-				legend: {
-				  item: {
-				    onclick: function (id) { els[id].select(); }
-				  }
-				},
-				transition: { duration: 0 },
-				onrendered: function(_this) { return function() { _this.jQ.find('.' + css_prefix + 'plot_box').height('auto'); }; }(this),
-				point: {
-					show: function(d) { if(show_points[d.id]) { return 1; } else { return 0; } },
-					r: function(d) { return marker_size[d.id]; }
-				},
-		    grid: {
-	        x: ((ignore_custom_xs || this.x_log) ? { show: this.x_grid } : { show: this.x_grid, lines: [{value: 0}] }),
-	        y: (this.y_log ? { show: this.y_grid } : { show: this.y_grid, lines: [{value: 0}] }),
-	        lines: { front: false }
-		    }
-			};
-			if(this.plotBox) {
-				this.jQ.find('.' + css_prefix + 'plot_box').height(this.height);
-				this.plotBox.destroy();
-			}
-			this.plotBox = c3.generate(plot_options);
-			var el = $(this.plotBox.element);
-			el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').find('.tick text').hover(function() {
-				$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'underline');
-			}, function() {
-				$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'none');
-			});
-			if(this.allow_interaction()) el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').on('click', function(e) { 
-				var target = $(e.target);
-				var axis = X_AXIS;
-				if(target.closest('.c3-axis-y').length) axis = Y_AXIS;
-				if(target.closest('.c3-axis-y2').length) axis = Y2_AXIS;
-				_this.setAxis(axis);
-				e.preventDefault();
-				e.stopPropagation();
-			});
-			// Setup axes styling
-			if(this.x_label === false) 
-				el.find('.c3-axis-x-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
-			else 
-				el.find('.c3-axis-x-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
-			if(this.y_label === false) 
-				el.find('.c3-axis-y-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
-			else 
-				el.find('.c3-axis-y-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
-			if(this.y2_label === false) 
-				el.find('.c3-axis-y2-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
-			else 
-				el.find('.c3-axis-y2-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
-			el.find('.c3-legend-item').hover(function() { $(this).find('text').css('text-decoration', 'underline'); }, function() { $(this).find('text').css('text-decoration', 'none'); });
-			$.each(this.children(), function(i, child) {
-				el.find('.c3-line-data-' + child.id).css('stroke-width',child.line_weight).css('stroke-dasharray', child.line_style.replace(/_/g,','));
-				if(child.selected)
-					child.addSelectLine();
-			});
+	
+		if(this.y_log) {
+			if(y_min === undefined) y_min = 1e-15;
+			if(y_max === undefined) y_max = 2e-15;
+			if(y_min <= 0) y_min = 1e-15;
+			if(y_max <= 0) y_max = 2e-15;
+			y_min = Math.log(y_min) / Math.LN10;
+			y_max = Math.log(y_max) / Math.LN10;
+			var exp_min = Math.ceil(y_min);
+			var exp_max = Math.floor(y_max);
+			var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
+			for(var i = exp_min; i <= exp_max; i = i + step) 
+				y_ticks.push(i);
+		}
+		if(this.y2_log) {
+			if(y2_min === undefined) y2_min = 1e-15;
+			if(y2_max === undefined) y2_max = 2e-15;
+			if(y2_min <= 0) y2_min = 1e-15;
+			if(y2_max <= 0) y2_max = 2e-15;
+			y2_min = Math.log(y2_min) / Math.LN10;
+			y2_max = Math.log(y2_max) / Math.LN10;
+			var exp_min = Math.ceil(y2_min);
+			var exp_max = Math.floor(y2_max);
+			var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
+			for(var i = exp_min; i <= exp_max; i = i + step) 
+				y2_ticks.push(i);
+		}
+		if(this.x_log) {
+			var exp_min = Math.ceil(x_min);
+			var exp_max = Math.floor(x_max);
+			var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
+			for(var i = exp_min; i <= exp_max; i = i + step) 
+				x_ticks.push(i);
 		} else {
-			if(this.plotBox) this.plotBox = this.plotBox.destroy();
-			this.jQ.find('.' + css_prefix + 'plot_box').height('auto');
+			for(var i = 0; i <= 20; i++) 
+				x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
+		}
+		try {
+			var x_tick_order = ((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2;
+		} catch(e) {
+			var x_tick_order = 0;
+		}
+		var _this = this;
+		this.jQ.find('.' + css_prefix + 'plot_box').prev('div.plot_title').remove();
+		var title_div = $('<div/>').addClass('plot_title');
+		if(this.chart_title === false) {
+			title_div.addClass('no_title').addClass(css_prefix + 'hide_print').html('<span class="title_span">Add a Title</span>');
+		} else {
+			title_div.html('<span class="title_span">' + this.chart_title + '</span>');
+		}
+		title_div.insertBefore(this.jQ.find('.' + css_prefix + 'plot_box'));
+		title_div.find('span.title_span').on('click', function(e) {
+			title_div.html('<input type="text">');
+			title_div.find('input').val(_this.chart_title === false ? '' : _this.chart_title).focus().on('blur', function() {
+				var title = $(this).val().trim();
+				if(title == '') title = false;
+				_this.chart_title = title;
+				_this.drawPlot();
+				_this.worksheet.save();
+			});
+			e.preventDefault();
+			e.stopPropagation();
+		});
+		this.jQ.find('.' + css_prefix + 'plot_box').html('');
+		var ceil10 = function(val, exp) {
+			if (typeof exp === 'undefined' || +exp === 0) 
+    		return Math.ceil(val);
+    	val = +val;
+    	exp = +exp;
+    	val = val.toString().split('e');
+    	val = Math.ceil(+(val[0] + 'e' + (val[1] ? (+val[1] - exp) : -exp)));
+    	val = val.toString().split('e');
+    	return +(val[0] + 'e' + (val[1] ? (+val[1] + exp) : exp));
+		}
+		if(hist_plot) {
+			var categories = [];
+			for(var i = 0; i < hist_plot.length; i++) 
+				categories.push(ceil10(hist_plot[i][0], x_tick_order) + ' to ' + ceil10(hist_plot[i][1], x_tick_order) + ((hist_plot_unit_label && (hist_plot_unit_label != '1.0')) ? (' [' + this.worksheet.latexToUnit(hist_plot_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']') : ''));
+		}	else if(this.x_labels && this.has_bar)
+			var categories = this.x_labels.split('__s__');
+		else 
+			var categories = [];
+		var plot_options = {
+			bindto: this.jQ.find('.' + css_prefix + 'plot_box')[0],
+			size: { height: this.height },
+			axis: {
+				rotated: this.rotated,
+				x: { 
+					tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { rotate: (this.x_log ? 90 : 0), values: x_ticks, format: this.x_log ? function (d) { return Math.pow(10,d).toPrecision(3)*1; } : function (d) { return ceil10(d, x_tick_order); } }),
+					label: { text: x_label, position: 'outer-center'}, 
+					min: ((this.x_min === false) || ignore_custom_xs ? undefined : (this.x_log ? Math.log(this.x_min) / Math.LN10 : this.x_min)),
+					max: ((this.x_max === false) || ignore_custom_xs ? undefined : (this.x_log ? Math.log(this.x_max) / Math.LN10 : this.x_max)),
+					categories: categories,
+					type: categories.length ? 'category' : 'indexed'
+				},
+				y: { 
+					label: { text: y_label, position: 'outer-middle'},
+					min: (this.y_min === false ? undefined : (this.y_log ? Math.log(this.y_min) / Math.LN10 : this.y_min)),
+					max: (this.y_max === false ? undefined : (this.y_log ? Math.log(this.y_max) / Math.LN10 : this.y_max)),
+					tick: (this.y_log ? { values: y_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {})
+				},
+				y2: { 
+					label: { text: y2_label, position: 'outer-middle'}, 
+					min: (this.y2_min === false ? undefined : (this.y2_log ? Math.log(this.y2_min) / Math.LN10 : this.y2_min)),
+					max: (this.y2_max === false ? undefined : (this.y2_log ? Math.log(this.y2_max) / Math.LN10 : this.y2_max)),
+					tick: (this.y2_log ? { values: y2_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {}),
+					show: show_y2
+				}
+			},
+			data: { 
+				xs: xs,
+				columns: columns,
+				types: types,
+				groups: [groups_y, groups_y2],
+				axes: axes,
+				names: names,
+				colors: colors,
+				onclick: function(d, el) { els[d.id].select(); }
+			},
+			legend: {
+			  item: {
+			    onclick: function (id) { els[id].select(); }
+			  }
+			},
+			transition: { duration: 0 },
+			onrendered: function(_this) { return function() { _this.jQ.find('.' + css_prefix + 'plot_box').height('auto'); }; }(this),
+			point: {
+				show: function(d) { if(show_points[d.id]) { return 1; } else { return 0; } },
+				r: function(d) { return marker_size[d.id]; }
+			},
+	    grid: {
+        x: ((ignore_custom_xs || this.x_log) ? { show: this.x_grid } : { show: this.x_grid, lines: [{value: 0}] }),
+        y: (this.y_log ? { show: this.y_grid } : { show: this.y_grid, lines: [{value: 0}] }),
+        lines: { front: false }
+	    }
+		};
+		if(this.plotBox) {
+			this.jQ.find('.' + css_prefix + 'plot_box').height(this.height);
+			this.plotBox.destroy();
+		}
+		this.plotBox = c3.generate(plot_options);
+		var el = $(this.plotBox.element);
+		el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').find('.tick text').hover(function() {
+			$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'underline');
+		}, function() {
+			$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'none');
+		});
+		if(this.allow_interaction()) el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').on('click', function(e) { 
+			var target = $(e.target);
+			var axis = X_AXIS;
+			if(target.closest('.c3-axis-y').length) axis = Y_AXIS;
+			if(target.closest('.c3-axis-y2').length) axis = Y2_AXIS;
+			_this.setAxis(axis);
+			e.preventDefault();
+			e.stopPropagation();
+		});
+		// Setup axes styling
+		if(this.x_label === false) 
+			el.find('.c3-axis-x-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+		else 
+			el.find('.c3-axis-x-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+		if(this.y_label === false) 
+			el.find('.c3-axis-y-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+		else 
+			el.find('.c3-axis-y-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+		if(this.y2_label === false) 
+			el.find('.c3-axis-y2-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+		else 
+			el.find('.c3-axis-y2-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+		el.find('.c3-legend-item').hover(function() { $(this).find('text').css('text-decoration', 'underline'); }, function() { $(this).find('text').css('text-decoration', 'none'); });
+		$.each(this.children(), function(i, child) {
+			el.find('.c3-line-data-' + child.id).css('stroke-width',child.line_weight).css('stroke-dasharray', child.line_style.replace(/_/g,','));
+			if(child.selected)
+				child.addSelectLine();
+		});
+		if(columns.length == 0) {
+			this.jQ.find('.c3-xgrid-lines line, .c3-ygrid-lines, .c3-y2grid-lines').css('stroke','#ffffff');
+			this.jQ.find('.' + css_prefix + 'plot_box').height('300px');
 			this.expand();
-			this.jQ.find('.' + css_prefix + 'plot_box .explain').html('No data to plot.  Please setup a data series to plot.');
+			this.jQ.find('.' + css_prefix + 'plot_box').append($('<div/>').addClass('overlay_message').html('<strong>No data to plot.</strong><BR>Setup a data source or check for errors.'));
 		}
 	}
 	_.children = function() { 
@@ -740,8 +744,8 @@ var subplot = P(EditableBlock, function(_, super_) {
 		return false; // Since we are special type of block, we don't want auto destroyers and auto-to-math things happening
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">Plot Type: ' + focusableHTML('SelectBox',  'plot_type') + helpBlock() + '</div>'
-		  + '<div class="' + css_prefix + 'focusableItems" data-id="1">Data Label: <div class="' + css_prefix + 'command_border">' + focusableHTML('CommandBlock',  'plot_label') + '&nbsp;</div></div>YIELD' + answerSpan();
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">Plot Type: ' + focusableHTML('SelectBox',  'plot_type') + ' with label: ' + focusableHTML('CommandBlock',  'plot_label') + '&nbsp;' + helpBlock() + '</div>'
+		  + 'YIELD' + answerSpan();
 	}
 	_.postInsertHandler = function() {
 		this.selectBox = registerFocusable(SelectBox, this, 'plot_type', { blank_message: 'Choose Plot Type', options: 
@@ -760,11 +764,14 @@ var subplot = P(EditableBlock, function(_, super_) {
 		});
 		this.selectBox.paste(this.plot_type);
 		var _this = this;
-		this.label = registerFocusable(CommandBlock, this, 'plot_label', { editable: true, handlers: {blur: function(el) { _this.parent.drawPlot(); } } })
-		this.focusableItems.unshift([this.label]);
-		this.focusableItems.unshift([this.selectBox]);
+		this.label = registerFocusable(CommandBlock, this, 'plot_label', { editable: true, border: true, handlers: {blur: function(el) { _this.parent.drawPlot(); } } })
+		this.focusableItems.unshift([this.selectBox, this.label]);
 		super_.postInsertHandler.call(this);
 		// Since we play with ordering, when I am added there may be children 'lower' than me in the list.  We have to re-evaluate those.
+		var text = this.name().split('');
+		this.label.clear();
+		for(var i = 0; i < text.length; i++) 
+			$('<var/>').html(text[i]).appendTo(this.label.jQ);
 		var kids = this.parent.children();
 		var setEval = false;
 		for(var i = 0; i < kids.length; i++) {
@@ -946,7 +953,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 		if(dir == -2)
 			this.selectBox.focus(L);
 		else if(dir == L) 
-			this.label.focus(L);
+			this.focusableItems[1][0].focus(L);
 		return this;
 	}
 	_.findStartElement = function() {

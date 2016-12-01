@@ -8,13 +8,13 @@ var video = P(Element, function(_, super_) {
 
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'top ' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'video') + '&nbsp;url:&nbsp;' 
-			+ '<div class="' + css_prefix + 'command_border">' + focusableHTML('CommandBlock', 'video_url') + '&nbsp;</div>' + helpBlock() + '<BR>'  + answerSpan() + '</div>';
+			+ focusableHTML('CommandBlock', 'video_url') + '&nbsp;' + helpBlock() + '<BR>'  + answerSpan() + '</div>';
 	}
 	_.postInsertHandler = function() {
 		super_.postInsertHandler.call(this);
 		var _this = this;
 		this.codeBlock = registerFocusable(CodeBlock,this, 'video', { });
-		this.block = registerFocusable(CommandBlock, this, 'video_url', { editable: true, handlers: {blur: function(el) { _this.processUrl(el.toString()); } } });
+		this.block = registerFocusable(CommandBlock, this, 'video_url', { editable: true, border: true, handlers: {blur: function(el) { _this.processUrl(el.toString()); } } });
 		this.focusableItems = [[this.codeBlock,this.block]];
 		this.leftJQ.append('<span class="fa fa-upload"></span>');
 		return this;

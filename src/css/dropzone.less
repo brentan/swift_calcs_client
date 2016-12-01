@@ -1,8 +1,11 @@
 div.sc_element_container {
     .sc_command_border {
+        &:hover, &.focused, &.empty {
+            border-color: #ddeeff;
+        }
         padding: 1px 3px;
         display: inline-block;
-        border: 1px solid #ddeeff;
+        border: 1px solid transparent;
         min-height: 22px;
         min-width: 20px;
     }

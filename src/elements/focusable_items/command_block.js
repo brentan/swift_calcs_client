@@ -23,6 +23,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		this.handlers = options.handlers;
 		this.allowDelete = options.allowDelete;
 		this.editable = options.editable;
+    if(options.border === true) this.jQ.addClass(css_prefix + 'command_border');
     this.cursor = $('<span class="' + css_prefix + 'cursor">&#8203;</span>');
     if(!this.editable && klass.length)
 			this.jQ.html('<var>' + klass.split('').join('</var><var>') + '</var>');
@@ -279,10 +280,12 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 		this.clearCursor();
 	}
 	_.blur = function() {
+    super_.blur.call(this);
 		this.clearCursor();
 		if(this.handlers.blur) this.handlers.blur(this);
 	}
 	_.windowBlur = function() {
+    super_.windowBlur.call(this);
 		this.clearCursor();
 	}
 	_.focus = function(dir) {
@@ -354,6 +357,7 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
 	// Cursor functions //
 	_.placeCursor = function(location) {
 		this.clearCursor();
+    this.jQ.removeClass('empty').children(".placeholder").remove();
 		this.location = location;
 		this.anchor = location;
 		 if((location == 0) && (this.children().length == 0)) {
@@ -392,6 +396,8 @@ var CommandBlock = P(aFocusableItem, function(_, super_) {
     this.cursor.removeClass('blink');
 		this.cursor.detach();
 		this.cursorPlaced = false;
+    this.jQ.children(".placeholder").remove();
+    if(this.empty()) this.jQ.addClass('empty').append($("<span/>").addClass('placeholder').html("&nbsp;")); //Display issue: without this the box 'jumps'
 	}
 	_.clear = function() {
 		this.jQ.html('');
