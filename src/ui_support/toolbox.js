@@ -192,8 +192,8 @@ $(function() {
         // Implicit items, at this point, have already been blurred and removed from the DOM.  So find a neighbor
         if(el[-1]) el = el[-1];
         else if(el[1]) el = SwiftCalcs.elements.math().insertBefore(el[1]);
-        else if(el.parent && el.parent.implicitType) el = el.parent.implicitType().prependTo(el.parent);
-        else if(el.parent) el = SwiftCalcs.elements.math().prependTo(el.parent);
+        else if(el.parent && el.parent.implicitType) el = el.parent.implicitType().appendTo(el.parent);
+        else if(el.parent) el = SwiftCalcs.elements.math().appendTo(el.parent);
       }
       var replace = false;
       if(el.empty && el.empty())

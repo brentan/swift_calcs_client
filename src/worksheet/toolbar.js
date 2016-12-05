@@ -1376,8 +1376,6 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
         { text: 'Cross Product', giac_func: 'cross(' },
         { text: 'Determinant', giac_func: 'det(' },
         { text: 'Dot Product', giac_func: 'dot(' },
-	      { text: 'Empty Matrix', giac_func: 'matrix(' },
-	      { text: 'Make Matrix from Expression', giac_func: 'makemat(' },
 	      { text: 'Random Matrix', giac_func: 'randMat(' },
 	      [ 'Elementwise Math',
 	      	{ text: 'Elementwise Addition', giac_func: '+'},

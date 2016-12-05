@@ -6,6 +6,7 @@ var mixture = P(Element, function(_, super_) {
   _.evaluatable = true;
   _.data_type = 2;
   _.number_of_species = 0;
+  _.var_entered = false;
   _.last_name = "";
   _.special_footer = "Thermodynamic data from <a href='https://www.grc.nasa.gov/WWW/CEAWeb/ceaThermoBuild.htm' target='_blank'>NASA Glenn Research Center</a>";
   _.helpText = "<<<[VAR]> = mixture>>\n<<&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <[mass or moles]> of <[name]>>>\n<<&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <[mass or moles]> of <[name]>>>\nLoad the data for the specified mixture (specify components and moles/mass of each) into the specified variable.";
@@ -53,6 +54,8 @@ var mixture = P(Element, function(_, super_) {
     super_.focus.call(this, dir);
     if(dir == 0)
       this.ends[L].focus(L);
+    if(dir == L)
+      this.varStoreField.focus(L);
     return this;
   }
   _.enterPressed = function(_this) {
@@ -66,7 +69,7 @@ var mixture = P(Element, function(_, super_) {
   }
   _.submissionHandler = function(_this) {
     return function(mathField) {
-      if(_this.needsEvaluation) {     
+      if(_this.needsEvaluation && _this.var_entered) {     
         _this.genCommand();
         _this.evaluate();
         _this.needsEvaluation = false;
@@ -129,6 +132,7 @@ var mixture = P(Element, function(_, super_) {
   }
   _.changed = function(el) {
     this.needsEvaluation = this.varStoreField.empty() ? false : true;
+    this.var_entered = this.var_entered || this.needsEvaluation;
   }
   _.getUnarchiveList = function() {
     if(this.unarchive_list_set) return this.unarchive_list;
@@ -179,17 +183,20 @@ var mixture_component = P(material_holder, function(_, super_) {
     return function(mathField) {
       if(_this.ignore_blur_eval) return;
       if(_this.needsEvaluation) {   
-        _this.parent.genCommand();
         _this.parent.needsEvaluation = true;
-        _this.parent.evaluate(true);
+        _this.parent.submissionHandler(_this.parent)();
         _this.needsEvaluation = false;
       }
+      return;
     };
   }
   _.enterPressed = function(_this) {
     return function(item) {
       _this.submissionHandler(_this)();
-      if(_this[R]) _this[R].focus(L);
+      if(!_this[R] && _this.parent.varStoreField.empty()) {
+        _this.parent.focus(L);
+      } else if(_this[R]) 
+        _this[R].focus(L);
       else if(_this.parent[R] && (_this.parent[R] instanceof math) && _this.parent[R].empty())
         _this.parent[R].focus(L);
       else

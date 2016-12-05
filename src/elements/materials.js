@@ -129,7 +129,7 @@ var material_holder = P(EditableBlock, function(_, super_) {
           var detail_div = $('<div/>').addClass('detail').appendTo($(this)).hide();
           var to_add = [];
           $.each(item_list[$(this).attr('data-id') + ""], function(k, v) {
-            to_add.push("<td class='item'>" + v.name + "</td><td class='item'>" + v.value + (v.units ? _this.worksheet.latexToUnit(v.units)[1] : '') + '</td>');
+            if(v.value) to_add.push("<td class='item'>" + v.name + "</td><td class='item'>" + v.value + (v.units ? _this.worksheet.latexToUnit(v.units)[1] : '') + '</td>');
           });
           detail_div.html("<table><tbody><tr><td colspan=2><b>Available Properties</b></td><td rowspan=" + (to_add.length+1) + "><a class='button'>Select Material</a></td></tr><tr>" + to_add.join("</tr><tr>") + '</tr></tbody></table><div class="explain">' + _this.special_footer + '</div>').slideDown(200);
           detail_div.find('a.button').on('click', select_material);
@@ -152,7 +152,7 @@ var material_holder = P(EditableBlock, function(_, super_) {
     var timeOut = false;
     var ajaxRequest = false;
     var lastRequest = '';
-    var submitFunction = function(_this){ return function(search) {
+    var submitFunction = function(_this){ return function() {
       search = $autocomplete.val().trim();
       // Cancel the last request if valid
       if(ajaxRequest) ajaxRequest.abort();
@@ -170,7 +170,7 @@ var material_holder = P(EditableBlock, function(_, super_) {
       ajaxRequest = $.ajax({
         type: "POST",
         url: "/material_search",
-        data: {query: search, data_type: _this.data_type },
+        data: {query: search.replace(/ /g,''), data_type: _this.data_type },
         success: populate,
         error: function(err) {
           window.hidePopupOnTop();

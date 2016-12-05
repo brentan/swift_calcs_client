@@ -669,7 +669,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       rho = rho*1;
     } 
     this.set_specificVolume(1/rho);
-    return "1/(" + rho + ")*(_kg*_m^-3.0)";
+    return "1/(" + rho + ")*_(kg/m^3)";
   }
   _.set_v = _.set_specificVolume = function(v) {
     if(typeof v === "string") {
@@ -683,7 +683,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     var Mw_gas = this.Mw_gas();
     if(Mw_gas == 0) return this.setError("Mixture has no species in the gas phase");
     this.set_P((this.GasConstant * this.getT()) / (Mw_gas * v));
-    return v + "*(_m^3.0/_kg)";
+    return v + "*_(m^3/kg)";
   }
   _.set_V = _.set_Volume = function(v) {
     if(typeof v === "string") {
@@ -723,7 +723,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       _this.set_T(guess);
       return (_this.enthalpy_i(mass_specific) - enthalpy);
     }));
-    return enthalpy + (mass_specific ? "*(_J/_kg)" : "*(_J/_mol)");
+    return enthalpy + (mass_specific ? "*_(J/kg)" : "*_(J/mol)");
   }
   _.set_G = _.set_Gibbs = _.set_g = _.set_gibbs = function(gibbs) {
     // To set Gibbs, we hold P constant at current pressure, then vary T until we have a gibbs value equal to the desired value
@@ -750,7 +750,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       _this.set_T(guess);
       return (_this.gibbs_i(mass_specific) - gibbs);
     }));
-    return gibbs + (mass_specific ? "*(_J/_kg)" : "*(_J/_mol)");
+    return gibbs + (mass_specific ? "*_(J/kg)" : "*_(J/mol)");
   }
   _.set_s = _.set_entropy = _.set_S = _.set_Entropy = function(entropy) {
     // To set entropy, we hold P constant at current pressure, then vary T until we have an entropy equal to the desired value
@@ -777,7 +777,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       _this.set_T(guess);
       return (_this.entropy_i(mass_specific) - entropy);
     }));
-    return entropy + (mass_specific ? "*(_J/_kg/_K)" : "*(_J/_mol/_K)");
+    return entropy + (mass_specific ? "*_(J/(kg*K))" : "*_(J/(mol*K))");
   }
   _.s_v = _.entropy_v = _.S_v = _.Entropy_v = function() {
     return this.error("Function is used to set entropy at constant specific volume.  To find entropy, use the 's' or 'entropy' commands.");
@@ -810,7 +810,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       _this.set_specificVolume(curV);
       return (_this.entropy_i(mass_specific) - entropy);
     }));
-    return entropy + (mass_specific ? "*(_J/_kg/_K)" : "*(_J/_mol/_K)");
+    return entropy + (mass_specific ? "*_(J/(kg*K))" : "*_(J/(mol*K))");
   }
   _.set_u = _.set_internalEnergy = _.set_U = _.set_InternalEnergy = function(energy) {
     // To set entropy, we hold v constant at current specific volume, then vary T until we have an energy equal to the desired value
@@ -840,7 +840,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       _this.set_specificVolume(curV);
       return (_this.internalEnergy_i(mass_specific) - energy);
     }));
-    return energy + (mass_specific ? "*(_J/_kg)" : "*(_J/_mol)");
+    return energy + (mass_specific ? "*_(J/kg)" : "*_(J/mol)");
   }
   // Saturation
   _.set_saturatedT = function() {
@@ -858,10 +858,10 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('Cv_i', mass_specific);
   }
   _.Cv = function() {
-    return this.Cv_i(true) + "*(_J/_kg/_K)";
+    return this.Cv_i(true) + "*_(J/(kg*K))";
   }
   _.Cv_mole = function() {
-    return this.Cv_i(false) + "*(_J/_mol/_K)";
+    return this.Cv_i(false) + "*_(J/(mol*K))";
   }
   // J/K{kg|mol}
   _.Cp_i = function(mass_specific) { 
@@ -869,10 +869,10 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('Cp_i', mass_specific);
   }
   _.Cp = function() {
-    return this.Cp_i(true) + "*(_J/_kg/_K)";
+    return this.Cp_i(true) + "*_(J/(kg*K))";
   }
   _.Cp_mole = function() {
-    return this.Cp_i(false) + "*(_J/_mol/_K)";
+    return this.Cp_i(false) + "*_(J/(mol*K))";
   }
   _.gamma = function() {
     return (this.Cp_i() / this.Cv_i()) + "";
@@ -883,13 +883,13 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('enthalpy_i', mass_specific);
   }
   _.h = _.enthalpy = function() {
-    return this.enthalpy_i(true) + "*(_J/_kg)";
+    return this.enthalpy_i(true) + "*_(J/kg)";
   }
   _.h_mole = _.enthalpy_mole = function() {
-    return this.enthalpy_i(false) + "*(_J/_mol)";
+    return this.enthalpy_i(false) + "*_(J/mol)";
   }
   _.H = _.Enthalpy = function() {
-    return this.enthalpy_i(false)*this.moles_i + "*(_J)";
+    return this.enthalpy_i(false)*this.moles_i + "*_J";
   }
   // J/K{kg|mol}
   _.entropy_i = function(mass_specific) { 
@@ -897,13 +897,13 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('entropy_i', mass_specific);
   }
   _.s = _.entropy = function() {
-    return this.entropy_i(true) + "*(_J/_K/_kg)";
+    return this.entropy_i(true) + "*_(J/(K*kg))";
   }
   _.s_mole = _.entropy_mole = function() {
-    return this.entropy_i(false) + "*(_J/_K/_mol)";
+    return this.entropy_i(false) + "*_(J/(K*mol))";
   }
   _.S = _.Entropy = function() {
-    return this.entropy_i(false)*this.moles_i + "*(_J/_K)";
+    return this.entropy_i(false)*this.moles_i + "*_(J/K)";
   }
   // J/{kg|mol}
   _.internalEnergy_i = function(mass_specific) {
@@ -911,13 +911,13 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('internalEnergy_i', mass_specific);
   }
   _.u = _.internalEnergy = function() {
-    return this.internalEnergy_i(true) + "*(_J/_kg)";
+    return this.internalEnergy_i(true) + "*_(J/kg)";
   }
   _.u_mole = _.internalEnergy_mole = function() {
-    return this.internalEnergy_i(false) + "*(_J/_mol)";
+    return this.internalEnergy_i(false) + "*_(J/mol)";
   }
   _.U = _.InternalEnergy = function() {
-    return this.internalEnergy_i(false)*this.moles_i + "*(_J)";
+    return this.internalEnergy_i(false)*this.moles_i + "*_(J)";
   }
   // J/{kg|mol}
   _.gibbs_i = function(mass_specific) {
@@ -925,13 +925,13 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('gibbs_i', mass_specific);
   }
   _.g = _.gibbs = function() {
-    return this.gibbs_i(true) + "*(_J/_kg)";
+    return this.gibbs_i(true) + "*_(J/kg)";
   }
   _.g_mole = _.gibbs_mole = function() {
-    return this.gibbs_i(false) + "*(_J/_mol)";
+    return this.gibbs_i(false) + "*_(J/mol)";
   }
   _.G = _.Gibbs = function() {
-    return this.gibbs_i(false)*this.moles_i + "*(_J)";
+    return this.gibbs_i(false)*this.moles_i + "*_J";
   }
   // J/{kg|mol}
   _.enthalpyFormation298_i = function(mass_specific) {
@@ -943,13 +943,13 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return hf298_mole;
   }
   _.hF298 = _.enthalpyFormation298 = function() {
-    return this.enthalpyFormation298_i(true) + "*(_J/_kg)";
+    return this.enthalpyFormation298_i(true) + "*_(J/kg)";
   }
   _.hF298_mole = _.enthalpyFormation298_mole = function() {
-    return this.enthalpyFormation298_i(false) + "*(_J/_mol)";
+    return this.enthalpyFormation298_i(false) + "*_(J/mol)";
   }
   _.HF298 = _.EnthalpyFormation298 = function() {
-    return this.enthalpyFormation298_i(false)*this.moles_i + "*(_J)";
+    return this.enthalpyFormation298_i(false)*this.moles_i + "*_J";
   }
   // J/{kg|mol}
   _.dhF298_i = function(mass_specific) {
@@ -958,13 +958,13 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return h_diff_mole;
   }
   _.dhF298 = function() {
-    return this.dhF298_i(true) + "*(_J/_kg)";
+    return this.dhF298_i(true) + "*_(J/kg)";
   }
   _.dhF298_mole = function() {
-    return this.dhF298_i(false) + "*(_J/_mol)";
+    return this.dhF298_i(false) + "*_(J/mol)";
   }
   _.dHF298 = _.EnthalpyFormation298 = function() {
-    return this.dhF298_i(false)*this.moles_i + "*(_J)";
+    return this.dhF298_i(false)*this.moles_i + "*_J";
   }
   // J/{kg|mol}
   _.enthalpyFormation_i = function(mass_specific) {
@@ -972,13 +972,13 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('enthalpyFormation_i', mass_specific);
   }
   _.hF = _.enthalpyFormation = function() {
-    return this.enthalpyFormation_i(true) + "*(_J/_kg)";
+    return this.enthalpyFormation_i(true) + "*_(J/kg)";
   }
   _.hF_mole = _.enthalpyFormation_mole = function() {
-    return this.enthalpyFormation_i(false) + "*(_J/_mol)";
+    return this.enthalpyFormation_i(false) + "*_(J/mol)";
   }
   _.HF = _.EnthalpyFormation = function() {
-    return this.enthalpyFormation_i(false)*this.moles_i + "*(_J)";
+    return this.enthalpyFormation_i(false)*this.moles_i + "*_J";
   }
   // J/{kg|mol}
   _.gibbsFormation_i = function(mass_specific) {
@@ -986,20 +986,20 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('gibbsFormation_i', mass_specific);
   }
   _.gF = _.gibbsFormation = function() {
-    return this.gibbsFormation_i(true) + "*(_J/_kg)";
+    return this.gibbsFormation_i(true) + "*_(J/kg)";
   }
   _.gF_mole = _.gibbsFormation_mole = function() {
-    return this.gibbsFormation_i(false) + "*(_J/_mol)";
+    return this.gibbsFormation_i(false) + "*_(J/mol)";
   }
   _.GF = _.GibbsFormation = function() {
-    return this.gibbsFormation_i(false)*this.moles_i + "*(_J)";
+    return this.gibbsFormation_i(false)*this.moles_i + "*_J";
   }
   _.logK = function() {
     return (this.gibbsFormation_i() / (-1 * this.getT() * this.GasConstant / 1000 / Math.LOG10E)) + "";
   }
   // kg/kmol
   _.M = _.molecularMass = function() {
-    return this.Mw + "*(_g/_mol)";
+    return this.Mw + "*_(g/mol)";
   }
   // K
   _.T = _.temperature = function() {
@@ -1067,23 +1067,23 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return (this.getP() * this.Mw_gas()) / (this.GasConstant * this.getT());
   }
   _.rho = _.density = function() {
-    return this.density_i() + "*(_kg/_m^3)";
+    return this.density_i() + "*_(kg/m^3)";
   }
   _.rho_gas = _.density_gas = function() {
-    return this.density_gas_i() + "*(_kg/_m^3)";
+    return this.density_gas_i() + "*_(kg/m^3)";
   }
   // [m^3 / kg]
   _.specificVolume_i = function() {
     return 1 / this.density_i();
   }
   _.v = _.specificVolume = function() {
-    return this.specificVolume_i() + "*(_m^3/_kg)";
+    return this.specificVolume_i() + "*_(m^3/kg)";
   }
   _.specificVolume_gas_i = function() {
     return 1 / this.density_gas_i();
   }
   _.v_gas = _.specificVolume_gas = function() {
-    return this.specificVolume_gas_i() + "*(_m^3/_kg)";
+    return this.specificVolume_gas_i() + "*_(m^3/kg)";
   }
   _.V = _.Volume = function() {
     return this.specificVolume_i*this.mass + "*(_m^3)";

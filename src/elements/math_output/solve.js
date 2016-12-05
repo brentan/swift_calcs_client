@@ -103,6 +103,8 @@ var solve = P(SettableMathOutput, function(_, super_) {
 		}
 		if(target.hasClass('fa-remove')) {
 			this.removeEquation(target.closest('div.' + css_prefix + 'focusableItems').attr('data-id')*1);
+			this.needsEvaluation = true;
+			this.submissionHandler(this)();
 			return false;
 		}
     if(super_.mouseClick.call(this,e)) return true;
