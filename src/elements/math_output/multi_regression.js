@@ -1,7 +1,7 @@
 
 var multi_regression = P(SettableMathOutput, function(_, super_) {
   _.klass = ['multi_regression'];
-  _.helpText = "<<multi_regression <[data]>>>\nWill find the best fit to the supplied data for the specified regression type:\nLinear: y = m*x + b\nPolynomial: y = a<sub>n</sub> * x<sup>n</sup> + ... + a<sub>2</sub> * x<sup>2</sup> + a<sub>1</sub> * x + a<sub>0</sub>\nPower: y = m * x ^ b\nExponential: y = a * e^(b * x)\nLogarithmic: y = a * ln(x) + b\nLogit Model: y'(x) is best fit to data for x<sub>0</sub>, x<sub>0</sub>+1, x<sub>0</sub>+2, ... with y(x<sub>0</sub>) = y<sub>0</sub>";
+  _.helpText = "<<multi_regression>>\nWill find the best fit to the supplied data.  Provide the y (dependent) data, and 1 or more x (independent) datasets that produce the y-value.  If each y-value should be weighted (useful if the data has been transformed, for example from log space), you can add the weights as well.  Finally, check whether to allow a non-zero constant to be included in the results (y=mx... OR y=mx...+b)";
   _.savedProperties = ['number_of_datasets','include_weights'];
   _.number_of_datasets = 1;
   _.include_weights = false;
@@ -15,9 +15,9 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
     + '<div class="weight_link"><div class="' + css_prefix + 'add_weights ' + css_prefix + 'hide_print">Add weights to the data</div></div>'
     + '<div style="display:none;" class="weights">with data weights of ' + focusableHTML('MathQuill',  'weights') + '&nbsp;<i class="fa fa-remove ' + css_prefix + 'hide_print"></i></div>'
     + '<div class="' + css_prefix + 'focusableItems data_line" data-id="2">x<sub><span class="counter">1</span> data</sub><span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'xdata0') + '</div>'
-    + '<div><div class="' + css_prefix + 'add_another_dataset ' + css_prefix + 'hide_print">Add another independent parameter</div></div>'
+    + '<div><div class="' + css_prefix + 'add_equation ' + css_prefix + 'hide_print">Add another independent parameter</div></div>'
     + '<div class="' + css_prefix + 'focusableItems" data-id="3">' + focusableHTML('CheckBox',  'intercept') + '</div>';
-    return this.wrapHTML('Multiple Linear Regression', html, true);
+    return this.wrapHTML('multiple linear regression', html, true);
   }
   _.postInsertHandler = function() {
     this.xdata[0] = registerFocusable(MathQuill, this, 'xdata0', { ghost: '[data]', handlers: {
@@ -32,7 +32,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
       enter: this.enterPressed(this),
       blur: this.submissionHandler(this)
     }});
-    this.intercept = registerFocusable(CheckBox, this, 'intercept', { options: { message: 'Allow non-zero intercept'}});
+    this.intercept = registerFocusable(CheckBox, this, 'intercept', { message: 'Allow non-zero constant term'});
     this.focusableItems = [[this.ydata] , [this.xdata[0]], [this.intercept]];
     this.needsEvaluation = false;
     super_.postInsertHandler.call(this);
@@ -56,7 +56,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
   _.addEquation = function(focus, skip_focusable) {
     // Add a new equation line to the solver list
     var html = '<div class="' + css_prefix + 'focusableItems data_line">x<sub><span class="counter"></span> data</sub><span class="equality">&#8801;</span>' + focusableHTML('MathQuill',  'xdata' + this.eq_id) + '&nbsp;<i class="fa fa-remove ' + css_prefix + 'hide_print"></i></div>';
-    this.jQ.find('.' + css_prefix + 'add_another_dataset').before(html);
+    this.jQ.find('.' + css_prefix + 'add_equation').before(html);
     this.xdata.push(registerFocusable(MathQuill, this, 'xdata' + this.eq_id, { ghost: '[data]', handlers: {
       enter: this.enterPressed(this),
       blur: this.submissionHandler(this)
@@ -67,9 +67,9 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
     if(focus) this.xdata[this.number_of_datasets-1].focus(1);
   }
   _.removeEquation = function(index) {
-    if((index == 0) && this.include_weights) return this.removeWeights();
-    if(this.xdata[index].touched) this.changed();
-    this.xdata.splice(index, 1);
+    if((index == 2) && this.include_weights) return this.removeWeights();
+    if(this.xdata[index-2].touched) this.changed();
+    this.xdata.splice(index-2, 1);
     this.jQ.find('.' + css_prefix + 'content').find('.' + css_prefix + 'focusableItems').each(function() {
       var el = $(this);
       if((el.attr('data-id')*1) == index)
@@ -77,6 +77,8 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
     });
     this.number_of_datasets--;
     this.redoFocusableList();
+    this.changed(false);
+    this.submissionHandler(this)();
   }
   _.redoFocusableList = function() {
     var id = 0;
@@ -111,10 +113,12 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
     this.jQ.find('.weight_link').show();
     this.include_weights = false;
     this.redoFocusableList();
+    this.changed(false);
+    this.submissionHandler(this)();
   }
   _.mouseClick = function(e) {
     var target = $(e.target);
-    if(target.hasClass(css_prefix + 'add_another_dataset')) {
+    if(target.hasClass(css_prefix + 'add_equation')) {
       this.addEquation(true);
       return false;
     }
@@ -123,19 +127,17 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
       return false;
     }
     if(target.hasClass('fa-remove')) {
-      this.removeEquation(target.closest('div.' + css_prefix + 'focusableItems').attr('data-id')*1-2);
+      this.removeEquation(target.closest('div.' + css_prefix + 'focusableItems').attr('data-id')*1);
       return false;
     }
     if(super_.mouseClick.call(this,e)) return true;
   }
   _.submissionHandler = function(_this) {
     return function(mathField) {
-      if((mathField === _this.varStoreField) && _this.varStoreField.empty()) 
-        _this.clearVariableStore();
       if(_this.needsEvaluation) {
         // check for anything that is empty
         var errors = [];
-        if(_this.scoped && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
+        if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
           errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
         var xdata = _this.xdata[0].text({});
         var ydata_text = _this.ydata.text({});
@@ -143,6 +145,8 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
           if(_this.xdata[i].empty()) errors.push('Dataset ' + (i+1) + ' is currently empty.  Please add a dataset.');
         if(_this.ydata.empty())
           errors.push('No y data provided.');
+        if(_this.include_weights && _this.weights.empty())
+          errors.push('No weight information provided.');
 
         var x_data = [];
         var x_units = [];
@@ -151,7 +155,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
           x_units.push('mksa_base((' + _this.xdata[i].text({check_for_array: true}) + ')[0])');
         }
 
-        var command = 'multi_regression(' + _this.xdata.text({check_for_array: true}) + ",[" + x_data.join(",") + "]," + (_this.intercept.checked ? "1" : "0");
+        var command = 'multi_regression(' + _this.ydata.text({check_for_array: true}) + ",[" + x_data.join(",") + "]," + (_this.intercept.checked ? "1" : "0");
         if(_this.include_weights)
           command += "," + _this.weights.text({check_for_array: true});
         command += ");";
@@ -169,6 +173,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
         } else {
           // Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
           _this.commands.unshift({command: command, nomarkup: true, pre_command: 'mksareduce_mode(1);' }); 
+          _this.dependent_vars = GetDependentVars(command);
           _this.evaluate();
           _this.needsEvaluation = false;
         }
@@ -183,10 +188,10 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
         if(!result[1].warnings[i].match(/assignation is x_unit/) && !result[1].warnings[i].match(/declared as global/))
           warnings.push(result[1].warnings[i]);
       result[1].warnings = warnings;
-      var xs = this.intercept.checked ? ['a_0'] : [];
+      var xs = this.intercept.checked ? ['b_0'] : [];
       for(var i = 0; i < this.xdata.length; i++) 
-        xs.push("a_{" + (i+1) + "}");
-      result[1].returned = "\\begin{bmatrix0}" + xs.join("\\\\") + "end{bmatrix0} \\whitespace\\Longrightarrow \\whitespace " + result[1].returned;
+        xs.push("b_{" + (i+1) + "}");
+      result[1].returned = "\\begin{bmatrix0}" + xs.join("\\\\") + "\\end{bmatrix0} \\whitespace\\Longrightarrow \\whitespace " + result[1].returned;
     }
     var to_return = super_.evaluationFinished.call(this, [result[1]]); // Transform to array with result 1 in spot 0, as that is what is expected in evaluationFinished
     this.last_result = result;

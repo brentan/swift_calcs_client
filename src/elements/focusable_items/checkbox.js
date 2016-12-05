@@ -46,8 +46,11 @@ var CheckBox = P(aFocusableItem, function(_, super_) {
         this.handlers.downOutOf(this);
         break;
       case 'Spacebar': 
+        this.scheduleUndoPoint();
         this.checked = !this.checked;
         this.updateCheckbox();
+        this.changed();
+        this.evaluateElement();
         break;
       default:
         return;
@@ -56,6 +59,7 @@ var CheckBox = P(aFocusableItem, function(_, super_) {
   }
   _.write = function(text) {
     this.checked = text == 'true';
+    this.changed();
     this.updateCheckbox();
   }
   _.text = function() {
@@ -76,12 +80,17 @@ var CheckBox = P(aFocusableItem, function(_, super_) {
   }
   _.mouseUp = function(e) {
     // opened events handled directly be event listeners on the pulldown divs
+    this.scheduleUndoPoint();
     this.checked = !this.checked;
     this.updateCheckbox();
+    this.changed();
+    this.evaluateElement();
+    this.blur();
   }
   _.clear = function() {
     this.checked = false;
     this.updateCheckbox();
+    this.changed();
     return this;
   }
   _.currentState = function() {
@@ -92,6 +101,8 @@ var CheckBox = P(aFocusableItem, function(_, super_) {
   _.restoreState = function(data) {
     this.checked = data.checked;
     this.updateCheckbox();
+    this.changed();
+    this.evaluateElement();
   }
 });
 
