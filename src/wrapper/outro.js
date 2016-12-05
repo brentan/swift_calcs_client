@@ -24,6 +24,8 @@
 		'solve': solve,
 		'desolve': desolve,
 		'regression': regression,
+		'multiRegression': multi_regression,
+		'multi_regression': multi_regression,
 		'import': importData,
 		'image': image,
 		'imageBlock': imageBlock,

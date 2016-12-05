@@ -1,0 +1,22 @@
+.sc_element {
+  position: relative;
+  span.sc_CheckBox {
+    display: inline-block;
+    white-space: nowrap;
+    cursor: pointer;
+    i.fa {
+      margin-right: 5px;
+    }
+    &:hover {
+      i.fa {
+        color: #7788cc;
+      }
+    }
+    &.highlighted {
+      i.fa {
+        color: #7788cc;
+      }
+    }
+  }
+  &.sc_no_interaction span.sc_CheckBox { cursor: not-allowed; }
+}
