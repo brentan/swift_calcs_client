@@ -115,13 +115,13 @@ var regression = P(SettableMathOutput, function(_, super_) {
 				command = _this.mode  + '_regression(' + command + ')';
 				if((_this.mode != 'polynomial') && (_this.mode != 'logistic'))
 					command = '[' + command + ']';
-				var x_unit = 'mksa_base((' + _this.xdata.text({check_for_array: true}) + ')[0])';
-				var y_unit = 'mksa_base((' + _this.ydata.text({check_for_array: true}) + ')[0])';
+				var x_unit = 'mksa_base(at(' + _this.xdata.text({check_for_array: true}) + ',0))';
+				var y_unit = 'mksa_base(at(' + _this.ydata.text({check_for_array: true}) + ',0))';
 				var x = _this.varStoreField.text().match(/\(/) ? "x" : "'x'";
 				var out_command;
 				switch(_this.mode) {
 					case 'polynomial':
-						out_command = "at(apply(y->{ local x_unit, y_unit, j, out; out := 0; x_unit = " + x_unit + "; y_unit = " + y_unit + "; out := ('x'/x_unit)^(colDim([y]) - 1) * y[0] * y_unit; for(j:=1; j < colDim([y]); j++) { out := out + (" + x + "/x_unit)^(colDim([y]) - j - 1) * y[j] * y_unit; } return out; }, [[val]]),0)"
+						out_command = "at(apply(y->{ local x_unit, y_unit, j, out; out := 0; x_unit = " + x_unit + "; y_unit = " + y_unit + "; out := ('x'/x_unit)^(colDim([y]) - 1) * at(y,0) * y_unit; for(j:=1; j < colDim([y]); j++) { out := out + (" + x + "/x_unit)^(colDim([y]) - j - 1) * y[j] * y_unit; } return out; }, [[val]]),0)"
 						break;
 					case 'power':
 						out_command = "at([val],1)*" + y_unit + "*(" + x + "/" + x_unit + ")^(at([val],0))";
@@ -135,7 +135,7 @@ var regression = P(SettableMathOutput, function(_, super_) {
 					case 'logistic':
 						x_unit = 'mksa_base(' + _this.xo.text({}) + ')';
 						y_unit = 'mksa_base(' + _this.yo.text({}) + ')';
-						out_command = "apply(x->{ return at([val],0)*" + y_unit + "}, [" + x + "/" + x_unit + "])[0]";
+						out_command = "at(apply(x->{ return at([val],0)*" + y_unit + "}, [" + x + "/" + x_unit + "]),0)";
 						break;
 					default:
 						out_command = "at([val],0)*(" + x + "/" + x_unit + ")*" + y_unit + " + at([val],1) * " + y_unit;

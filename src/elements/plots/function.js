@@ -57,7 +57,7 @@ var plot_func = P(subplot, function(_, super_) {
   _.getUnitsCommands = function() {
 		if(this.eq0.text().trim() == '') return [];
 		var unit_command = this.show_unit && this.unit_box.text().length ? this.unit_box.text() : '1';
-		var command1 = "latex(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[0.0000000016514245*" + unit_command + "])[0])"; // Evaluate at an x to find units...add something so that we dont get evaluation at 0
+		var command1 = "latex(at(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[0.0000000016514245*" + unit_command + "]),0))"; // Evaluate at an x to find units...add something so that we dont get evaluation at 0
 		var command2 = "latex(evalf(mksa_base(" + unit_command + ")))";
     return [{command: command1, nomarkup: true},{command: command2, nomarkup: true}];
   }
@@ -77,7 +77,7 @@ var plot_func = P(subplot, function(_, super_) {
 			var command3 = "plotfunc(evalf(" + command + ")," + name + "=log10(" + min_val + ")..log10(" + max_val +"),nstep=400)"; 
 		} else
 			var command3 = "plotfunc(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + ")..(" + max_val +"),nstep=400)"; 
-		var command4 = "latex(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[0.0000000016514245*" + unit_command + "])[0])";
+		var command4 = "latex(at(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[0.0000000016514245*" + unit_command + "]),0))";
 		this.dependent_vars = GetDependentVars(command3, [this.eq1.text()]);
 		return [{command: command3, nomarkup: true, pre_command: 'mksareduce_mode(1);' },{command: command4, nomarkup: true, pre_command: 'mksareduce_mode(0);'}]
 	}

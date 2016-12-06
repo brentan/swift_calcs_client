@@ -1406,6 +1406,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	      ],
 	      [ 'Structure',
 	        { text: 'Append', giac_func: 'append(' },
+	        { text: 'Index of First Row/Col', giac_func: 'first_index(' },
 	        { text: 'Concatenate', giac_func: 'concat(' },
 	        { text: 'Delete Columns', giac_func: 'delcols(' },
 	        { text: 'Delete Rows', giac_func: 'delrows(' },

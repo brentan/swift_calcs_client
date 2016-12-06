@@ -4,7 +4,7 @@
 
 Worksheet.open(function(_) {
 	_.settings_loaded = false;
-	var default_settings = { currency_date: '0', currency_unit: 'USD', angle: 'rad', complex: 'on', approx: 'off', units: 'mks', digits: '9', custom_units: false, base_units: ['m','kg','s','K'], derived_units: ['A','mol','cd','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'] };
+	var default_settings = { one_indexed: '0', currency_date: '0', currency_unit: 'USD', angle: 'rad', complex: 'on', approx: 'off', units: 'mks', digits: '9', custom_units: false, base_units: ['m','kg','s','K'], derived_units: ['A','mol','cd','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'] };
 	var showApplyNow = function() {
 		$('.popup_dialog .bottom_links button.submit').show();
 	}
@@ -42,6 +42,13 @@ Worksheet.open(function(_) {
       + "<div class='select'><select class='complex_mode' data-type='complex_mode'>"
       + "<option value='on'>Enabled</option>"
       + "<option value='off'>Disabled</option>"
+      + "</select></div>"
+      + "</div>"
+      + "<div class='section'>"
+      + "Matrix and Vector Index Numbering: "
+      + "<div class='select'><select class='index_mode' data-type='index_mode'>"
+      + "<option value='1'>First row/col is numbered 1</option>"
+      + "<option value='0'>First row/col is numbered 0</option>"
       + "</select></div>"
       + "</div>"
 			+ "<div class='section'>"
@@ -352,6 +359,9 @@ Worksheet.open(function(_) {
 			case 'currency_unit':
 				SwiftCalcs.active_worksheet.settings.currency_unit = $(this).val();
 				break;
+			case 'index_mode':
+				SwiftCalcs.active_worksheet.settings.one_indexed = $(this).val();
+				break;
 			case 'unit_mode':
 				SwiftCalcs.active_worksheet.settings.units = $(this).val();
 				switch(SwiftCalcs.active_worksheet.settings.units) {
@@ -388,6 +398,7 @@ Worksheet.open(function(_) {
     $('select.currency_unit').val(this.settings.currency_unit).on('change', handleSelectChange);
 		$('select.unit_mode').val(this.settings.units).on('change', handleSelectChange);
 		$('select.digits_select').val(this.settings.digits).on('change', handleSelectChange);
+		$('select.index_mode').val(this.settings.one_indexed).on('change', handleSelectChange);
 		$('input.datepicker').datepicker({autoHide: true, format: 'yyyy-mm-dd', endDate: new Date(), zIndex: 99999});
 		if(this.settings.currency_date != default_settings.currency_date)
 			$('input.datepicker').datepicker('setDate', this.settings.currency_date);
@@ -445,6 +456,7 @@ Worksheet.open(function(_) {
     if(typeof this.settings.approx === 'undefined') this.settings.approx = default_settings.approx;
     if(typeof this.settings.currency_date === 'undefined') this.settings.currency_date = default_settings.currency_date;
     if(typeof this.settings.currency_unit === 'undefined') this.settings.currency_unit = default_settings.currency_unit;
+    if(typeof this.settings.one_indexed === 'undefined') this.settings.one_indexed = default_settings.one_indexed;
 		this.settingsToGiac(false);
 		return this;
 	}
@@ -481,15 +493,17 @@ Worksheet.open(function(_) {
 		$.each(data, function(k,v) {
 			giac.sendCommand({setCurrencyConversion: v});
 		});
-		giac.sendCommand({digits: this.settings.digits,approx_mode: this.settings.approx == 'on', restart_string: "complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units).concat([this.settings.currency_unit])});
+		giac.sendCommand({digits: this.settings.digits,approx_mode: this.settings.approx == 'on', restart_string: "first_index(" + this.settings.one_indexed + ");complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units).concat([this.settings.currency_unit])});
 		this.settings_loaded = true;
 		if(recalculate !== false) {
 			error_shown = false;
 			this.settings.saved = true;
 			if(this.rights >= 3) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {hash_string: this.hash_string, settings: this.settings } });
 			$('.apply_now').removeClass('shown').hide();
-			if(SwiftCalcs.active_worksheet == this) 
+			if(SwiftCalcs.active_worksheet == this) {
+				this.save();
 				this.fullEvalNeeded().evaluate(); if(!SwiftCalcs.giac.auto_evaluation) { SwiftCalcs.giac.manualEvaluation(); }
+			}
 		}
 	}
 });

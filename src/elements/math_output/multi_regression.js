@@ -152,7 +152,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
         var x_units = [];
         for(var i = 0; i < _this.xdata.length; i++) {
           x_data.push(_this.xdata[i].text({check_for_array: true}));
-          x_units.push('mksa_base((' + _this.xdata[i].text({check_for_array: true}) + ')[0])');
+          x_units.push('mksa_base(at(' + _this.xdata[i].text({check_for_array: true}) + ',0))');
         }
 
         var command = 'multi_regression(' + _this.ydata.text({check_for_array: true}) + ",[" + x_data.join(",") + "]," + (_this.intercept.checked ? "1" : "0");
@@ -160,7 +160,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
           command += "," + _this.weights.text({check_for_array: true});
         command += ");";
 
-        var x_units = 'mksa_base((' + _this.ydata.text({check_for_array: true}) + ')[0])./[' + (_this.intercept.checked ? "1," : "") + x_units.join(",") + "]";
+        var x_units = 'mksa_base(at(' + _this.ydata.text({check_for_array: true}) + ',0))./[' + (_this.intercept.checked ? "1," : "") + x_units.join(",") + "]";
 
         var out_command = "diag(" + x_units + ")*([val])";
 
