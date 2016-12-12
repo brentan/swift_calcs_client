@@ -1,6 +1,6 @@
 
 var image = P(importData, function(_, super_) {
-	_.helpText = "<<image>>\nInsert an image into your worksheet from elsewhere on the internet or from your machine.";
+	_.helpText = "<<image>>\nInsert an image into your worksheet from elsewhere on the internet or from your machine.\nHELP:12";
 	_.focuasableName = 'image';
 
 	_.innerHtml = function() {

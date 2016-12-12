@@ -9,7 +9,7 @@ var slider = P(Element, function(_, super_) {
 	_.evaluatable = true;
   _.interaction_level = INTERACTION_LEVELS.FORM_ELEMENTS;
 	_.lineNumber = true;
-	_.helpText = "<<slider>>\nThe slider provides a user visual slider that a user can click and manipulate in order to change an input.\nClick the <i class='fa fa-wrench'></i> icon to customize the minimum, maximum, step size, and units of the slider.";
+	_.helpText = "<<slider>>\nThe slider provides a user visual slider that a user can click and manipulate in order to change an input.\nClick the <i class='fa fa-wrench'></i> icon to customize the minimum, maximum, step size, and units of the slider.\nHELP:18";
 
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_store') + '<span class="equality">&#8801;</span>' + focusableHTML('Slider', 'value') + "<span class='gear'><i class='fa fa-wrench'></i></span>" + (this.worksheet.allow_interaction() ? helpBlock() : '') + "</div>" + answerSpan();;

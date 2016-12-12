@@ -14,7 +14,7 @@ createGiacElement({
 createGiacElement({
 	name: 'matrix',
 	code: 'matrix',
-	helpText: '<<matrix>> of size <[rows]> by <[cols]>\nwhere value(r,c)=<[EXPR]>\nCreate a matrix of size rows by cols, where each element is equal to the expression provided based on its position.  Keep in mind Swift Calcs is zero-indexed, so the first row and first column provided r and c of 0',
+	helpText: '<<matrix>> of size <[rows]> by <[cols]>\nwhere value(r,c)=<[EXPR]>\nCreate a matrix of size rows by cols, where each element is equal to the expression provided based on its position.  Keep in mind Swift Calcs is zero-indexed, so the first row and first column provided r and c of 0\nHELP:24',
 	content: [ 
 		"of size <<MathQuill {ghost: 'rows'}>> by <<MathQuill {ghost: 'columns'}>>",
 		"where el[r,c] is <<MathQuill {ghost: 'expression for element at row r and column c'}>>",

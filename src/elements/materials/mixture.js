@@ -9,7 +9,7 @@ var mixture = P(Element, function(_, super_) {
   _.var_entered = false;
   _.last_name = "";
   _.special_footer = "Thermodynamic data from <a href='https://www.grc.nasa.gov/WWW/CEAWeb/ceaThermoBuild.htm' target='_blank'>NASA Glenn Research Center</a>";
-  _.helpText = "<<<[VAR]> = mixture>>\n<<&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <[mass or moles]> of <[name]>>>\n<<&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <[mass or moles]> of <[name]>>>\nLoad the data for the specified mixture (specify components and moles/mass of each) into the specified variable.";
+  _.helpText = "<<<[VAR]> = mixture>>\n<<&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <[mass or moles]> of <[name]>>>\n<<&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <[mass or moles]> of <[name]>>>\nLoad the data for the specified mixture (specify components and moles/mass of each) into the specified variable.\nHELP:29";
 
   _.innerHtml = function() {
     return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var_name') + '<span class="equality">&#8801;</span>' + focusableHTML('CodeBlock', "mixture") + helpBlock() + '</div>'

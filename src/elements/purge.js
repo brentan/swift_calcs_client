@@ -3,7 +3,7 @@ var purge = P(Element, function(_, super_) {
 	_.needsEvaluation = false; 
 	_.evaluatable = true;
 	_.lineNumber = true;
-	_.helpText = "<<purge <[VARS]>>>\nPurge the variable (or comma seperated list of variables) from memory.  The values of these variables is forgotten at this step for all following calculations.";
+	_.helpText = "<<purge <[VARS]>>>\nPurge the variable (or comma seperated list of variables) from memory.  The values of these variables is forgotten at this step for all following calculations.\nHELP:18";
 
 	_.innerHtml = function() {
 		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('CodeBlock', 'purge') + focusableHTML('MathQuill',  'var') + helpBlock();

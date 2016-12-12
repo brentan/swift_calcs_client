@@ -3,7 +3,7 @@ var solve = P(SettableMathOutput, function(_, super_) {
 	_.klass = ['solve'];
 	_.number_of_equations = 1;
 	_.ask_initial_guess = false;
-	_.helpText = "<<solve <[EXPR]> for <[VARS]>>>\nSolve the expression(s) given (EXPR) for the variable(s) specified in VARS.  Use the 'add another equation' link to solve systems of equations.  When solving for multiple variables, enter as a comma-seperated list.  If an initial guess is requested, enter as a comma-seperated list corresponding to the variable list.\nExample: Solve x^2=4 for x with initial guess 0.2.\nExample: Solve x^2+y=6,x-y^2=-2 for x,y";
+	_.helpText = "<<solve <[EXPR]> for <[VARS]>>>\nSolve the expression(s) given (EXPR) for the variable(s) specified in VARS.  Use the 'add another equation' link to solve systems of equations.  When solving for multiple variables, enter as a comma-seperated list.  If an initial guess is requested, enter as a comma-seperated list corresponding to the variable list.\nExample: Solve x^2=4 for x with initial guess 0.2.\nExample: Solve x^2+y=6,x-y^2=-2 for x,y\nHELP:21";
 	_.savedProperties = ['number_of_equations', 'ask_initial_guess'];
 
 	_.init = function() {

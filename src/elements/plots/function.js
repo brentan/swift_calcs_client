@@ -5,7 +5,7 @@ var plot_func = P(subplot, function(_, super_) {
 	_.x_provided = true;
 	_.show_points = false;
 	_.savedProperties = subplotProperties.slice(0).concat(['show_unit']);
-	_.helpText = "<<function plot>>\nPlot a function.  Provide the function to plot, as well as the independant variable to plot against.  For example, plot <[cos(x)]> as a function of <[x]>.";
+	_.helpText = "<<function plot>>\nPlot a function.  Provide the function to plot, as well as the independant variable to plot against.  For example, plot <[cos(x)]> as a function of <[x]>.\nHELP:23";
 
 	_.innerHtml = function() {
 		return super_.innerHtml.call(this).replace('YIELD','<div class="' + css_prefix + 'focusableItems" data-id="1">plot&nbsp;' + focusableHTML('MathQuill',  'eq0') + '&nbsp;as a function of&nbsp;' + focusableHTML('MathQuill',  'eq1') + '<span class="show_units" style="display:none;">&nbsp;with x-axis units of&nbsp;' + focusableHTML('MathQuill',  'unit_box') + '</span><span class="show_units_link explain">&nbsp;<a href="#">Add x-axis units</a></span></div>');

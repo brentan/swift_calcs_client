@@ -4,7 +4,7 @@ var material = P(material_holder, function(_, super_) {
   _.class_name = "material";
   _.blank_message = "Material"
   _.special_footer = "Material data courtesy <a href='http://www.makeitfrom.com/' target='_blank'>MakeItFrom.com</a>";
-  _.helpText = "<<<[VAR]> = material <[name]>>>\nLoad the data for the specified material into the specified variable.";
+  _.helpText = "<<<[VAR]> = material <[name]>>>\nLoad the data for the specified material into the specified variable.\nHELP:28";
 
   _.postInsertHandler = function() {
     super_.postInsertHandler.call(this);

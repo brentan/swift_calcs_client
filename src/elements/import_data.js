@@ -7,7 +7,7 @@
 var importData = P(Element, function(_, super_) {
 	_.klass = ['importData','hide_print'];
 	_.evaluatable = false;
-	_.helpText = "<<import>>\nImport files or attach data to your worksheet.";
+	_.helpText = "<<import>>\nImport files or attach data to your worksheet.\nHELP:25";
 	_.active_items = 0;
 	_.dropzone_showing = true;
 	_.no_save = true;

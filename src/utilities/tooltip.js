@@ -7,7 +7,7 @@ $(function() {
   // things between <[]> will be placed in a bounding box to indicate input (no nested boxes or code blocks), 
   // and things between || become an 'explanation' span.  \n changed to <br>
   var markup = function(html) {
-  	return html.replace(/<\[([^>]*)\]>/g,'<span class="box">$1</span>').replace(/<<(.*)>>/g,'<span class="code">$1</span>').replace(/\n/g,'<br>').replace(/\|(.*)\|/g,'<span class="explanation">$1</span>');
+  	return html.replace(/HELP:([0-9]+)/g,'<a href="#" class="help_item" style="color:#888888;" data-id="$1">Show Help Tutorial For This Topic</a>').replace(/<\[([^>]*)\]>/g,'<span class="box">$1</span>').replace(/<<(.*)>>/g,'<span class="code">$1</span>').replace(/\n/g,'<br>').replace(/\|(.*)\|/g,'<span class="explanation">$1</span>');
   }
   // Create a tooltip with content HTML and location topblock.  Optional leftblock can be used as a different element to use for left position.  Assumes blocks are within sc_element_container
   var createTooltip = SwiftCalcs.createTooltip = function(html, topBlock, leftBlock, high_z) {

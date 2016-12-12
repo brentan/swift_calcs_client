@@ -1,6 +1,6 @@
 
 var csv = P(importData, function(_, super_) {
-	_.helpText = "<<Image>>\nInsert data from a .csv (comma seperated values) file into your worksheet.  If you have data in another format (such as MS Excel), you can open the file in its native program and save-as a 'csv' file.";
+	_.helpText = "<<Image>>\nInsert data from a .csv (comma seperated values) file into your worksheet.  If you have data in another format (such as MS Excel), you can open the file in its native program and save-as a 'csv' file.\nHELP:25";
 	_.focuasableName = 'csv';
 });
 

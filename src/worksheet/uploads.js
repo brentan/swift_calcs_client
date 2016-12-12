@@ -109,8 +109,9 @@ Worksheet.open(function(_) {
         upload_bind_complete = true;
 	}
 	_.unbindUploads = function() {
-        if(upload_bind_complete)
-		  this.jQ.find('input.file_uploads').fileupload('destroy');
+        try {
+          if(upload_bind_complete) this.jQ.find('input.file_uploads').fileupload('destroy');
+        } catch(e) { }
         upload_bind_complete = false;
 	}
 });

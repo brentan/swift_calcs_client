@@ -2,7 +2,7 @@ var plot_line = P(subplot, function(_, super_) {
 	_.plot_type = 'plot_line';
 	_.c3_type = 'line';
 	_.show_points = true;
-	_.helpText = "<<line plot>>\nPlot a line based on x and y data.  Provide the x and y data to plot.";
+	_.helpText = "<<line plot>>\nPlot a line based on x and y data.  Provide the x and y data to plot.\nHELP:23";
 
 	_.innerHtml = function() {
 		return super_.innerHtml.call(this).replace('YIELD','<div class="' + css_prefix + 'focusableItems" data-id="1">x data:&nbsp;' + focusableHTML('MathQuill',  'eq0') + '</div><div class="' + css_prefix + 'focusableItems" data-id="2">y data:&nbsp;' + focusableHTML('MathQuill',  'eq1') + '</div>');

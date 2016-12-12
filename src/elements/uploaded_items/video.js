@@ -3,7 +3,7 @@
  */
 
 var video = P(Element, function(_, super_) {
-	_.helpText = "<<video>>\nEmbed a video from youtube or vimeo into your worksheet.";
+	_.helpText = "<<video>>\nEmbed a video from youtube or vimeo into your worksheet.\nHELP:12";
 	_.klass = ['import_video'];
 
 	_.innerHtml = function() {

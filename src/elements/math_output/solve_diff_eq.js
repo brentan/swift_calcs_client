@@ -3,8 +3,8 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 	_.klass = ['desolve'];
 	_.number_of_equations = 1;
 	_.numeric_mode = false;
-	_.helpTextSymbolic = "<<solve differential equation <[EXPR]> for <[FUNC]>>>\nSolve the differential equation(s) and condition(s) given (EXPR) for the function specified in FUNC.  Use apostrophes in EXPR to indicate a derivative.  Use the 'add another equation' link to add more equations or conditions.\nExample: Solve differential equation f'' + f = cos(x), f(0) = 1, f'(0) = 0 for f(x)";
-	_.helpTextNumeric = "<<solve differential equation y'=<[EXPR]> and y(0)=<[INIT]> for <[x]> from <[0]> to <[end]>>>\nSolve the differential equation(s) given (EXPR) numerically.  Each equation is the derivative of a value y.  Initial conditions for each y must also be provided, as well as the end value for the dependant variable to which the solution should solve.  The solver will return a matrix with value from the intial condition to the final value, with values for y in between.\nExample: Solve differential equation y' = y * cos(x), y(0) = 1, for x from 0 to 1";
+	_.helpTextSymbolic = "<<solve differential equation <[EXPR]> for <[FUNC]>>>\nSolve the differential equation(s) and condition(s) given (EXPR) for the function specified in FUNC.  Use apostrophes in EXPR to indicate a derivative.  Use the 'add another equation' link to add more equations or conditions.\nExample: Solve differential equation f'' + f = cos(x), f(0) = 1, f'(0) = 0 for f(x)\nHELP:22";
+	_.helpTextNumeric = "<<solve differential equation y'=<[EXPR]> and y(0)=<[INIT]> for <[x]> from <[0]> to <[end]>>>\nSolve the differential equation(s) given (EXPR) numerically.  Each equation is the derivative of a value y.  Initial conditions for each y must also be provided, as well as the end value for the dependant variable to which the solution should solve.  The solver will return a matrix with value from the intial condition to the final value, with values for y in between.\nExample: Solve differential equation y' = y * cos(x), y(0) = 1, for x from 0 to 1\nHELP:22";
 	_.savedProperties = ['number_of_equations', 'numeric_mode'];
 
 	_.init = function() {

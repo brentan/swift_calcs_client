@@ -4,7 +4,7 @@ var plot_parametric = P(subplot, function(_, super_) {
   _.c3_type = 'scatter';
   _.line_weight = 0;
   _.x_provided = true;
-  _.helpText = "<<parametric plot>>\nPlot two functions that determine the x and y coordinates, based on an independant variable.  Provide the x and y functions to plot, as well as the independant variable to plot against.  For example, plot x=<[cos(t)]> and y=<[sin(t)]> for <[t]> from <[-180]> to <[180]> with step size of <[1]>.";
+  _.helpText = "<<parametric plot>>\nPlot two functions that determine the x and y coordinates, based on an independant variable.  Provide the x and y functions to plot, as well as the independant variable to plot against.  For example, plot x=<[cos(t)]> and y=<[sin(t)]> for <[t]> from <[-180]> to <[180]> with step size of <[1]>.\nHELP:23";
 
   _.innerHtml = function() {
     return super_.innerHtml.call(this).replace('YIELD','<div class="' + css_prefix + 'focusableItems" data-id="1">x:&nbsp;' + focusableHTML('MathQuill',  'eqx') + '</div><div class="' + css_prefix + 'focusableItems" data-id="2">y:&nbsp;' + focusableHTML('MathQuill',  'eqy') + '<div class="' + css_prefix + 'focusableItems" data-id="3">for&nbsp;' + focusableHTML('MathQuill',  'var') + '&nbsp;from&nbsp;' + focusableHTML('MathQuill',  'startval') + '&nbsp;to&nbsp;' + focusableHTML('MathQuill',  'endval') + '&nbsp;with step size of&nbsp;' + focusableHTML('MathQuill',  'step') + '</div>');

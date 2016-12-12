@@ -394,7 +394,7 @@ var loadWorker = function(giacHandler) {
       case 'setStatus':
         if(text === '') {
         	giacHandler.giac_ready = true;
-        	if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.settingsToGiac(false);
+        	if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setSettings(false);
 					$('.worksheet_holder').removeClass(css_prefix + 'giac_loading');
 					giac.postMessage(JSON.stringify({objectList: true}));
         	return;

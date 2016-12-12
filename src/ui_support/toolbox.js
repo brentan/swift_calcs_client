@@ -284,13 +284,4 @@ $(function() {
       arrow.addClass('fa-caret-down').removeClass('fa-caret-right');
     }
   });
-  // Settings
-  $('body').on('click', 'a.custom_units', function(e) {
-    $('div.custom_units').addClass('shown');
-    $(this).hide();
-    SwiftCalcs.active_worksheet.settings.custom_units = true;
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  });
 });
