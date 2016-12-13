@@ -589,8 +589,8 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     }
     pressure = this.set_P(pressure);
     enthalpy = this.set_Enthalpy(enthalpy);
-    if((typeof enthalpy === "string") && (typeof pressure === "string"))
-      return "[" + enthalpy + "," + pressure + "]";
+    if((typeof enthalpy === "string") && (typeof pressure === "string")) 
+      return "[ " + enthalpy + " , " + pressure + " ]";
     else
       return '';
   }
@@ -1017,19 +1017,19 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   // Multi-get
   _.TP = function() {
-    return "[" + this.T + "," + this.P + "]";
+    return "[" + this.T() + "," + this.P() + "]";
   }
   _.hP = function() {
-    return "[" + this.h + "," + this.P + "]";
+    return "[" + this.h() + "," + this.P() + "]";
   }
   _.sP = function() {
-    return "[" + this.s + "," + this.P + "]";
+    return "[" + this.s() + "," + this.P() + "]";
   }
   _.sv = function() {
-    return "[" + this.s + "," + this.v + "]";
+    return "[" + this.s() + "," + this.v() + "]";
   }
   _.uv = function() {
-    return "[" + this.u + "," + this.v + "]";
+    return "[" + this.u() + "," + this.v() + "]";
   }
   // Saturation
   _.getTsat = function() {
