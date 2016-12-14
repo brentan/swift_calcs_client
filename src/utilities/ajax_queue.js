@@ -76,7 +76,13 @@ var ajaxQueueClass = P(function(_) {
 					if(ajaxQueue.ignore_errors[id] === true) return;
 		  		window.showPopupOnTop();
 		  		$('.popup_dialog .full').html("<div class='title'>Save Failed</div><div>There was a problem while saving your worksheet.  To avoid data-loss, saving has been disabled.  Please reload your browser window to correct this issue.</div>");
-		      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+		      $('.popup_dialog .bottom_links').html('<button class="grey">Close</button>');
+		      $('.popup_dialog .bottom_links button').on('click', function() {
+			      if(SwiftCalcs.active_worksheet && (SwiftCalcs.active_worksheet.hash_string == id))
+			      	SwiftCalcs.active_worksheet.FailedSaveMessage();
+		      	window.hidePopupOnTop();
+		      	return false;
+		      });
 		      window.resizePopup(true);
 		      SwiftCalcs.active_worksheet.FailedSaveMessage();
 				} else {
@@ -112,10 +118,14 @@ var ajaxQueueClass = P(function(_) {
 					if(response.alert) {
 			  		window.showPopupOnTop();
 			  		$('.popup_dialog .full').html("<div class='title'>" + response.title + "</div><div>" + response.message + "</div>");
-			      $('.popup_dialog .bottom_links').html('<button class="close">Close</button>');
+			      $('.popup_dialog .bottom_links').html('<button class="grey">Close</button>');
+			      $('.popup_dialog .bottom_links button').on('click', function() {
+			      	if(SwiftCalcs.active_worksheet && (SwiftCalcs.active_worksheet.hash_string == id))
+				      	SwiftCalcs.active_worksheet.FailedSaveMessage();
+			      	window.hidePopupOnTop();
+			      	return false;
+			      });
 			      window.resizePopup(true);
-			      if(SwiftCalcs.active_worksheet.hash_string == id)
-			      	SwiftCalcs.active_worksheet.FailedSaveMessage();
 					}
 					else
       			showNotice('Error while saving: ' + response.message, 'red');
