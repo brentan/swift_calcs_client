@@ -121,7 +121,7 @@ var regression = P(SettableMathOutput, function(_, super_) {
 				var out_command;
 				switch(_this.mode) {
 					case 'polynomial':
-						out_command = "at(apply(y->{ local x_unit, y_unit, j, out; out := 0; x_unit = " + x_unit + "; y_unit = " + y_unit + "; out := ('x'/x_unit)^(colDim([y]) - 1) * at(y,0) * y_unit; for(j:=1; j < colDim([y]); j++) { out := out + (" + x + "/x_unit)^(colDim([y]) - j - 1) * y[j] * y_unit; } return out; }, [[val]]),0)"
+						out_command = "at(apply(y->{ local x_unit, y_unit, j, out; out := 0; x_unit = " + x_unit + "; y_unit = " + y_unit + "; out := ('x'/x_unit)^(colDim([y]) - 1) * at(y,0) * y_unit; for(j:=1; j < colDim([y]); j++) { out := out + (" + x + "/x_unit)^(colDim([y]) - j - 1) * at(y,j) * y_unit; } return out; }, [[val]]),0)"
 						break;
 					case 'power':
 						out_command = "at([val],1)*" + y_unit + "*(" + x + "/" + x_unit + ")^(at([val],0))";
