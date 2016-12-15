@@ -88,6 +88,9 @@ var imageBlock = P(uploadedItem, function(_, super_) {
 		return false;
 	}
 	_.setURL = function(url) {
+		url = url.replace('swiftcalcs.s3.','swiftcalcs-data.s3-us-west-2.');
+		url = url.replace('swiftcalcsdata.s3.','swiftcalcs-data.s3-us-west-2.');
+		url = url.replace('swiftcalcs-data.s3.','swiftcalcs-data.s3-us-west-2.');
 		this.url = url;
 		this.jQ.find('.' + css_prefix + 'top').find('img').remove()
 		this.jQ.find('.' + css_prefix + 'top').append('<img src="' + this.url + '">');

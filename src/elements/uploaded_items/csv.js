@@ -271,6 +271,9 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 		this.setIndependentVars(this.varName.text().trim());
 	}
 	_.setURL = function(url) {
+		url = url.replace('swiftcalcs.s3.','swiftcalcs-data.s3-us-west-2.');
+		url = url.replace('swiftcalcsdata.s3.','swiftcalcs-data.s3-us-west-2.');
+		url = url.replace('swiftcalcs-data.s3.','swiftcalcs-data.s3-us-west-2.');
 		this.url = url;
 		var _this = this;
 		this.jQ.find('.file_name').html(this.upload_name);
