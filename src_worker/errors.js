@@ -1,5 +1,9 @@
 var fix_message = function(message) {
 	message = message.replace(/:.*:[ ]*/,'').replace(/([ '])_/g,"$1");
+    if(message.match(/^Temperature Units Warning/)) {
+        // Temperature warning.  Update this to a smaller error
+        return message.replace("Temperature Units Warning","Temperature Ambiguity").replace(/deg(F|C)/g,"&deg;$1").replace(/delta(F|C)/g,"&Delta;&deg;$1").replace(/delta(K|Rankine)/g,"&Delta;$1") + "<BR><a data-id='30' class='help_item' href='#' style='color:#666666;'>Learn More</a>";
+    }
 	var tester = [
 		{ sequence: /^.*Expecting an expression, not a function.*$/i, update: 'Expecting an expression, not a function.  For example, to take the derivative of a function <i>f</i>, <i>df/dx</i> should instead be written as <i>d<b>f(x)</b>/dx</i>'},
 		{ sequence: /^[\s]*sto.*not allowed!.*$/, update: 'Invalid Assignment.  The left side of the assignment should be a variable or function name, such as <i>x&#8802;</i> or <i>f(x)&#8802;</i>'},

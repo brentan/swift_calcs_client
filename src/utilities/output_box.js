@@ -37,17 +37,18 @@ var outputBox = P(function(_) {
 		this.jQ.append(html);
 		return this;
 	}
-	_.setWarning = function(html, append) {
+	_.setWarning = function(html, append, hide_circle) {
 		html = html.replace(/warning[,:\-]/i, "Notice:").replace(/warning/i, "Notice");
 		if(!append) this.clearState();
 		this.el.jQ.addClass('warn');
 		var err = $('<div/>').addClass('warning').html(html);
-		$('<a href="#"><i class="fa fa-fw fa-question-circle"></i></a>').on('click', function(e) {
-			window.loadToPopup('/error_help', {message: html});
-			e.preventDefault();
-			e.stopPropagation();
-			return false;
-		}).appendTo(err);
+		if(hide_circle !== true)
+			$('<a href="#"><i class="fa fa-fw fa-question-circle"></i></a>').on('click', function(e) {
+				window.loadToPopup('/error_help', {message: html});
+				e.preventDefault();
+				e.stopPropagation();
+				return false;
+			}).appendTo(err);
 		this.jQ.append(err);
 		this.jQ.addClass('warn');
 		return this;

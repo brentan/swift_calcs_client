@@ -159,9 +159,15 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 				this.outputBox.jQ.removeClass('calculating');
 				if(this.outputMode != 1) {
 					var already_issued = [];
+					var temp_notice_issued = false;
 					for(var i = 0; i < result[0].warnings.length; i++) {
 						if(already_issued.indexOf(result[0].warnings[i]) >= 0) continue;
-						this.outputBox.setWarning(result[0].warnings[i],true);
+						if(result[0].warnings[i].match(/^Temperature Ambiguity/)) {
+							if(temp_notice_issued) continue
+							temp_notice_issued = true;
+							this.outputBox.setWarning(result[0].warnings[i],true,true);
+						} else
+							this.outputBox.setWarning(result[0].warnings[i],true);
 						already_issued.push(result[0].warnings[i]);
 					}
 					this.outputBox.expand();

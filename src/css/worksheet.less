@@ -452,6 +452,14 @@ div.sc_element_container {
               background-color: #e7e7e7;
               div.pulldown { display: block; }
             }
+            &.warn {
+              &:hover {
+                div.pulldown { display: none; }
+              }
+              & > table > tbody > tr:hover {
+                div.pulldown { display: block; }
+              }
+            }
             & > div, div.answer {
               float: right;
             }
