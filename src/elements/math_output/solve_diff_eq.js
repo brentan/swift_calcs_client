@@ -250,7 +250,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 				} else {
 					_this.dependent_vars = GetDependentVars(command, step_var.split(","));
 					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
-					_this.commands.unshift({command: command, protect_vars: step_var, nomarkup: true, pre_command: (_this.numeric_mode ? 'mksareduce_mode(1);' : 'mksavariable_mode(1);') }); 
+					_this.commands.unshift({command: command, protect_vars: step_var, nomarkup: true }); 
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}

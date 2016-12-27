@@ -15,7 +15,6 @@ $(function() {
 		$('div.custom_units span.length').html('<span class="custom_unit_box" data-unit="' + item.settings.base_units[0] + '">' + window.SwiftCalcsLatexHelper.latexToHtml("\\Unit{" + item.settings.base_units[0] + "}") + '</span>');
 		$('div.custom_units span.mass').html('<span class="custom_unit_box" data-unit="' + item.settings.base_units[1] + '">' + window.SwiftCalcsLatexHelper.latexToHtml("\\Unit{" + item.settings.base_units[1] + "}") + '</span>');
 		$('div.custom_units span.time').html('<span class="custom_unit_box" data-unit="' + item.settings.base_units[2] + '">' + window.SwiftCalcsLatexHelper.latexToHtml("\\Unit{" + item.settings.base_units[2] + "}") + '</span>');
-		$('div.custom_units span.temp').html('<span class="custom_unit_box" data-unit="' + item.settings.base_units[3] + '">' + window.SwiftCalcsLatexHelper.latexToHtml("\\Unit{" + item.settings.base_units[3] + "}") + '</span>');
 		var y = $('.popup_dialog .full').scrollTop(); 
 		$('div.custom_units .added_units').html('');
 		var new_settings = [];
@@ -80,7 +79,7 @@ $(function() {
 		item.settings.base_units[0] = $('div.custom_units span.length .custom_unit_box').attr('data-unit');
 		item.settings.base_units[1] = $('div.custom_units span.mass .custom_unit_box').attr('data-unit');
 		item.settings.base_units[2] = $('div.custom_units span.time .custom_unit_box').attr('data-unit');
-		item.settings.base_units[3] = $('div.custom_units span.temp .custom_unit_box').attr('data-unit');
+		item.settings.base_units[3] = $('select.temperature').val();
 		item.settings.derived_units = [];
 		$('div.custom_units .added_units .custom_unit_box').each(function() {
 			item.settings.derived_units.push($(this).attr('data-unit'));
@@ -115,23 +114,28 @@ $(function() {
 				case 'index_mode':
 					item.settings.one_indexed = $(this).val();
 					break;
+				case 'temperature':
+					item.settings.base_units[3] = $(this).val();
+					break;
 				case 'unit_mode':
 					item.settings.units = $(this).val();
 					switch(SwiftCalcs.active_worksheet.settings.units) {
 						case 'mks':
-							var base = ['m','kg','s','K'];
+							var base = ['m','kg','s'];
 							var derived = ['A','mol','cd','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'];
 							break;
 						case 'cgs':
-							var base = ['cm','g','s','K'];
+							var base = ['cm','g','s'];
 							var derived = ['mL','A','mol','cd','N','Ohm','Pa','J','T','C','F','H','Hz','V','W','Wb'];
 							break;
 						case 'ips':
-							var base = ['in','lb','s','Rankine'];
+							var base = ['in','lb','s'];
 							var derived = ['gal','A','mol','cd','lbf','Ohm','psi','Btu','T','C','F','H','Hz','V','hp','Wb'];
 							break;
 					}
+					var current_temp = item.settings.base_units[3];
 					item.settings.base_units = base;
+					item.settings.base_units.push(current_temp);
 					item.settings.derived_units = derived;
 					window.SwiftCalcsSettings.setUnitSidebar(item, false);
 					break;
@@ -150,6 +154,7 @@ $(function() {
 		$('select.digits_select').val(item.settings.digits).on('change', handleSelectChange);
 		$('select.index_mode').val(item.settings.one_indexed).on('change', handleSelectChange);
 		$('select.thousands').val(item.settings.thousands).on('change', handleSelectChange);
+		$('select.temperature').val(item.settings.base_units[3]).on('change', handleSelectChange);
 		$('.popup_dialog .bottom_links button.close').on('click', function(e) { 
 			$('.popup_dialog .settings').remove();
 			window.hideDialogs();
@@ -282,7 +287,7 @@ Worksheet.open(function(_) {
     //out += ", ";
 		//out += this.settings.digits;
 		//out += " digits, " 
-		out += this.settings.base_units[0] + ', ' + this.settings.base_units[1] + ', ' + this.settings.base_units[2] + ', ' + this.settings.base_units[3];
+		out += this.settings.base_units[0] + ', ' + this.settings.base_units[1] + ', ' + this.settings.base_units[2] + ', ' + this.settings.base_units[3].replace("deg","&deg;");
 		return out;
 	}
   var start_approx_mode = false;
@@ -375,7 +380,7 @@ Worksheet.open(function(_) {
 		$.each(data, function(k,v) {
 			giac.sendCommand({setCurrencyConversion: v});
 		});
-		giac.sendCommand({digits: this.settings.digits,approx_mode: this.settings.approx == 'on', restart_string: "first_index(" + this.settings.one_indexed + ");complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units).concat([this.settings.currency_unit])});
+		giac.sendCommand({digits: this.settings.digits,approx_mode: this.settings.approx == 'on', restart_string: "one_index(" + this.settings.one_indexed + ");complex_mode:=" + (this.settings.complex == 'on' ? '1' : '0') + ";angle_radian:=" + (this.settings.angle == 'rad' ? '1' : '0') + ";set_units(_" + (this.settings.angle == 'rad' ? 'rad' : 'deg') + ");", set_units: this.settings.base_units.concat(this.settings.derived_units).concat([this.settings.currency_unit])});
 		this.settings_loaded = true;
 		if(recalculate !== false) {
 			error_shown = false;

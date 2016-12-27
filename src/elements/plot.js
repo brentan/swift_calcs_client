@@ -167,41 +167,50 @@ var plot = P(Element, function(_, super_) {
 			// Build command list
 			this.commands = [];
 			if(this.x_units) {
-				this.commands.push({ command: 'evalf(mksa_remove(' + this.worksheet.latexToText(this.x_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(mksa_coefficient(' + this.worksheet.latexToText(this.x_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(mksa_offset(' + this.worksheet.latexToText(this.x_units) + '))', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(this.x_units) + ')))', nomarkup: true });
 				this.commands.push({ command: '1.0', nomarkup: true});
 			} else if(x_unit) {
-				this.commands.push({ command: 'evalf(inv(unit_remove(' + this.worksheet.latexToText(x_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(inv(default_units_coefficient(' + this.worksheet.latexToText(x_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(-1*default_units_offset(' + this.worksheet.latexToText(x_unit) + ')', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(x_unit) + ')))', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(default_base(' + this.worksheet.latexToText(x_unit) + ')))', nomarkup: true });
 			} else {
 				this.commands.push({ command: '1.0', nomarkup: true });
+				this.commands.push({ command: '0.0', nomarkup: true });
 				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
 				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
 			}
 			if(this.y_units) {
-				this.commands.push({ command: 'evalf(mksa_remove(' + this.worksheet.latexToText(this.y_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(mksa_coefficient(' + this.worksheet.latexToText(this.y_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(mksa_offset(' + this.worksheet.latexToText(this.y_units) + '))', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(this.y_units) + ')))', nomarkup: true });
 				this.commands.push({ command: '1.0', nomarkup: true});
 			} else if(y_unit) {
-				this.commands.push({ command: 'evalf(inv(unit_remove(' + this.worksheet.latexToText(y_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(inv(default_units_coefficient(' + this.worksheet.latexToText(y_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(-1*default_units_offset(' + this.worksheet.latexToText(y_unit) + ')', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(y_unit) + ')))', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(default_base(' + this.worksheet.latexToText(y_unit) + ')))', nomarkup: true });
 			} else {
 				this.commands.push({ command: '1.0', nomarkup: true });
+				this.commands.push({ command: '0.0', nomarkup: true });
 				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
 				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
 			}
 			if(this.y2_units) {
-				this.commands.push({ command: 'evalf(mksa_remove(' + this.worksheet.latexToText(this.y2_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(mksa_coefficient(' + this.worksheet.latexToText(this.y2_units) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(mksa_offset(' + this.worksheet.latexToText(this.y2_units) + '))', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(this.y2_units) + ')))', nomarkup: true });
 				this.commands.push({ command: '1.0', nomarkup: true});
 			} else if(y2_unit) {
-				this.commands.push({ command: 'evalf(inv(unit_remove(' + this.worksheet.latexToText(y2_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(inv(default_units_coefficient(' + this.worksheet.latexToText(y2_unit) + '))', nomarkup: true });
+				this.commands.push({ command: 'evalf(-1*default_units_offset(' + this.worksheet.latexToText(y2_unit) + ')', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(mksa_base(' + this.worksheet.latexToText(y2_unit) + ')))', nomarkup: true });
 				this.commands.push({ command: 'latex(evalf(default_base(' + this.worksheet.latexToText(y2_unit) + ')))', nomarkup: true });
 			} else {
 				this.commands.push({ command: '1.0', nomarkup: true });
+				this.commands.push({ command: '0.0', nomarkup: true });
 				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
 				this.commands.push({ command: 'latex(1.0)', nomarkup: true });
 			}
@@ -217,14 +226,17 @@ var plot = P(Element, function(_, super_) {
 	}
 	_.evaluationFinished = function(result, evaluation_id) {
 		this.x_unit_conversion = result[0].returned*1;
-		this.x_unit = result[1].returned;
-		this.x_unit_label = this.x_units ? this.x_units : result[2].returned;
-		this.y_unit_conversion = result[3].returned*1;
-		this.y_unit = result[4].returned;
-		this.y_unit_label = this.y_units ? this.y_units : result[5].returned;
-		this.y2_unit_conversion = result[6].returned*1;
-		this.y2_unit = result[7].returned;
-		this.y2_unit_label = this.y2_units ? this.y2_units : result[8].returned;
+		this.x_unit_offset = result[1].returned*1;
+		this.x_unit = result[2].returned;
+		this.x_unit_label = this.x_units ? this.x_units : result[3].returned;
+		this.y_unit_conversion = result[4].returned*1;
+		this.y_unit_offset = result[5].returned*1;
+		this.y_unit = result[6].returned;
+		this.y_unit_label = this.y_units ? this.y_units : result[7].returned;
+		this.y2_unit_conversion = result[8].returned*1;
+		this.y2_unit_offset = result[9].returned*1;
+		this.y2_unit = result[10].returned;
+		this.y2_unit_label = this.y2_units ? this.y2_units : result[11].returned;
 		var kids = this.children();
 		if(kids.length) 
 			kids[0].continueEvaluation(evaluation_id)
@@ -249,12 +261,12 @@ var plot = P(Element, function(_, super_) {
 		var axes = {};
 		var children = this.children();
 		var x_ticks = [];
-		var x_max = this.x_max === false ? this.calc_x_max : (this.x_max * this.x_unit_conversion); // Convert to mksa from requested unit base
-		var x_min = this.x_min === false ? this.calc_x_min : (this.x_min * this.x_unit_conversion);
-		var y_min = this.y_min === false ? undefined : (this.y_min * this.y_unit_conversion);
-		var y_max = this.y_max === false ? undefined : (this.y_max * this.y_unit_conversion);
-		var y2_min = this.y2_min === false ? undefined : (this.y2_min * this.y2_unit_conversion);
-		var y2_max = this.y2_max === false ? undefined : (this.y2_max * this.y2_unit_conversion);
+		var x_max = this.x_max === false ? this.calc_x_max : ((this.x_max + this.x_unit_offset) * this.x_unit_conversion); // Convert to mksa from requested unit base
+		var x_min = this.x_min === false ? this.calc_x_min : ((this.x_min + this.x_unit_offset) * this.x_unit_conversion);
+		var y_min = this.y_min === false ? undefined : ((this.y_min + this.y_unit_offset) * this.y_unit_conversion);
+		var y_max = this.y_max === false ? undefined : ((this.y_max + this.y_unit_offset) * this.y_unit_conversion);
+		var y2_min = this.y2_min === false ? undefined : ((this.y2_min + this.y2_unit_offset) * this.y2_unit_conversion);
+		var y2_max = this.y2_max === false ? undefined : ((this.y2_max + this.y2_unit_offset) * this.y2_unit_conversion);
 		var x_unit = this.x_units ? this.x_unit : false;
 		var y_unit = this.y_units ? this.y_unit : false;
 		var y2_unit = this.y2_units ? this.y2_unit : false;
@@ -285,13 +297,19 @@ var plot = P(Element, function(_, super_) {
 					children[i].outputBox.setWarning('Function Plot Ignored.  Function is plotted with a bar chart, which assumes a monotonic x-axis.').expand();
 					continue;
 				}
-				if(x_min === false) x_min = -5 * this.x_unit_conversion;
-				if(x_max === false) x_max = 5 * this.x_unit_conversion;
+				if(x_min === false) x_min = (-5 + this.x_unit_offset) * this.x_unit_conversion;
+				if(x_max === false) x_max = (5 + this.x_unit_offset) * this.x_unit_conversion;
 			}
 			var y_vals = children[i].ys.slice(0);
 			if(children[i].y_axis == 'y2') {
+				var offset = this.y2_unit_offset;
+				if(y2_unit && (y2_unit != children[i].y_unit)) {
+					// Check for temperature mis-matching...if I get a delta unit back, ignore the offset.
+					if(children[i].y_unit && y2_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/)) 
+						offset = 0;
+				}
 				for(var j = 1; j < y_vals.length; j++)
-					y_vals[j] = y_vals[j] / this.y2_unit_conversion;  // Convert from mksa back to requested unit base
+					y_vals[j] = y_vals[j] / this.y2_unit_conversion - offset;  // Convert from mksa back to requested unit base
 				if(this.y2_log) {
 					for(var j=1; j<y_vals.length; j++){
 					  if((y2_min === undefined) || (y_vals[j] < y2_min)) y2_min = y_vals[j];
@@ -300,8 +318,14 @@ var plot = P(Element, function(_, super_) {
 					}
 				} 
 			} else {
+				var offset = this.y_unit_offset;
+				if(y_unit && (y_unit != children[i].y_unit)) {
+					// Check for temperature mis-matching...if I get a delta unit back, ignore the offset.
+					if(children[i].y_unit && y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/)) 
+						offset = 0;
+				}
 				for(var j = 1; j < y_vals.length; j++)
-					y_vals[j] = y_vals[j] / this.y_unit_conversion;  // Convert from mksa back to requested unit base
+					y_vals[j] = y_vals[j] / this.y_unit_conversion - offset;  // Convert from mksa back to requested unit base
 				if(this.y_log) {
 					for(var j=1; j<y_vals.length; j++){
 					  if((y_min === undefined) || (y_vals[j] < y_min)) y_min = y_vals[j];
@@ -314,44 +338,71 @@ var plot = P(Element, function(_, super_) {
 			els['data_' + children[i].id] = children[i];
 			if(!ignore_custom_xs) {
 				xs['data_' + children[i].id] = 'x_' + children[i].id;
+				if(x_unit && (x_unit != children[i].x_unit)) {
+					if(!((this.x_unit_label.match(/\{(K|Rankine)\}/)) && children[i].x_unit && children[i].x_unit.match(/\{\\delta(C|F|K|Rankine)\}/))) { // Hide this for K/Rankine as base unit, as this is 'same' unit type (no offset, deltaK = K, deltaRankine = Rankine)
+						this.expand();
+						if((typeof children[i].x_unit === 'undefined') || (children[i].x_unit == '1.0'))
+							children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted on an x-axis with units, but this plot has no associated x-axis units.', true).expand();
+						else if(x_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && children[i].x_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
+							children[i].outputBox.setWarning('Incompatible x-axis units.  Data returned units in absolute temperature (' + this.worksheet.latexToUnit(this.x_unit_label.replace("delta","deg"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however x-axis is set to relative temperature (' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
+						else if(children[i].x_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && x_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
+							children[i].outputBox.setWarning('Incompatible x-axis units.  Data returned units in relative temperature (' + this.worksheet.latexToUnit(this.x_unit_label.replace(/\{(deg)?/,"{\\delta"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however x-axis is set to absolute temperature (' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
+						else
+							children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted, but its x-axis units (' + this.worksheet.latexToUnit(children[i].x_unit)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;") + ') are not the same as shown.', true).expand();
+						children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+					} 
+				} else
+					x_unit = children[i].x_unit;
+				var x_vals = children[i].xs.slice(0);
+				for(var j = 1; j < x_vals.length; j++)
+					x_vals[j] = x_vals[j] / this.x_unit_conversion - this.x_unit_offset;  // Convert from mksa back to requested unit base
 				if(!(children[i] instanceof plot_func)) {
 					x_min = x_min === false ? Math.min.apply(Math, children[i].xs.slice(1)) : Math.min(Math.min.apply(Math, children[i].xs.slice(1)), x_min);
 					x_max = x_max === false ? Math.max.apply(Math, children[i].xs.slice(1)) : Math.max(Math.max.apply(Math, children[i].xs.slice(1)), x_max);
 					if(this.x_min !== false) x_min = Math.max(x_min, this.x_min);
 					if(this.x_max !== false) x_max = Math.min(x_max, this.x_max);
 				}
-				if(x_unit && (x_unit != children[i].x_unit)) {
-					this.expand();
-					children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted, but its x-axis units are not the same as shown.', true).expand();
-					children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
-				} else
-					x_unit = children[i].x_unit;
-				var x_vals = children[i].xs.slice(0);
-				for(var j = 1; j < x_vals.length; j++)
-					x_vals[j] = x_vals[j] / this.x_unit_conversion;  // Convert from mksa back to requested unit base
 				if(this.x_log) {
 					for(var j=1; j<x_vals.length; j++){
 					  x_vals[j] = Math.log(x_vals[j]) / Math.LN10;
 					}
 					if(x_min <= 0) x_min = 1e-15;
 					if(x_max <= 0) x_max = 2e-15;
-				  x_min = Math.log(x_min / this.x_unit_conversion) / Math.LN10;
-				  x_max = Math.log(x_max / this.x_unit_conversion) / Math.LN10;
+				  x_min = Math.log(x_min / this.x_unit_conversion - this.x_unit_offset) / Math.LN10;
+				  x_max = Math.log(x_max / this.x_unit_conversion - this.x_unit_offset) / Math.LN10;
 				} 
 				columns.push(x_vals);
 			}
 			if(children[i].y_axis != 'y2') {
 				if(y_unit && (y_unit != children[i].y_unit)) {
-					this.expand();
-					children[i].outputBox.setWarning('Incompatible y-axis units.  Data has been plotted, but its y-axis units are not the same as shown.', true).expand();
-					children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+					if(!(children[i].y_unit && y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/))) {
+						this.expand();
+						if((typeof children[i].y_unit === 'undefined') || (children[i].y_unit == '1.0'))
+							children[i].outputBox.setWarning('Incompatible y-axis units.  Data has been plotted on an y-axis with units, but this plot has no associated y-axis units.', true).expand();
+						else if(y_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && children[i].y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
+							children[i].outputBox.setWarning('Incompatible y-axis units.  Data returned units in absolute temperature (' + this.worksheet.latexToUnit(this.y_unit_label.replace("delta","deg"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however y-axis is set to relative temperature (' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
+						else if(children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
+							children[i].outputBox.setWarning('Incompatible y-axis units.  Data returned units in relative temperature (' + this.worksheet.latexToUnit(this.y_unit_label.replace(/\{(deg)?/,"{\\delta"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however y-axis is set to absolute temperature (' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
+						else
+							children[i].outputBox.setWarning('Incompatible y-axis units.  Data has been plotted, but its y-axis units (' + this.worksheet.latexToUnit(children[i].y_unit)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;") + ') are not the same as shown.', true).expand();
+						children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+					}
 				} else
 					y_unit = children[i].y_unit;
 			} else {
 				if(y2_unit && (y2_unit != children[i].y_unit)) {
-					this.expand();
-					children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data has been plotted, but its y-axis units are not the same as shown.', true).expand();
-					children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+					if(!(children[i].y_unit && y2_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/))) {
+						this.expand();
+						if((typeof children[i].y_unit === 'undefined') || (children[i].y_unit == '1.0'))
+							children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data has been plotted on an axis with units, but this plot has no associated units.', true).expand();
+						else if(children[i].y_unit && y2_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && children[i].y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
+							children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data returned units in absolute temperature (' + this.worksheet.latexToUnit(this.y2_unit_label.replace("delta","deg"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however secondary y-axis is set to relative temperature (' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
+						else if(children[i].y_unit && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && y2_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
+							children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data returned units in relative temperature (' + this.worksheet.latexToUnit(this.y2_unit_label.replace(/\{(deg)?/,"{\\delta"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however secondary y-axis is set to absolute temperature (' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
+						else
+							children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data has been plotted, but its units (' + this.worksheet.latexToUnit(children[i].y_unit)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;") + ') are not the same as shown.', true).expand();
+						children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+					}
 				} else
 					y2_unit = children[i].y_unit;
 			}
@@ -380,9 +431,9 @@ var plot = P(Element, function(_, super_) {
 		var x_label = this.x_label ? this.x_label : 'Add a label';
 		var y_label = this.y_label ? this.y_label : 'Add a label';
 		var y2_label = this.y2_label ? this.y2_label : 'Add a label';
-		if(!ignore_custom_xs && this.x_unit_label && (this.x_unit_label != '1.0')) x_label += ' [' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
-		if(this.y_unit_label && (this.y_unit_label != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
-		if(this.y2_unit_label && (this.y2_unit_label != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']';
+		if(!ignore_custom_xs && this.x_unit_label && (this.x_unit_label != '1.0')) x_label += ' [' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
+		if(this.y_unit_label && (this.y_unit_label != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
+		if(this.y2_unit_label && (this.y2_unit_label != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
 		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
 	
 		if(this.y_log) {
@@ -419,7 +470,7 @@ var plot = P(Element, function(_, super_) {
 				x_ticks.push(i);
 		} else {
 			for(var i = 0; i <= 20; i++) 
-				x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion);
+				x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion - this.x_unit_offset);
 		}
 		try {
 			var x_tick_order = ((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2;

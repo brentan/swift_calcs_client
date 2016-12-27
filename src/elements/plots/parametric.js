@@ -54,7 +54,7 @@ var plot_parametric = P(subplot, function(_, super_) {
     this.dependent_vars = GetDependentVars(command3, [this.var.text()]);
     var command4 = "latex(at(apply(" + this.var.text() + "->(evalf(mksa_base(" + this.eqx.text() + "))),[(" + this.step.text() + ")*1.0000000016514245]),0))"; // Evaluate at the first t to find units...add something so that we dont get evaluation at 0
     var command5 = "latex(at(apply(" + this.var.text() + "->(evalf(mksa_base(" + this.eqy.text() + "))),[(" + this.step.text() + ")*1.0000000016514245]),0))"; // Evaluate at the first t to find units...add something so that we dont get evaluation at 0
-    return [{command: command3, nomarkup: true, pre_command: 'mksareduce_mode(1);' },{command: command4, nomarkup: true, pre_command: 'mksareduce_mode(0);'},{command: command5, nomarkup: true}]
+    return [{command: command3, nomarkup: true },{command: command4, nomarkup: true},{command: command5, nomarkup: true}]
   }
   _.evaluationFinished = function(result) {
     if(this.parent.getUnits) {

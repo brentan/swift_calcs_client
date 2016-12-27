@@ -142,8 +142,6 @@ var receiveMessage = function(command) {
 		var to_send = command.commands[ii].command.trim();
 		warnings.push([]);
     if(command.commands[ii].unit_convert && (ii > 0)) {
-      //BRENTAN: The is a bug if one of the items to convert is numerically 0.  If that happens, the u__s or u__m 'variable' is dropped and so we don't know what units '0' should be in...
-      Module.caseval('mksareduce_mode(0);mksavariable_mode(0);'); // disable the special unit command modes
       // Unit convert is a special command.  It means the previous answer, if successful, had units removed and replaced with variable names with mksa_remove and mksa_var.  That answer
       // now needs to be converted back into unit space.  We do that here and insert into this command where the string [val] is placed.
       if(!output[ii-1].success) {
@@ -155,7 +153,18 @@ var receiveMessage = function(command) {
       // Copy previous warnings over
       warnings[ii] = warnings[ii - 1];
       if(output[ii-1].returned.trim() == '[]') output[ii-1].returned = '[undef]';
-      to_send = to_send.replace(/\[val\]/g, output[ii-1].returned.replace(/u__/g,'_'));
+      var to_replace = output[ii-1].returned;
+      if(to_send.match(/^[\s]*[a-z][a-z0-9_]*\(([a-z0-9_,\s]+)\)[\s]*:=/i)) {
+        if(to_replace.match("->")) to_replace = to_replace.replace(/^.*\-\>(.*)$/,"$1");
+        var func_var = to_send.replace(/^[\s]*[a-z][a-z0-9_]*\(([a-z0-9_,\s]+)\)[\s]*:=.*$/i,"$1");
+        if(func_var.match(",")) {
+          func_var = func_var.split(",");
+          for(var jj = 0; jj < func_var.length; jj++)
+            to_replace = to_replace.replace(new RegExp("^x_" + (jj+1) + "([^a-zA-Z0-9_])","g"),func_var[jj].trim() + "$1").replace(new RegExp("([^a-zA-Z0-9_])x_" + (jj+1) + "$","g"),"$1" + func_var[jj].trim()).replace(new RegExp("([^a-zA-Z0-9_])x_" + (jj+1) + "([^a-zA-Z0-9_])","g"),"$1" + func_var[jj].trim() + "$2").replace(new RegExp("^x_" + (jj+1) + "$","g"),func_var[jj].trim());
+        } else
+          to_replace = to_replace.replace(/^x(_1)?([^a-zA-Z0-9_])/g,func_var + "$2").replace(/([^a-zA-Z0-9_])x(_1)?$/g,"$1" + func_var).replace(/([^a-zA-Z0-9_])x(_1)?([^a-zA-Z0-9_])/g,"$1" + func_var + "$3").replace(/^x(_1)?$/g,func_var);
+      } 
+      to_send = to_send.replace(/\[val\]/g, to_replace);
       var test_output = { success: true, returned: Module.casevalWithTimeout(to_send) };
       test_output = testError(test_output, ii, to_send);
       if(!test_output.success) { // See if this threw an error, likely a bad units error.  If not, we let full calculation continue

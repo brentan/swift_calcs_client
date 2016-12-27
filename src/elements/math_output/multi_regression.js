@@ -1,7 +1,7 @@
 
 var multi_regression = P(SettableMathOutput, function(_, super_) {
   _.klass = ['multi_regression'];
-  _.helpText = "<<multi_regression>>\nWill find the best fit to the supplied data.  Provide the y (dependent) data, and 1 or more x (independent) datasets that produce the y-value.  If each y-value should be weighted (useful if the data has been transformed, for example from log space), you can add the weights as well.  Finally, check whether to allow a non-zero constant to be included in the results (y=mx... OR y=mx...+b)";
+  _.helpText = "<<multi_regression>>\nWill find the best fit to the supplied data for a linear summation of terms:\ny=b<sub>0</sub>+b<sub>1</sub>*x<sub>1</sub>+b<sub>2</sub>*x<sub>2</sub>+...+b<sub>n</sub>*x<sub>n</sub>\nProvide the y (dependent) data, and 1 or more independent datasets (x<sub>1</sub>, x<sub>2</sub>, etc) matched with the y-data.  If each y-value should be weighted (useful if the data has been transformed, for example from log space), you can add the weights as well.  Finally, check whether to allow a non-zero constant to be included in the results (if unchecked, b<sub>0</sub>=0)";
   _.savedProperties = ['number_of_datasets','include_weights'];
   _.number_of_datasets = 1;
   _.include_weights = false;
@@ -41,8 +41,6 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
   _.parseSavedProperties = function(args) {
     super_.parseSavedProperties.call(this, args);
     // After we do this, we want to set up the DOM correctly for the number of equations this block had, before rest of parse completes
-    if(this.ask_initial_guess)
-      this.jQ.find('.initial_guess').show();
     var equations_to_add = this.number_of_datasets;
     this.number_of_datasets = 1;
     for(var i = 1; i < equations_to_add; i++)
@@ -149,20 +147,15 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
           errors.push('No weight information provided.');
 
         var x_data = [];
-        var x_units = [];
-        for(var i = 0; i < _this.xdata.length; i++) {
+        for(var i = 0; i < _this.xdata.length; i++) 
           x_data.push(_this.xdata[i].text({check_for_array: true}));
-          x_units.push('mksa_base(at(' + _this.xdata[i].text({check_for_array: true}) + ',0))');
-        }
 
         var command = 'multi_regression(' + _this.ydata.text({check_for_array: true}) + ",[" + x_data.join(",") + "]," + (_this.intercept.checked ? "1" : "0");
         if(_this.include_weights)
           command += "," + _this.weights.text({check_for_array: true});
         command += ");";
 
-        var x_units = 'mksa_base(at(' + _this.ydata.text({check_for_array: true}) + ',0))./[' + (_this.intercept.checked ? "1," : "") + x_units.join(",") + "]";
-
-        var out_command = "diag(" + x_units + ")*([val])";
+        var out_command = "[val]";
 
         _this.commands = _this.genCommand(out_command);
         _this.commands[0].unit_convert = true;
@@ -172,7 +165,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
           _this.setError(errors.join('<BR>'));
         } else {
           // Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
-          _this.commands.unshift({command: command, nomarkup: true, pre_command: 'mksareduce_mode(1);' }); 
+          _this.commands.unshift({command: command, nomarkup: true }); 
           _this.dependent_vars = GetDependentVars(command);
           _this.evaluate();
           _this.needsEvaluation = false;
@@ -188,10 +181,6 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
         if(!result[1].warnings[i].match(/assignation is x_unit/) && !result[1].warnings[i].match(/declared as global/))
           warnings.push(result[1].warnings[i]);
       result[1].warnings = warnings;
-      var xs = this.intercept.checked ? ['b_0'] : [];
-      for(var i = 0; i < this.xdata.length; i++) 
-        xs.push("b_{" + (i+1) + "}");
-      result[1].returned = "\\begin{bmatrix0}" + xs.join("\\\\") + "\\end{bmatrix0} \\whitespace\\Longrightarrow \\whitespace " + result[1].returned;
     }
     var to_return = super_.evaluationFinished.call(this, [result[1]]); // Transform to array with result 1 in spot 0, as that is what is expected in evaluationFinished
     this.last_result = result;
@@ -205,7 +194,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
       this.intercept.touched = true;
     if(el === this.ydata)
       this.ydata.touched = true;
-    if(this.xdata[0].touched && !this.xdata[0].empty() && this.ydata.touched)
+    if(this.xdata[0].touched && this.ydata.touched && !this.ydata.empty())
       this.needsEvaluation = true;
   }
 });

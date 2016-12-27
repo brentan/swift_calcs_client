@@ -844,7 +844,10 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			html: '<div style="position: relative;top:-2px;padding:0px 5px;"><div style="padding-bottom:0px;border-bottom: 1px solid #444444;line-height:9px;font-size:9px;">m</div><div style="padding-top: 1px;line-height:9px;font-size:9px;">s</div></div>',
 			title: 'Insert Unit',
 			method: function(el) { el.command('\\Unit'); },
-			units: function(el, cmd, unit) { el.command(cmd, unit); }
+			units: function(el, cmd, unit) { 
+				if((unit == 'degC') || (unit == 'degF') || (unit == 'deltaC') || (unit == 'deltaF')) unit = "\\" + unit;
+				el.command(cmd, unit); 
+			}
 		},
 		{ title: '|' },
 		{
@@ -1170,10 +1173,12 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			{
 				id: 'Temperature',
 				sub: [
-					//{name: 'Degree Celsius', unit: 'C'},
-					//{name: 'Degree Fehrenheit', unit: 'F'},
 					{name: 'Kelvin', unit: 'K'},
 					{name: 'Rankine', unit: 'Rankine'},
+					{name: 'Celsius (absolute)', unit: 'degC'},
+					{name: 'Fehrenheit (absolute)', unit: 'degF'},
+					{name: 'Celsius (relative)', unit: 'deltaC'},
+					{name: 'Fehrenheit (relative)', unit: 'deltaF'},
 				]
 			},
 			{
@@ -1254,8 +1259,14 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		var output = '';
 		for(var i=0; i < units.length; i++) {
 			output += '<li><div class="item ignore" style="width:160px;" title=""><span class="fa fa-caret-right"></span>' + units[i].id + '</div><ul>';
-			for(var j=0; j < units[i].sub.length; j++) 
-				output += '<li><div class="item unit" title="' + units[i].sub[j].unit + '"><span class="code">' + units[i].sub[j].unit.replace(/\^([0-9]+)/g,"<sup>$1</sup>") + '</span>: ' + units[i].sub[j].name + '</div></li>';
+			for(var j=0; j < units[i].sub.length; j++) {
+				if((units[i].sub[j].unit == 'degF') || (units[i].sub[j].unit == 'degC'))
+					output += '<li><div class="item unit" title="' + units[i].sub[j].unit + '"><span class="code">' + units[i].sub[j].unit.replace(/deg([A-Z])/g,"&deg;$1") + '</span>: ' + units[i].sub[j].name + '</div></li>';
+				else if((units[i].sub[j].unit == 'deltaF') || (units[i].sub[j].unit == 'deltaC'))
+					output += '<li><div class="item unit" title="' + units[i].sub[j].unit + '"><span class="code">' + units[i].sub[j].unit.replace(/delta([A-Z])/g,"&Delta;&deg;$1") + '</span>: ' + units[i].sub[j].name + '</div></li>';
+				else
+					output += '<li><div class="item unit" title="' + units[i].sub[j].unit + '"><span class="code">' + units[i].sub[j].unit.replace(/\^([0-9]+)/g,"<sup>$1</sup>") + '</span>: ' + units[i].sub[j].name + '</div></li>';
+			}
 			output += '</ul></li>';
 		}	
 		var top_option = $('<li/>').html('<div class="item">Insert Unit Picker <kbd style="font-size:14px;">"</kbd></div>');
@@ -1406,7 +1417,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	      ],
 	      [ 'Structure',
 	        { text: 'Append', giac_func: 'append(' },
-	        { text: 'Index of First Row/Col', giac_func: 'first_index(' },
+	        { text: 'Index of First Row/Col', giac_func: 'firstIndex' },
 	        { text: 'Concatenate', giac_func: 'concat(' },
 	        { text: 'Delete Columns', giac_func: 'delcols(' },
 	        { text: 'Delete Rows', giac_func: 'delrows(' },
@@ -1595,6 +1606,12 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	        { text: 'Convert trig(x) -> tan(x/2)', giac_func: 'halftan(' },
 	        { text: 'Convert hyp -> exp', giac_func: 'hyp2exp(' }
 	      ]
+	    ],
+	    Units: [
+	      { text: 'Transform to MKSA Units', giac_func: 'mksa(' },
+	      { text: 'Transform Temperature to Kelvin', giac_func: 'kelvin(' },
+	      { text: 'Transform to MKSA and drop units', giac_func: 'mksa_remove(' },
+	      { text: 'Transform to defaults and drop units', giac_func: 'unit_remove(' },
 	    ],
 	  };
 		var output = '';

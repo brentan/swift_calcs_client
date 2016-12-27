@@ -22,6 +22,7 @@
 		'plot_parametric': plot_parametric,
 		'purge': purge,
 		'solve': solve,
+		'solver': solver,
 		'desolve': desolve,
 		'regression': regression,
 		'multiregression': multi_regression,

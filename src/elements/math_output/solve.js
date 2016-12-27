@@ -3,6 +3,7 @@ var solve = P(SettableMathOutput, function(_, super_) {
 	_.klass = ['solve'];
 	_.number_of_equations = 1;
 	_.ask_initial_guess = false;
+	_.symbolic_command = 'solve';
 	_.helpText = "<<solve <[EXPR]> for <[VARS]>>>\nSolve the expression(s) given (EXPR) for the variable(s) specified in VARS.  Use the 'add another equation' link to solve systems of equations.  When solving for multiple variables, enter as a comma-seperated list.  If an initial guess is requested, enter as a comma-seperated list corresponding to the variable list.\nExample: Solve x^2=4 for x with initial guess 0.2.\nExample: Solve x^2+y=6,x-y^2=-2 for x,y\nHELP:21";
 	_.savedProperties = ['number_of_equations', 'ask_initial_guess'];
 
@@ -130,10 +131,10 @@ var solve = P(SettableMathOutput, function(_, super_) {
 				} else {
 					var eqs = [];
 					$.each(_this.eqFields, function(i, v) { eqs.push(v.text()); });
-					var start_command = '';
+					var start_command = _this.symbolic_command;
 					var end_command = '';
 					if(_this.ask_initial_guess) {
-						start_command += 'f';
+						start_command = 'fsolve';
 						if(_this.guessField.empty() && (_this.varField.text().split(',').length > 1)) 
 							end_command = ',[' + $.map(_this.varField.text().split(','), function() { return 0; }).join(',') + ']';
 						else if(_this.guessField.empty())
@@ -149,9 +150,9 @@ var solve = P(SettableMathOutput, function(_, super_) {
 					else
 						var var_command = '\'' + _this.varField.text() + '\'';
 					if(eqs.length > 1)
-						var command = start_command + 'solve([' + eqs.join(', ').replace(/==/g,'=') + '], ' + var_command + end_command + ')';
+						var command = start_command + '([' + eqs.join(', ').replace(/==/g,'=') + '], ' + var_command + end_command + ')';
 					else
-						var command = start_command + 'solve(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + end_command + ')';
+						var command = start_command + '(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + end_command + ')';
 					if(_this.ask_initial_guess) {
 						// Numeric solver...units were dropped, so we use the guess to restore units
 						var guess_text = _this.guessField.text();
@@ -169,7 +170,7 @@ var solve = P(SettableMathOutput, function(_, super_) {
 					}
 					_this.commands[0].restore_vars = _this.varField.text();
 					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
-					_this.commands.unshift({command: command, nomarkup: true, protect_vars: _this.varField.text(), pre_command: (_this.ask_initial_guess ? 'mksareduce_mode(1);' : 'mksavariable_mode(1);') }); 
+					_this.commands.unshift({command: command, nomarkup: true, protect_vars: _this.varField.text() }); 
 
 					if(_this.ask_initial_guess) // insert guess into the equations to see if it causes a unit error
 						_this.commands.push({command: "((" + _this.varField.text() + ")->(" + _this.eqFields[0].text().replace(/==/g,'-') + "))(" + guess_text + ")", nomarkup: true});
@@ -227,4 +228,8 @@ var solve = P(SettableMathOutput, function(_, super_) {
 		if(this.eqFields[0].touched && !this.eqFields[0].empty() && this.varField.touched)
 			this.needsEvaluation = true;
 	}
+});
+// Backwards compatibility
+var solver = P(solve, function(_, super_) {
+	_.symbolic_command = 'solver';
 });
