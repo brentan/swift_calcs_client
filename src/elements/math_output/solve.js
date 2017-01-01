@@ -122,6 +122,8 @@ var solve = P(SettableMathOutput, function(_, super_) {
 					errors.push('Invalid variable list (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid comma-seperated list of variables');
 				if(_this.ask_initial_guess && !_this.guessField.empty() && (_this.guessField.text().split(',').length !== _this.varField.text().split(',').length))
 					errors.push('Invalid guesses.  Please ensure you provide 1 guess for each variable you are solving for (enter as a comma-seperated list)');
+				if(_this.ask_initial_guess && (_this.eqFields.length !== _this.varField.text().split(',').length))
+					errors.push('Invalid variable list.  Number of variables to solve for must match the number of equations being solved.');
 				for(var i = 0; i < _this.eqFields.length; i++)
 					if(_this.eqFields[i].empty()) errors.push('Equation ' + (i+1) + ' is currently empty.  Please add an equation.');
 				if(errors.length && _this.outputMathBox) {
