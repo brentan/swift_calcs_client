@@ -652,7 +652,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   _.set_P = _.set_pressure = function(pressure) {
     if(typeof pressure === "string") {
-      if(Module.caseval("mksa_base(evalf(" + pressure + "))").trim() != "1_(kg*m^-1.0*s^-2.0)") 
+      if(Module.caseval("mksa_base(evalf(" + pressure + "))").trim() != "1_(kg*m^-1*s^-2)") 
         return this.setError("Incompatible Units.  Expecting Pressure units (Pascal)");
     } else
       pressure = pressure + "_Pa";
@@ -661,7 +661,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   _.set_rho = _.set_density = function(rho) {
     if(typeof rho === "string") {
-      if(Module.caseval("mksa_base(evalf(" + rho + "))").trim() != "1_(kg*m^-3.0)") 
+      if(Module.caseval("mksa_base(evalf(" + rho + "))").trim() != "1_(kg*m^-3)") 
         return this.setError("Incompatible Units.  Expecting Density units (mass/volume)");
       rho = Module.caseval("mksa_remove(evalf(" + rho + "))").trim();
       if(!rho.match(/^\-?[0-9\.]+(\e[\-\+]?[0-9\.]+)?$/))
@@ -673,7 +673,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   _.set_v = _.set_specificVolume = function(v) {
     if(typeof v === "string") {
-      if(Module.caseval("mksa_base(evalf(" + v + "))").trim() != "1_(kg^-1.0*m^3.0)") 
+      if(Module.caseval("mksa_base(evalf(" + v + "))").trim() != "1_(kg^-1*m^3)") 
         return this.setError("Incompatible Units.  Expecting specific volume units (volume/mass)");
       v = Module.caseval("mksa_remove(evalf(" + v + "))").trim();
       if(!v.match(/^\-?[0-9\.]+(\e[\-\+]?[0-9\.]+)?$/))
@@ -687,7 +687,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
   }
   _.set_V = _.set_Volume = function(v) {
     if(typeof v === "string") {
-      if(Module.caseval("mksa_base(evalf(" + v + "))").trim() != "1_(m^3.0)") 
+      if(Module.caseval("mksa_base(evalf(" + v + "))").trim() != "1_(m^3)") 
         return this.setError("Incompatible Units.  Expecting volume units");
       v = Module.caseval("mksa_remove(evalf(" + v + "))").trim();
       if(!v.match(/^\-?[0-9\.]+(\e[\-\+]?[0-9\.]+)?$/))
@@ -704,11 +704,12 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     var mass_specific = false;
     if(typeof enthalpy === "string") {
       var unit = Module.caseval("mksa_base(evalf(" + enthalpy + "))").trim();
-      if(unit == "1_(m^2.0*s^-2.0)") 
+console.log()
+      if(unit == "1_(m^2*s^-2)") 
         mass_specific = true;
-      else if(unit == "1_(kg*m^2.0*s^-2.0*mol^-1.0)")
+      else if(unit == "1_(kg*m^2*s^-2*mol^-1)")
         mass_specific = false;
-      else if(unit == "1_(kg*m^2.0*s^-2.0)") {
+      else if(unit == "1_(kg*m^2*s^-2)") {
         enthalpy = "(" + enthalpy + ")/(" + this.moles_i + "_mol)";
         mass_specific = false;
       } else
@@ -731,11 +732,11 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     var mass_specific = false;
     if(typeof gibbs === "string") {
       var unit = Module.caseval("mksa_base(evalf(" + gibbs + "))").trim();
-      if(unit == "1_(m^2.0*s^-2.0)") 
+      if(unit == "1_(m^2*s^-2)") 
         mass_specific = true;
-      else if(unit == "1_(kg*m^2.0*s^-2.0*mol^-1.0)")
+      else if(unit == "1_(kg*m^2*s^-2*mol^-1)")
         mass_specific = false;
-      else if(unit == "1_(kg*m^2.0*s^-2.0)") {
+      else if(unit == "1_(kg*m^2*s^-2)") {
         gibbs = "(" + gibbs + ")/(" + this.moles_i + "_mol)";
         mass_specific = false;
       } else
@@ -758,11 +759,11 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     var mass_specific = false;
     if(typeof entropy === "string") {
       var unit = Module.caseval("mksa_base(evalf(" + entropy + "))").trim();
-      if(unit == "1_(m^2.0*s^-2.0*K^-1.0)") 
+      if(unit == "1_(m^2*s^-2*K^-1)") 
         mass_specific = true;
-      else if(unit == "1_(kg*m^2.0*s^-2.0*K^-1.0*mol^-1.0)")
+      else if(unit == "1_(kg*m^2*s^-2*K^-1*mol^-1)")
         mass_specific = false;
-      else if(unit == "1_(kg*m^2.0*s^-2.0*K^-1.0)") {
+      else if(unit == "1_(kg*m^2*s^-2*K^-1)") {
         entropy = "(" + entropy + ")/(" + this.moles_i + "_mol)";
         mass_specific = false;
       } else
@@ -777,7 +778,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       _this.set_T(guess);
       return (_this.entropy_i(mass_specific) - entropy);
     }));
-    return entropy + (mass_specific ? "*_(J/(kg*K))" : "*_(J/(mol*K))");
+    return entropy + (mass_specific ? "*_(J/(kg*deltaK))" : "*_(J/(mol*deltaK))");
   }
   _.s_v = _.entropy_v = _.S_v = _.Entropy_v = function() {
     return this.error("Function is used to set entropy at constant specific volume.  To find entropy, use the 's' or 'entropy' commands.");
@@ -788,11 +789,11 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     var mass_specific = false;
     if(typeof entropy === "string") {
       var unit = Module.caseval("mksa_base(evalf(" + entropy + "))").trim();
-      if(unit == "1_(m^2.0*s^-2.0*K^-1.0)") 
+      if(unit == "1_(m^2*s^-2*K^-1)") 
         mass_specific = true;
-      else if(unit == "1_(kg*m^2.0*s^-2.0*K^-1.0*mol^-1.0)")
+      else if(unit == "1_(kg*m^2*s^-2*K^-1*mol^-1)")
         mass_specific = false;
-      else if(unit == "1_(kg*m^2.0*s^-2.0*K^-1.0)") {
+      else if(unit == "1_(kg*m^2*s^-2*K^-1)") {
         entropy = "(" + entropy + ")/(" + this.moles_i + "_mol)";
         mass_specific = false;
       } else
@@ -810,7 +811,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
       _this.set_specificVolume(curV);
       return (_this.entropy_i(mass_specific) - entropy);
     }));
-    return entropy + (mass_specific ? "*_(J/(kg*K))" : "*_(J/(mol*K))");
+    return entropy + (mass_specific ? "*_(J/(kg*deltaK))" : "*_(J/(mol*deltaK))");
   }
   _.set_u = _.set_internalEnergy = _.set_U = _.set_InternalEnergy = function(energy) {
     // To set entropy, we hold v constant at current specific volume, then vary T until we have an energy equal to the desired value
@@ -818,11 +819,11 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     var mass_specific = false;
     if(typeof energy === "string") {
       var unit = Module.caseval("mksa_base(evalf(" + energy + "))").trim();
-      if(unit == "1_(m^2.0*s^-2.0)") 
+      if(unit == "1_(m^2*s^-2)") 
         mass_specific = true;
-      else if(unit == "1_(kg*m^2.0*s^-2.0*mol^-1.0)")
+      else if(unit == "1_(kg*m^2*s^-2*mol^-1)")
         mass_specific = false;
-      else if(unit == "1_(kg*m^2.0*s^-2.0)") {
+      else if(unit == "1_(kg*m^2*s^-2)") {
         energy = "(" + energy + ")/(" + this.moles_i + "_mol)";
         mass_specific = false;
       } else
@@ -861,7 +862,7 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.Cv_i(true) + "*_(J/(kg*K))";
   }
   _.Cv_mole = function() {
-    return this.Cv_i(false) + "*_(J/(mol*K))";
+    return this.Cv_i(false) + "*_(J/(mol*deltaK))";
   }
   // J/K{kg|mol}
   _.Cp_i = function(mass_specific) { 
@@ -869,10 +870,10 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('Cp_i', mass_specific);
   }
   _.Cp = function() {
-    return this.Cp_i(true) + "*_(J/(kg*K))";
+    return this.Cp_i(true) + "*_(J/(kg*deltaK))";
   }
   _.Cp_mole = function() {
-    return this.Cp_i(false) + "*_(J/(mol*K))";
+    return this.Cp_i(false) + "*_(J/(mol*deltaK))";
   }
   _.gamma = function() {
     return (this.Cp_i() / this.Cv_i()) + "";
@@ -897,13 +898,13 @@ var Mixture = P(SwiftCalcsObject, function(_, super_) {
     return this.commandSpeciesByMole('entropy_i', mass_specific);
   }
   _.s = _.entropy = function() {
-    return this.entropy_i(true) + "*_(J/(K*kg))";
+    return this.entropy_i(true) + "*_(J/(deltaK*kg))";
   }
   _.s_mole = _.entropy_mole = function() {
-    return this.entropy_i(false) + "*_(J/(K*mol))";
+    return this.entropy_i(false) + "*_(J/(deltaK*mol))";
   }
   _.S = _.Entropy = function() {
-    return this.entropy_i(false)*this.moles_i + "*_(J/K)";
+    return this.entropy_i(false)*this.moles_i + "*_(J/deltaK)";
   }
   // J/{kg|mol}
   _.internalEnergy_i = function(mass_specific) {

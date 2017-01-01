@@ -312,8 +312,8 @@ var plot = P(Element, function(_, super_) {
 					y_vals[j] = y_vals[j] / this.y2_unit_conversion - offset;  // Convert from mksa back to requested unit base
 				if(this.y2_log) {
 					for(var j=1; j<y_vals.length; j++){
-					  if((y2_min === undefined) || (y_vals[j] < y2_min)) y2_min = y_vals[j];
-					  if((y2_max === undefined) || (y_vals[j] > y2_max)) y2_max = y_vals[j];
+					  if(y_vals[j] && ((y2_min === undefined) || (y_vals[j] < y2_min))) y2_min = y_vals[j];
+					  if(y_vals[j] && ((y2_max === undefined) || (y_vals[j] > y2_max))) y2_max = y_vals[j];
 					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
 					}
 				} 
@@ -328,8 +328,8 @@ var plot = P(Element, function(_, super_) {
 					y_vals[j] = y_vals[j] / this.y_unit_conversion - offset;  // Convert from mksa back to requested unit base
 				if(this.y_log) {
 					for(var j=1; j<y_vals.length; j++){
-					  if((y_min === undefined) || (y_vals[j] < y_min)) y_min = y_vals[j];
-					  if((y_max === undefined) || (y_vals[j] > y_max)) y_max = y_vals[j];
+					  if(y_vals[j] && ((y_min === undefined) || (y_vals[j] < y_min))) y_min = y_vals[j];
+					  if(y_vals[j] && ((y_max === undefined) || (y_vals[j] > y_max))) y_max = y_vals[j];
 					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
 					}
 				} 
@@ -354,8 +354,13 @@ var plot = P(Element, function(_, super_) {
 				} else
 					x_unit = children[i].x_unit;
 				var x_vals = children[i].xs.slice(0);
-				for(var j = 1; j < x_vals.length; j++)
-					x_vals[j] = x_vals[j] / this.x_unit_conversion - this.x_unit_offset;  // Convert from mksa back to requested unit base
+				if(children[i].plot_type == 'plot_func') {
+					for(var j = 1; j < x_vals.length; j++)
+						x_vals[j] = x_vals[j] / this.x_unit_conversion;  // Convert from mksa back to requested unit base (offset already removed by plotfunc)
+				} else {
+					for(var j = 1; j < x_vals.length; j++)
+						x_vals[j] = x_vals[j] / this.x_unit_conversion - this.x_unit_offset;  // Convert from mksa back to requested unit base
+				}
 				if(!(children[i] instanceof plot_func)) {
 					x_min = x_min === false ? Math.min.apply(Math, children[i].xs.slice(1)) : Math.min(Math.min.apply(Math, children[i].xs.slice(1)), x_min);
 					x_max = x_max === false ? Math.max.apply(Math, children[i].xs.slice(1)) : Math.max(Math.max.apply(Math, children[i].xs.slice(1)), x_max);
@@ -366,10 +371,12 @@ var plot = P(Element, function(_, super_) {
 					for(var j=1; j<x_vals.length; j++){
 					  x_vals[j] = Math.log(x_vals[j]) / Math.LN10;
 					}
+					x_min = x_min / this.x_unit_conversion - this.x_unit_offset;
+					x_max = x_max / this.x_unit_conversion - this.x_unit_offset;
 					if(x_min <= 0) x_min = 1e-15;
 					if(x_max <= 0) x_max = 2e-15;
-				  x_min = Math.log(x_min / this.x_unit_conversion - this.x_unit_offset) / Math.LN10;
-				  x_max = Math.log(x_max / this.x_unit_conversion - this.x_unit_offset) / Math.LN10;
+				  x_min = Math.log(x_min) / Math.LN10;
+				  x_max = Math.log(x_max) / Math.LN10;
 				} 
 				columns.push(x_vals);
 			}
@@ -443,11 +450,12 @@ var plot = P(Element, function(_, super_) {
 			if(y_max <= 0) y_max = 2e-15;
 			y_min = Math.log(y_min) / Math.LN10;
 			y_max = Math.log(y_max) / Math.LN10;
-			var exp_min = Math.ceil(y_min);
-			var exp_max = Math.floor(y_max);
-			var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
+			var exp_diff = Math.floor(Math.log(y_max - y_min) / Math.LN10);
+			var exp_min = Math.floor(y_min / Math.pow(10,exp_diff)) * Math.pow(10,exp_diff);
+			var exp_max = Math.ceil(y_max / Math.pow(10,exp_diff)) * Math.pow(10,exp_diff);
+			var step = (exp_max - exp_min)/10;
 			for(var i = exp_min; i <= exp_max; i = i + step) 
-				y_ticks.push(i);
+				if(i>y_min && i<y_max) y_ticks.push(i);
 		}
 		if(this.y2_log) {
 			if(y2_min === undefined) y2_min = 1e-15;
@@ -456,11 +464,12 @@ var plot = P(Element, function(_, super_) {
 			if(y2_max <= 0) y2_max = 2e-15;
 			y2_min = Math.log(y2_min) / Math.LN10;
 			y2_max = Math.log(y2_max) / Math.LN10;
-			var exp_min = Math.ceil(y2_min);
-			var exp_max = Math.floor(y2_max);
-			var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
+			var exp_diff = Math.floor(Math.log(y2_max - y2_min) / Math.LN10);
+			var exp_min = Math.floor(y2_min / Math.pow(10,exp_diff)) * Math.pow(10,exp_diff);
+			var exp_max = Math.ceil(y2_max / Math.pow(10,exp_diff)) * Math.pow(10,exp_diff);
+			var step = (exp_max - exp_min)/10;
 			for(var i = exp_min; i <= exp_max; i = i + step) 
-				y2_ticks.push(i);
+				if(i>y2_min && i<y2_max) y2_ticks.push(i);
 		}
 		if(this.x_log) {
 			var exp_min = Math.ceil(x_min);

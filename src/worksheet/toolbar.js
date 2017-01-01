@@ -784,6 +784,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">i</span>&nbsp;&nbsp;', title: '(-1)^(1/2)', method: function(el) { el.command('i'); } },
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">e</span>&nbsp;&nbsp;', title: '2.71828...', method: function(el) { el.command('e'); } },
 				{html: '&nbsp;&nbsp;<span style="font-family: serif;">&pi;</span>&nbsp;&nbsp;', title: '3.14159...', method: function(el) { el.command('\\pi'); } },
+				{html: '&nbsp;&nbsp;<span style="font-family: serif;">undef</span>', title: 'undefined', method: function(el) { el.command('undef'); } },
 			]
 		},
 		{
@@ -1095,7 +1096,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 					{name: 'Minute', unit: 'mn'},
 					{name: 'Second', unit: 's'},
 					{name: 'Hertz', unit: 'Hz'},
-					{name: 'Revelutions per Minute', unit: 'rpm'}
+					{name: 'Revolutions per Minute', unit: 'rpm'}
 				]
 			},
 			{
@@ -1609,7 +1610,8 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	    ],
 	    Units: [
 	      { text: 'Transform to MKSA Units', giac_func: 'mksa(' },
-	      { text: 'Transform Temperature to Kelvin', giac_func: 'kelvin(' },
+	      { text: 'Force Temperature to be absolute', giac_func: 'absT(' },
+	      { text: 'Force Temperature to be relative', giac_func: 'relT(' },
 	      { text: 'Transform to MKSA and drop units', giac_func: 'mksa_remove(' },
 	      { text: 'Transform to defaults and drop units', giac_func: 'unit_remove(' },
 	    ],

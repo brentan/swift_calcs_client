@@ -60,7 +60,7 @@ var programmatic_function = P(Element, function(_, super_) {
 	_.compile_line = function(commands, el, evaluation_id) {
 		for(var i = 0; i < commands.length; i++) {
 			if(commands[i].pre_command) this.command_list.push(commands[i].pre_command);
-	    if(((i+1) < commands.length) && (commands[i+1].unit_convert)) { // A bit hacky, but we have to deal with the special mksavariable_mode being enabled/disabled
+	    if(((i+1) < commands.length) && (commands[i+1].dereference)) { // A bit hacky, but we have to deal with the special mksavariable_mode being enabled/disabled
 	    	this.command_list.push("temp__var := " + commands[i].command);
 	    	this.command_list.push(commands[i+1].command.replace(/\[val\]/g, "revertSWIFTCALCSCLIENTunits(temp__var)"));
 	    	this.command_list.push('purge(temp__var);');

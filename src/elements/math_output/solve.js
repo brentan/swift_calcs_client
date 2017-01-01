@@ -153,27 +153,12 @@ var solve = P(SettableMathOutput, function(_, super_) {
 						var command = start_command + '([' + eqs.join(', ').replace(/==/g,'=') + '], ' + var_command + end_command + ')';
 					else
 						var command = start_command + '(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + end_command + ')';
-					if(_this.ask_initial_guess) {
-						// Numeric solver...units were dropped, so we use the guess to restore units
-						var guess_text = _this.guessField.text();
-						if(guess_text.trim() == '') guess_text = (_this.varField.text().split(',').length > 1) ? $.map(_this.varField.text().split(','), function() { return 1; }).join(',') : 1;
-						if(_this.varField.text().split(',').length > 1) // What if there are commas within each element? like a matrix?
-							_this.commands = _this.genCommand('[val] .* [mksa_base(' + guess_text.replace(/,/g, '),mksa_base(') + ')]'); // convert answer back to appropriate units
-						else
-							_this.commands = _this.genCommand('[val] * mksa_base(' + guess_text + ')'); // convert answer back to appropriate units
-						_this.commands[0].unit_convert = true;
-						// BRENTAN: TODO: The provided guess units should allow us to autoconvert the answer in to the desired units as well...
-					} else {
-						// Symbolic solver
-						_this.commands = _this.genCommand('[val]');
-						_this.commands[0].unit_convert = true;
-					}
+					_this.commands = _this.genCommand('[val]');
+					_this.commands[0].dereference = true;
+					//}
 					_this.commands[0].restore_vars = _this.varField.text();
 					// Solve the equation, with special unit mode for the solver.  Result will be inserted in place of [val] in the next computation
 					_this.commands.unshift({command: command, nomarkup: true, protect_vars: _this.varField.text() }); 
-
-					if(_this.ask_initial_guess) // insert guess into the equations to see if it causes a unit error
-						_this.commands.push({command: "((" + _this.varField.text() + ")->(" + _this.eqFields[0].text().replace(/==/g,'-') + "))(" + guess_text + ")", nomarkup: true});
 
 					_this.dependent_vars = GetDependentVars(command, _this.varField.text().split(","));
 					_this.evaluate();
@@ -183,12 +168,6 @@ var solve = P(SettableMathOutput, function(_, super_) {
 		};
 	}
 	_.evaluationFinished = function(result) {
-		if(this.ask_initial_guess && !result[2].success) {
-			if(result[2].returned.match(/Incompatible units Error/))
-				result[1].warnings.push('Error during unit consistency check: Ensure your intial guess has the proper expected units, and that units in the equations balance')
-			else
-				result[1].warnings.push(result[2].returned);
-		}
 		if(result[1].returned && result[1].success) {
 			// Test for no result
 			if(result[1].returned.match(/[\s]*\\begin{bmatrix[0-9]+}\\end{bmatrix[0-9]+}[\s]*/)) { 
@@ -232,4 +211,7 @@ var solve = P(SettableMathOutput, function(_, super_) {
 // Backwards compatibility
 var solver = P(solve, function(_, super_) {
 	_.symbolic_command = 'solver';
+  _.toString = function() {
+  	return '{solver}{{' + this.argumentList().join('}{') + '}}';
+  }
 });

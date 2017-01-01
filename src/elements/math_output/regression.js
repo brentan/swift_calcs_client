@@ -118,7 +118,7 @@ var regression = P(SettableMathOutput, function(_, super_) {
 				var x = _this.varStoreField.text().match(/\(/) ? "x" : "'x'";
 				var ind_var = _this.varStoreField.text().match(/\(/) ? _this.varStoreField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_]*)\)$/i,"$2") : "x";
 				_this.commands = _this.genCommand("[val]");
-				_this.commands[0].unit_convert = true;
+				_this.commands[0].dereference = true;
 				_this.commands[0].force_simplify = 'expand';
 				_this.commands[0].restore_vars = ind_var;
 				if(errors.length && _this.outputMathBox) {

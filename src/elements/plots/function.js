@@ -65,18 +65,16 @@ var plot_func = P(subplot, function(_, super_) {
 		if(this.eq0.text().trim() == '') return [];
 		var min_val = this.parent.x_min === false ? (this.parent.calc_x_min === false ? ((-5 + this.parent.x_unit_offset) * this.parent.x_unit_conversion) : this.parent.calc_x_min) : ((this.parent.x_min + this.parent.x_unit_offset) * this.parent.x_unit_conversion);
 		var max_val = this.parent.x_max === false ? (this.parent.calc_x_max === false ? (( 5 + this.parent.x_unit_offset) * this.parent.x_unit_conversion) : this.parent.calc_x_max) : ((this.parent.x_max + this.parent.x_unit_offset) * this.parent.x_unit_conversion);
+		min_val = min_val - this.parent.x_unit_offset * this.parent.x_unit_conversion; // Remove offset...it is added back in by the giac plot function (used to deal with log plots of non-zero offsets!)
+		max_val = max_val - this.parent.x_unit_offset * this.parent.x_unit_conversion;
 		var unit_command = this.show_unit && this.unit_box.text().length ? this.unit_box.text() : '1';
 		if(this.parent.x_log) {
 			if(min_val <= 0) min_val = 1e-15;
 			if(max_val <= 0) max_val = 2e-15;
-			var command = this.eq0.text();
-			var name = this.eq1.text();
-			command = command.replace(new RegExp('([^a-zA-Z])' + name + '([^a-zA-Z_\(\[])','g'),"$1(10^" + name + ")$2");
-			command = command.replace(new RegExp('^' + name + '([^a-zA-Z_\(\[])','g'),"(10^" + name + ")$1");
-			command = command.replace(new RegExp('([^a-zA-Z])' + name + '$','g'),"$1(10^" + name + ")");
-			var command3 = "plotfunc(evalf(" + command + ")," + name + "=log10(" + min_val + ")..log10(" + max_val +"),nstep=400)"; 
+			var command3 = "plotfunclog"; 
 		} else
-			var command3 = "plotfunc(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + ")..(" + max_val +"),nstep=400)"; 
+			var command3 = "plotfuncoffset";
+		command3 += "(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + ")..(" + max_val +"),nstep=400," + (this.parent.x_unit_offset * this.parent.x_unit_conversion) + ")"; 
 		var command4 = "latex(at(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[0.0000000016514245*" + unit_command + "]),0))";
 		this.dependent_vars = GetDependentVars(command3, [this.eq1.text()]);
 		return [{command: command3, nomarkup: true },{command: command4, nomarkup: true }]
@@ -97,10 +95,7 @@ var plot_func = P(subplot, function(_, super_) {
 						this.xs = [];
 						this.ys = [];
 						for(var i = 0; i < output.length; i++) {
-							if(this.parent.x_log)
-								this.xs.push(Math.pow(10,output[i][0]));
-							else
-								this.xs.push(output[i][0]);
+							this.xs.push(output[i][0]); 
 							this.ys.push(output[i][1]);
 						}
 						if(((this.y_axis == 'y') && this.parent.y_log) || ((this.y_axis == 'y2') && this.parent.y2_log)) {

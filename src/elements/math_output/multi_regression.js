@@ -158,7 +158,7 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
         var out_command = "[val]";
 
         _this.commands = _this.genCommand(out_command);
-        _this.commands[0].unit_convert = true;
+        _this.commands[0].dereference = true;
         if(errors.length && _this.outputMathBox) {
           _this.worksheet.save();
           _this.outputMathBox.clear();

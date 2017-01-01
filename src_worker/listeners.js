@@ -141,7 +141,7 @@ var receiveMessage = function(command) {
       Module.caseval(command.commands[ii].pre_command);
 		var to_send = command.commands[ii].command.trim();
 		warnings.push([]);
-    if(command.commands[ii].unit_convert && (ii > 0)) {
+    if(command.commands[ii].dereference && (ii > 0)) {
       // Unit convert is a special command.  It means the previous answer, if successful, had units removed and replaced with variable names with mksa_remove and mksa_var.  That answer
       // now needs to be converted back into unit space.  We do that here and insert into this command where the string [val] is placed.
       if(!output[ii-1].success) {

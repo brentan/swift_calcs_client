@@ -223,8 +223,8 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 					else
 						var command = 'odesolve(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + eq_vars[0] + ',' + init_conditions[0] + step_command + ',curve)';
 					// Convert answer back to input units.
-					_this.commands = _this.genCommand('concat(tran(at([val], [i__s..i__e, 0]) * mksa_base(' + _this.endField.text({}) + ')),at([val], [i__s..i__e, 1]) * BlockDiagonal([mksa_base(' + init_conditions.join('), mksa_base(') + ')]))');
-					_this.commands[0].unit_convert = true;
+					_this.commands = _this.genCommand('[val]');
+					_this.commands[0].dereference = true;
 					// BRENTAN: TODO: Any way to do a unit consistency check?
 					// BRENTAN: TODO: The provided guess units should allow us to autoconvert the answer in to the desired units as well...*/
 				} else {
@@ -240,7 +240,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 					else
 						var command = 'desolve(' + eqs[0].replace(/==/g,'=') + ', ' + var_command + ')';
 					_this.commands = _this.genCommand('[val]');
-					_this.commands[0].unit_convert = true;
+					_this.commands[0].dereference = true;
 				}
 				_this.commands[0].restore_vars = step_var;
 				if(errors.length && _this.outputMathBox) {
