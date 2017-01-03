@@ -63,6 +63,7 @@ var Element = P(function(_) {
 		this.independent_objects = [];
 		this.dependent_vars = [];
 		this.previous_independent_vars = [];
+    this.ignored_vars = {};
 		this.unarchive_list = [];
 		this.autocomplete_list = {};
 		this.ends[R] = 0;
@@ -396,12 +397,12 @@ var Element = P(function(_) {
     var add_vars = function(vars, impacted) {
       if(impacted) {
         for(var j=0; j<vars.length; j++) {
-          impacted_el_vars[vars[j].trim()]=true;
+          impacted_el_vars[vars[j].replace("(","").trim()]=true;
           all_independent_vars.push(vars[j].trim());
         }
       } else {
         for(var j=0; j<vars.length; j++) {
-          selection_vars[vars[j].trim()]=true;
+          selection_vars[vars[j].replace("(","").trim()]=true;
           all_independent_vars.push(vars[j].trim());
         }
       }
@@ -435,7 +436,6 @@ var Element = P(function(_) {
     //Whew!  That was a mess.  But recalculation should now proceed swimmingly
     var start_el = (move_down ? impacted_els[impacted_els.length - 1] : this)
     var next_el  = (move_down ? this : impacted_els[impacted_els.length - 1])
-    var vars     = all_independent_vars;
 
 		// First, basically remove this item from the tree
 		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'move', L: this[L], parent: this.parent });
@@ -489,7 +489,7 @@ var Element = P(function(_) {
 
     var eval_id = this.worksheet.evaluate([], start_el);
     if(next_el) next_el = next_el.nextEvaluateElement();
-    if(next_el) giac.add_altered(eval_id, vars, next_el.id); // Let evaluator know about all altered vars in move operation
+    if(next_el) giac.add_altered(eval_id, all_independent_vars, next_el.id); // Let evaluator know about all altered vars in move operation
 
 		return this;
 	}
@@ -535,7 +535,7 @@ var Element = P(function(_) {
 	    } else
 	    	var eval_target = target;
 	    if(target) do_eval = true;
-	   }
+	  }
 		if(this[L] !== 0) 
 			this[L][R] = this[R];
 		else
@@ -873,20 +873,6 @@ var Element = P(function(_) {
 	_.scoped = function() {
 		return this.allIndependentVars().length > 0;
 	}
-  _.varHelp = function(varname) {
-    if(this.dependent_vars.indexOf(varname.replace("__SCOBJECT","")) === -1) return false;
-    if(this.independent_vars.indexOf(varname.replace("__SCOBJECT","")) !== -1) return false;
-    return this.definesVar(varname);
-  }
-  _.definesVar = function(varname) {
-    if(this.disabled || this.jQ.hasClass(css_prefix + 'greyout') || (this.independent_vars.indexOf(varname) === -1)) {
-      if(this[L]) {
-        if(this[L].hasChildren && !this[L].disabled && this[L].ends[R]) return this[L].ends[R].definesVar(varname);
-        else return this[L].definesVar(varname);
-      } else if(this.parent && this.parent.definesVar) return this.parent.definesVar(varname);
-      else return false;
-    } else return this;
-  }
   _.topOffset = function() {
     var top_self = this.jQ.position().top;
     if(this.parent instanceof Element) return top_self + this.parent.topOffset();
@@ -1388,7 +1374,7 @@ var Element = P(function(_) {
 		this.autocomplete_list = {};
 		for(var i = 0; i < list.length; i++) {
 			for(var j = 0; j < list[i][1].length; j++)
-				if(list[i][1][j].indexOf("__") == -1) this.autocomplete_list[list[i][1][j]] = true;
+				if(list[i][1][j].indexOf("__") == -1) this.autocomplete_list[list[i][1][j]] = list[i][0].replace(/^.*_([0-9]+)$/,"$1")*1;
 		}
 	}
 	_.autocomplete = function() {
@@ -1405,6 +1391,14 @@ var Element = P(function(_) {
   _.getLastResult = function() {
     if(this.last_result && this.last_result[0] && this.last_result[0].success) return this.last_result[0].returned;
     return false;
+  }
+  _.varHelp = function(varname) {
+    if(this.ignored_vars[varname]) return false;
+    var defining_el = this.autocomplete_list[varname];
+    if(!defining_el) defining_el = this.autocomplete_list[varname + "("];
+    if(!defining_el) defining_el = this.worksheet.object_list[varname];
+    if(defining_el) defining_el = Element.byId[defining_el];
+    return defining_el ? defining_el : false;
   }
 	/* 
 	 Keyboard events.  Will forward the event to whatever item is focusable.  The focusable item should respond to:

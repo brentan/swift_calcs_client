@@ -41,7 +41,7 @@ var material_holder = P(EditableBlock, function(_, super_) {
       enter: this.enterPressed(this),
       blur: this.submissionHandler(this)
     }});
-    this.varStoreField.disableAutoUnit(true);
+    this.varStoreField.variableEntryField(true);
     this.codeBlock = registerFocusable(CodeBlock, this, this.class_name, { });
     this.focusableItems = [[this.varStoreField, this.codeBlock]];
   }
@@ -61,15 +61,6 @@ var material_holder = P(EditableBlock, function(_, super_) {
       return true;
     } else
       return false;
-  }
-  _.definesVar = function(varname) {
-    if(this.disabled || this.jQ.hasClass(css_prefix + 'greyout') || (this.independent_vars.indexOf(varname.replace("__SCOBJECT","")) === -1)) {
-      if(this[L]) {
-        if(this[L].hasChildren && !this[L].disabled && this[L].ends[R]) return this[L].ends[R].definesVar(varname);
-        else return this[L].definesVar(varname);
-      } else if(this.parent && this.parent.definesVar) return this.parent.definesVar(varname);
-      else return false;
-    } else return this;
   }
   _.getLastResult = function() {
     if(this.full_name) return this.full_name.replace(/ /g,"\\whitespace ");
@@ -301,6 +292,7 @@ var material_holder = P(EditableBlock, function(_, super_) {
   }
   _.genCommand = function() {
     this.independent_vars = [this.varStoreField.text().trim()];
+    if(this.last_name) this.worksheet.object_list[this.last_name+"__SCOBJECT"] = false;
     //Command in below never actually run, but is instead there to ensure a change to this block is evaluated by eval engine
     this.commands = [{command: this.independent_vars[0]+"="+this.full_name, setMaterial: {data_type: this.data_type, var_name: this.independent_vars[0], data: this.data, last_name: this.last_name} }];    
   }
@@ -313,6 +305,7 @@ var material_holder = P(EditableBlock, function(_, super_) {
   }
   _.evaluationFinished = function(result) {
     if(result[0].success) {
+      this.worksheet.object_list[this.varStoreField.text().trim()+"__SCOBJECT"] = this.id;
       this.outputBox.clearState().collapse(true);
       this.last_name = this.varStoreField.text().trim();
     } else {

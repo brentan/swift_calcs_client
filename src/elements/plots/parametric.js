@@ -47,6 +47,16 @@ var plot_parametric = P(subplot, function(_, super_) {
     var command2 = "latex(at(apply(" + this.var.text() + "->(evalf(mksa_base(" + this.eqy.text() + "))),[(" + this.step.text() + ")*1.0000000016514245]),0))"; // Evaluate at the first t to find units...add something so that we dont get evaluation at 0
     return [{command: command1, nomarkup: true},{command: command2, nomarkup: true}];
   }
+  _.submissionHandler = function(_this) {
+    return function(mathField) {
+      _this.ignored_vars = GetIgnoredVars([_this.var.text()]);
+      if(_this.needsEvaluation) {
+        _this.commands = _this.createCommands();
+        _this.altered_content = _this.newCommands();
+        _this.parent.evaluate(true);
+      }
+    };
+  }
   _.createCommands = function() {
     if(this.eqx.text().trim() == '') return [];
     if(this.eqy.text().trim() == '') return [];

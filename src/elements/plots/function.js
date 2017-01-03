@@ -19,7 +19,7 @@ var plot_func = P(subplot, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.eq1.disableAutoUnit(true);
+		this.eq1.variableEntryField(true);
 		this.unit_box = registerFocusable(MathQuill, this, 'unit_box', { noWidth: true, handlers: {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
@@ -79,6 +79,16 @@ var plot_func = P(subplot, function(_, super_) {
 		this.dependent_vars = GetDependentVars(command3, [this.eq1.text()]);
 		return [{command: command3, nomarkup: true },{command: command4, nomarkup: true }]
 	}
+  _.submissionHandler = function(_this) {
+    return function(mathField) {
+      _this.ignored_vars = GetIgnoredVars([_this.eq1.text()]);
+      if(_this.needsEvaluation) {
+        _this.commands = _this.createCommands();
+        _this.altered_content = _this.newCommands();
+        _this.parent.evaluate(true);
+      }
+    };
+  }
 	_.evaluationFinished = function(result) {
     if(this.parent.getUnits) {
       if(result[0].success) this.y_unit = result[0].returned;

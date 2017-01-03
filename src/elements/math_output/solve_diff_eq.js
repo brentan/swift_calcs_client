@@ -52,8 +52,8 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 		}});
 		this.solver = registerFocusable(SelectBox, this, 'solver', { options: { symbolic: 'Symbolic (Exact) Solver', newton_solver: 'Numeric (Approximate) Solver'}});
 		this.eqFields[0].setExpressionMode(true);
-		this.varField.disableAutoUnit(true);
-		this.varFields[0].disableAutoUnit(true);
+		this.varField.variableEntryField(true);
+		this.varFields[0].variableEntryField(true);
 		this.command = registerFocusable(CodeBlock, this, 'solve differential equation', { });
 		this.focusableItems = [[], [this.eqFields[0]] , [this.varField], [this.solver]];
 		this.needsEvaluation = false;
@@ -91,7 +91,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 			blur: this.submissionHandler(this)
 		}}));
 		this.varFields[this.varFields.length - 1].latex("y_{" + this.eq_id + "}");
-		this.varFields[this.varFields.length - 1].disableAutoUnit(true);
+		this.varFields[this.varFields.length - 1].variableEntryField(true);
 		this.eqFields[this.number_of_equations].setExpressionMode(true);
 		this.eq_id++;
 		this.number_of_equations++;
@@ -177,6 +177,8 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
+			var step_var = _this.numeric_mode ? _this.varField.text() : _this.varField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_]*)\)$/i,"$1, $2");
+			_this.ignored_vars = GetIgnoredVars(step_var.split(","));
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
@@ -210,7 +212,6 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 							errors.push("Invalid variable name (" + _this.worksheet.latexToHtml(v.latex()) + ").  Please correct this error to continue.");
 						eq_vars.push(to_add);
 					}
-					var step_var = _this.varField.text();
 					// if they entered y(x) instead of y in the expression field, convert it:
 					for(var i = 0; i < eq_vars.length; i++) {
 						for(var j=0; j < eqs.length; j++) 
@@ -231,7 +232,6 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 					// symbolic solver desolve
 					if(!_this.varField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_]*\)$/i))
 						errors.push('Invalid function name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid function with dependant variables.  Ex: f(x)');
-					var step_var = _this.varField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_]*)\)$/i,"$1, $2");
 					var eqs = [];
 					$.each(_this.eqFields, function(i, v) { eqs.push(v.text()); });
 					var var_command = _this.varField.text({default: 'f(x)'});

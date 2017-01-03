@@ -177,8 +177,13 @@ var SwiftCalcs = {};
       return ((result * 1) != 0);
     return false;
   }
-
-  var GetDependentVars = function(command, ignore) {
+  var GetIgnoredVars = function(list) {
+    var out = {};
+    for(var i = 0; i < list.length; i++)
+      out[list[i]] = true;
+    return out;
+  }
+  var GetDependentVars = SwiftCalcs.GetDependentVars = function(command, ignore) {
     var dependent_vars = [];
     if(typeof ignore === 'undefined') ignore = [];
     if(command.match(/^[\s]*[a-z][a-z0-9_]*SWIFTCALCSMETHOD.*:=.*$/i)) // by setting it, it is also dependent on it, because special objects are weird
@@ -203,7 +208,7 @@ var SwiftCalcs = {};
     }
     return dependent_vars;
   }
-  var GetIndependentVars = function(command) {
+  var GetIndependentVars = SwiftCalcs.GetIndependentVars = function(command) {
     var independent_vars = [];
     if(command.match(/^[\s]*[a-z][a-z0-9_]*SWIFTCALCSMETHOD.*:=.*$/i)) {// by setting it, it is also dependent on it, because special objects are weird
       var method_name = command.replace(/^[\s]*([a-z][a-z0-9_]*)SWIFTCALCSMETHOD.*$/i, "$1");
@@ -213,8 +218,10 @@ var SwiftCalcs = {};
       independent_vars.push(method_name + "_rho__in");
     }
     command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
-    if(command.match(/^[\s]*[a-z][a-z0-9_]*(\(.*\))?(\[.*\])?[\s]*:=/i)) 
-      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?(\[.*\])?[\s]*:=.*$/i,"$1"));
+    if(command.match(/^[\s]*[a-z][a-z0-9_]*(\(.*\))[\s]*:=/i)) 
+      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))[\s]*:=.*$/i,"$1("));
+    else if(command.match(/^[\s]*[a-z][a-z0-9_]*(\[.*\])?[\s]*:=/i)) 
+      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\[.*\])?[\s]*:=.*$/i,"$1"));
     return independent_vars
   }
     

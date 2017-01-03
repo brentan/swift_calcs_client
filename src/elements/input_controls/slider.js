@@ -19,7 +19,7 @@ var slider = P(Element, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.varStoreField.disableAutoUnit(true);
+		this.varStoreField.variableEntryField(true);
 		this.slider = registerFocusable(Slider,this, 'value', { min: this.slider_min, max: this.slider_max, step: this.step_size, unit: this.units});
 		this.focusableItems = [[this.varStoreField, this.slider]];
 		this.touched = false;

@@ -102,7 +102,7 @@ var receiveMessage = function(command) {
 	if(command.restart) {
     var unarchive_string = "";
     for(var i = 0; i < command.unarchive_list.length; i++) 
-      unarchive_string += command.unarchive_list[i][1].join(";").replace(/([^;]+)/g,"$1:=unarchive(\"" + command.unarchive_list[i][0] + "_$1\")") + ";";
+      unarchive_string += command.unarchive_list[i][1].join(";").replace(/\(/g,'').replace(/([^;]+)/g,"$1:=unarchive(\"" + command.unarchive_list[i][0] + "_$1\")") + ";";
     Module.caseval('restart;srand;' + restart_string + unarchive_string);
     return;
   }
@@ -114,7 +114,7 @@ var receiveMessage = function(command) {
   // If we need to load a scope, do it here
 	if(command.load_scope) {
     for(var i = 0; i < command.var_list.length; i++)
-      Module.caseval(command.var_list[i] + ':=unarchive("' + command.load_scope + "_" + command.var_list[i] + '")');
+      Module.caseval(command.var_list[i].replace("(","") + ':=unarchive("' + command.load_scope + "_" + command.var_list[i].replace("(","") + '")');
   }
   // Iterate over the command list
 	for(ii = 0; ii < command.commands.length; ii++) {
@@ -131,7 +131,7 @@ var receiveMessage = function(command) {
     }
     if(command.commands[ii].protect_vars) {
       // This command uses a dependant variable (like solve for x), so we want to purge 'x' so that it is treated symbolically.  We must remember to restore 'x' later...
-      var var_list = command.commands[ii].protect_vars.split(',');
+      var var_list = command.commands[ii].protect_vars.replace(/\(/g,"").split(',');
       var purge_command = '';
       for(var i = 0; i < var_list.length; i++) 
         purge_command += "if(" + var_list[i] + "!='" + var_list[i] + "'){" + var_list[i] + "__temp:=" + var_list[i] + ";};";
@@ -293,7 +293,7 @@ var receiveMessage = function(command) {
   // If we are scoped evaluation, we should save the scope now for future retreival
 	if(command.scoped) {
     for(var i = 0; i < command.var_list.length; i++)
-		  Module.caseval('archive("' + command.next_scope + "_" + command.var_list[i] + '", ' + command.var_list[i] + ')');
+		  Module.caseval('archive("' + command.next_scope + "_" + command.var_list[i].replace("(","") + '", ' + command.var_list[i].replace("(","") + ')');
   }
   // Return the result to the window thread
   if(command.variable)
@@ -309,7 +309,7 @@ var restoreVars = function(var_list) {
   // This command undoes the stashing of dependant variables (like solve for x), to restore 'x'
   var restore_command = '';
   var restore_vars = [];
-  var_list = var_list.split(',');
+  var_list = var_list.replace(/\(/g,'').split(',');
   for(var i = 0; i < var_list.length; i++) {
     restore_command += "if(" + var_list[i] + "__temp!='" + var_list[i] + "__temp'){" + var_list[i] + ":=" + var_list[i] + "__temp;};";
     restore_vars.push(var_list[i] + "__temp");

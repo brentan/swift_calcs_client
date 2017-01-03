@@ -22,7 +22,7 @@ var mixture = P(Element, function(_, super_) {
       enter: this.enterPressed(this),
       blur: this.submissionHandler(this)
     }});
-    this.varStoreField.disableAutoUnit(true);
+    this.varStoreField.variableEntryField(true);
     this.focusableItems = [[this.varStoreField, registerFocusable(CodeBlock,this, 'mixture', { })], [-1]];
     super_.postInsertHandler.call(this);
     if(this.jQ) this.jQ.find('.another_link a.add_another').on('click', function(_this) { return function(e) {
@@ -94,6 +94,7 @@ var mixture = P(Element, function(_, super_) {
     this.last_result = "Mixture: \\whitespace\\whitespace " + description.join(", ");
     var var_name = this.varStoreField.text().trim();
     this.independent_vars = [var_name, var_name + "_T__in", var_name + "_P__in"];
+    if(this.last_name) this.worksheet.object_list[this.last_name+"__SCOBJECT"] = false;
     this.commands = [{command: this.independent_vars.join(",") + "=" + command, setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: species, last_name: this.last_name} }];    
   }
   _.getLastResult = function() {
@@ -112,6 +113,7 @@ var mixture = P(Element, function(_, super_) {
       this.outputBox.clearState().collapse(true);
       var children = this.children();
       this.number_of_species = children.length;
+      this.worksheet.object_list[this.varStoreField.text().trim()+"__SCOBJECT"] = this.id;
       for(var i = 0; i < children.length; i++)
         children[i].needsEvaluation = false;
     } else {
@@ -144,15 +146,6 @@ var mixture = P(Element, function(_, super_) {
   _.getUnarchiveList = function() {
     if(this.unarchive_list_set) return this.unarchive_list;
     return this.previousUnarchivedList();
-  }
-  _.definesVar = function(varname) {
-    if(this.disabled || this.jQ.hasClass(css_prefix + 'greyout') || (this.independent_vars.indexOf(varname.replace("__SCOBJECT","")) === -1)) {
-      if(this[L]) {
-        if(this[L].hasChildren && !this[L].disabled && this[L].ends[R]) return this[L].ends[R].definesVar(varname);
-        else return this[L].definesVar(varname);
-      } else if(this.parent && this.parent.definesVar) return this.parent.definesVar(varname);
-      else return false;
-    } else return this;
   }
 });
 

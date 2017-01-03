@@ -45,6 +45,7 @@ var Worksheet = P(function(_) {
     this.onshape_did = inputs.onshape_did;
     this.fusion_id = inputs.fusion_id;
 		this.ends = {};
+    this.object_list = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
 		this.hashtags = [];

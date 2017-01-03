@@ -43,11 +43,11 @@ var GiacHandler = P(function(_) {
     if(delay) {
       var addition = {el_id: delay, vars: {}}
       for(var i = 0; i < l; i++)
-        addition.vars[altered[i].trim()] = true;
+        addition.vars[altered[i].replace("(","").trim()] = true;
       this.evaluations[eval_id].altered_list_additions.push(addition);
     } else {
       for(var i = 0; i < l; i++)
-        this.evaluations[eval_id].altered_list[altered[i].trim()] = true;
+        this.evaluations[eval_id].altered_list[altered[i].replace("(","").trim()] = true;
     }
   }
   _.get_and_wipe_altered = function(eval_id, delay) {
@@ -65,7 +65,7 @@ var GiacHandler = P(function(_) {
     if(!this.evaluations[eval_id]) return;
     var l = altered.length;
     for(var i = 0; i < l; i++)
-      this.evaluations[eval_id].altered_list[altered[i].trim()] = false;
+      this.evaluations[eval_id].altered_list[altered[i].replace("(","").trim()] = false;
   }
   _.load_altered = function(eval_id, el) {
     if(!this.evaluations[eval_id]) return;
@@ -84,7 +84,7 @@ var GiacHandler = P(function(_) {
   _.check_altered = function(eval_id, el) {
     if(!this.evaluations[eval_id]) return false;
     var l = el.dependent_vars.length;
-    for(var i = 0; i < l; i++)
+    for(var i = 0; i < l; i++) 
       if(this.evaluations[eval_id].altered_list[el.dependent_vars[i]] === true) return true;
     return false;
   }
