@@ -45,27 +45,41 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	}
 	_.reshapeToolbar = function() {
 		if(window.embedded) return;
-    var menu_height = max(max(40, $("#account_bar td.middle").height()), $("#account_bar td.right").height());
-    $('#account_bar').height(menu_height);
-		if(window.matchMedia("only screen and (max-device-width: 480px)").matches) {
-			var toolbar_height = 0;
-			var extra_padding = 2;
-			$('div.top_yellow_message').each(function() {
-				extra_padding += $(this).height();
-			});
-		} else {
-			var toolbar_height = this.toolbar_holder.height();
-			var extra_padding = 20;
+
+		$("#account_bar td.middle nav.menu").children("ul").children("li").show();
+		$("#account_bar td.middle nav.menu").children("ul").children("li.mobile").hide();
+    var menu_height = $("#account_bar td.middle").height();
+		if(menu_height > 50) {
+			// Change to mobile icon
+			$("#account_bar td.middle nav.menu").children("ul").children("li").hide();
+			$("#account_bar td.middle nav.menu").children("ul").children("li.mobile, li.no_select").show();
 		}
-		var top = menu_height;
-		var bot = top + toolbar_height;
-		$('.worksheet_holder_outer_box').css('padding-top', (bot + extra_padding) + 'px');
-		if(!window.matchMedia("only screen and (max-device-width: 480px)").matches)
-			this.toolbar_holder.css('top', top + 'px');
-		$('div.sidebar').css('top', bot + 'px');
-		$('div.projects_list').css('top', top + 'px');
-		$('div.top_yellow_message').css('top', bot + 'px');
-		$('div.toolbox_top').css('height', toolbar_height + 'px');
+    menu_height = $("#account_bar td.middle").height();
+		if(menu_height > 50) {
+			// Remove info area
+			$("#account_bar td.middle nav.menu").children("ul").children("li.no_select").hide();
+		}
+		$("#account_bar td.right nav.accounts").children("ul").children("li").removeClass('hidden');
+    menu_height = $("#account_bar td.right").height();
+    var count = 0;
+		while(menu_height > 50) {
+			// Remove icons until we reach height
+			$("#account_bar td.right nav.accounts").children("ul").children("li:not(.hidden)").last().addClass('hidden');
+			menu_height = $("#account_bar td.right").height();
+			if(count > 20) break;
+			count++;
+		}
+
+		count=0;
+		this.toolbar_holder.children("ul").children("li.hidden").removeClass("hidden").show();
+		menu_height = this.toolbar_holder.height();
+		while(menu_height > 50) {
+			// Remove icons until we reach height
+			this.toolbar_holder.children("ul").children("li:not(.right, .hidden)").last().addClass('hidden').hide();
+			menu_height = this.toolbar_holder.height();
+			if(count > 100) break;
+			count++;
+		}
 	}
 	var current_toolbar_target = 0;
 	_.attachToolbar = function(el, options) {
