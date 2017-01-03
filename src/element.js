@@ -26,6 +26,7 @@ var Element = P(function(_) {
   _.no_save = false;
   _.jQ = 0;
   _.hidden = true;
+  _.disabled = false;
 	_.error = false;
 	_.savedProperties = [];
 	_.outputBox = false;
@@ -291,6 +292,13 @@ var Element = P(function(_) {
 		});
 		return child_found;
 	}
+  _.flash = function(color, duration) {
+    var el = this.jQ.closest('.sc_element');
+    if(typeof color === 'undefined') color = "#ffe0e0";
+    if(typeof duration === 'undefined') duration = 400;
+    el.stop().css("background-color", color).animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')} , duration: duration });
+    return this;
+  }
 
 	/*
 	Move commands.  Allows them to be moved upwards, downwards, etc.
@@ -865,6 +873,20 @@ var Element = P(function(_) {
 	_.scoped = function() {
 		return this.allIndependentVars().length > 0;
 	}
+  _.varHelp = function(varname) {
+    if(this.dependent_vars.indexOf(varname) === -1) return false;
+    if(this.independent_vars.indexOf(varname) !== -1) return false;
+    return this.definesVar(varname);
+  }
+  _.definesVar = function(varname) {
+    if(this.disabled || this.jQ.hasClass(css_prefix + 'greyout') || (this.independent_vars.indexOf(varname) === -1)) {
+      if(this[L]) {
+        if(this[L].hasChildren && !this[L].disabled && this[L].ends[R]) return this[L].ends[R].definesVar(varname);
+        else return this[L].definesVar(varname);
+      } else if(this.parent && this.parent.definesVar) return this.parent.definesVar(varname);
+      else return false;
+    } else return this;
+  }
 	//_.overrideUnarchivedListForChildren = function() {
 		// To be defined by parent elements that want to pass a special list to children.
 		// Example: For loop (Add in iterator)
@@ -1292,11 +1314,11 @@ var Element = P(function(_) {
 		if(!this.inTree) return this;
 		if(!this.blurred) return this;
 		this.lastFocusedItem = false;
-		this.worksheet.focus();
 		this.worksheet.blurToolbar(this);
 		if(this.worksheet.activeElement)
 			this.worksheet.activeElement.blur(this);
 		this.blurred = false;
+    this.worksheet.focus();
 		this.worksheet.activeElement = this;
 		if(this.leftJQ) this.leftJQ.addClass(css_prefix + 'focused');
 		if(this.jQ) this.jQ.addClass(css_prefix + 'focused');

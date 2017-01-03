@@ -184,7 +184,7 @@ $(function() {
     el.find('.iframe_embed input').val("<iframe width='100%' height='" + (height > 0 ? height : '600') + "' frameborder='0' allowTransparency='true' scrolling='no' style='width:100%;overflow:hidden;border-width:0px;height:" + (height > 0 ? height : '600') + "px;background-color:transparent;' src='" + iframe_src + "'></iframe>");
   }
 
-	var openSharingDialog = window.openSharingDialog = function(item_hash, item_type) {
+  var openSharingWindow = function(item_hash, item_type, show_embed) {
     if(item_hash == '') {
       if(window.user_logged_in) {
         showNotice("Save this document in order to enable sharing");
@@ -200,7 +200,7 @@ $(function() {
       return;
     }
     window.showLoadingOnTop();
-    window.ajaxRequest("/rights", { item_hash: item_hash, item_type: item_type }, function(response) {
+    window.ajaxRequest("/rights", { item_hash: item_hash, item_type: item_type, show_embed: show_embed }, function(response) {
       window.showPopupOnTop();
 			var el = $('.popup_dialog .full').html(response.html);
       el.find('input.static').each( function() {
@@ -283,16 +283,24 @@ $(function() {
       buttons.find('button.submit').on('click', function() {
         submitRights($('form.rights_form'));
       });
-      // Populate embed boxes
-      createEmbedCode();
-      // Listen for changes to embed options
-      el.find('.embed_span select').on('change', function(e) { createEmbedCode(); });
-      el.find('.embed_span .iframe_code').on('click', function(e) { $(this).hide(); $(this).closest('.embed_span').find('.iframe_embed').show(); });
+      if(show_embed) {
+        // Populate embed boxes
+        createEmbedCode();
+        // Listen for changes to embed options
+        el.find('.embed_span select').on('change', function(e) { createEmbedCode(); });
+        el.find('.embed_span .iframe_code').on('click', function(e) { $(this).hide(); $(this).closest('.embed_span').find('.iframe_embed').show(); });
+      }
       window.resizePopup(); 
     }, function(err) {
       window.hidePopupOnTop();
     });
 	}
+  var openSharingDialog = window.openSharingDialog = function(item_hash, item_type) {
+    openSharingWindow(item_hash, item_type, false);
+  }
+  var openEmbedDialog = window.openEmbedDialog = function(item_hash, item_type) {
+    openSharingWindow(item_hash, item_type, true);
+  }
   var loadCopies = window.loadCopies = function(hash_string) {
     var success = function(response) {
       window.showPopupOnTop();

@@ -18,24 +18,23 @@ var aFocusableItem = P(function(_) {
     this.jQ.attr('data-focusable-id', this.id);
     this.jQ.addClass(css_prefix + 'focusable');
   }
-  _.flash = function() {
-    var el = this.jQ.closest('.sc_element');
-    el.stop().css("background-color", "#ffe0e0").animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')} , duration: 400 });
+  _.flash = function(color) {
+    this.element.flash(color);
     return this;
   }
 	_.scrollToMe = function(dir) {
-		if(this.jQ) {
-			var top = this.jQ.position().top;
+		if(this.jQ && this.element.jQ) {
+			var top = this.jQ.position().top + this.element.jQ.position().top - $('body').scrollTop();
 			var bottom = top + this.jQ.height();
 			var to_move_top = Math.min(0, top);
-			var to_move_bot = Math.max(0, bottom - this.element.worksheet.jQ.height()+20);
+			var to_move_bot = Math.max(0, bottom - $('body').height()+20);
 			if((to_move_bot > 0) && (to_move_top < 0)) {
 				if(dir === R)
-					this.element.worksheet.jQ.scrollTop(this.element.worksheet.jQ.scrollTop() + to_move_bot);
+					$('body').scrollTop($('body').scrollTop() + to_move_bot);
 				else
-					this.element.worksheet.jQ.scrollTop(this.element.worksheet.jQ.scrollTop() + to_move_top);
+					$('body').scrollTop($('body').scrollTop() + to_move_top);
 			}	else
-				this.element.worksheet.jQ.scrollTop(this.element.worksheet.jQ.scrollTop() + to_move_top + to_move_bot);
+				$('body').scrollTop($('body').scrollTop() + to_move_top + to_move_bot);
 		}
 		return this;
 	}

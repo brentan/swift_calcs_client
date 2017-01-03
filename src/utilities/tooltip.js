@@ -42,15 +42,17 @@ $(function() {
 
 	var destroyTooltip = SwiftCalcs.destroyTooltip = function(fade) {
 		if(exposed) {
-      if(!fade) fade = 250;
-			$el.removeClass('high_z').stop().fadeOut({duration:fade, complete: function() { $(this).detach(); } });
+      if(typeof fade === 'undefined') fade = 250;
+      if(fade > 0)
+			  $el.removeClass('high_z').stop().fadeOut({duration:fade, complete: function() { $(this).detach(); } });
+      else
+        $el.removeClass('high_z').stop().hide().detach();
 			exposed = false;
 		}
 	}
-
   // Create a Help Popup with content HTML
   var createHelpPopup = SwiftCalcs.createHelpPopup = function(html, topBlock) {
-    destroyTooltip();
+    if(exposed) $el.removeClass('high_z').detach();
     var container = $('.sc_element_container');
     var leftOffset = topBlock.offset().left - 20 + Math.floor(topBlock.width()/2);
     var topOffset = topBlock.offset().top - 40;
@@ -68,6 +70,7 @@ $(function() {
     $el.css({top: Math.ceil(topOffset) + 'px', left: Math.floor(leftOffset) + 'px', display:'none'});
     $el.stop().fadeIn({duration: 250});
     exposed = true;
+    return $el;
 	};
 
 	var destroyHelpPopup = SwiftCalcs.destroyHelpPopup = function(fade) {

@@ -801,18 +801,18 @@ var WYSIWYG = P(function(_) {
     this.updateToolbar();
   }
   _.scrollToMe = function(dir) {
-    if(this.$editor) {
-      var top = this.$editor.position().top;
+    if(this.$editor && this.el.jQ) {
+      var top = this.$editor.position().top + this.el.jQ.position().top - $('body').scrollTop();
       var bottom = top + this.$editor.height();
       var to_move_top = Math.min(0, top);
-      var to_move_bot = Math.max(0, bottom - this.el.worksheet.jQ.height()+20);
+      var to_move_bot = Math.max(0, bottom - $('body').height()+20);
       if((to_move_bot > 0) && (to_move_top < 0)) {
         if(dir === R)
-          this.el.worksheet.jQ.scrollTop(this.el.worksheet.jQ.scrollTop() + to_move_bot);
+          $('body').scrollTop($('body').scrollTop() + to_move_bot);
         else
-          this.el.worksheet.jQ.scrollTop(this.el.worksheet.jQ.scrollTop() + to_move_top);
+          $('body').scrollTop($('body').scrollTop() + to_move_top);
       } else
-        this.el.worksheet.jQ.scrollTop(this.el.worksheet.jQ.scrollTop() + to_move_top + to_move_bot);
+        $('body').scrollTop($('body').scrollTop() + to_move_top + to_move_bot);
     }
     return this;
   }

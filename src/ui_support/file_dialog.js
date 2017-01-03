@@ -833,6 +833,12 @@ $(function() {
 							closeMenu();
 						}).appendTo(menu);
 				}
+				if(response.rights_level >= 3) 
+					$('<div/>').html('<i class="fa fa-fw fa-code"></i>Embed Project').on('click', function(e) {
+	    			window.trackEvent("Worksheet", "Embed Dialog","From Menu");
+						window.openEmbedDialog(project_hash, 'Project');
+						closeMenu();
+					}).appendTo(menu);
 				if(!response.onshape)
 					$('<div/>').html('<i class="fa fa-fw fa-archive"></i>Archive Project').on('click', function(e) {
 						// Archive
@@ -1154,6 +1160,17 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
+	$('body').on('click', 'nav.menu .embed_dialog', function(e) {
+		window.trackEvent("Worksheet", "Embed Dialog","From Menu");
+		if(SwiftCalcs.active_worksheet)
+			window.openEmbedDialog(SwiftCalcs.active_worksheet.hash_string, 'Worksheet');
+		else if(current_project_hash)
+			window.openEmbedDialog(current_project_hash, 'Project');
+		else 
+			window.showNotice("Open a worksheet or Project to Embed", "red");
+		e.preventDefault();
+		return false;
+	});
 	$('body').on('click', '.sharing_icon', function(e) {
 		window.openSharingDialog($(this).attr('data-hash'), $(this).attr('data-type'));
 		e.preventDefault();
@@ -1279,6 +1296,12 @@ $(function() {
 				$('<div/>').html('<i class="fa fa-fw fa-user-plus"></i>Manage Collaborators').on('click', function(e) {
     			window.trackEvent("Worksheet", "Sharing Dialog","From Menu");
 					window.openSharingDialog(worksheet_hash, 'Worksheet');
+					closeMenu();
+				}).appendTo(menu);
+			if(response.rights_level >= 3) 
+				$('<div/>').html('<i class="fa fa-fw fa-code"></i>Embed Worksheet').on('click', function(e) {
+    			window.trackEvent("Worksheet", "Embed Dialog","From Menu");
+					window.openEmbedDialog(worksheet_hash, 'Worksheet');
 					closeMenu();
 				}).appendTo(menu);
 			if(response.rights_level >= 3) 
