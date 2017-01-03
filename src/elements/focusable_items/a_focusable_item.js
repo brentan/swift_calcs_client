@@ -23,8 +23,8 @@ var aFocusableItem = P(function(_) {
     return this;
   }
 	_.scrollToMe = function(dir) {
-		if(this.jQ && this.element.jQ) {
-			var top = this.jQ.position().top + this.element.jQ.position().top - $('body').scrollTop();
+		if(this.jQ && this.element && this.element.jQ) {
+			var top = this.jQ.position().top + this.element.topOffset() - $('body').scrollTop();
 			var bottom = top + this.jQ.height();
 			var to_move_top = Math.min(0, top);
 			var to_move_bot = Math.max(0, bottom - $('body').height()+20);

@@ -874,8 +874,8 @@ var Element = P(function(_) {
 		return this.allIndependentVars().length > 0;
 	}
   _.varHelp = function(varname) {
-    if(this.dependent_vars.indexOf(varname) === -1) return false;
-    if(this.independent_vars.indexOf(varname) !== -1) return false;
+    if(this.dependent_vars.indexOf(varname.replace("__SCOBJECT","")) === -1) return false;
+    if(this.independent_vars.indexOf(varname.replace("__SCOBJECT","")) !== -1) return false;
     return this.definesVar(varname);
   }
   _.definesVar = function(varname) {
@@ -886,6 +886,11 @@ var Element = P(function(_) {
       } else if(this.parent && this.parent.definesVar) return this.parent.definesVar(varname);
       else return false;
     } else return this;
+  }
+  _.topOffset = function() {
+    var top_self = this.jQ.position().top;
+    if(this.parent instanceof Element) return top_self + this.parent.topOffset();
+    return top_self;
   }
 	//_.overrideUnarchivedListForChildren = function() {
 		// To be defined by parent elements that want to pass a special list to children.
@@ -1397,6 +1402,10 @@ var Element = P(function(_) {
 	_.autocompleteObject = function(name) {
 		return giac.object_methods[name];
 	}
+  _.getLastResult = function() {
+    if(this.last_result && this.last_result[0] && this.last_result[0].success) return this.last_result[0].returned;
+    return false;
+  }
 	/* 
 	 Keyboard events.  Will forward the event to whatever item is focusable.  The focusable item should respond to:
 	 If cut/copy handles the cut/copy directly, and should set worksheet.clipboard to the appropriate value and return true,

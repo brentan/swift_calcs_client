@@ -81,17 +81,24 @@ var mixture = P(Element, function(_, super_) {
     var children = this.children();
     var command = "";
     this.dependent_vars = [];
+    var description = [];
     for(var i = 0; i < children.length; i++) {
       if(children[i].data !== false) {
         var to_store = children[i].speciesData();
         species.push(to_store);
+        description.push(children[i].varStoreField.latex().trim() + " " + to_store.data.full_name.replace(/<sub>([0-9]+)<\/sub>/g,"_{$1}"));
         command += to_store.quantity + "->" + to_store.data.full_name + ";";
         this.dependent_vars = this.dependent_vars.concat(GetDependentVars(to_store.quantity));
       }
     }
+    this.last_result = "Mixture: \\whitespace\\whitespace " + description.join(", ");
     var var_name = this.varStoreField.text().trim();
     this.independent_vars = [var_name, var_name + "_T__in", var_name + "_P__in"];
     this.commands = [{command: this.independent_vars.join(",") + "=" + command, setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: species, last_name: this.last_name} }];    
+  }
+  _.getLastResult = function() {
+    if(this.last_result) return this.last_result;
+    return false;
   }
 
   _.shouldBeEvaluated = function(evaluation_id) {
@@ -137,6 +144,15 @@ var mixture = P(Element, function(_, super_) {
   _.getUnarchiveList = function() {
     if(this.unarchive_list_set) return this.unarchive_list;
     return this.previousUnarchivedList();
+  }
+  _.definesVar = function(varname) {
+    if(this.disabled || this.jQ.hasClass(css_prefix + 'greyout') || (this.independent_vars.indexOf(varname.replace("__SCOBJECT","")) === -1)) {
+      if(this[L]) {
+        if(this[L].hasChildren && !this[L].disabled && this[L].ends[R]) return this[L].ends[R].definesVar(varname);
+        else return this[L].definesVar(varname);
+      } else if(this.parent && this.parent.definesVar) return this.parent.definesVar(varname);
+      else return false;
+    } else return this;
   }
 });
 

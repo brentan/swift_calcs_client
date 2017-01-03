@@ -150,6 +150,10 @@ var regression = P(SettableMathOutput, function(_, super_) {
 		this.last_result = result;
 		return to_return;
 	}
+  _.getLastResult = function() {
+    if(this.last_result && this.last_result[1] && this.last_result[1].success) return this.last_result[1].returned;
+    return false;
+  }
 	// Callback for focusable items notifying that this element has been changed
 	_.changed = function(el) {
 		if(el === this.regression_type) {

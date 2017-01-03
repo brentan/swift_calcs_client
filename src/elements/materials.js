@@ -62,7 +62,19 @@ var material_holder = P(EditableBlock, function(_, super_) {
     } else
       return false;
   }
-
+  _.definesVar = function(varname) {
+    if(this.disabled || this.jQ.hasClass(css_prefix + 'greyout') || (this.independent_vars.indexOf(varname.replace("__SCOBJECT","")) === -1)) {
+      if(this[L]) {
+        if(this[L].hasChildren && !this[L].disabled && this[L].ends[R]) return this[L].ends[R].definesVar(varname);
+        else return this[L].definesVar(varname);
+      } else if(this.parent && this.parent.definesVar) return this.parent.definesVar(varname);
+      else return false;
+    } else return this;
+  }
+  _.getLastResult = function() {
+    if(this.full_name) return this.full_name.replace(/ /g,"\\whitespace ");
+    return false;
+  }
   _.loadOptions = function(parent_id) {
     this.ignore_blur_eval = true;
     this.blur();

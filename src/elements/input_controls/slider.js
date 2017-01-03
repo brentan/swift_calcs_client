@@ -56,7 +56,7 @@ var slider = P(Element, function(_, super_) {
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
 			if(_this.needsEvaluation) {
-				_this.commands = [{command: _this.varStoreField.text() + " := " + _this.slider.text(), nomarkup: true}];	
+				_this.commands = [{command: _this.varStoreField.text() + " := " + _this.slider.text()}];	
 				_this.independent_vars = [_this.varStoreField.text().trim()];
 				_this.evaluate();
 				_this.needsEvaluation = false;
@@ -64,6 +64,7 @@ var slider = P(Element, function(_, super_) {
 		};
 	}
 	_.evaluationFinished = function(result) {
+		this.last_result = result;
 		if(!result[0].success) {
 			this.outputBox.setError(result[0].returned);
 			this.outputBox.expand();

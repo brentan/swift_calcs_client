@@ -802,7 +802,7 @@ var WYSIWYG = P(function(_) {
   }
   _.scrollToMe = function(dir) {
     if(this.$editor && this.el.jQ) {
-      var top = this.$editor.position().top + this.el.jQ.position().top - $('body').scrollTop();
+      var top = this.$editor.position().top + this.el.topOffset() - $('body').scrollTop();
       var bottom = top + this.$editor.height();
       var to_move_top = Math.min(0, top);
       var to_move_bot = Math.max(0, bottom - $('body').height()+20);
