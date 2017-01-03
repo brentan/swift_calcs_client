@@ -109,7 +109,6 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 			this.needsEvaluation = false;
 			new_el.insertAfter(this).show().focus(0);
   		new_el.paste(this.varField.latex() + '=' + this.eqFields[0].latex());
-  		console.log(this.varField.latex() + '=' + this.eqFields[0].latex());
 			this.remove(0);
 			if(!stream) this.worksheet.endUndoStream();
 		} else {
