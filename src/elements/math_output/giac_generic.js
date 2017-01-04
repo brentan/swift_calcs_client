@@ -6,7 +6,6 @@ structure:
 {
 	name: 'name' // name of element (used for code block and keyboard shortcut)',
 	helpText: 'help text for tooltip bubble',
-	function_of: 'n', //List of variables that should be added to StoreAsVariable function.  Include when function returns an algebaric expression of variable 'n'
 	content: [ // An array where each item is a new row.  Items between <<>> will be tranformed into
 						 // the focusableItem with the same name.  Options can be sent with a hash_string list after the focusable item name
 		"text:<<MathQuill>>",
@@ -14,6 +13,8 @@ structure:
 	],
 	pre_command: "assume(n, DOM_INT)", // Pre-command to run before the real command, if any.  Omit if none
 	command: "giac($1, $2)" // command to send to giac, with $1 the output from the first focusable item, $2 the second, etc
+	protect_vars: 2, // index of variable entry field, will be protected from evaluation
+	returns_function: 's' // if returns a function, default variable (can be $n too), requires protect_vars to be set too
 }
 */
 
@@ -52,7 +53,7 @@ var createGiacElement = function(options) {
 		_.nomarkup = options.nomarkup;
 		_.no_approx = options.no_approx ? options.no_approx : false;
 		_.no_algebra = options.no_algebra ? options.no_algebra : false;
-		_.function_of = options.function_of ? options.function_of : false;
+		_.returns_function = options.returns_function ? options.returns_function : false;
 		_.pre_command = options.pre_command ? options.pre_command : false;
 		var block_html = html;
 		var to_populate = focusable_list;
@@ -87,11 +88,25 @@ var createGiacElement = function(options) {
 			return function(mathField) {
 				if(_this.needsEvaluation) {
 					var command = _this.options.command;
-					for(var i = 0; i < _this.items.length; i++) 
+					var returns_function = _this.options.returns_function;
+					for(var i = 0; i < _this.items.length; i++) {
 						command = command.replace("$" + (i+1), _this.items[i].text());
-					_this.commands = _this.genCommand(command);
+						if(returns_function) returns_function=returns_function.replace("$" + (i+1), _this.items[i].text());
+					}
+					if(_this.options.returns_function) {
+	          if(_this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i)) {
+	            // Need to turn in to a function definition
+	            var varName = _this.varStoreField.text().replace(/_(.*)$/,"_{$1}");
+	            _this.varStoreField.clear().paste("\\operatorname{" + varName + "}\\left({" + returns_function + "}\\right)");
+	          }
+	          if(_this.varStoreField.text().length == 0) command = command.replace("'x'","'" + returns_function + "'");
+						_this.commands = _this.genCommand("[val]");
+						_this.commands[0].dereference = true;
+						_this.commands.unshift({command: command, nomarkup: true }); 
+					} else
+						_this.commands = _this.genCommand(command);
 					if(_this.options.protect_vars) {
-						_this.commands[0].restore_vars = _this.items[_this.options.protect_vars-1].text();
+						_this.commands[_this.commands.length-1].restore_vars = _this.items[_this.options.protect_vars-1].text();
 						_this.commands[0].protect_vars = _this.items[_this.options.protect_vars-1].text();
 					}
 					_this.evaluate();
@@ -108,6 +123,14 @@ var createGiacElement = function(options) {
 			}
 			if(all_touched)
 				this.needsEvaluation = true;
+		}
+		_.evaluationFinished = function(result) {
+			if(this.options.returns_function) {
+				var to_return = super_.evaluationFinished.call(this, [result[1]]); // Transform to array with result 1 in spot 0, as that is what is expected in evaluationFinished
+				this.last_result = result;
+				return to_return;
+			} else
+				return super_.evaluationFinished.call(this, result);
 		}
 	})});
 }

@@ -47,31 +47,30 @@ createGiacElement({
 createGiacElement({
 	name: 'laplace',
 	code: 'laplace transform',
-	function_of: 's',
 	helpText: '<<laplace <[EXPR]> for <[VAR]>>>\nFinds the laplace transform for the expression EXPR with variable VAR.  Result will have variable s.',
 	content: [ 
 		" of <<MathQuill {ghost: 'expression'}>>",
 		"for <<MathQuill {ghost: 'variable', variableEntryField: true }>>"
 	],
-	command: "laplace($1, $2, 's')", 
-	protect_vars: 2
+	command: "laplace($1, $2, 'x')", 
+	protect_vars: 2,
+	returns_function: 's'
 });
 createGiacElement({
 	name: 'ilaplace',
 	code: 'inverse laplace transform',
-	function_of: 'x',
 	helpText: '<<ilaplace <[EXPR]> for <[VAR]>>>\nFinds the laplace transform for the expression EXPR with variable VAR.  Result will have variable x.',
 	content: [ 
 		" of <<MathQuill {ghost: 'expression'}>>",
 		"for <<MathQuill {ghost: 'variable', variableEntryField: true }>>"
 	],
 	command: "ilaplace($1, $2, 'x')", 
-	protect_vars: 2
+	protect_vars: 2,
+	returns_function: 'x'
 });
 createGiacElement({
 	name: 'fouriera',
 	code: 'fourier coefficient a',
-	function_of: 'n',
 	helpText: '<<fourier a <[EXPR]> for <[VAR]>, period <[T]>, lower bound <[BOUND]>>>\nFinds the expression for the fourier coefficients a<sub>n</sub> for the expression EXPR with variable VAR, period T, and boundes BOUND to BOUND+T.',
 	content: [ 
 		" of <<MathQuill {ghost: 'expression'}>>",
@@ -79,14 +78,14 @@ createGiacElement({
 		"with period of <<MathQuill {ghost: 'T' }>>",
 		"and lower bound <<MathQuill {ghost: '0', default: '0' }>>",
 	],
-	pre_command: "assume('n', DOM_INT)",
-	command: "fourier_an($1, $2, $3, 'n', $4)", 
-	protect_vars: 2
+	pre_command: "assume('x', DOM_INT)",
+	command: "fourier_an($1, $2, $3, 'x', $4)", 
+	protect_vars: 2,
+	returns_function: 'n'
 });
 createGiacElement({
 	name: 'fourierb',
 	code: 'fourier coefficient b',
-	function_of: 'n',
 	helpText: '<<fourier b <[EXPR]> for <[VAR]>, period <[T]>, lower bound <[BOUND]>>>\nFinds the expression for the fourier coefficients b<sub>n</sub> for the expression EXPR with variable VAR, period T, and boundes BOUND to BOUND+T.',
 	content: [ 
 		" of <<MathQuill {ghost: 'expression'}>>",
@@ -94,14 +93,14 @@ createGiacElement({
 		"with period of <<MathQuill {ghost: 'T' }>>",
 		"and lower bound <<MathQuill {ghost: '0', default: '0' }>>",
 	],
-	pre_command: "assume('n', DOM_INT)",
-	command: "fourier_bn($1, $2, $3, 'n', $4)", 
-	protect_vars: 2 
+	pre_command: "assume('x', DOM_INT)",
+	command: "fourier_bn($1, $2, $3, 'x', $4)", 
+	protect_vars: 2,
+	returns_function: 'n'
 });
 createGiacElement({
 	name: 'fourierc',
 	code: 'fourier coefficient c',
-	function_of: 'n',
 	helpText: '<<fourier c <[EXPR]> for <[VAR]>, period <[T]>, lower bound <[BOUND]>>>\nFinds the expression for the fourier coefficients c<sub>n</sub> for the expression EXPR with variable VAR, period T, and boundes BOUND to BOUND+T.',
 	content: [ 
 		" of <<MathQuill {ghost: 'expression'}>>",
@@ -109,9 +108,10 @@ createGiacElement({
 		"with period of <<MathQuill {ghost: 'T' }>>",
 		"and lower bound <<MathQuill {ghost: '0', default: '0' }>>",
 	],
-	pre_command: "assume('n', DOM_INT)",
-	command: "fourier_cn($1, $2, $3, 'n', $4)", 
-	protect_vars: 2 
+	pre_command: "assume('x', DOM_INT)",
+	command: "fourier_cn($1, $2, $3, 'x', $4)", 
+	protect_vars: 2,
+	returns_function: 'n'
 });
 createGiacElement({
 	name: 'series',
@@ -124,7 +124,8 @@ createGiacElement({
 		"of order <<MathQuill {ghost: '5', default: '5'}>> <<SelectBox {options: { 0: 'Bidirectional', 1: 'Unidirectional positive', -1: 'Unidirectional negative'}}>>"
 	],
 	command: "series($1, $2, $3, $4, $5)", 
-	protect_vars: 2 
+	protect_vars: 2,
+	returns_function: '$2' 
 });
 createGiacElement({
 	name: 'taylor',
@@ -137,31 +138,32 @@ createGiacElement({
 		"of order <<MathQuill {ghost: '5', default: '5'}>> <<SelectBox {options: { 0: 'Bidirectional', 1: 'Unidirectional positive', -1: 'Unidirectional negative'}}>>"
 	],
 	command: "taylor($1, $2, $4, $3, $5)", 
-	protect_vars: 2 
+	protect_vars: 2,
+	returns_function: '$2' 
 });
 createGiacElement({
 	name: 'ztrans',
 	code: 'Z transform',
-	function_of: 'z',
 	helpText: '<<z transform <[EXPR]> for <[VAR]>>>\nFinds the Z transform for the expression EXPR with variable VAR.  Result will have variable z.',
 	content: [ 
 		" of <<MathQuill {ghost: 'expression'}>>",
 		"for <<MathQuill {ghost: 'variable', variableEntryField: true }>>"
 	],
-	command: "ztrans($1, $2, 'z')", 
-	protect_vars: 2 
+	command: "ztrans($1, $2, 'x')", 
+	protect_vars: 2,
+	returns_function: 'z'
 });
 createGiacElement({
 	name: 'iztrans',
 	code: 'inverse Z transform',
-	function_of: 'x',
 	helpText: '<<inverse Z transform <[EXPR]> for <[VAR]>>>\nFinds the inverse Z transform for the expression EXPR with variable VAR.  Result will have variable x.',
 	content: [ 
 		" of <<MathQuill {ghost: 'expression'}>>",
 		"for <<MathQuill {ghost: 'variable', variableEntryField: true }>>"
 	],
 	command: "invztrans($1, $2, 'x')", 
-	protect_vars: 2 
+	protect_vars: 2,
+	returns_function: 'x' 
 });
 createGiacElement({
 	name: 'fmax',
@@ -198,7 +200,8 @@ createGiacElement({
 		"and denominator order <<MathQuill {ghost: 'n' }>>"
 	],
 	command: "pade($1, '$2', $4+2, $3+1)", 
-	protect_vars: 2 
+	protect_vars: 2,
+	returns_function: '$2' 
 });
 
 

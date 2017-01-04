@@ -135,8 +135,28 @@ var multi_regression = P(SettableMathOutput, function(_, super_) {
       if(_this.needsEvaluation) {
         // check for anything that is empty
         var errors = [];
-        if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
-          errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
+        if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_,]*\)$/i)) {
+          if(_this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i)) {
+            // Need to turn in to a function definition
+            var varName = "\\operatorname{" + _this.varStoreField.text().replace(/_(.*)$/,"_{$1}")+ "}\\left({";
+            var operators = [];
+            for(var i = 0;i < _this.xdata.length;i++)
+              operators.push("x_{" + (i+1) + "}");
+            _this.varStoreField.clear().paste(varName + operators.join(",") + "}\\right)");
+          } else
+            errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
+        } else if(_this.varStoreField.text().trim().length) {
+          // Ensure number of vars matches
+          var varName = "\\operatorname{" + _this.varStoreField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_,]*)\)$/i,"$1").replace(/_(.*)$/,"_{$1}")+ "}\\left({";
+          var prevoperators = _this.varStoreField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_,]*)\)$/i,"$2").split(",");
+          if(prevoperators.length != _this.xdata.length) {
+            var operators = [];
+            var j = 0;
+            for(var i = 0;i < _this.xdata.length;i++) 
+              operators.push(prevoperators[j] && prevoperators[j].length ? prevoperators[j++] : "x_{" + (i+1) + "}");
+            _this.varStoreField.clear().paste(varName + operators.join(",") + "}\\right)");
+          }
+        }
         var xdata = _this.xdata[0].text({});
         var ydata_text = _this.ydata.text({});
         for(var i = 0; i < _this.xdata.length; i++)

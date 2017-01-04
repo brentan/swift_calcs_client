@@ -182,8 +182,17 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?$/i))
+				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
+				else if(_this.varStoreField.text().trim().length && _this.numeric_mode && _this.varStoreField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_]*\)$/i)) {
+					// Numeric mode does not return a function.  Drop the function declaration
+          var varName = _this.varStoreField.text().replace(/^([a-z][a-z0-9_]*)\([a-z][a-z0-9_,]*\)$/i,"$1").replace(/_(.*)$/,"_{$1}");
+          _this.varStoreField.clear().paste(varName);
+				} else if(_this.varStoreField.text().trim().length && !_this.numeric_mode && _this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i)) {
+					// Symbolic mode returns a function.  Add a function declaration
+          var varName = _this.varStoreField.text().replace(/_(.*)$/,"_{$1}");
+          _this.varStoreField.clear().paste("\\operatorname{" + varName + "}\\left({x}\\right)");
+				}
 				for(var i = 0; i < _this.eqFields.length; i++)
 					if(_this.eqFields[i].empty()) errors.push('Equation ' + _this.numeric_mode ? ('y\'<sub>' + i + '</sub>') : (y+1) + ' is currently empty.  Please add an equation.');
 				if(_this.numeric_mode) {
