@@ -300,6 +300,25 @@ var Element = P(function(_) {
     el.stop().css("background-color", color).animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')} , duration: duration });
     return this;
   }
+  _.addNotice = function(message, klass, buttons, show_undo) {
+    this.insertJQ.children(".after_notice." + klass).remove();
+    if(show_undo) 
+      message += "&nbsp;<a href='#' class='undolink'>Undo</a>";
+    var div = $("<div/>").addClass('after_notice').addClass(klass).html(message + (buttons.length ? "<div class='buttons'></div>" : ""));
+    if(show_undo)
+      div.children("a.undolink").on("click", function(_this) { return function(e) {
+        _this.worksheet.restoreUndoPoint();
+        _this.removeNotice(klass);
+        e.preventDefault();
+      }}(this));
+    for(var i = 0; i < buttons.length; i++) 
+      $("<button/>").addClass(buttons[i].color).html(buttons[i].name).on('click', function(_this, func) { return function() { func.apply(_this); } }(this, buttons[i].func)).appendTo(div.children('div.buttons'));
+    this.insertJQ.append(div);
+    div.hide().slideDown({duration: 500});
+  }
+  _.removeNotice = function(klass) {
+    this.insertJQ.children(".after_notice." + klass).slideUp({duration: 300, always: function() { this.remove(); }});
+  }
 
 	/*
 	Move commands.  Allows them to be moved upwards, downwards, etc.
@@ -592,6 +611,9 @@ var Element = P(function(_) {
 				else 
 					this.move(action.parent, L, true);
 				break;
+      case 'suppress_autofunction':
+        this.worksheet.suppress_autofunction = action.val
+        break;
 		}
 	}
 	/* Visibility Methods
@@ -824,7 +846,7 @@ var Element = P(function(_) {
 		return !equal;
 	}
 	_.nextEvaluateElement = function() {
-		next_id = this;
+		var next_id = this;
 		while(true) {
 			if(next_id[R] && !(next_id[R] instanceof LogicCommand)) { next_id = next_id[R]; break; }
 			else if(next_id.parent) { next_id = next_id.parent; }
@@ -850,6 +872,52 @@ var Element = P(function(_) {
 			// Register the variable change with the next item (why not register now? in case we hijack this evaluation with another, we need to ensure the change gets loaded)
 			giac.add_altered(evaluation_id, this.previous_independent_vars, next_id ? next_id.id : -1);
 			giac.add_altered(evaluation_id, this.independent_vars, next_id ? next_id.id : -1);
+      if(this.previous_independent_vars.length && (this.previous_independent_vars.length == this.independent_vars.length) && !this.worksheet.trackingStream) {
+        // Check for change of name
+        for(var i = 0; i < this.previous_independent_vars.length; i++) {
+          if(this.previous_independent_vars[i].match(/__/)) continue; //System variable, ignore
+          if(this.previous_independent_vars[i].replace("(","") != this.independent_vars[i].replace("(","")) {
+            // Note, this won't rename things above this line but that may be below the item in the calc tree (basically, things above it but in a loop)
+            var next_el = this[R];
+            if(!next_el && this.parent) next_el = this.parent[R];
+            if(!(next_el && next_el.reliesOn(this.previous_independent_vars[i].replace("(","")))) continue; //No later lines rely on this variable, so just ignore the name change
+            // Variable name change!
+            if(this.worksheet.undoTimer) // Previous scheduled undo.  Do it now, as if we wait it will destroy the notice we are about to post.
+              this.worksheet.setUndoPoint(this.worksheet.undoElement, this.worksheet.undoHash, true);
+            // Stop auto-function during recomputation
+            this.worksheet.suppress_autofunction = true;
+            var start_name = this.previous_independent_vars[i];
+            this.addNotice((this.previous_independent_vars[i].match(/\($/) ? "Function" : "Variable") + " renamed from <i>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(this.previous_independent_vars[i].replace("(","")) + "</i> to <i>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(this.independent_vars[i].replace("(","")) + "</i>.  Update dependent lines to refer to the new name?","name_change_" + i,[{name: "Yes", color: "green", func: function(start_name, end_name, i) { return function() {
+              // Get current focus
+              var el = this.worksheet.activeElement || this.worksheet.lastActive;
+              var was_implicit = el ? el.implicit : false;
+              el.implicit = false;
+              if(el)
+                var item = el.focusedItem || el.lastFocusedItem;
+              else
+                var item = false;
+              // Stop auto-function during recomputation
+              this.worksheet.suppress_autofunction = true;
+              // Update all mathblocks
+              this.focus(L);
+              this.worksheet.startUndoStream();
+              var next_el = this[R];
+              if(!next_el && this.parent) next_el = this.parent[R];
+              next_el.changeVarName(start_name, end_name);
+              this.worksheet.setUndoPoint(this,{command: 'suppress_autofunction', val:true});
+              this.worksheet.endUndoStream();
+              // Restore focus
+              if(item) item.focus();
+              if(el) el.focus(); 
+              if(was_implicit) el.implicit = true;
+              // Remove message
+              this.removeNotice("name_change_" + i);
+            }}(this.previous_independent_vars[i].replace("(",""), this.independent_vars[i].replace("(",""), i)},{name: "No", color: "grey", func: function(i) { return function() {
+              this.removeNotice("name_change_" + i);
+            }}(i)}],false);
+          }
+        }
+      }
 			this.previous_independent_vars = this.independent_vars;
 			this.previous_commands = [];
 			for(var i = 0; i < this.commands.length; i++) 
@@ -861,6 +929,28 @@ var Element = P(function(_) {
 		giac.remove_altered(evaluation_id, this.independent_vars);
 		return giac.compile_mode; // In compile mode, we need to know the commands that are sent
 	}
+  _.reliesOn = function(varName) { // Test if this block or any following rely on this variable
+    if(this.dependent_vars.indexOf(varName) > -1) return true;
+    if(this.independent_vars.indexOf(varName) > -1) return false;
+    if(this.hasChildren && this.ends[L]) return this.ends[L].reliesOn(varName);
+    if(this[R]) return this[R].reliesOn(varName);
+    if(this.parent && this.parent[R]) return this.parent[R].reliesOn(varName);
+    return false;
+  }
+  _.changeVarName = function(varName,newName) { // Rename variable in this block and all following blocks
+    if(this.dependent_vars.indexOf(varName) > -1) {
+      // Rename variable inside all mathquill boxes
+      for(var i = 0; i < this.focusableItems.length; i++) {
+        for(var j = 0; j < this.focusableItems[i].length; j++) {
+          if((this.focusableItems[i][j] != -1) && this.focusableItems[i][j].mathquill) this.focusableItems[i][j].renameVariable(varName, newName);
+        }
+      }
+    } else if(this.independent_vars.indexOf(varName) > -1) return; // I define this variable, which means I should stop renaming from this point downwards
+    if(this.hasChildren && this.ends[L]) return this.ends[L].changeVarName(varName,newName);
+    if(this[R]) return this[R].changeVarName(varName,newName);
+    if(this.parent && this.parent[R]) return this.parent[R].changeVarName(varName,newName);
+    return;
+  }
 	_.allIndependentVars = function() {
 		var arr = this.independent_vars.concat(this.previous_independent_vars);
 		if(this.hasChildren) {

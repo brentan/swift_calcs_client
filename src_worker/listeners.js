@@ -98,6 +98,13 @@ var receiveMessage = function(command) {
     object_names = uniq(object_names).sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
     return sendMessage({command: 'objectList', object_names: object_names, object_methods: object_methods})
   }
+  if(command.protectedList) {
+    // Set list of protected values that can't be overwritten
+    var list = command.protectedList.split(",");
+    for(var i = 0; i < list.length; i++)
+      protected_list[list[i]]=true;
+    return;
+  }
   // If we are starting a new evaluation, restart giac to reset everything
 	if(command.restart) {
     var unarchive_string = "";
@@ -199,13 +206,15 @@ var receiveMessage = function(command) {
         to_send = to_send.replace(':=', ':=evalf(') + ')';
       }
       // Test for setting protected variable names
-      if(to_send.match(/^[\s]*(i|e|pi)[\s]*:=.*$/)) {
-        if(to_send.match(/^[\s]*i[\s]*:=.*$/))
-          output[ii] = {success: false, error_index: 0, returned: 'variable name <i>i</i> is protected and defined as sqrt(-1)', warnings: []}
-        else if(to_send.match(/^[\s]*e[\s]*:=.*$/))
-          output[ii] = {success: false, error_index: 0, returned: 'variable name <i>e</i> is protected and defined as 2.71828', warnings: []}
-        else 
-          output[ii] = {success: false, error_index: 0, returned: 'variable name <i>&pi;</i> is protected and defined as 3.14159', warnings: []}
+      if(protected_list[to_send.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?[\s]*:=.*$/i,"$1")]) {
+        if(to_send.match(/^[\s]*i\(?[\s]*:=.*$/))
+          output[ii] = {success: false, error_index: 0, returned: 'function or variable name <i>i</i> is protected and defined as sqrt(-1)', warnings: []}
+        else if(to_send.match(/^[\s]*e\(?[\s]*:=.*$/))
+          output[ii] = {success: false, error_index: 0, returned: 'function or variable name <i>e</i> is protected and defined as 2.71828', warnings: []}
+        else if(to_send.match(/^[\s]*pi\(?[\s]*:=.*$/))
+          output[ii] = {success: false, error_index: 0, returned: 'function or variable name <i>&pi;</i> is protected and defined as 3.14159', warnings: []}
+        else
+          output[ii] = {success: false, error_index: 0, returned: 'function or variable name <i>' + to_send.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?[\s]*:=.*$/i,"$1").replace(/_(.*)$/,"<sub>$1</sub>") + '</i> is a built-in function and cannot be overwritten.', warnings: []}
         if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
         continue;
       }

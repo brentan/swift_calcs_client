@@ -10,7 +10,7 @@ window.MathquillSetup = function() {
 		{ name: 'second', symbol: 's', prefix: true, mksa: [1,0,0,1,0,0,0,0,0]},
 		{ name: 'ampere', symbol: 'A', prefix: true, mksa: [1,0,0,0,1,0,0,0,0]},
 		{ name: 'kelvin', symbol: 'K', prefix: false, mksa: [1,0,0,0,0,1,0,0,0]},
-		{ name: 'mole', symbol: 'mol', prefix: false, mksa: [1,0,0,0,0,0,1,0,0]},
+		{ name: 'mole', symbol: 'mol', prefix: true, mksa: [1,0,0,0,0,0,1,0,0]},
 		{ name: 'candela', symbol: 'cd', prefix: true, mksa: [1,0,0,0,0,0,0,1,0]},
 		{ name: 'becquerel', symbol: 'Bq', prefix: true, mksa: [1,0,0,-1,0,0,0,0,0]},
 		{ name: 'coulomb', symbol: 'C', prefix: true, mksa: [1,0,0,1,1,0,0,0,0]},
@@ -297,7 +297,7 @@ window.MathquillSetup = function() {
 		return false;
 	}
 	//Set configuration parameters
-	MathQuill.config({
+	var mathquillConfigParams = window.mathquillConfigParams = {
 		spaceBehavesLikeTab: true,
 		charsThatBreakOutOfSupSub: '$=<>',
 		autoCommands: 'and or xor true false sqrt sum nthroot abs alpha beta gamma delta varepsilon epsilon zeta eta theta iota kappa lambda mu nu xi rho pi sigma tau upsilon phi chi psi omega Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega',
@@ -305,6 +305,19 @@ window.MathquillSetup = function() {
 		staticAutocomplete: ['acos','acosh','acot','asin','asinh','atan','atan2','atanh','ceil','comb','cos','cosh','cot','cross','csc','det','eigenvals','eigenvects','exp2trig','expand','factor','floor','log','log10','mean','median','nthroot','partfrac','perm','quartiles','rand','randnorm','rank','round','sec','simplify','sin','sinh','sqrt','stddev','tan','tanh','tcollect','texpand','tlin','trig2exp','variance'],
 		unitList: FullUnitList,
 		helpList: { // Helplist used to populate helpful popups for functions.  text in <> will be shown as code, text between || is added to the explanation class.  
+			i:"<<i>>\nImaginary Number",
+			e:"<<e>>\nExponential",
+			pi:"<<&pi;>>\nPi",
+			undef: "<<undef>>\nUndefined",
+			infinity: "<<&#x221e;>>\nInfinite",
+			true: "<<true>>\nBoolean true",
+			false:"<<false>>\nBoolean false",
+			and:"<<and>>\nAnd parameter",
+			or:"<<or>>\nOr parameter",
+			xor:"<<xor>>\nXor parameter",
+			firstIndex:"<<firstIndex>>\nReturns the numerical index of the first row or column in a vector/matrix, based on current settings (0 or 1)",
+			mksa_remove:"<<mksa_remove(4 in)>>\nConvert value to mksa units and then remove the unit from the value.\n|Also see: mksa, unit_remove|",
+			unit_remove:"<<unit_remove(4 in)>>\nConvert value to default units and then remove the unit from the value.\n|Also see: mksa, mksa_remove|",
 			Ci:"<<Ci(1.0)>>\nCosine integral int(cos(t)/t,t=-inf..x)\n|Also See: Ei,Si|",
 			Det:"<<Det([[1,2],[3,4]])>>\nDeterminant of a square matrix M, without evaluation.\n|Also See: det|",
 			Dirac:"<<Dirac(1)>>\nFunction derivative of Heaviside.\n|Also See: Heaviside|",
@@ -613,7 +626,7 @@ window.MathquillSetup = function() {
 			im:"<<im(1+2*i)>>\nReturns the imaginary part of a complex number\n|Also See: re,conj|",
 			in_ideal:"<<in_ideal((x+y)^2,[y^2,x^2+2*x*y],[x,y])>>\nChecks whether a polynomial or list of polynomials belongs to an ideal given by a Grobner basis (2nd argument) with respect to a variable list\n|Also See: gbasis,greduce|",
 			indets:"<<lname(exp(x)*2*sin(y))>>\nList of variables in the expression\n|Also See: has,lvar|",
-			infnorm:"<<infnorm([[1,2,3],[3,-9,6],[4,5,6]])>>\nMatrix norm induced by linfinty norm.\n|Also See: l1norm,l2norm,matrix_norm,frobenius_norm|",
+			linfnorm:"<<linfnorm([[1,2,3],[3,-9,6],[4,5,6]])>>\nMatrix norm induced by linfinty norm.\n|Also See: l1norm,l2norm,matrix_norm,frobenius_norm|",
 			int:"<<int(1/x)>>\nIndefinite integral, you can specify a variable of integration or the calculus of the integrate (bounds a and b).\n|Also See: Int,diff,plotarea,romberg,gaussquad|",
 			intDiv:"<<iquo(125,15)>>\nEuclidean quotient of 2 integers.\n|Also See: irem,smod,quo|",
 			interp:"<<lagrange([1,3,4],[0,1,2])>>\nReturns the polynomial of degree n-1 such that P(xk)=yk k=0..n-1\n|Also See: spline|",
@@ -943,5 +956,6 @@ window.MathquillSetup = function() {
 			zip:"<<zip('+',[a,b,c,d], [1,2,3,4])>>\nReturns a list whose j-th entry is f(l1[j],l2[j]): without default value its length is the minimum of the lengths of the two input lists and else the shorter list is padded with the default value.",
 			ztrans:"<<ztrans(a^x)>>\nz transform of a sequence\n|Also See: invztrans,laplace,invlaplace|"
 		}
-	});
+	}
+	MathQuill.config(mathquillConfigParams);
 }

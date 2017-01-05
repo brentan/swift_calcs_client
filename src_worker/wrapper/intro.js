@@ -1,5 +1,6 @@
 var constants = {};
 var user_vars = {};
+var protected_list = {};
 var timeout_length = 20;
 var digits = 9;
 var approx_mode = '0';

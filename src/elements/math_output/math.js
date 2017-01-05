@@ -3,6 +3,9 @@ var math = P(MathOutput, function(_, super_) {
 	_.klass = ['math'];
 	_.mathField = 0;
 	_.implicit = false;
+	_.not_defined_allowed = "";
+	_.savedProperties = ['not_defined_allowed'];
+	_.was_altered = false;
 
 	_.init = function(latex) {
 		super_.init.call(this);
@@ -128,6 +131,7 @@ var math = P(MathOutput, function(_, super_) {
 				_this.outputBox.collapse();
 			}
 			if(_this.needsEvaluation) {
+				_this.was_altered = true;
 				//console.log(_this.mathField.text());
 				var to_compute = _this.mathField.text();
 				window.trackEvent("Block", "Execute", to_compute.toLowerCase());
@@ -237,6 +241,65 @@ var math = P(MathOutput, function(_, super_) {
 	_.closePopup = function() {
 		this.mathField.closePopup();
 		return this;
+	}
+	_.evaluateNext = function(evaluation_id) {
+		super_.evaluateNext.call(this, evaluation_id);
+		if(!this.scoped()) return;
+		if(!this.was_altered) return;
+		this.was_altered = false;
+		var not_defined = [];
+		for(var i = 0; i < this.dependent_vars.length; i++) 
+			if(!this.autocomplete_list[this.dependent_vars[i]] && !this.autocomplete_list[this.dependent_vars[i] + "("] && !window.mathquillConfigParams.helpList[this.dependent_vars[i]]) not_defined.push(this.dependent_vars[i]);
+		if(this.not_defined_allowed == not_defined.join("=")) return;
+		if(not_defined.length) {
+			this.not_defined_allowed = not_defined.join("=");
+			if(!this.worksheet.first_eval_complete) return;
+			if(this.worksheet.trackingStream) return;
+			if(this.worksheet.suppress_autofunction) return;
+			not_defined = $.unique(not_defined);
+			// This line relies on a variable that has not been previously defined
+			if(this.mathField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?[\s]*:=/i)) {
+			  //did we mean to make this a function?   
+			  if(this.mathField.text().match(/^[a-z][a-z0-9_]*[\s]*:=/i)) {         
+			  	var already_func = false;
+				  var varName = this.mathField.latex().replace(/^([^=]*)=.*$/i,"$1");
+				  var varnametext = this.mathField.text().replace(/^([a-z][a-z0-9_]*)[\s]*:=.*$/i,"$1");
+	        var everythingElse = this.mathField.latex().replace(/^[^=]*=(.*)$/i,"$1");
+	      } else {
+	      	var already_func = true;
+				  var varName = this.mathField.latex().replace(/^\\operatorname\{([\\ a-z0-9_\{\}]*)\}\\left\(\{(.*)\}\\right\)[\s]*=.*$/i,"$1");  
+				  var curvars = this.mathField.latex().replace(/^\\operatorname\{([\\ a-z0-9_\{\}]*)\}\\left\(\{(.*)\}\\right\)[\s]*=.*$/i,"$2");  
+				  var varnametext = this.mathField.text().replace(/^([a-z][a-z0-9_]*)\([a-z][a-z0-9_,]*\)[\s]*:=.*$/i,"$1");
+	        var everythingElse = this.mathField.latex().replace(/^[^=]*=(.*)$/i,"$1");
+	      }
+        var varList = [];
+        for(var i = 0; i < not_defined.length; i++)
+        	varList.push(window.SwiftCalcsLatexHelper.UnitNameToLatex(not_defined[i]));
+        // Get current focus
+				var el = this.worksheet.activeElement || this.worksheet.lastActive;
+				var was_implicit = el ? el.implicit : false;
+				el.implicit = false;
+				if(el)
+					var item = el.focusedItem || el.lastFocusedItem;
+				else
+					var item = false;
+				// Update the mathblock
+				this.focus(L);
+				this.worksheet.startUndoStream();
+        this.mathField.moveToRightEnd().clearSelection().clear().paste("\\operatorname{" + varName + "}\\left({" + (already_func ? (curvars + ",") : "") + varList.join(",") + "}\\right)="+everythingElse); // Clear selection sets undo point for cursor position at end
+				this.worksheet.endUndoStream();
+				// Restore focus
+				if(item) item.focus();
+				if(el) el.focus(); 
+				if(was_implicit) el.implicit = true;
+				// Show message
+				if(!already_func)
+			  	var message = "Undefined variables in expression.  Transforming <i>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(varnametext) + "</i> to function definition.&nbsp;&nbsp;&nbsp;<a href='#' class='help_item' data-id='31'>Learn More</a>&nbsp;|";
+			  else
+			  	var message = "Undefined variables in function.  Adding undefined variables to input list for <i>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(varnametext) + "</i>.&nbsp;&nbsp;&nbsp;<a href='#' class='help_item' data-id='31'>Learn More</a>&nbsp;|";
+			  this.addNotice(message, "missing_var", [], true);
+			}
+		} 
 	}
 });
 var show_text_mode_popup = true;

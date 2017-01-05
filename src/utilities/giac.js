@@ -165,7 +165,11 @@ var GiacHandler = P(function(_) {
 	_.cancelEvaluations = function(el) { 
 		// User initiated abort.  Initiate the abort, let the user know the abort is happening, and if 5 seconds pass with no response, add option to force quit
 		// If el is passed, set to 'aborting' and use that to allow for full worker kill if no response occurs
-		if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) SwiftCalcs.active_worksheet.ready_to_print = true;
+		if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) {
+      SwiftCalcs.active_worksheet.ready_to_print = true;
+      SwiftCalcs.active_worksheet.first_eval_complete = true;
+      SwiftCalcs.active_worksheet.suppress_autofunction = false;
+    }
 		var to_cancel = this.current_evaluations();
 		for(var i = 0; i < to_cancel.length; i++)
 			this.cancelEvaluation(to_cancel[i], false); 
@@ -188,7 +192,11 @@ var GiacHandler = P(function(_) {
 	}
 	_.evaluationComplete = function(eval_id) {
 		if(!this.evaluations[eval_id]) return this;
-		if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) SwiftCalcs.active_worksheet.ready_to_print = true;
+		if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) {
+      SwiftCalcs.active_worksheet.ready_to_print = true;
+      SwiftCalcs.active_worksheet.first_eval_complete = true;
+      SwiftCalcs.active_worksheet.suppress_autofunction = false;
+    }
 		if(this.errors_encountered)
 			setError('Error encountered during computation.  Please correct to continue computation.'); // BRENTAN: Add link to line number?
 		else {
@@ -393,6 +401,8 @@ var loadWorker = function(giacHandler) {
       	break;
       case 'setStatus':
         if(text === '') {
+          var protected_list = Object.keys(window.mathquillConfigParams.helpList).join(",");
+          giac.postMessage(JSON.stringify({protectedList: protected_list}));
         	giacHandler.giac_ready = true;
         	if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setSettings(false);
 					$('.worksheet_holder').removeClass(css_prefix + 'giac_loading');

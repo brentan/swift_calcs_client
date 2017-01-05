@@ -59,6 +59,8 @@ Worksheet.open(function(_) {
       this.undoHash = 0;
     } else if(this.undoTimer) // Previous schedule is from another element.  Execute that one now
 			this.setUndoPoint(this.undoElement, this.undoHash, true);
+		// Remove any/all notices from worksheet
+		$(".after_notice").slideUp({duration: 300, always: function() { this.remove(); }});
 		if(el instanceof Element) 
 			el.undo_count++;
 		if(typeof hash === 'undefined') hash = el.currentState();
@@ -114,6 +116,7 @@ Worksheet.open(function(_) {
 	_.restoreUndoPoint = function() {
 		if(this.undoTimer) // Something is scheduled...add it in now
 			this.setUndoPoint(this.undoElement, this.undoHash, true);
+		$(".after_notice").slideUp({duration: 300, always: function() { this.remove(); }});
 		this.undoRedo(true);
 	}
 	_.restoreRedoPoint = function() {
@@ -133,6 +136,7 @@ Worksheet.open(function(_) {
 			// No else because the actual act of performing the undo/redo will create the redo/undo action for Elements
 			// Restore the state:
 			action[i].el.restoreState(action[i].state);
+			if(action[i].el.blur && (action[i].el !== action[action.length-1].item) && (action[i].el !== action[action.length-1].element)) action[i].el.blur();
 		}
 		// Add the reverse action to the undo/redo array
 		if(undo) {

@@ -31,6 +31,18 @@ window.SwiftCalcsLatexHelper = {
 		window.SwiftCalcsLatexHelper.mathField.setUnitMode(false);
 		if(out.trim() == '') return false;
 		return [out, out2];
+	},
+	UnitNameToLatex: function(name) {
+		var greek = ["alpha","beta","gamma","delta","varepsilon","epsilon","zeta","eta","theta","iota","kappa","lambda","mu","nu","xi","rho","pi","sigma","tau","upsilon","phi","chi","psi","omega","Gamma","Delta","Theta","Lambda","Xi","Pi","Sigma","Upsilon","Phi","Psi","Omega"];
+		for(var i = 0;i < greek.length;i++)
+			name = name.replace(new RegExp("^" + greek[i]),"\\" + greek[i] + " ").replace(new RegExp("_" + greek[i]),"_\\" + greek[i] + " ");
+		return name.replace(/_([\\a-z0-9 ]+)/i,"_{$1}");
+	},
+	UnitNameToHTML: function(name) {
+		var greek = ["alpha","beta","gamma","delta","varepsilon","epsilon","zeta","eta","theta","iota","kappa","lambda","mu","nu","xi","rho","pi","sigma","tau","upsilon","phi","chi","psi","omega","Gamma","Delta","Theta","Lambda","Xi","Pi","Sigma","Upsilon","Phi","Psi","Omega"];
+		for(var i = 0;i < greek.length;i++)
+			name = name.replace(new RegExp("^" + greek[i]),"&" + greek[i] + ";").replace(new RegExp("_" + greek[i]),"_&" + greek[i] + ";");
+		return name.replace(/_([&a-z0-9;]+)/i,"<sub>$1</sub>");
 	}
 };
 Worksheet.open(function(_) {

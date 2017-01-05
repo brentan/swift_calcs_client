@@ -28,6 +28,8 @@ var Worksheet = P(function(_) {
 	_.revision_hash = 0;
 	_.loaded = false;
 	_.ready_to_print = false;
+  _.first_eval_complete = false;
+  _.suppress_autofunction = false;
 
   var id = 0;
   function uniqueWorksheetId() { return id += 1; }
@@ -419,7 +421,10 @@ var Worksheet = P(function(_) {
     giac.suppress = false;
     setComplete();
 	  this.fullEvalNeeded().evaluate();
-	  if((this.ends[L] instanceof math) && (this.ends[L].mathField.text().trim() == "")) this.ready_to_print = true;
+	  if((this.ends[L] instanceof math) && (this.ends[L].mathField.text().trim() == "")) {
+      this.ready_to_print = true;
+      this.first_eval_complete = true;
+    }
 	  this.updateUploads();
 	  this.reset_server_base(to_parse);
 	  this.loaded = true;

@@ -41,7 +41,42 @@ div.sc_element_container {
     }
   }
   .sc_element {
+    span.equality { 
+      display: inline-block;
+      margin: 0px 3px;
+      font-size: 16px;
+      font-family: Symbola, "Times New Roman", serif;
+    }
     border-width:0px;
+    div.after_notice {
+      text-align: center;
+      font-size: 0.9em;
+      border: 1px solid #DDDDC0;
+      background-color: #FFFFE0;
+      margin-bottom: 15px;
+      padding: 5px;
+      border-radius: 5px;
+      span.nowrap {
+        display: inline-block;
+        white-space: nowrap;
+      }
+      a {
+        color: #777777;
+      }
+      div.buttons {
+        button {
+          margin: 3px 10px;
+          &.red {
+            background: #CC0000;
+            background-image: linear-gradient(to bottom, #CC0000, #aa0000);
+          }
+          &.green {
+            background: #00AA00;
+            background-image: linear-gradient(to bottom, #00AA00, #009900);
+          }
+        }
+      }
+    }
     table.sc_element_table {
       border: 0px;
       margin: 0px;
