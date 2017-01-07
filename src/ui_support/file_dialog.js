@@ -21,7 +21,7 @@ $(function() {
     if(archive) data.show_archived = true;
     //if(labels_hash) data.labels_hash = labels_hash;
     if(starred) data.star = true;
-    if($('div.search_bar input').val().trim().length > 0) data.search_term = $('div.search_bar input').val().trim();
+    if($('div.search_bar input').length && ($('div.search_bar input').val().trim().length > 0)) data.search_term = $('div.search_bar input').val().trim();
 		$.ajax({
       type: "POST",
       url: "/projects",
@@ -202,7 +202,7 @@ $(function() {
 			}
 			if(in_box) box.appendTo('.worksheet_holder')
 		} else {
-	    var search_term = $('div.search_bar input').val().trim().length > 0;
+	    var search_term = $('div.search_bar input').length && ($('div.search_bar input').val().trim().length > 0);
     	var fragment = SwiftCalcs.pushState.fragment || '';
 	    var star = fragment.match(/^starred_projects\//i) || fragment.match(/^starred\//i);
 	    var archive = fragment.match(/^archive_projects\//i) || fragment.match(/^archive/i);
@@ -833,7 +833,7 @@ $(function() {
 							closeMenu();
 						}).appendTo(menu);
 				}
-				if(response.rights_level >= 3) 
+				if(response.rights_level >= 1) 
 					$('<div/>').html('<i class="fa fa-fw fa-code"></i>Embed Project').on('click', function(e) {
 	    			window.trackEvent("Worksheet", "Embed Dialog","From Menu");
 						window.openEmbedDialog(project_hash, 'Project');
@@ -1298,7 +1298,7 @@ $(function() {
 					window.openSharingDialog(worksheet_hash, 'Worksheet');
 					closeMenu();
 				}).appendTo(menu);
-			if(response.rights_level >= 3) 
+			if(response.rights_level >= 1) 
 				$('<div/>').html('<i class="fa fa-fw fa-code"></i>Embed Worksheet').on('click', function(e) {
     			window.trackEvent("Worksheet", "Embed Dialog","From Menu");
 					window.openEmbedDialog(worksheet_hash, 'Worksheet');

@@ -242,22 +242,30 @@ Worksheet.open(function(_) {
           //Journey to common generation for start/end targets
           while(start_target.depth > end_target.depth) { start_target = start_target.parent; }
           while(start_target.depth < end_target.depth) { end_target = end_target.parent; }
-          //We dont know if the start or end target is 'first' in the tree, so we guess start is first, and if not, do the opposite
-          var success = false;
-          for(var next_element = start_target; next_element !== 0; next_element = next_element[R]) {
-            selection.push(next_element);
-            selected_elements = selected_elements.add(next_element.jQ);
-            if(next_element === end_target) { success = true; break; }
-          }
-          if(!success) {
+          while(true) {
+            //We dont know if the start or end target is 'first' in the tree, so we guess start is first, and if not, do the opposite
+            var success = false;
             selected_elements = $();
             selection = [];
-            for(var next_element = end_target; next_element !== 0; next_element = next_element[R]) {
+            for(var next_element = start_target; next_element !== 0; next_element = next_element[R]) {
               selection.push(next_element);
               selected_elements = selected_elements.add(next_element.jQ);
-              if(next_element === start_target) { success = true; break; }
+              if(next_element === end_target) { success = true; break; }
             }
-            if(!success) throw("Tree traversal failed for selection.  This shouldn't be possible");
+            if(!success) {
+              selected_elements = $();
+              selection = [];
+              for(var next_element = end_target; next_element !== 0; next_element = next_element[R]) {
+                selection.push(next_element);
+                selected_elements = selected_elements.add(next_element.jQ);
+                if(next_element === start_target) { success = true; break; }
+              }
+            }
+            if(success) break;
+            // No success...this may be an issue where the start/end blocks have another block between that is at a lesser depth.  Jump to parent of both
+            if(start_target.depth == 0) throw("Tree traversal failed for selection.  This shouldn't be possible");
+            start_target = start_target.parent;
+            end_target = end_target.parent;
           }
         }
 

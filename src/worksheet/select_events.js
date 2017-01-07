@@ -29,6 +29,7 @@ Worksheet.open(function(_) {
 				this.selection = [];
 				this.unblurToolbar();
 				el.focus();
+        if(el.focusedItem) el.focusedItem.focus();
 			} else if(this.selection[start_index] === start_el) {
 				// We are continuing to select more
 				var next_item = this.selection[end_index][dir];
@@ -129,6 +130,7 @@ Worksheet.open(function(_) {
   	if(this.selection.length == 0) return this;
   	var stream = !this.trackingStream;
   	if(stream) this.startUndoStream();
+    this.blurToolbar();
   	if(focus) {
   		// Determine if we need to add an implicit element
   		if(!(this.selection[0][L] instanceof EditableBlock) && !(this.selection[this.selection.length - 1][R] instanceof EditableBlock)) {
@@ -144,7 +146,7 @@ Worksheet.open(function(_) {
 	  		if(this.selection[this.selection.length - 1][R]) this.selection[this.selection.length - 1][R].focus(L);
 	  		else this.selection[0][L].focus(R);
 	  	}
-  	}
+  	} 
   	jQuery.each(this.selection, function(i,v) { v.mark_for_deletion = true; });
   	jQuery.each(this.selection, function(i,v) { v.remove(0); });
   	this.clearSelection();
@@ -161,6 +163,10 @@ Worksheet.open(function(_) {
         _this.setTextareaSelection();
       });
     }
+    if(this.selection.length)
+      this.attachToolbar(this, this.toolbar.selectionToolbar(this));
+    else
+      this.blurToolbar();
   };
   _.setTextareaSelection = function() {
     this.textareaSelectionTimeout = undefined;

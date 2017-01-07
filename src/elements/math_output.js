@@ -62,6 +62,18 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		} else
 			return false;
 	}
+  _.indent = function(el, indent) {
+    if(el === this.focusableItems[0][0]) {
+      //indent me (or un-indent)
+      if(indent)
+        this.worksheet.indent(this);
+      else
+        this.worksheet.outdent(this);
+      el.focus(L);
+      return true;
+    } else
+      return false;
+  }
 	_.evaluationFinished = function(result) {
 		return this.displayResults(result);
 	}

@@ -9,6 +9,7 @@
 		'for': for_loop,
 		'continue': continue_block,
 		'break': break_block,
+		'indent': indent,
 		'plot': plot,
 		'plot_func': plot_func,
 		'plot_line': plot_line,

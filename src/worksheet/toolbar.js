@@ -581,6 +581,90 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		}
 		return toolbar;
 	}
+	// Return the default selection toolbar
+	_.selectionToolbar = function(el, to_add, to_remove) {
+		var toolbar = [
+			{
+				id: 'indent',
+				icon: 'indent',
+				html: '&nbsp;Increase indent',
+				title: 'Increase indent',
+				method: function() { 
+          if(el.allow_interaction())
+          	el.indent(el.selection);
+          else 
+          	showNotice('Interaction disabled'); 
+        }
+			},
+			{ title: '|' },
+			{
+				id: 'outdent',
+				icon: 'outdent',
+				html: '&nbsp;Decrease indent',
+				title: 'Decrease indent',
+				method: function() { 
+          if(el.allow_interaction()){
+	          el.selection = el.outdent(el.selection);
+	          var to_select = $();
+	          for(var i = 0; i < el.selection.length; i++)
+	            to_select = to_select.add(el.selection[i].jQ);
+	          el.clearSelection(true);
+	          el.createSelection(to_select); 
+	          el.selectionChanged(true);
+	        } else showNotice('Interaction disabled');
+				}
+			},
+			{ title: '|' },
+			{
+				id: 'delete',
+				icon: 'trash-o',
+				html: '&nbsp;Delete',
+				title: 'Delete',
+				method: function() { 
+          if(el.allow_interaction())
+						el.deleteSelection();
+          else 
+          	showNotice('Interaction disabled'); 
+        }
+			},
+			{ title: '|' },
+			{
+				id: 'cut',
+				icon: 'cut',
+				title: 'cut',
+				method: function() { alert("Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-X."); }
+			},
+			{
+				id: 'copy',
+				icon: 'copy',
+				title: 'copy',
+				method: function() { alert("Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-C."); }
+			},
+			{
+				id: 'paste',
+				icon: 'paste',
+				title: 'paste',
+				method: function() { alert("Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-V."); }
+			},
+			{
+				id: 'mode',
+				html: 'Selection',
+				klass: 'selection_mode',
+				right: true
+			}
+		];
+		if(to_add) {
+			for(var i=0; i < to_add.length; i++)
+				toolbar.push(to_add[i]);
+		}
+		if(to_remove) {
+			for(var i=0; i < toolbar.length; i++) {
+				if(to_remove[toolbar[i].id])
+					toolbar[i].skip = true;
+			}
+		}
+		return toolbar;
+	}
 	// Return the default plot toolbar
 	_.plotToolbar = function(el, to_add, to_remove) {
 		var data_sets = [];

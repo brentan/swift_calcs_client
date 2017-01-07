@@ -196,6 +196,20 @@ Worksheet.open(function(_) {
           this.selectDir(this.activeElement, R);
           this.selectionChanged();
           break;
+        case 'Tab':
+          if(this.allow_interaction()) this.indent(this.selection);
+          break;
+        case 'Shift-Tab':
+          if(this.allow_interaction()){
+            this.selection = this.outdent(this.selection);
+            var to_select = $();
+            for(var i = 0; i < this.selection.length; i++)
+              to_select = to_select.add(this.selection[i].jQ);
+            this.clearSelection(true);
+            this.createSelection(to_select); 
+            this.selectionChanged(true);
+          }
+          break;
         default:
           return;
       }

@@ -164,7 +164,7 @@ var Element = P(function(_) {
 	These should all be self explanatory.  All operate with this being the object being inserted, so it will
 	be placed next to/into/in place of the provided target
 	*/
-	_.insertNextTo = function(sibling, location) {
+	_.insertNextTo = function(sibling, location, dont_eval) {
 		if(this.inTree) return this; // Already added...
 		if(this.validateParent && !this.validateParent(sibling.parent)) {
 			// This element cannot be inserted into a parent of this type
@@ -174,11 +174,11 @@ var Element = P(function(_) {
 		if(sibling.parent.validateChild && !sibling.parent.validateChild(this)) {
 			// Parent does not allow children of this type.  Insert at next available position
 			showNotice('This item cannot be inserted here and was placed at the next allowable position');
-			return this.insertNextTo(sibling.parent, R);
+			return this.insertNextTo(sibling.parent, R, dont_eval);
 		}
 		this.parent = sibling.parent;
 		this.updateWorksheet(this.parent.getWorksheet());
-		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'insert' });
+		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'insert', dont_eval: dont_eval });
 		this.inTree = true;
 		this[-location] = sibling;
 		if(sibling[location] !== 0) {
@@ -202,13 +202,13 @@ var Element = P(function(_) {
 		this.setAutocomplete(this.previousUnarchivedList());
 		return this;
 	}
-	_.insertAfter = function(sibling) {
-		return this.insertNextTo(sibling, R);
+	_.insertAfter = function(sibling, dont_eval) {
+		return this.insertNextTo(sibling, R, dont_eval);
 	}
-	_.insertBefore = function(sibling) {
-		return this.insertNextTo(sibling, L);
+	_.insertBefore = function(sibling, dont_eval) {
+		return this.insertNextTo(sibling, L, dont_eval);
 	}
-	_.insertInto = function(parent, location) {
+	_.insertInto = function(parent, location, dont_eval) {
 		if(this.inTree) return this; // Already added...
 		if(this.validateParent && !this.validateParent(parent)) {
 			// This element cannot be inserted into a parent of this type
@@ -218,11 +218,11 @@ var Element = P(function(_) {
 		if(parent.validateChild && !parent.validateChild(this)) {
 			// Parent does not allow children of this type.  Insert at next available position
 			showNotice('This item cannot be inserted here and was placed at the next allowable position');
-			return this.insertNextTo(parent, R);
+			return this.insertNextTo(parent, R, dont_eval);
 		}
 		this.parent = parent;
 		this.updateWorksheet(parent.getWorksheet());
-		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'insert' });
+		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'insert', dont_eval: dont_eval });
 		this.inTree = true;
 		this[-location] = parent.ends[location];
 		parent.ends[location] = this;
@@ -250,17 +250,17 @@ var Element = P(function(_) {
 		this.setAutocomplete(this.previousUnarchivedList());
 		return this;
 	}
-	_.prependTo = function(parent) {
-		return this.insertInto(parent, L);
+	_.prependTo = function(parent, dont_eval) {
+		return this.insertInto(parent, L, dont_eval);
 	}
-	_.appendTo = function(parent) {
-		return this.insertInto(parent, R);
+	_.appendTo = function(parent, dont_eval) {
+		return this.insertInto(parent, R, dont_eval);
 	}
-	_.replace = function(replaced) {
+	_.replace = function(replaced, dont_eval) {
 		var stream = !replaced.worksheet.trackingStream;
 		if(stream) replaced.worksheet.startUndoStream();
-		this.insertAfter(replaced);
-		replaced.remove();
+		this.insertAfter(replaced, dont_eval);
+		replaced.remove(0, dont_eval);
 		if(stream) this.worksheet.endUndoStream();
 		return this;
 	}
@@ -324,9 +324,9 @@ var Element = P(function(_) {
 	Move commands.  Allows them to be moved upwards, downwards, etc.
 	The move command takes care of all the move related stuff, including removing the old element and reinserting at the correct
 	new location.  Note that it takes a target to insert before or after, and a direction.  insertInto should be set to true to insert into 
-	an element at the end based on dir
+	an element at the end based on dir.  Set dont_eval true in order to perform a move without evaluating anything
 	*/
-	_.move = function(target, location, insertInto) {
+	_.move = function(target, location, insertInto, dont_eval) {
 		// Check if the move is allowed
 		if(insertInto) {
 			if((this.validateParent && !this.validateParent(target)) || (target.validateChild && !target.validateChild(this))) {
@@ -342,122 +342,124 @@ var Element = P(function(_) {
 			}
 		}
 
-    /*
-    Move Evaluation Strategy
-    - Find all independent vars in this item
-    - Find all independent vars in skipped elements
-    - Any elements in this item dependent on independent vars in skipped elements much be recalced
-    - Any elements in skipped section dependent on independent vars in this item must be recalced
-    */
-    //Find all elements between old and new location
-    var target_el = target;
-    var impacted_els = [];
-    //Assume moving upwards (initial guess)
-    var move_up = true;
-    //Adjust target_el to be the element just below where we are inserting (target_el is first impacted el)
-    if(insertInto) {
-      if(target_el.independent_vars.length) impacted_els.push(target_el);
-      else if(target_el instanceof Loop) impacted_els.push(target_el);
-      if((location === L) && (target_el.ends[L])) target_el = target_el.ends[L];
-      else target_el = target_el[R];
-    } else if(location === R) target_el = target_el[R];
-    var first_item = target_el;
-    // Start marching downwards until we reach the this item
-    while(true) {
-      if(target_el == 0) { move_up = false; break; } // End of the road, no match was ever found
-      if(target_el.id == this.id) { break; } // Done!
-      impacted_els.push(target_el);
-      if(target_el.hasChildren && target_el.ends[L])
-        target_el = target_el.ends[L];
-      else if(target_el[R]) 
-        target_el = target_el[R];
-      else if(target_el.parent) {
-        if(target_el.independent_vars.length) impacted_els.push(target_el.parent);
-        else if(target_el instanceof Loop) impacted_els.push(target_el.parent);
-        target_el = target_el.parent[R];
-      } else { move_up = false; break; } // End of the road, no match was ever found
-    } 
-    if(!move_up) {
-      // First guess was wrong!  Try again...adjust target_el to be the element just above where we are inserting (target_el is first impacted el)
-      target_el = target;
+    if(dont_eval !== true) {
+      /*
+      Move Evaluation Strategy
+      - Find all independent vars in this item
+      - Find all independent vars in skipped elements
+      - Any elements in this item dependent on independent vars in skipped elements much be recalced
+      - Any elements in skipped section dependent on independent vars in this item must be recalced
+      */
+      //Find all elements between old and new location
+      var target_el = target;
       var impacted_els = [];
-      var move_down = true;
+      //Assume moving upwards (initial guess)
+      var move_up = true;
+      //Adjust target_el to be the element just below where we are inserting (target_el is first impacted el)
       if(insertInto) {
         if(target_el.independent_vars.length) impacted_els.push(target_el);
         else if(target_el instanceof Loop) impacted_els.push(target_el);
-        if((location === R) && (target_el.ends[R])) target_el = target_el.ends[R];
-        else target_el = target_el[L];
-      } else if(location === L) target_el = target_el[L];
-      // Start marching upwards until we reach the this item
+        if((location === L) && (target_el.ends[L])) target_el = target_el.ends[L];
+        else target_el = target_el[R];
+      } else if(location === R) target_el = target_el[R];
+      var first_item = target_el;
+      // Start marching downwards until we reach the this item
       while(true) {
-        if(target_el == 0) { move_down = false; break; } // End of the road, no match was ever found
+        if(target_el == 0) { move_up = false; break; } // End of the road, no match was ever found
         if(target_el.id == this.id) { break; } // Done!
         impacted_els.push(target_el);
-        if(target_el.hasChildren && target_el.ends[R])
-          target_el = target_el.ends[R];
-        else if(target_el[L]) 
-          target_el = target_el[L];
+        if(target_el.hasChildren && target_el.ends[L])
+          target_el = target_el.ends[L];
+        else if(target_el[R]) 
+          target_el = target_el[R];
         else if(target_el.parent) {
           if(target_el.independent_vars.length) impacted_els.push(target_el.parent);
           else if(target_el instanceof Loop) impacted_els.push(target_el.parent);
-          target_el = target_el.parent[L];
-        } else { move_down = false; break; } // End of the road, no match was ever found
+          target_el = target_el.parent[R];
+        } else { move_up = false; break; } // End of the road, no match was ever found
       } 
-    }
-    if(!move_up && !move_down) {
-      // THIS SHOULD NEVER HAPPEN
-      impacted_els = [];
-    }
+      if(!move_up) {
+        // First guess was wrong!  Try again...adjust target_el to be the element just above where we are inserting (target_el is first impacted el)
+        target_el = target;
+        var impacted_els = [];
+        var move_down = true;
+        if(insertInto) {
+          if(target_el.independent_vars.length) impacted_els.push(target_el);
+          else if(target_el instanceof Loop) impacted_els.push(target_el);
+          if((location === R) && (target_el.ends[R])) target_el = target_el.ends[R];
+          else target_el = target_el[L];
+        } else if(location === L) target_el = target_el[L];
+        // Start marching upwards until we reach the this item
+        while(true) {
+          if(target_el == 0) { move_down = false; break; } // End of the road, no match was ever found
+          if(target_el.id == this.id) { break; } // Done!
+          impacted_els.push(target_el);
+          if(target_el.hasChildren && target_el.ends[R])
+            target_el = target_el.ends[R];
+          else if(target_el[L]) 
+            target_el = target_el[L];
+          else if(target_el.parent) {
+            if(target_el.independent_vars.length) impacted_els.push(target_el.parent);
+            else if(target_el instanceof Loop) impacted_els.push(target_el.parent);
+            target_el = target_el.parent[L];
+          } else { move_down = false; break; } // End of the road, no match was ever found
+        } 
+      }
+      if(!move_up && !move_down) {
+        // THIS SHOULD NEVER HAPPEN
+        impacted_els = [];
+      }
 
-    //Create a list of all independent vars in impacted els
-    var impacted_el_vars = {};
-    var selection_vars = {};
-    var all_independent_vars = [];
-    var add_vars = function(vars, impacted) {
-      if(impacted) {
-        for(var j=0; j<vars.length; j++) {
-          impacted_el_vars[vars[j].replace("(","").trim()]=true;
-          all_independent_vars.push(vars[j].trim());
-        }
-      } else {
-        for(var j=0; j<vars.length; j++) {
-          selection_vars[vars[j].replace("(","").trim()]=true;
-          all_independent_vars.push(vars[j].trim());
+      //Create a list of all independent vars in impacted els
+      var impacted_el_vars = {};
+      var selection_vars = {};
+      var all_independent_vars = [];
+      var add_vars = function(vars, impacted) {
+        if(impacted) {
+          for(var j=0; j<vars.length; j++) {
+            impacted_el_vars[vars[j].replace("(","").trim()]=true;
+            all_independent_vars.push(vars[j].trim());
+          }
+        } else {
+          for(var j=0; j<vars.length; j++) {
+            selection_vars[vars[j].replace("(","").trim()]=true;
+            all_independent_vars.push(vars[j].trim());
+          }
         }
       }
-    }
-    for(var i = 0; i < impacted_els.length; i++)
-      add_vars(impacted_els[i].independent_vars, true);
-    add_vars(this.allIndependentVars(), false); // What is independent in the moved blocks?
+      for(var i = 0; i < impacted_els.length; i++)
+        add_vars(impacted_els[i].independent_vars, true);
+      add_vars(this.allIndependentVars(), false); // What is independent in the moved blocks?
 
-    //Check each selection element against list to see if recalculation is needed
-    var checker = function(impacted_el_vars) { return function(_this) { 
-      for(var k = 0; k < _this.dependent_vars.length; k++) {
-        if(impacted_el_vars[_this.dependent_vars[k].trim()]) {
-          _this.altered_content = true;
-          _this.previous_commands = [];
-          break;
+      //Check each selection element against list to see if recalculation is needed
+      var checker = function(impacted_el_vars) { return function(_this) { 
+        for(var k = 0; k < _this.dependent_vars.length; k++) {
+          if(impacted_el_vars[_this.dependent_vars[k].trim()]) {
+            _this.altered_content = true;
+            _this.previous_commands = [];
+            break;
+          }
+        }
+      }; }(impacted_el_vars);
+      this.commandChildren(checker);
+
+      //Check impacted els against list to see if recalculation is needed
+      for(var i = 0; i < impacted_els.length; i++) {
+        for(var k = 0; k < impacted_els[i].dependent_vars.length; k++) {
+          if(selection_vars[impacted_els[i].dependent_vars[k].trim()]) {
+            impacted_els[i].previous_commands = [];
+            impacted_els[i].altered_content = true;
+            break;
+          }
         }
       }
-    }; }(impacted_el_vars);
-    this.commandChildren(checker);
-
-    //Check impacted els against list to see if recalculation is needed
-    for(var i = 0; i < impacted_els.length; i++) {
-      for(var k = 0; k < impacted_els[i].dependent_vars.length; k++) {
-        if(selection_vars[impacted_els[i].dependent_vars[k].trim()]) {
-          impacted_els[i].previous_commands = [];
-          impacted_els[i].altered_content = true;
-          break;
-        }
-      }
+      //Whew!  That was a mess.  But recalculation should now proceed swimmingly
+      var start_el = (move_down ? impacted_els[impacted_els.length - 1] : this);
+      var next_el  = (move_down ? this : impacted_els[impacted_els.length - 1]);
     }
-    //Whew!  That was a mess.  But recalculation should now proceed swimmingly
-    var start_el = (move_down ? impacted_els[impacted_els.length - 1] : this)
-    var next_el  = (move_down ? this : impacted_els[impacted_els.length - 1])
 
 		// First, basically remove this item from the tree
-		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'move', L: this[L], parent: this.parent });
+		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'move', L: this[L], parent: this.parent, dont_eval: dont_eval === true });
 		if(this[L] !== 0) 
 			this[L][R] = this[R];
 		else
@@ -466,12 +468,7 @@ var Element = P(function(_) {
 			this[R][L] = this[L];
 		else
 			this.parent.ends[R] = this[L];
-		if((this.parent.ends[L] === 0) && (this.parent.ends[R] === 0)) {
-			if(this.parent.implicitType)
-				this.parent.implicitType().appendTo(this.parent).show(0);
-			else
-				math().appendTo(this.parent).show(0);
-		}
+    var old_parent = this.parent;
 		this[R] = 0;
 		this[L] = 0;
 		// Next, insert me into/next to my target
@@ -505,10 +502,21 @@ var Element = P(function(_) {
 		if(this.implicit && (this[L] == 0) && (this[R] == 0))
 			this.implicit = false;
 		if(this.worksheet && !this.implicit) this.worksheet.save();
+    // Deal with old parent
+    if((old_parent.ends[L] === 0) && (old_parent.ends[R] === 0)) {
+      if(old_parent instanceof indent) 
+        old_parent.remove(0,dont_eval);
+      else if(old_parent.implicitType)
+        old_parent.implicitType().appendTo(old_parent).show(0);
+      else
+        math().appendTo(old_parent).show(0);
+    }
 
-    var eval_id = this.worksheet.evaluate([], start_el);
-    if(next_el) next_el = next_el.nextEvaluateElement();
-    if(next_el) giac.add_altered(eval_id, all_independent_vars, next_el.id); // Let evaluator know about all altered vars in move operation
+    if(dont_eval !== true) {
+      var eval_id = this.worksheet.evaluate([], start_el);
+      if(next_el) next_el = next_el.nextEvaluateElement();
+      if(next_el) giac.add_altered(eval_id, all_independent_vars, next_el.id); // Let evaluator know about all altered vars in move operation
+    }
 
 		return this;
 	}
@@ -537,10 +545,10 @@ var Element = P(function(_) {
 		delete this.jQ;
 		return this;
 	}
-	_.remove = function(duration) {
+	_.remove = function(duration, dont_eval) {
 		if(!this.inTree) return this; // Already removed...
 		// Add this to the undoManager
-		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'remove', L: this[L], parent: this.parent });
+		if(this.worksheet) this.worksheet.setUndoPoint(this, { command: 'remove', L: this[L], parent: this.parent, dont_eval: dont_eval });
 		this.inTree = false;
 		duration = typeof duration === 'undefined' ? 200 : duration;
 		this.preRemoveHandler();
@@ -564,7 +572,9 @@ var Element = P(function(_) {
 		else
 			this.parent.ends[R] = this[L];
 		if((this.parent.ends[L] === 0) && (this.parent.ends[R] === 0)) {
-			if(this.parent.implicitType)
+      if(this.parent instanceof indent) 
+        this.parent.remove(0, dont_eval);
+			else if(this.parent.implicitType)
 				this.parent.implicitType().appendTo(this.parent).show(0).focus(L);
 			else
 				math().appendTo(this.parent).show(0).focus(L);
@@ -583,7 +593,7 @@ var Element = P(function(_) {
 		this[R] = 0;
 		this.worksheet.renumber();
 		if(!this.implicit) this.worksheet.save();
-		if(do_eval) {
+		if(do_eval && (dont_eval !== true)) {
 			var eval_id = this.worksheet.evaluate([], eval_target);
 			giac.add_altered(eval_id, independent_vars, target.id); // Let evaluator know about all altered vars in move operation
     }
@@ -595,21 +605,23 @@ var Element = P(function(_) {
 		switch(action.command) {
 			case 'remove':
 				if(action.L)
-					this.insertAfter(action.L);
+					this.insertAfter(action.L, action.dont_eval);
 				else
-					this.prependTo(action.parent);
-		    var eval_id = this.worksheet.evaluate([], this);
-		    var next_el = this.nextEvaluateElement();
-		    if(next_el) giac.add_altered(eval_id, this.allIndependentVars(), next_el.id); // Let evaluator know about all altered vars in restore operation
+					this.prependTo(action.parent, action.dont_eval);
+        if(action.dont_eval !== true) {
+  		    var eval_id = this.worksheet.evaluate([], this);
+  		    var next_el = this.nextEvaluateElement();
+  		    if(next_el) giac.add_altered(eval_id, this.allIndependentVars(), next_el.id); // Let evaluator know about all altered vars in restore operation
+        }
 				break;
 			case 'insert':
-				this.remove(0);
+				this.remove(0, action.dont_eval);
 				break;
 			case 'move':
 				if(action.L) 
-					this.move(action.L, R, false);
+					this.move(action.L, R, false, action.dont_eval);
 				else 
-					this.move(action.parent, L, true);
+					this.move(action.parent, L, true, action.dont_eval);
 				break;
       case 'suppress_autofunction':
         this.worksheet.suppress_autofunction = action.val
@@ -751,6 +763,7 @@ var Element = P(function(_) {
 		this.worksheet.evaluate([], el, stop_id);
 		return this;
 	}
+  var count = 0;
 	_.blurOutputBox = function() {
 		if(this.outputBox) this.outputBox.calculating();
 		if(this.jQ && (typeof this.jQ.find === 'function')) {

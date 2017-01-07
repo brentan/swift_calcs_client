@@ -41,13 +41,13 @@ div.sc_element_container {
     }
   }
   .sc_element {
+    border-width:0px;
     span.equality { 
       display: inline-block;
       margin: 0px 3px;
       font-size: 16px;
       font-family: Symbola, "Times New Roman", serif;
     }
-    border-width:0px;
     div.after_notice {
       text-align: center;
       font-size: 0.9em;
@@ -161,6 +161,21 @@ div.sc_element_container {
       font-style: italic;
       text-align: center;
       font-size: 10px;
+    }
+    &.sc_indent {
+      & > table.sc_element_table > tbody > tr > td.sc_element_td {
+        i.fa-spinner.calculation_spinner { 
+          display: none;
+        }
+        div.sc_element_collapse div.sc_collapse.show {
+          display: none;
+        }
+        &:hover {
+          div.sc_element_collapse div.sc_collapse.show {
+            display: inline-block;
+          }
+        }
+      }
     }
     &.sc_fusion {
       div.sc_loaded {
@@ -759,6 +774,11 @@ div.sc_element_container {
     cursor: text;
   }
   .sc_element {
+    .sc_placeholder {
+      display: none !important;
+      visibility: hidden;
+      height: 0px;
+    }
     .sc_math.mq-math-mode.mq-editable-field {
       border-color: #ffffff;
       &:hover, &.mq-focused {
