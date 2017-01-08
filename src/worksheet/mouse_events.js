@@ -228,7 +228,7 @@ Worksheet.open(function(_) {
       var target = Element.byId[$(e.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];   
       // If the click is on the left-hand side (the line number), we select the element
       var force_select = false;
-      if((selected_target.length == 0) && $(e.target).closest('td.' + css_prefix + 'element_td').length && !(e.shiftKey) && !$(e.target).closest('div.' + css_prefix + 'collapse').length && !$(e.target).closest('div.' + css_prefix + 'expand').length) {
+      if((selected_target.length == 0) && $(e.target).closest('td.' + css_prefix + 'element_td').length && !(e.shiftKey) && !$(e.target).closest('div.' + css_prefix + 'collapse').length && !$(e.target).closest('div.' + css_prefix + 'expand').length && !$(e.target).closest('div.' + css_prefix + 'disabled_icon').length) {
         if(target.focusedItem) target.focusedItem.mouseOut(e);
         _this.clearSelection();
         _this.createSelection(target.jQ);
@@ -302,9 +302,13 @@ Worksheet.open(function(_) {
           		selected_elements = selected_elements.add(target.jQ);
           		selection.push(target);
           	} else if(target instanceof text) return true; // Let text objects deal with their own mouse events
-          } else if(command == 'mouseUp') { // Check for collapse/expand
+          } else if(command == 'mouseUp') { // Check for collapse/expand/disable
             if($(e.target).closest('div.' + css_prefix + 'collapse').length) target.collapse();
             else if($(e.target).closest('div.' + css_prefix + 'expand').length) target.expand();
+            else if($(e.target).closest('div.' + css_prefix + 'disabled_icon').length) {
+              if(target.disabled) target.enable()
+              else target.disable();
+            }
           }
       	} else { //Start and target are different elements
           selectFromTargets(target, new_target);

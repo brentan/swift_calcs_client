@@ -115,6 +115,16 @@ div.sc_element_container {
           display: none;
           margin-right: 3px;
         }
+        div.sc_disabled_icon {
+          font-size: 8px;
+          display: none;
+          cursor: pointer;
+          i.fa-ban {
+            display: none;
+            color: #ff7777;
+            cursor: pointer;
+          }
+        }
         div.sc_element_collapse {
           width: 10px;
           font-size: 12px;
@@ -140,11 +150,31 @@ div.sc_element_container {
         }
         &:hover {
           background-color: #f7f7f7;
+          div.sc_disabled_icon {
+            display: inline-block;
+            &:hover {
+              color: #555555;
+            }
+          }
         }
         &.sc_focused {
           background-color: #f2f2f2;
           div.sc_expand, div.sc_collapse {
             color: #bbbbbb;
+          }
+        }
+      }
+    }
+    &.sc_disabled {
+      color: #aaaaaa;
+      & > table.sc_element_table > tbody > tr > td.sc_element_td {
+        div.sc_disabled_icon {
+          display: inline-block;
+          i.fa-ban {
+            display: inline-block;
+            &:hover {
+              color: #aa0000;
+            }
           }
         }
       }
@@ -167,12 +197,18 @@ div.sc_element_container {
         i.fa-spinner.calculation_spinner { 
           display: none;
         }
+        div.sc_disabled_icon {
+          display: none;
+        }
         div.sc_element_collapse div.sc_collapse.show {
           display: none;
         }
         &:hover {
           div.sc_element_collapse div.sc_collapse.show {
             display: inline-block;
+          }
+          div.sc_disabled_icon {
+            display: none;
           }
         }
       }

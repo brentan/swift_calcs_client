@@ -96,7 +96,9 @@ var Element = P(function(_) {
 		if(this.worksheet && this.worksheet.activeUndo && this.jQ) return this;
 		this.jQ = $('<div style="display:none;" ' + css_prefix + 'element_id=' + this.id + ' class="' + css_prefix + 'element ' + (!this.allow_interaction() ? (css_prefix + 'no_interaction ') : '')
 			+ jQuery.map(this.klass, function(k) { return (css_prefix + k) }).join(' ') + '">'
-			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td"><i class="fa fa-exclamation-triangle"></i><span></span><div class="' + css_prefix + 'element_collapse">'
+			+ '<table class="' + css_prefix + 'element_table"><tbody><tr><td class="' + css_prefix + 'element_td">'
+			+ (this.evaluatable ? '<div class="' + css_prefix + 'disabled_icon fa-stack fa-lg"><i class="fa fa-calculator fa-stack-1x"></i><i class="fa fa-ban fa-stack-2x text-danger"></i></div>' : '')
+			+ '<i class="fa fa-exclamation-triangle"></i><span></span><div class="' + css_prefix + 'element_collapse">'
 			+ '<div class="' + css_prefix + 'expand"><i class="fa fa-caret-right"></i></div><div class="' + css_prefix + 'collapse"><i class="fa fa-caret-down"></i></div></div></td>'
 			+ '<td class="' + css_prefix + 'element_insert_td">' + this.innerHtml() + '</td></tr></tbody></table></div>');
 		var parent = this;
@@ -130,6 +132,8 @@ var Element = P(function(_) {
 			this.collapse(true);
 		} else if(this.hasChildren)
 			this.collapseArrow();
+		if(this.disabled)
+			this.jQ.addClass(css_prefix + 'disabled');
 		return this;
 	}
 	// Allow blocks to define handlers to run before being destroyed.
@@ -747,6 +751,7 @@ var Element = P(function(_) {
 		if(typeof force === 'undefined') force = false;
 		if(force === 0) force = false;
 		if(this.mark_for_deletion) return;
+		if(this.disabled) return;
 		if(!this.needsEvaluation && (force === false)) return this;
 		if(!this.newCommands() && !this.outputSettingsChange && (force === false)) return this;
 		this.altered_content = true; // We called evaluate on this element, so it was altered, which will force its evaluation
@@ -786,7 +791,7 @@ var Element = P(function(_) {
 	_.shouldBeEvaluated = function(evaluation_id) {
 		giac.load_altered(evaluation_id, this);
 		if(giac.evaluations[evaluation_id]) giac.evaluations[evaluation_id].active_id = this.id;
-		if(!this.evaluatable || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;
+		if(!this.evaluatable || this.disabled || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;
 		if(giac.compile_mode && !this.scoped()) return false; // In compile mode, we only care about scoped lines
 		// Logic Blocks: Make sure I'm not a children of any block that is not currently activated
 		for(var el = this; el instanceof Element; el = el.parent) {
@@ -1054,6 +1059,41 @@ var Element = P(function(_) {
 		return true;
 	}
 
+	// Disable/Enable a line.  When disabled, it will be removed from the computation tree
+	_.disable = function() {
+		if(this.disabled) return;
+		var independent_vars = this.allIndependentVars();
+		var do_eval = false;
+		if(independent_vars.length) {
+	    var target = this.nextEvaluateElement();
+	    if(this.parent) {
+	    	var eval_target = this.parent;
+	    	this.parent.altered_content = true;
+	    } else
+	    	var eval_target = target;
+	    if(target) do_eval = true;
+	  }
+	  this.blurOutputBox();
+		this.unarchive_list = this.previousUnarchivedList().slice(0);
+		this.unarchive_list_set = true;
+		this.jQ.addClass(css_prefix + 'disabled');
+		this.setAutocomplete(this.unarchive_list);
+		this.disabled = true;
+		if(do_eval) {
+			var eval_id = this.worksheet.evaluate([], eval_target);
+			giac.add_altered(eval_id, independent_vars, target.id); // Let evaluator know about all altered vars in move operation
+    }
+		this.worksheet.save();
+		window.setTimeout(function(_this) { return function() { _this.blur(); } }(this),1);
+	}
+	_.enable = function() {
+		if(!this.disabled) return;
+		this.jQ.removeClass(css_prefix + 'disabled');
+		this.disabled = false;
+		this.evaluate(true);
+		this.worksheet.save();
+	}
+
 	// Journey up parents to the worksheet.  Evaluation is linear in the first generation children of worksheet.  Below that level,
 	// Children blocks may have non-linear evaluation (such as 'for' loops, etc).  We need to find our ancestor who is a worksheet
 	// first generation child, then start the evaluation process there and move inwards/downwards.  
@@ -1186,7 +1226,10 @@ var Element = P(function(_) {
 			this.collapse();
 		else if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'expand').length) 
 			this.expand();
-		else if(this.allow_interaction() && (this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'focusableItems').length) {
+		else if((this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'disabled_icon').length) {
+			if(this.disabled) this.enable()
+			else this.disable();
+		} else if(this.allow_interaction() && (this.start_target === -1) && $(e.target).closest('div.' + css_prefix + 'focusableItems').length) {
 			var focusable = this.getFocusableByX($(e.target).closest('div.' + css_prefix + 'focusableItems').attr('data-id')*1, e.originalEvent.pageX);
 			focusable.focus(e.originalEvent.pageX);
 		}
@@ -1618,6 +1661,7 @@ var Element = P(function(_) {
   	}
   	if(this instanceof SettableMathOutput) 
   		arg_list.push('var_field_value: ' + this.var_field_value);
+  	if(this.evaluatable) arg_list.push('disabled: ' + this.disabled);
   	if(arg_list.length)
   		output.push(arg_list.join(', '));
   	var start_index = ((this instanceof SettableMathOutput) && !this.var_field_value) ? 1 : 0; // Ignore varStoreField for SettableMathOutput, if not scoped, to simplify item in storage

@@ -616,6 +616,28 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			},
 			{ title: '|' },
 			{
+				id: 'disable_eval',
+				icon: 'ban',
+				html: '&nbsp;Disable Evaluation',
+				title: 'Disable Evaluation',
+				method: function() { 
+          for(var i =0; i < el.selection.length; i++)
+          	el.selection[i].disable();
+        }
+			},
+			{ title: '|' },
+			{
+				id: 'enable_eval',
+				icon: 'calculator',
+				html: '&nbsp;Enable Evaluation',
+				title: 'Enable Evaluation',
+				method: function() { 
+          for(var i =0; i < el.selection.length; i++)
+          	el.selection[i].enable();
+        }
+			},
+			{ title: '|' },
+			{
 				id: 'delete',
 				icon: 'trash-o',
 				html: '&nbsp;Delete',
