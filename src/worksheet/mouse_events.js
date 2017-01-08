@@ -56,6 +56,22 @@ Worksheet.open(function(_) {
       drag_done_handler(el, into, dir);
       e_drag.preventDefault();
     }
+    var scrollInterval = false;
+    var scrollTime = 1;
+    var scrollWorksheet = function(up) {
+      $("body").scrollTop($("body").scrollTop() + ((up ? -10 : 10) * scrollTime));
+      scrollTime = Math.min(3, scrollTime * 1.05);
+    }
+    function ScrollEnter(e_drag) {
+      if(scrollInterval) window.clearInterval(scrollInterval);
+      scrollTime = 1;
+      scrollInterval = window.setInterval(function(up) { return function() { scrollWorksheet(up); } }($(e_drag.target).hasClass('top_scroll')), 50);
+      e_drag.preventDefault();
+    }
+    function ScrollLeave(e_drag) {
+      if(scrollInterval) window.clearInterval(scrollInterval);
+      e_drag.preventDefault();
+    }
     function dragLeave(e_drag) {
       var el = Element.byId[$(e_drag.target).closest('.' + css_prefix + 'element').attr(css_prefix + 'element_id') || -1];
       el.jQ.removeClass(css_prefix + 'dropTop').removeClass(css_prefix + 'dropBot');
@@ -95,6 +111,7 @@ Worksheet.open(function(_) {
 		function dragStart(e_drag) {
       _this.dragging = true;
       $(e_drag.target).addClass('dragging');
+      $(".top_scroll, .bot_scroll").show().on('dragenter', ScrollEnter).on('dragleave', ScrollLeave);
       e_drag.originalEvent.dataTransfer.setData("text/plain", "Draggable Element");
     	// We started a drag, so remove mouesup listener as we dont want it firing
       $(e.target.ownerDocument).unbind('mouseup', mouseup_drag);
@@ -110,6 +127,8 @@ Worksheet.open(function(_) {
 			_this.mousedown = false;
       $(e_drag.target).removeClass('dragging');
     	// Remove listeners
+      if(scrollInterval) window.clearInterval(scrollInterval);
+      $(".top_scroll, .bot_scroll").hide().off('dragenter', ScrollEnter).off('dragleave', ScrollLeave);
 			$(e_drag.target).off('dragend', dragEnd);
     	_this.insertJQ.find('.' + css_prefix + 'element').off('dragenter', dragEnter);
     	_this.insertJQ.find('.' + css_prefix + 'element').find('*').off('dragenter', dragEnter);
