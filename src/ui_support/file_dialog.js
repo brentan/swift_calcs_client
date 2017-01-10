@@ -985,7 +985,7 @@ $(function() {
 		window.selectToolboxTab('projects_list');
 		$('.base_layout').removeClass('worksheet_open');
 		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
-		if((dont_check_for_empty !== true) && SwiftCalcs.pushState.last_active_url.match(/^(\/)?$/)) {
+		if((dont_check_for_empty === false) && SwiftCalcs.pushState.last_active_url.match(/^(\/)?$/)) {
 			// Closing a worksheet that was 'maximized', so we should load the active list but prepend this to its top
 			var item = el.children('.active_holder').children('.worksheet_item');
 			prepend_to_list = {
