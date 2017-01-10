@@ -542,7 +542,62 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 						if(typeof target === 'undefined') return showNotice("No element found with this line number", 'red');
 						el.command('write', "<div class='sc_text_special_block sc_line_reference' data-element='" + target.id + "'>line " + line + "</div>&#8203;"); 
 					}
-				} } 
+				} },
+				{html: "Value of Variable", method: function(el) { 
+					// I hate textboxes..before we do anything we need to capture the cursor location
+					var startState = el.textField.currentState();
+	    		window.showPopupOnTop();
+	    		$('.popup_dialog .full').html("<div class='title'>Show Value of a Variable</div><div class='explain'>All variables and functions defined up to this point in your worksheet shown below.  Click any variable to select.  The value of the variable or function will be shown in your textbox and updated whenever the worksheet changes.</div><div class='math'></div><div class='checkbox'><i class='fa fa-fw fa-check-square-o'></i>Show variable name before value</div><div class='explain'>If checked, will show <strong>x&#8658;</strong> before the value itself (example shown for variable name x).</div>");
+	        $('.popup_dialog .bottom_links').html('<button class="OK">Add</button><button class="close grey">Close</button>');
+					var check = $('.popup_dialog').find('.checkbox');
+					check.on('click', function(e) {
+						var i = $(this).find('i');
+						if(i.hasClass('fa-check-square-o'))
+							i.addClass('fa-square-o').removeClass('fa-check-square-o');
+						else
+							i.addClass('fa-check-square-o').removeClass('fa-square-o');
+						e.preventDefault();
+					});
+					var var_name = '';
+					var input = $('.popup_dialog').find('.math');
+					var allwords = el.autocomplete();
+          for(var i = 0; i < allwords.length; i++) {
+          	var element = el.varHelp(allwords[i]);
+            var last_result = element ? element.getLastResult() : false;
+          	$("<div/>").addClass('list').attr("data-var",allwords[i].replace("(","")).html("<table border=0><tbody><tr><td>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(allwords[i].replace("(","")) + "</td><td class='val'>" + window.SwiftCalcsLatexHelper.latexToHtml(last_result ? last_result : '') + "</td></tr></tbody></table>").appendTo(input).on('click', function(e) {
+          		var_name = $(this).attr("data-var");
+          		input.find("div.list").removeClass("selected");
+          		$(this).addClass("selected");
+          	});
+          } 
+					/* This is using a mathquill block as input.  Holding code for use later!
+					var input = $('.popup_dialog').find('.math');
+					var mq_onblur = function(item) {
+						var_name = item.text();
+						if(var_name.trim().length) {
+							if(!var_name.match(/^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)?$/)) {
+								var_name = '';
+								showNotice('Invalid variable name.  Please ensure you are choosing a valid variable');
+							}
+						} else var_name = '';
+					}
+					var mq = window.standaloneMathquill(input, false, true, { blur: mq_onblur }, el);
+					*/
+					$('.popup_dialog .bottom_links').find('.OK').on('click', function(e) {
+						if(var_name.length) {
+							var show_prior = check.find('i').hasClass('fa-check-square-o') ? "1" : "0";
+							el.textField.restoreState(startState);
+							// Restore state has a 50ms delay due to window focus shenanigans...so we delay our insert here another 100ms
+							window.setTimeout(function() {
+								el.command('write', "<div class='sc_text_special_block sc_var_reference'><span class='sc_hide'>" + show_prior + "=" + var_name + "</span>Awaiting value of " + window.SwiftCalcsLatexHelper.UnitNameToHTML(var_name) + "</div>&#8203;"); 
+								el.updateVarReferences();
+							}, 100);
+							window.hidePopupOnTop();
+						} else
+							showNotice("No valid variable name provided.","red");
+					});
+					window.resizePopup(true);
+				} },
 			]
 		},
 		{ title: '|',

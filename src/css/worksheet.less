@@ -197,18 +197,12 @@ div.sc_element_container {
         i.fa-spinner.calculation_spinner { 
           display: none;
         }
-        div.sc_disabled_icon {
-          display: none;
-        }
         div.sc_element_collapse div.sc_collapse.show {
           display: none;
         }
         &:hover {
           div.sc_element_collapse div.sc_collapse.show {
             display: inline-block;
-          }
-          div.sc_disabled_icon {
-            display: none;
           }
         }
       }
@@ -843,6 +837,13 @@ div.sc_element_container {
       border: 1px solid #ddeeff;
       padding: 2px;
       border-radius: 2px;
+      .sc_hide {
+        display: none;
+      }
+      .mq-math-mode.mq-editable-field {
+        border-width: 0px;
+        margin: -1px;
+      }
     }
 
   }

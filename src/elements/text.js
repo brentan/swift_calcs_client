@@ -53,8 +53,6 @@ var text = P(EditableBlock, function(_, super_) {
   _.command = function(command, option) {
     var param = null;
     switch(command) {
-      case 'line_reference':
-
       case 'normalFormat':
         var container = $(rangy.getSelection(this.textField.$editor[0]).getRangeAt(0).commonAncestorContainer);
         while(container.closest('.' + css_prefix + 'wysiwyg').length) {
@@ -287,6 +285,61 @@ var text = P(EditableBlock, function(_, super_) {
       else
         setElementReference($(this), worksheet);
     });
+  }
+  _.setAutocomplete = function(list) {
+    super_.setAutocomplete.call(this, list);
+    this.updateVarReferences();
+  }
+  _.updateVarReferences = function() {
+    var _this = this;
+    this.jQ.find('.sc_var_reference').each(function() { 
+      var var_name = $(this).children(".sc_hide");
+      if(var_name) {
+        var el = _this.varHelp(var_name.html().split("=")[1]);
+        if(var_name.html().split("=")[0] == '1') 
+          var prior_name = window.SwiftCalcsLatexHelper.UnitNameToLatex(var_name.html().split("=")[1]) + "\\whitespace \\Longrightarrow \\whitespace ";
+        else
+          var prior_name = '';
+        var hidden_el = "<span class='sc_hide'>" + var_name.html() + "</span>";
+        if(el && el.getLastResult()) 
+          $(this).html(hidden_el + window.SwiftCalcsLatexHelper.latexToHtml(prior_name + el.getLastResult()));
+        else 
+          $(this).html(hidden_el + "No value found for " + window.SwiftCalcsLatexHelper.UnitNameToHTML(var_name.html().split("=")[1]));
+      } else
+        $(this).html(hidden_el + "<strong>CORRUPT REFERENCE</strong>");
+    });
+    this.textField.syncCode();
+    this.worksheet.save();
+  }
+  _.reliesOn = function(varName) { // Test if this block or any following rely on this variable
+    var foundit = false;
+    this.jQ.find('.sc_var_reference').each(function() { 
+      if(foundit) return;
+      var var_name = $(this).children(".sc_hide");
+      if(var_name) var_name = var_name.html().split("=")[1];
+      else return;
+      if(var_name == varName) foundit = true;
+    });
+    if(foundit) return true;
+    if(this[R]) return this[R].reliesOn(varName);
+    if(this.parent && this.parent[R]) return this.parent[R].reliesOn(varName);
+    return false;
+  }
+  _.changeVarName = function(varName,newName) { // Rename variable in this block and all following blocks
+    var foundit = false;
+    this.jQ.find('.sc_var_reference').each(function() { 
+      var var_name = $(this).children(".sc_hide");
+      if(var_name) var_name = var_name.html().split("=")[1];
+      else return;
+      if(var_name == varName) {
+        foundit = true;
+        $(this).children(".sc_hide").html($(this).children(".sc_hide").html().split("=")[0] + "=" + newName);
+      }
+    });
+    if(foundit) this.updateVarReferences();
+    if(this[R]) return this[R].changeVarName(varName,newName);
+    if(this.parent && this.parent[R]) return this.parent[R].changeVarName(varName,newName);
+    return;
   }
 });
 
@@ -768,10 +821,10 @@ var WYSIWYG = P(function(_) {
       }
       return true;
     } else if($(startContainer).closest('.sc_text_special_block').length) {
-      range.setStartBefore(startContainer);
+      range.setStartBefore($(startContainer).closest('.sc_text_special_block')[0]);
       range.select();
     } else if($(endContainer).closest('.sc_text_special_block').length) {
-      range.setEndAfter(endContainer);
+      range.setEndAfter($(endContainer).closest('.sc_text_special_block')[0]);
       range.select();
     }
     return false;
@@ -779,6 +832,7 @@ var WYSIWYG = P(function(_) {
   _.focus = function(dir, dir2) {
     if(this.el.blurred) return this.el.focus(dir);
     this.el.worksheet.unblurToolbar();
+    window.setTimeout(function(_this) { return function() { _this.el.worksheet.unblurToolbar(); } }(this),1);
     if(this.blurred) {
       this.blurred = false;
       var start_scroll = this.el.worksheet.jQ.scrollTop();

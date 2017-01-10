@@ -22,6 +22,10 @@ var aFocusableItem = P(function(_) {
     this.element.flash(color);
     return this;
   }
+  _.topOffset = function() {
+    if(this.jQ && this.element && this.element.jQ) return this.element.topOffset();
+    return 0;
+  }
 	_.scrollToMe = function(dir) {
 		if(this.jQ && this.element && this.element.jQ) {
 			var top = this.jQ.position().top + this.element.topOffset() - $('body').scrollTop();

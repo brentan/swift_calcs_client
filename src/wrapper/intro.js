@@ -201,11 +201,11 @@ var SwiftCalcs = {};
     } 
     if(command.match(/^.*:=.*$/i)) command = command.replace(/^.*:=(.*)$/i,"$1");
     // Remove units
-    command = command.replace(/^_[a-z2µ]+([^a-z2µ])/gi,"$1").replace(/([^a-z0-9])_[a-z2µ]+$/gi,"$1").replace(/([^a-z0-9])_[a-z2µ]+([^a-z2µ])/gi,"$1 $2");
-    var dependent_var = command.replace(/[^a-zA-Z_0-9]/g," ");
+    command = command.replace(/^_[a-z2µ]+([^a-z2µ])/gi,"$1").replace(/([^a-z0-9_])_[a-z2µ]+$/gi,"$1").replace(/([^a-z0-9_])_[a-z2µ]+([^a-z2µ])/gi,"$1 $2");
+    command = command.replace(/[^a-zA-Z_0-9]/g," ").replace(/[a-z0-9_]+__[a-z0-9_]+/gi,"");
     var reg = /([a-z][a-z0-9]*(_[a-z0-9]*)?)/gi;
     var result;
-    while((result = reg.exec(dependent_var)) !== null) {
+    while((result = reg.exec(command)) !== null) {
       if(function_vars[result[1]] !== true) dependent_vars.push(result[1]);
     }
     return dependent_vars;

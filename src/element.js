@@ -1080,6 +1080,7 @@ var Element = P(function(_) {
 		this.setAutocomplete(this.unarchive_list);
 		this.disabled = true;
 		if(do_eval) {
+			this.worksheet.suppress_autofunction = true;
 			var eval_id = this.worksheet.evaluate([], eval_target);
 			giac.add_altered(eval_id, independent_vars, target.id); // Let evaluator know about all altered vars in move operation
     }

@@ -176,6 +176,9 @@ var solve = P(SettableMathOutput, function(_, super_) {
 			if(result[1].returned.match(/[\s]*\\begin{bmatrix[0-9]+}\\end{bmatrix[0-9]+}[\s]*/)) { 
 				result[1].returned = ''; 
 				result[1].warnings.push('No results found'); 
+			} else if(this.ask_initial_guess && result[1].returned.match(/fsolve/)) { 
+				result[1].returned = ''; 
+				result[1].warnings.push('Solver was unable to evaluate to a numeric result.  Ensure all variables in use are fully defined.'); 
 			} else {
 				if(this.number_of_equations > 1) 
 					var to_add = "\\left\\{ " + this.varField.text() + " \\right\\}"
