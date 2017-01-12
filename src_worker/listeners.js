@@ -160,7 +160,7 @@ var receiveMessage = function(command) {
       // Copy previous warnings over
       warnings[ii] = warnings[ii - 1];
       if(output[ii-1].returned.trim() == '[]') output[ii-1].returned = '[undef]';
-      var to_replace = output[ii-1].returned;
+      var to_replace = output[ii-1].returned.replace(/\-\-/g,"+");
       if(to_send.match(/^[\s]*[a-z][a-z0-9_]*\(([a-z0-9_,\s]+)\)[\s]*:=/i)) {
         if(to_replace.match("->")) to_replace = to_replace.replace(/^.*\-\>(.*)$/,"$1");
         var func_var = to_send.replace(/^[\s]*[a-z][a-z0-9_]*\(([a-z0-9_,\s]+)\)[\s]*:=.*$/i,"$1");

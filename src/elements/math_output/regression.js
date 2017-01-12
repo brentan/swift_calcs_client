@@ -119,9 +119,6 @@ var regression = P(SettableMathOutput, function(_, super_) {
 							command += ", " + _this.order.text({});
 		  	}
 				command = _this.mode  + '_regression(' + command + ')';
-				var x_unit = 'mksa_base(at(' + _this.xdata.text({check_for_array: true}) + ',0))';
-				var y_unit = 'mksa_base(at(' + _this.ydata.text({check_for_array: true}) + ',0))';
-				var x = _this.varStoreField.text().match(/\(/) ? "x" : "'x'";
 				var ind_var = _this.varStoreField.text().match(/\(/) ? _this.varStoreField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_]*)\)$/i,"$2") : "x";
 				_this.commands = _this.genCommand("[val]");
 				_this.commands[0].dereference = true;
@@ -144,7 +141,6 @@ var regression = P(SettableMathOutput, function(_, super_) {
 		};
 	}
 	_.evaluationFinished = function(result) {
-		// BRENTAN: Deal with different modes and rebuild them into functions, and add units along the way
 		if(result[1].returned && result[1].success) {
 			var warnings = [];
 			for(var i = 0; i < result[1].warnings; i++) 

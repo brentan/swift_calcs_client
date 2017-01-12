@@ -19,6 +19,7 @@ $(function() {
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
       {left: 'fa-magic', text: 'Fit Function to Data', el: 'regression'},
       {left: 'fa-magic', text: 'Multi Linear Regression', el: 'multiregression'},
+      {left: 'fa-magic', text: 'Interpolate Data', el: 'interpolate'},
       {left: '[x]', text: 'Create Matrix', el: 'matrix'},
     ],
     Onshape: [

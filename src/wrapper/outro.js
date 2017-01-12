@@ -30,6 +30,7 @@
 		'multi_regression': multi_regression,
 		'import': importData,
 		'image': image,
+		'interpolate':interpolate,
 		'imageBlock': imageBlock,
 		'slider': slider,
 		'csv': csv,

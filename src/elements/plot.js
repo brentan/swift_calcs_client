@@ -347,8 +347,10 @@ var plot = P(Element, function(_, super_) {
 							children[i].outputBox.setWarning('Incompatible x-axis units.  Data returned units in absolute temperature (' + this.worksheet.latexToUnit(this.x_unit_label.replace("delta","deg"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however x-axis is set to relative temperature (' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
 						else if(children[i].x_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && x_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
 							children[i].outputBox.setWarning('Incompatible x-axis units.  Data returned units in relative temperature (' + this.worksheet.latexToUnit(this.x_unit_label.replace(/\{(deg)?/,"{\\delta"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however x-axis is set to absolute temperature (' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
-						else
+						else if(this.worksheet.latexToUnit(children[i].x_unit)[0])
 							children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted, but its x-axis units (' + this.worksheet.latexToUnit(children[i].x_unit)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;") + ') are not the same as shown.', true).expand();
+						else
+							children[i].outputBox.setWarning('Could not determine x-axis units.  It may not be defined near the test point of x=0').expand();
 						children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
 					} 
 				} else
@@ -390,8 +392,10 @@ var plot = P(Element, function(_, super_) {
 							children[i].outputBox.setWarning('Incompatible y-axis units.  Data returned units in absolute temperature (' + this.worksheet.latexToUnit(this.y_unit_label.replace("delta","deg"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however y-axis is set to relative temperature (' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
 						else if(children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
 							children[i].outputBox.setWarning('Incompatible y-axis units.  Data returned units in relative temperature (' + this.worksheet.latexToUnit(this.y_unit_label.replace(/\{(deg)?/,"{\\delta"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however y-axis is set to absolute temperature (' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
-						else
+						else if(this.worksheet.latexToUnit(children[i].y_unit)[0])
 							children[i].outputBox.setWarning('Incompatible y-axis units.  Data has been plotted, but its y-axis units (' + this.worksheet.latexToUnit(children[i].y_unit)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;") + ') are not the same as shown.', true).expand();
+						else
+							children[i].outputBox.setWarning('Could not determine y-axis units.  It may not be defined near the test point of x=0').expand();
 						children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
 					}
 				} else
@@ -406,8 +410,10 @@ var plot = P(Element, function(_, super_) {
 							children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data returned units in absolute temperature (' + this.worksheet.latexToUnit(this.y2_unit_label.replace("delta","deg"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however secondary y-axis is set to relative temperature (' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
 						else if(children[i].y_unit && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && y2_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
 							children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data returned units in relative temperature (' + this.worksheet.latexToUnit(this.y2_unit_label.replace(/\{(deg)?/,"{\\delta"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however secondary y-axis is set to absolute temperature (' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
-						else
+						else if(this.worksheet.latexToUnit(children[i].y_unit)[0])
 							children[i].outputBox.setWarning('Incompatible secondary y-axis units.  Data has been plotted, but its units (' + this.worksheet.latexToUnit(children[i].y_unit)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;") + ') are not the same as shown.', true).expand();
+						else
+							children[i].outputBox.setWarning('Could not determine secondary y-axis units.  It may not be defined near the test point of x=0').expand();
 						children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
 					}
 				} else

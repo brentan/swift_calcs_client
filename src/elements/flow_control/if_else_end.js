@@ -117,7 +117,7 @@ var if_block = P(LogicBlock, function(_, super_) {
 			if(new_true_id > -1) {
 				var el = new_true_id == this.id ? this.ends[L] : Element.byId[new_true_id][R];
 				for(el; (el instanceof Element) && !(el instanceof LogicCommand); el = el[R]) 
-	    		el.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true; } });
+	    		el.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true;  _this.previous_commands = []; } });
 	    }
     	// Also need to go through and mark all variables that were set in old 'true' area as altered for the continuing calculation
     	if(this.lastTrueId > -1) {

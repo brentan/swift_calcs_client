@@ -555,7 +555,7 @@ var Worksheet = P(function(_) {
   }
   _.fullEvalNeeded = function() {
     // Set all items to altered
-    this.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true; } });
+    this.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true;  _this.previous_commands = []; } });
     return this;
   }
   // Evaluate the worksheet.  If var_list is set (array), these variables should be placed into the 'altered' list from the start

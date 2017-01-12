@@ -1091,6 +1091,7 @@ var Element = P(function(_) {
 		if(!this.disabled) return;
 		this.jQ.removeClass(css_prefix + 'disabled');
 		this.disabled = false;
+		this.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true; _this.previous_commands = []; } });
 		this.evaluate(true);
 		this.worksheet.save();
 	}
