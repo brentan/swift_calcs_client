@@ -220,10 +220,10 @@ var SwiftCalcs = {};
       independent_vars.push(method_name + "_rho__in");
     }
     command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
-    if(command.match(/^[\s]*[a-z][a-z0-9_]*(\(.*\))[\s]*:=/i)) 
+    if(command.match(/^[\s]*[a-z][a-z0-9_]*(\([a-z][a-z0-9_]*(,[\s]?[a-z][a-z0-9_]*)*\))[\s]*:=/i)) 
       independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))[\s]*:=.*$/i,"$1("));
-    else if(command.match(/^[\s]*[a-z][a-z0-9_]*(\[.*\])?[\s]*:=/i)) 
-      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\[.*\])?[\s]*:=.*$/i,"$1"));
+    else if(command.match(/^[\s]*[a-z][a-z0-9_]*(\[.*\])?(\(.*\))?[\s]*:=/i)) 
+      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\[.*\])?(\(.*\))?[\s]*:=.*$/i,"$1"));
     return independent_vars
   }
     

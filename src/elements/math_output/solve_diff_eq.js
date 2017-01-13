@@ -182,7 +182,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_]*\))?$/i))
+				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\[[a-z0-9_,\.]*\])?(\([a-z][a-z0-9_]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
 				else if(_this.varStoreField.text().trim().length && _this.numeric_mode && _this.varStoreField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_]*\)$/i)) {
 					// Numeric mode does not return a function.  Drop the function declaration
