@@ -341,6 +341,22 @@ var text = P(EditableBlock, function(_, super_) {
     if(this.parent && this.parent[R]) return this.parent[R].changeVarName(varName,newName);
     return;
   }
+  _.evaluateNext = function(evaluation_id) {
+    if(this.jQ && (typeof this.jQ.removeClass === 'function'))
+      this.jQ.removeClass(css_prefix + 'greyout');
+    for(var el = this; el instanceof Element; el = el.parent) {
+      if(el.parent instanceof LogicBlock) {
+        for(var el2 = el; el2 instanceof Element; el2 = el2[L]) {
+          if(el2 instanceof LogicCommand) break;
+        }
+        if(el2 instanceof LogicCommand) {
+          if(el2.logicResult === false) { this.jQ.addClass(css_prefix + 'greyout'); break; }
+        } else 
+          if(el.parent.logicResult === false) { this.jQ.addClass(css_prefix + 'greyout'); break; }
+      }
+    }
+    return super_.evaluateNext.call(this, evaluation_id); 
+  }
 });
 
 /**
