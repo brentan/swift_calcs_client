@@ -336,14 +336,18 @@ Worksheet.open(function(_) {
 	}
 	var error_shown = false;
 	_.bindSettings = function() {
-		if(!(this.settings.saved == "true") && !(this.settings.saved ===true)) 
+		var save_settings = false;
+		if(!(this.settings.saved == "true") && !(this.settings.saved ===true)) {
 			this.settings = window.SwiftCalcsSettings.settings;
+			save_settings = true;
+		}
 		// Add new settings that aren't in all files
     if(typeof this.settings.digits === 'undefined') this.settings.digits = window.SwiftCalcsSettings.settings.digits;
     if(typeof this.settings.approx === 'undefined') this.settings.approx = window.SwiftCalcsSettings.settings.approx;
     if(typeof this.settings.currency_date === 'undefined') this.settings.currency_date = default_currency_date;
     if(typeof this.settings.currency_unit === 'undefined') this.settings.currency_unit = window.SwiftCalcsSettings.settings.currency_unit;
     if(typeof this.settings.one_indexed === 'undefined') this.settings.one_indexed = window.SwiftCalcsSettings.settings.one_indexed;
+    if(save_settings) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {hash_string: this.hash_string, settings: this.settings } }); 
 		this.setSettings(false);
 		return this;
 	}
