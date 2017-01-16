@@ -104,6 +104,8 @@ var ajaxQueueClass = P(function(_) {
       data: post_data, 
       success: function(response) {
       	if(response.success) {
+		    	if((typeof response.application_version !== 'undefined') && (response.application_version != (window.Mathquill_version + "|" + window.SwiftCalcs_version + "|" + window.giac_version)) && ($("#new_version").length == 0))
+		    		$("<div id='new_version'><span>A New Version of Swift Calcs is Available</span><a href='#' onclick='window.location.reload();'>Reload window</a></div>").appendTo("body");
       		ajaxQueue.known_server_version[id]++;
       		ajaxQueue.server_version[id] = ajaxQueue.should_be_server_version[id]; // Update what we know to be on the server
       		ajaxQueue.complete(id);
