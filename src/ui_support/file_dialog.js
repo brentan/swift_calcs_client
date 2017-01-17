@@ -1074,6 +1074,28 @@ $(function() {
 			window.loadWorksheet($(this));
 		}
 	});
+	var needPaidPlan = window.needPaidPlan = function(el) {
+		el = el.closest("div.active_holder");
+		el.find('i.fa-print').hide();
+		el.children('div.content').show();
+		el.children('div.loader').hide();
+		var div = $("<div/>").addClass("need_paid_plan").appendTo(el.children('div.content'));
+		div.html("<i class='fa fa-exclamation-triangle'></i><h2>Upgrade Your Subsription or Allow Public Access to View</h2>This item's sharing settings are not compatible with your current Swift Calcs subscription.  To view and edit this item, please:<ul><li><a href='#' onclick='window.loadSubscriptionSettings(); return false;'>Click here</a> to upgrade your account to a <a href='#' onclick='window.loadSubscriptionSettings(1); return false;'>Professional</a> or <a href='#' onclick='window.loadSubscriptionSettings(2); return false;'>Business Plan</a></li><li>Or <a href='#' class='reset_rights'>click here to change share settings on your Projects and Worksheets to allow Public Viewing and Copying</a></li></ul><div class='explain'>Questions?  <a href='#' class='support_ticket'>Open a support ticket</a> or email us at <a href='mailto:support@swiftcalcs.com'>support@swiftcalcs.com</a> for assistance.</div>");
+		div.find('a.reset_rights').on('click', function(e) {
+			e.preventDefault();
+			if(!confirm("Are you sure?  This action will set share settings to 'Public can View and Copy' on ALL THE PROJECTS AND WORKSHEETS YOU OWN, and cannot be undone.  If you wish to maintain non-public projects or worksheets, consider upgrading to a Professional or Business plan.")) return;
+			el.children('div.content').hide();
+			el.children('div.loader').show();
+			window.ajaxRequest("/set_public", { }, function() {
+					showNotice("All of your Projects and Worksheets set to allow Public Viewing and Copying","green");
+					el.find('i.fa-print').show();
+					window.loadWorksheet(el.children('div.worksheet_item'));
+				}, function() {
+				el.children('div.content').show();
+				el.children('div.loader').hide();
+			});
+		});
+	}
 	var loadWorksheet = window.loadWorksheet = function(el, response) {
 		var hash_string = el.attr('data-hash');
     window.trackEvent("Worksheet", "Load", hash_string);
@@ -1081,6 +1103,7 @@ $(function() {
 		if(el_next.length == 0) el_next = $('<div/>').addClass('content').insertAfter(el);
 		var success = function(response) {
       if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
+      if(response.need_paid_plan === true) return window.needPaidPlan(el_next);
       var worksheet = SwiftCalcs.Worksheet(response);
       if(window.embedded) {
       	$('div.header .name').html(response.name);
