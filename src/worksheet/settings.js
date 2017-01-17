@@ -347,7 +347,7 @@ Worksheet.open(function(_) {
     if(typeof this.settings.currency_date === 'undefined') this.settings.currency_date = default_currency_date;
     if(typeof this.settings.currency_unit === 'undefined') this.settings.currency_unit = window.SwiftCalcsSettings.settings.currency_unit;
     if(typeof this.settings.one_indexed === 'undefined') this.settings.one_indexed = window.SwiftCalcsSettings.settings.one_indexed;
-    if(save_settings) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {hash_string: this.hash_string, settings: this.settings } }); 
+    if(save_settings && (this.rights >= 3)) window.silentRequest('/worksheet_commands', {command: 'update_settings', data: {hash_string: this.hash_string, settings: this.settings } }); 
 		this.setSettings(false);
 		return this;
 	}
