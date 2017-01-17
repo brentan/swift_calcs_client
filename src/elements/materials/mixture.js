@@ -185,6 +185,14 @@ var mixture_component = P(material_holder, function(_, super_) {
       // Data is raw from server, so lets transform it
       this.data.data.full_name = this.full_name;
       super_.convertData.call(this, this.data.data);
+      // Hijack creation here...if we are over quota we don't allow the creation of more than 2 component mixtures
+      if($("div.base_layout").hasClass('hobby_tier') && (this.parent.children().length >= 3)) {
+        window.setTimeout(function(_this) { return function() {
+          _this.remove();
+          window.showNotice("Your Subscription only supports 2 component mixtures.  Upgrade your account to enable multi-component mixtures of 4 or more components","red");
+          window.loadSubscriptionSettings();
+        } }(this),250);
+      }
     }
   }
   _.findStartElement = function() {
