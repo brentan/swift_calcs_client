@@ -54,11 +54,14 @@ $(function() {
     i.closest(".collapsable_item").find(".level").html(": " + tex);
     i.closest(".collapsable_item").find("i.fa-dot-circle-o").removeClass('fa-dot-circle-o').addClass('fa-circle-o');
     i.find("i.fa-circle-o").addClass('fa-dot-circle-o').removeClass('fa-circle-o');
-    i.closest(".collapsable_item").find("input.public_rights").val(i.attr('data-type'));
-    if(i.attr('data-type')*1 > 0) 
-      i.closest(".rights_form").find(".hide_on_public").hide();
-    else if(i.attr('data-type')*1 == 0)
-      i.closest(".rights_form").find(".hide_on_public").show();
+    if(i.closest(".collapsable_item").find("input.public_rights").length) {
+      i.closest(".collapsable_item").find("input.public_rights").val(i.attr('data-type'));
+      if(i.attr('data-type')*1 > 0) 
+        i.closest(".rights_form").find(".hide_on_public").hide();
+      else if(i.attr('data-type')*1 == 0)
+        i.closest(".rights_form").find(".hide_on_public").show();
+    } else
+      i.closest(".collapsable_item").find("input.team_rights").val(i.attr('data-type'));
   }
   var createRightsDropdown = window.createUserRightsDropdown = function(span) {
     var id = span.attr('data-hash');
@@ -88,6 +91,10 @@ $(function() {
     data.item_hash = form.find('.item_hash').val();
     // Public Rights
     data.public_rights = form.find('.public_selection input.public_rights').val()*1;
+    if(form.find('.team_selection input.team_rights').length) // Team Rights
+      data.team_rights = form.find('.team_selection input.team_rights').val()*1;
+    else
+      data.team_rights = -2;
     // Changes to users already added
     data.people = [];
     form.find('.people select').each(function() {
