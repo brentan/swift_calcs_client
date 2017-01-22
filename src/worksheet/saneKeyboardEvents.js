@@ -103,17 +103,6 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
     var typingResetTimeout = null;
     var typing = false;
 
-    target.bind("keydown", function (e) {
-      if (typingResetTimeout) clearTimeout(typingResetTimeout);
-      typing = true;
-    });
-    
-    target.bind("keyup", function (e) {
-      typingResetTimeout = setTimeout(function () {
-        typing = false;
-      }, 100);
-    });
-
     // checkTextareaFor() is called after keypress to
     // say "Hey, I think something was just typed" or "pasted" (resp.),
     // so that at all subsequent opportune times (next event or timeout),
@@ -168,6 +157,8 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
     }
 
     function handleKey() {
+      var key_name = stringify(keydown);
+      if(key_name == 'Backspace') resetText();
       handlers.keystroke(stringify(keydown), keydown);
     }
 
@@ -217,6 +208,7 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       // b1318e5349160b665003e36d4eedd64101ceacd8
       
       var text = textarea.val();
+      console.log("TEXT IN: '" + text + "'");
       if (textarea[0].selectionStart === 4 && textarea[0].selectionEnd === 5) {
         return;
       }
@@ -232,11 +224,13 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
         // Do nothing
       } else if (text.charAt(text.length - 1) == PLACEHOLDER.charAt(0))
           text = text.slice(0, -1);
-          
+      
+      console.log("TRANSFORED: '" + test + "'")
       if (text && (text.length === 1)) {
-        console.log("TYPED: " + text);
+        console.log("TYPED");
         handlers.typedText(text);
-      }
+      } else
+        console.log("NO TYPE");
 
       resetText();
       return;
@@ -311,6 +305,16 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       // iOS doesn't send key code with commands for external keyboard because APPLE.  instead
       // we use this crazy PLACEHOLDER and look at how it is changed by the keypress to figure 
       // out what just happened.  STUPID!
+      target.bind("keydown", function (e) {
+        if (typingResetTimeout) clearTimeout(typingResetTimeout);
+        typing = true;
+      });
+      
+      target.bind("keyup", function (e) {
+        typingResetTimeout = setTimeout(function () {
+          typing = false;
+        }, 100);
+      });
       var doc_listener = function (e) {
         function ancestor(HTMLobj){
           while(HTMLobj.parentElement){HTMLobj=HTMLobj.parentElement}
