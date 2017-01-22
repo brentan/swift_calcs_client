@@ -147,6 +147,21 @@ var PushState = P(function(_) {
     } else if(fragment.match(/active/i)) {
       window.openFileDialog('active');
       return true;
+    } else if(fragment.match(/team/i)) {
+      window.openFileDialog('team');
+      return true;
+    } else if(fragment.match(/my_docs/i)) {
+      window.openFileDialog('my_docs');
+      return true;
+    } else if(fragment.match(/shared/i)) {
+      window.openFileDialog('shared');
+      return true;
+    } else if(fragment.match(/onshape_docs/i)) {
+      window.openFileDialog('onshape_docs');
+      return true;
+    } else if(fragment.match(/fusion_docs/i)) {
+      window.openFileDialog('fusion_docs');
+      return true;
     } else if(fragment.match(/archive/i)) {
       window.openFileDialog('archive');
       return true;
