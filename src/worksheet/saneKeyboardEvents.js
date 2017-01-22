@@ -233,8 +233,10 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       } else if (text.charAt(text.length - 1) == PLACEHOLDER.charAt(0))
           text = text.slice(0, -1);
           
-      if (text && (text.length === 1))
+      if (text && (text.length === 1)) {
+        console.log("TYPED: " + text);
         handlers.typedText(text);
+      }
 
       resetText();
       return;
@@ -306,7 +308,6 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
 
     var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     if(iOS) {
-      alert('iOS DETECTED!');
       // iOS doesn't send key code with commands for external keyboard because APPLE.  instead
       // we use this crazy PLACEHOLDER and look at how it is changed by the keypress to figure 
       // out what just happened.  STUPID!
@@ -316,7 +317,6 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
           return HTMLobj;
         }
         if(ancestor(textarea[0])!==document.documentElement) {
-          alert('remove listener');
           document.removeEventListener("selectionchange" , doc_listener);
           return;
         }
@@ -388,7 +388,6 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
           }
         }
         if(command) {
-          alert(command);
           handlers.keystroke(command, { preventDefault: function(e) {} });
         }
       }
