@@ -85,7 +85,6 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		if(menu_height > 50) {
 			var last_li = this.toolbar_holder.children("ul").children("li:not(.right, .command_lib)").last();
 			last_li.after("<li class='excess' title='More Options'><div class='item hide_on_mobile pulldown'><span class='fa fa-fw fa-ellipsis-v'></span></div><ul class='excess'></ul></li>");
-			console.log('here');
 		}
 		while(menu_height > 50) {
 			// Remove icons until we reach height

@@ -16,9 +16,9 @@
  * Organization:
  * - key values map and stringify()
  * - saneKeyboardEvents()
- *    + defer() and flush()
- *    + event handler logic
- *    + attach event handlers and export methods
+ *    defer() and flush()
+ *    event handler logic
+ *    attach event handlers and export methods
  ************************************************/
 
 
@@ -98,6 +98,21 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
     var textarea = jQuery(el);
     var richarea = jQuery(rich_el);
     var target = jQuery(handlers.container || textarea);
+    var PLACEHOLDER = "\n aaaa a\n";
+
+    var typingResetTimeout = null;
+    var typing = false;
+
+    target.bind("keydown", function (e) {
+      if (typingResetTimeout) clearTimeout(typingResetTimeout);
+      typing = true;
+    });
+    
+    target.bind("keyup", function (e) {
+      typingResetTimeout = setTimeout(function () {
+        typing = false;
+      }, 100);
+    });
 
     // checkTextareaFor() is called after keypress to
     // say "Hey, I think something was just typed" or "pasted" (resp.),
@@ -118,6 +133,7 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
 
     // -*- public methods -*- //
     function select(text) {
+      return resetText();
       // check textarea at least once/one last time before munging (so
       // no race condition if selection happens after keypress/paste but
       // before checkTextarea), then never again ('cos it's been munged)
@@ -125,11 +141,19 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       checkTextarea = noop;
       clearTimeout(timeoutId);
 
+
       textarea.val(text);
       if (text) textarea[0].select();
       shouldBeSelected = !!text;
     }
     var shouldBeSelected = false;
+
+    function resetText(force) {
+      if(!textarea.is(":focus") && (force !== true)) return;
+      if(handlers.pasting) return;
+      textarea.val(PLACEHOLDER);
+      textarea[0].setSelectionRange(4, 5);
+    }
 
     // -*- helper subroutines -*- //
 
@@ -153,11 +177,12 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       keypress = null;
 
       handleKey();
-      if (shouldBeSelected) checkTextareaFor(function() {
+      resetText();
+      /*if (shouldBeSelected) checkTextareaFor(function() {
         textarea[0].select(); // re-select textarea in case it's an unrecognized
         checkTextarea = noop; // key that clears the selection, then never
         clearTimeout(timeoutId); // again, 'cos next thing might be blur
-      });
+      });*/
     }
 
     function onKeypress(e) {
@@ -170,6 +195,7 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       keypress = e;
 
       checkTextareaFor(typedText);
+      resetText();
     }
     function typedText() {
       // If there is a selection, the contents of the textarea couldn't
@@ -189,6 +215,33 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       //   reliable as our tests are comprehensive
       // If anything like #40 or #71 is reported in IE < 9, see
       // b1318e5349160b665003e36d4eedd64101ceacd8
+      
+      var text = textarea.val();
+      if (textarea[0].selectionStart === 4 && textarea[0].selectionEnd === 5) {
+        return;
+      }
+
+      if (text.substring(0, 9) == PLACEHOLDER && text.length > PLACEHOLDER.length)
+          text = text.substr(9);
+      else if (text.substr(0, 4) == PLACEHOLDER.substr(0, 4))
+          text = text.substr(4, text.length - PLACEHOLDER.length + 1);
+      else if (text.charAt(text.length - 1) == PLACEHOLDER.charAt(0))
+          text = text.slice(0, -1);
+      // can happen if undo in textarea isn't stopped
+      if (text === "\n") {
+        // Do nothing
+      } else if (text.charAt(text.length - 1) == PLACEHOLDER.charAt(0))
+          text = text.slice(0, -1);
+          
+      if (text && (text.length === 1))
+        handlers.typedText(text);
+
+      resetText();
+      return;
+
+
+
+
       if (hasSelection()) return;
       
       var text = textarea.val();
@@ -201,6 +254,8 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
     }
 
     function onBlur() { keydown = keypress = null; }
+
+    function onFocus() { resetText(true); }
 
     function onPaste(ev) {
       var e = ev.originalEvent;
@@ -234,7 +289,6 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
         richarea.focus();
         window.setTimeout(pastedText);
       } else {
-        textarea.val('');
         textarea.focus(); // Ignore HTML in these cases
         window.setTimeout(pastedText);
       }
@@ -244,17 +298,110 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       handlers.pasting = false;
       var html = richarea.html();
       var text = textarea.val();
-      textarea.val('');
+      resetText();
       richarea.html('');
       if (text) handlers.paste(text, html);
     }
     handlers.pasteHandler = onPaste;
+
+    var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if(iOS) {
+      alert('iOS DETECTED!');
+      // iOS doesn't send key code with commands for external keyboard because APPLE.  instead
+      // we use this crazy PLACEHOLDER and look at how it is changed by the keypress to figure 
+      // out what just happened.  STUPID!
+      var doc_listener = function (e) {
+        function ancestor(HTMLobj){
+          while(HTMLobj.parentElement){HTMLobj=HTMLobj.parentElement}
+          return HTMLobj;
+        }
+        if(ancestor(textarea[0])!==document.documentElement) {
+          alert('remove listener');
+          document.removeEventListener("selectionchange" , doc_listener);
+          return;
+        }
+        if (document.activeElement !== textarea[0]) {
+          return;
+        }
+        if (typing) {
+          return;
+        }
+        var selectionStart = textarea[0].selectionStart;
+        var selectionEnd = textarea[0].selectionEnd;
+        textarea[0].setSelectionRange(4, 5);
+        var command = false;
+        if (selectionStart == selectionEnd) {
+          switch (selectionStart) {
+            case 0:
+              command='Up';
+              break;
+            case 1:
+              comand='Home';
+              break;
+            case 2:
+              command='Alt-Left';
+              break;
+            case 4:
+              command='Left';
+              break;
+            case 5:
+              command='Right';
+              break;
+            case 7:
+              command='Alt-Right';
+              break;
+            case 8:
+              comand='End';
+              break;
+            case 9:
+              command='Down';
+              break;
+          }
+        } else {
+          switch (selectionEnd) {
+            case 6:
+              command='Shift-Right';
+              break;
+            case 7:
+              command='Alt-Shift-Right';
+              break;
+            case 8:
+              command='Meta-Shift-Right';
+              break;
+            case 9:
+              command='Shift-Down';
+              break;
+          }
+          switch (selectionStart) {
+            case 0:
+              command='Shift-Up';
+              break;
+            case 1:
+              command='Meta-Shift-Left';
+              break;
+            case 2:
+              command='Alt-Shift-Left';
+              break;
+            case 3:
+              command='Shift-Left';
+              break;
+          }
+        }
+        if(command) {
+          alert(command);
+          handlers.keystroke(command, { preventDefault: function(e) {} });
+        }
+      }
+      document.addEventListener("selectionchange", doc_listener);
+    } 
+
 
     // -*- attach event handlers -*- //
     target.bind({
       keydown: onKeydown,
       keypress: onKeypress,
       focusout: onBlur,
+      focusin: onFocus,
       paste: onPaste
     });
 

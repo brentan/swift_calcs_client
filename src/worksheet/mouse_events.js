@@ -236,6 +236,7 @@ Worksheet.open(function(_) {
         _this.selectionChanged();
         selected_target = target.jQ;
         force_select = true;
+        window.setTimeout(function() { _this.textarea.focus(); },1);
       }
       var last_target = _this.activeElement || _this.lastActive;
 	    var new_target;
