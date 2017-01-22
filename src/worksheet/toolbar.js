@@ -72,10 +72,24 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 
 		count=0;
 		this.toolbar_holder.children("ul").children("li.hidden").removeClass("hidden").show();
+		if(this.toolbar_holder.children("ul").children("li.excess").length) {
+			// Move items in excess back to toolbar:
+			$ul = this.toolbar_holder.children("ul");
+			this.toolbar_holder.children("ul").children("li.excess").children("ul").children("li").each(function() {
+				$(this).detach().insertBefore($ul.children("li.excess"));
+			});
+			this.toolbar_holder.children("ul").children("li.excess").remove();
+		}
+
 		menu_height = this.toolbar_holder.height();
+		if(menu_height > 50) {
+			var last_li = this.toolbar_holder.children("ul").children("li:not(.right, .command_lib)").last();
+			last_li.after("<li class='excess' title='More Options'><div class='item hide_on_mobile pulldown'><span class='fa fa-fw fa-ellipsis-v'></span></div><ul class='excess'></ul></li>");
+			console.log('here');
+		}
 		while(menu_height > 50) {
 			// Remove icons until we reach height
-			this.toolbar_holder.children("ul").children("li:not(.right, .hidden)").last().addClass('hidden').hide();
+			this.toolbar_holder.children("ul").children("li:not(.right, .excess, .command_lib)").last().detach().prependTo(this.toolbar_holder.children("ul").children("li.excess").children("ul"));
 			menu_height = this.toolbar_holder.height();
 			if(count > 100) break;
 			count++;
@@ -108,6 +122,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 					$li.addClass('right');
 				var $div = $('<div/>').addClass('item').appendTo($li);
 				if(cur_item.klass) $div.addClass(cur_item.klass);
+				if(cur_item.klass == 'command_lib') $li.addClass(cur_item.klass);
 				if(cur_item.hide_mobile) $div.addClass('hide_on_mobile');
 				if(cur_item.html)
 					if(cur_item.html) $div.html(cur_item.html);
@@ -1106,6 +1121,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">Command Library</div>',
 			title: 'Command Library',
 			hide_mobile: true,
+			klass: 'command_lib',
 			commands: function(el, cmd, unit) { el.command(cmd, unit); }
 		},
 		{
