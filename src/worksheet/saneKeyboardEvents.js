@@ -225,7 +225,7 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       } else if (text.charAt(text.length - 1) == PLACEHOLDER.charAt(0))
           text = text.slice(0, -1);
       
-      console.log("TRANSFORED: '" + test + "'")
+      console.log("TRANSFORED: '" + text + "'")
       if (text && (text.length === 1)) {
         console.log("TYPED");
         handlers.typedText(text);
