@@ -158,7 +158,7 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
 
     function handleKey() {
       var key_name = stringify(keydown);
-      if(key_name == 'Backspace') resetText();
+      if((key_name == 'Backspace') || (key_name == 'Del')) resetText();
       handlers.keystroke(stringify(keydown), keydown);
     }
 
@@ -209,6 +209,10 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       
       var text = textarea.val();
       console.log("TEXT IN: '" + text + "'");
+      console.log(textarea[0].selectionStart);
+      console.log(textarea[0].selectionEnd);
+
+      //if(text == PLACEHOLDER) return resetText();
       if (textarea[0].selectionStart === 4 && textarea[0].selectionEnd === 5) {
         return;
       }
