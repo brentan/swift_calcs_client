@@ -157,8 +157,6 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
     }
 
     function handleKey() {
-      var key_name = stringify(keydown);
-      if((key_name == 'Backspace') || (key_name == 'Del')) resetText();
       handlers.keystroke(stringify(keydown), keydown);
     }
 
@@ -208,11 +206,8 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       // b1318e5349160b665003e36d4eedd64101ceacd8
       
       var text = textarea.val();
-      console.log("TEXT IN: '" + text + "'");
-      console.log(textarea[0].selectionStart);
-      console.log(textarea[0].selectionEnd);
 
-      //if(text == PLACEHOLDER) return resetText();
+      if((text == PLACEHOLDER) && (textarea[0].selectionStart === 0 && textarea[0].selectionEnd === 0)) return resetText(); // IE GRR!
       if (textarea[0].selectionStart === 4 && textarea[0].selectionEnd === 5) {
         return;
       }
@@ -229,12 +224,8 @@ var saneKeyboardEvents = SwiftCalcs.saneKeyboardEvents = (function() {
       } else if (text.charAt(text.length - 1) == PLACEHOLDER.charAt(0))
           text = text.slice(0, -1);
       
-      console.log("TRANSFORED: '" + text + "'")
-      if (text && (text.length === 1)) {
-        console.log("TYPED");
+      if (text && (text.length === 1)) 
         handlers.typedText(text);
-      } else
-        console.log("NO TYPE");
 
       resetText();
       return;
