@@ -67,6 +67,9 @@ var plot_func = P(subplot, function(_, super_) {
 		var max_val = this.parent.x_max === false ? (this.parent.calc_x_max === false ? (( 5 + this.parent.x_unit_offset) * this.parent.x_unit_conversion) : this.parent.calc_x_max) : ((this.parent.x_max + this.parent.x_unit_offset) * this.parent.x_unit_conversion);
 		min_val = min_val - this.parent.x_unit_offset * this.parent.x_unit_conversion; // Remove offset...it is added back in by the giac plot function (used to deal with log plots of non-zero offsets!)
 		max_val = max_val - this.parent.x_unit_offset * this.parent.x_unit_conversion;
+		var x_unit = this.parent.x_unit ? window.SwiftCalcsLatexHelper.latexToUnit(this.parent.x_unit) : '1';
+		if(x_unit.length == 2) x_unit = x_unit[0];
+		else x_unit = '1';
 		var unit_command = this.show_unit && this.unit_box.text().length ? this.unit_box.text() : '1';
 		if(this.parent.x_log) {
 			if(min_val <= 0) min_val = 1e-15;
@@ -74,7 +77,7 @@ var plot_func = P(subplot, function(_, super_) {
 			var command3 = "plotfunclog"; 
 		} else
 			var command3 = "plotfuncoffset";
-		command3 += "(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + ")..(" + max_val +"),nstep=400," + (this.parent.x_unit_offset * this.parent.x_unit_conversion) + ")"; 
+		command3 += "(evalf(" + this.eq0.text() + ")," + this.eq1.text() + "=(" + min_val + "*" + x_unit + ")..(" + max_val +"*" + x_unit + "),nstep=400," + (this.parent.x_unit_offset * this.parent.x_unit_conversion) + ")"; 
 		var command4 = "latex(at(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[0.0000000016514245*" + unit_command + "]),0))";
 		this.dependent_vars = GetDependentVars(command3, [this.eq1.text()]);
 		return [{command: command3, nomarkup: true },{command: command4, nomarkup: true }]
