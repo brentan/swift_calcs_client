@@ -274,6 +274,38 @@ var plot = P(Element, function(_, super_) {
 		var hist_plot = false;
 		var y_ticks = [];
 		var y2_ticks = [];
+		var suggested_y_min = undefined;
+		if(y_min == undefined) {
+			for(var i = 0; i < children.length; i++) {
+				if(children[i].y_axis == 'y' && children[i].suggest_y_min != undefined)
+					y_min = y_min == undefined ? children[i].suggest_y_min : Math.min(y_min, children[i].suggest_y_min);
+			}
+			suggested_y_min = y_min == undefined ? undefined : (y_min / this.y_unit_conversion - this.y_unit_offset);
+		}
+		var suggested_y_max = undefined;
+		if(y_max == undefined) {
+			for(var i = 0; i < children.length; i++) {
+				if(children[i].y_axis == 'y' && children[i].suggest_y_max != undefined)
+					y_max = y_max == undefined ? children[i].suggest_y_max : Math.max(y_max, children[i].suggest_y_max);
+			}
+			suggested_y_max = y_max == undefined ? undefined : (y_max / this.y_unit_conversion - this.y_unit_offset);
+		}
+		var suggested_y2_min = undefined;
+		if(y2_min == undefined) {
+			for(var i = 0; i < children.length; i++) {
+				if(children[i].y_axis == 'y2' && children[i].suggest_y_min != undefined)
+					y2_min = y2_min == undefined ? children[i].suggest_y_min : Math.min(y2_min, children[i].suggest_y_min);
+			}
+			suggested_y2_min = y2_min == undefined ? undefined : (y2_min / this.y2_unit_conversion - this.y2_unit_offset);
+		}
+		var suggested_y2_max = undefined;
+		if(y2_max == undefined) {
+			for(var i = 0; i < children.length; i++) {
+				if(children[i].y_axis == 'y2' && children[i].suggest_y_max != undefined)
+					y2_max = y2_max == undefined ? children[i].suggest_y_max : Math.max(y2_max, children[i].suggest_y_max);
+			}
+			suggested_y2_max = y2_max == undefined ? undefined : (y2_max / this.y2_unit_conversion - this.y2_unit_offset);
+		}
 		for(var i = 0; i < children.length; i++) {
 			// Collapse error/warn boxes
 			children[i].outputBox.jQ.find('.parent_warning').remove();
@@ -547,14 +579,14 @@ var plot = P(Element, function(_, super_) {
 				},
 				y: { 
 					label: { text: y_label, position: 'outer-middle'},
-					min: (this.y_min === false ? undefined : (this.y_log ? Math.log(this.y_min) / Math.LN10 : this.y_min)),
-					max: (this.y_max === false ? undefined : (this.y_log ? Math.log(this.y_max) / Math.LN10 : this.y_max)),
+					min: (this.y_min === false ? (suggested_y_min == undefined ? undefined : (this.y_log ? Math.log(suggested_y_min) / Math.LN10 : suggested_y_min)) : (this.y_log ? Math.log(this.y_min) / Math.LN10 : this.y_min)),
+					max: (this.y_max === false ? (suggested_y_max == undefined ? undefined : (this.y_log ? Math.log(suggested_y_max) / Math.LN10 : suggested_y_max)) : (this.y_log ? Math.log(this.y_max) / Math.LN10 : this.y_max)),
 					tick: (this.y_log ? { values: y_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {})
 				},
 				y2: { 
 					label: { text: y2_label, position: 'outer-middle'}, 
-					min: (this.y2_min === false ? undefined : (this.y2_log ? Math.log(this.y2_min) / Math.LN10 : this.y2_min)),
-					max: (this.y2_max === false ? undefined : (this.y2_log ? Math.log(this.y2_max) / Math.LN10 : this.y2_max)),
+					min: (this.y2_min === false ? (suggested_y2_min == undefined ? undefined : (this.y2_log ? Math.log(suggested_y2_min) / Math.LN10 : suggested_y2_min)) : (this.y2_log ? Math.log(this.y2_min) / Math.LN10 : this.y2_min)),
+					max: (this.y2_max === false ? (suggested_y2_max == undefined ? undefined : (this.y2_log ? Math.log(suggested_y2_max) / Math.LN10 : suggested_y2_max)) : (this.y2_log ? Math.log(this.y2_max) / Math.LN10 : this.y2_max)),
 					tick: (this.y2_log ? { values: y2_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {}),
 					show: show_y2
 				}
@@ -739,6 +771,7 @@ var plot = P(Element, function(_, super_) {
 						var children = _this.children();
 						for(var i = 0; i < children.length; i++) {
 							if(children[i].plot_me && (children[i] instanceof plot_func)) children[i].needsEvaluation = true;
+							if(children[i].plot_me && (children[i] instanceof plot_parametric)) children[i].needsEvaluation = true;
 						}
 					}
 					break;
@@ -750,6 +783,11 @@ var plot = P(Element, function(_, super_) {
 					_this.y_grid = grid_val;
 					_this.y_units = units_field.latex();
 					if(_this.y_units.match(/^\\Unit\{[ ]*\}$/)) _this.y_units = false;
+					var children = _this.children();
+					for(var i = 0; i < children.length; i++) {
+						if(children[i].plot_me && (children[i] instanceof plot_func) && (children[i].y_axis == 'y')) children[i].needsEvaluation = true;
+						if(children[i].plot_me && (children[i] instanceof plot_parametric) && (children[i].y_axis == 'y')) children[i].needsEvaluation = true;
+					}
 					break;
 				case Y2_AXIS:
 					_this.y2_label = label;
@@ -758,6 +796,11 @@ var plot = P(Element, function(_, super_) {
 					_this.y2_log = log_val;
 					_this.y2_units = units_field.latex();
 					if(_this.y2_units.match(/^\\Unit\{[ ]*\}$/)) _this.y2_units = false;
+					var children = _this.children();
+					for(var i = 0; i < children.length; i++) {
+						if(children[i].plot_me && (children[i] instanceof plot_func) && (children[i].y_axis == 'y2')) children[i].needsEvaluation = true;
+						if(children[i].plot_me && (children[i] instanceof plot_parametric) && (children[i].y_axis == 'y2')) children[i].needsEvaluation = true;
+					}
 					break;
 			}
 			$('.standalone_textarea').remove();
