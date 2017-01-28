@@ -131,7 +131,6 @@ var plot_func = P(subplot, function(_, super_) {
 						if((this.y_axis == 'y' && (this.parent.y_min === false || this.parent.y_max === false)) || (this.y_axis == 'y2' && (this.parent.y2_min === false || this.parent.y2_max === false))) {
 							// Suggest y_min and/or y_max.  Perform a numerical range trim search to find optimal plot range for viewable interest
 							var big = 10;
-							var huge = 1e8;
 							var y_prime = this.ys.slice(0);
 							var altered_ys = this.ys.slice(0);
 							//Find approximation for y_prime:
@@ -152,14 +151,16 @@ var plot_func = P(subplot, function(_, super_) {
 								} 
 							}
 							while(true) {
-								var indexOfMaxValue = altered_ys.reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
-								var indexOfMinValue = altered_ys.reduce((iMin, x, i, arr) => x < arr[iMin] ? i : iMin, 0);
+								var indexOfMaxValue = altered_ys.reduce((iMax, x, i, arr) => arr[iMax]!=undefined ? (x > arr[iMax] ? i : iMax) : i, 0);
+								var indexOfMinValue = altered_ys.reduce((iMin, x, i, arr) => arr[iMin]!=undefined ? (x < arr[iMin] ? i : iMin) : i, 0);
 								if(indexOfMaxValue == indexOfMinValue) break;
-								var delta = (altered_ys[indexOfMaxValue] - altered_ys[indexOfMinValue]) / (this.xs[indexOfMaxValue] - this.xs[indexOfMinValue]);
-								if((delta > huge) || (Math.abs(y_prime[indexOfMinValue])/delta > big)) altered_ys[indexOfMinValue]=undefined;
-								if((delta > huge) || (Math.abs(y_prime[indexOfMaxValue])/delta > big)) altered_ys[indexOfMaxValue]=undefined;
+								var delta = (altered_ys[indexOfMaxValue] - altered_ys[indexOfMinValue]) / (this.xs[this.xs.length-1] - this.xs[0]);
+								if(Math.abs(y_prime[indexOfMinValue])/delta > big) altered_ys[indexOfMinValue]=undefined;
+								if(Math.abs(y_prime[indexOfMaxValue])/delta > big) altered_ys[indexOfMaxValue]=undefined;
 								if(altered_ys[indexOfMinValue]!=undefined && altered_ys[indexOfMaxValue]!=undefined) break; // Things look good!
 							}
+							this.suggest_y_min = undefined;
+							this.suggest_y_max = undefined;
 							if(this.y_axis == 'y' && this.parent.y_min === false)
 								this.suggest_y_min = this.parent.y_max ? (altered_ys[indexOfMinValue] > this.parent.y_max ? undefined : altered_ys[indexOfMinValue]) : altered_ys[indexOfMinValue];
 							if(this.y_axis == 'y2' && this.parent.y2_min === false)

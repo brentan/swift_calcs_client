@@ -114,6 +114,8 @@ var plot_parametric = P(subplot, function(_, super_) {
                 }
               }
             }
+            this.suggest_y_min = (this.y_axis == 'y' && this.parent.y_min === false) || (this.y_axis == 'y2' && this.parent.y2_min === false) ? Math.min.apply(Math, this.ys) : undefined;
+            this.suggest_y_max = (this.y_axis == 'y' && this.parent.y_max === false) || (this.y_axis == 'y2' && this.parent.y2_max === false) ? Math.max.apply(Math, this.ys) : undefined;
             this.ys.unshift('data_' + this.id);
             this.xs.unshift('x_' + this.id);
             this.plot_me = true;

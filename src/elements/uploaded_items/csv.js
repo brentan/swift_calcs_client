@@ -244,7 +244,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 					if(j >= results.data[i].length)
 						var val = 0;
 					else
-						var val = (typeof results.data[i][j] == "number" ? results.data[i][j] : 0)
+						var val = (results.data[i][j].trim().match(/^[+-]?([0-9]+(\.|,)?[0-9]*|[0-9]*(\.|,)?[0-9]+|[0-9]+)(e[+-]?([0-9]+(\.|,)?[0-9]*|[0-9]*(\.|,)?[0-9]+|[0-9]+))?$/) ? eval(results.data[i][j].replace(/,/g,".")) : 0)
 					col.push(val);
 				}
 				rows.push(col.join(','));
@@ -259,7 +259,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 					if(j >= results.data[i].length)
 						var val = 0;
 					else
-						var val = (typeof results.data[i][j] == "number" ? results.data[i][j] : 0)
+						var val = (results.data[i][j].trim().match(/^[+-]?([0-9]+(\.|,)?[0-9]*|[0-9]*(\.|,)?[0-9]+|[0-9]+)(e[+-]?([0-9]+(\.|,)?[0-9]*|[0-9]*(\.|,)?[0-9]+|[0-9]+))?$/) ? eval(results.data[i][j].replace(/,/g,".")) : 0)
 					rows.push(val);
 				}
 				var sub = ("" + results.data[this.headerRow][j]).replace(/\b[a-z]/gi, function (letter) {
@@ -279,7 +279,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 		this.jQ.find('.file_name').html(this.upload_name);
 		Papa.parse(this.url, {
 			download: true,
-			dynamicTyping: true,
+			dynamicTyping: false,
 			complete: function(results) {
 				_this.data = results;
 				if(_this.colList === false)

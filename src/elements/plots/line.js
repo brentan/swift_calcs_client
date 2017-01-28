@@ -116,6 +116,8 @@ var plot_line = P(subplot, function(_, super_) {
 					this.sets_x = true;
 					this.parent.calc_x_min = this.parent.calc_x_min === false ? this.my_xmin : Math.min(this.my_xmin, this.parent.calc_x_min);
 					this.parent.calc_x_max = this.parent.calc_x_max === false ? this.my_xmax : Math.max(this.my_xmax, this.parent.calc_x_max);
+          this.suggest_y_min = (this.y_axis == 'y' && this.parent.y_min === false) || (this.y_axis == 'y2' && this.parent.y2_min === false) ? Math.min.apply(Math, this.ys) : undefined;
+          this.suggest_y_max = (this.y_axis == 'y' && this.parent.y_max === false) || (this.y_axis == 'y2' && this.parent.y2_max === false) ? Math.max.apply(Math, this.ys) : undefined;
 					this.ys.unshift('data_' + this.id);
 					this.xs.unshift('x_' + this.id);
 					this.plot_me = true;

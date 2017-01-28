@@ -52,6 +52,8 @@ var plot_bar = P(barplot, function(_, super_) {
 						return true;
 					}
 					this.ys = eval(this.ys);
+          this.suggest_y_min = (this.y_axis == 'y' && this.parent.y_min === false) || (this.y_axis == 'y2' && this.parent.y2_min === false) ? Math.min.apply(Math, this.ys) : undefined;
+          this.suggest_y_max = (this.y_axis == 'y' && this.parent.y_max === false) || (this.y_axis == 'y2' && this.parent.y2_max === false) ? Math.max.apply(Math, this.ys) : undefined;
 					this.ys.unshift('data_' + this.id);
 					this.plot_me = true;
 					this.outputBox.clearState().collapse();
