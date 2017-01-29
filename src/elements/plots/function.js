@@ -133,28 +133,90 @@ var plot_func = P(subplot, function(_, super_) {
 							var big = 10;
 							var y_prime = this.ys.slice(0);
 							var altered_ys = this.ys.slice(0);
+							var x_log = this.parent.x_log;
+							var y_log = (this.y_axis=='y' && this.parent.y_log) || (this.y_axis=='y2' && this.parent.y2_log);
 							//Find approximation for y_prime:
-							if(altered_ys[0]!=undefined && altered_ys[1]!=undefined) y_prime[0] = (altered_ys[1] - altered_ys[0]) / (this.xs[1] - this.xs[0]);
-							else y_prime[0] = undefined;
-							if(altered_ys[y_prime.length-1]!=undefined && altered_ys[y_prime.length-2]!=undefined) y_prime[y_prime.length-1] = (altered_ys[y_prime.length-1] - altered_ys[y_prime.length-2]) / (this.xs[y_prime.length-1] - this.xs[y_prime.length-2]);
-							else y_prime[y_prime.length-1] = undefined;
-							for(var i = 1; i < (y_prime.length-1);i++) {
-								if(altered_ys[i]!=undefined) {
-									if(altered_ys[i-1]!=undefined && altered_ys[i+1]!=undefined) 
-										y_prime[i] = 0.5*(altered_ys[i] - altered_ys[i-1])/(this.xs[i]-this.xs[i-1]) + 0.5*(altered_ys[i+1] - altered_ys[i])/(this.xs[i+1]-this.xs[i]);
-									else if(altered_ys[i-1]!=undefined) 
-										y_prime[i] = (altered_ys[i] - altered_ys[i-1])/(this.xs[i]-this.xs[i-1]);
-									else if(altered_ys[i+1]!=undefined) 
-										y_prime[i] = (altered_ys[i+1] - altered_ys[i])/(this.xs[i+1]-this.xs[i]);
-									else 
-										altered_ys[i]=undefined;
-								} 
+							if(x_log && y_log) {
+								if(altered_ys[0]!=undefined && altered_ys[1]!=undefined) y_prime[0] = (Math.log(altered_ys[1]) - Math.log(altered_ys[0])) / (Math.log(this.xs[1]) - Math.log(this.xs[0]));
+								else y_prime[0] = undefined;
+								if(altered_ys[y_prime.length-1]!=undefined && altered_ys[y_prime.length-2]!=undefined) y_prime[y_prime.length-1] = (Math.log(altered_ys[y_prime.length-1]) - Math.log(altered_ys[y_prime.length-2])) / (Math.log(this.xs[y_prime.length-1]) - Math.log(this.xs[y_prime.length-2]));
+								else y_prime[y_prime.length-1] = undefined;
+								for(var i = 1; i < (y_prime.length-1);i++) {
+									if(altered_ys[i]!=undefined) {
+										if(altered_ys[i-1]!=undefined && altered_ys[i+1]!=undefined) 
+											y_prime[i] = 0.5*(Math.log(altered_ys[i]) - Math.log(altered_ys[i-1])) /(Math.log(this.xs[i])-Math.log(this.xs[i-1])) + 0.5*(Math.log(altered_ys[i+1]) - Math.log(altered_ys[i]))/(Math.log(this.xs[i+1])-Math.log(this.xs[i]));
+										else if(altered_ys[i-1]!=undefined) 
+											y_prime[i] = (Math.log(altered_ys[i]) - Math.log(altered_ys[i-1]))/(Math.log(this.xs[i])-Math.log(this.xs[i-1]));
+										else if(altered_ys[i+1]!=undefined) 
+											y_prime[i] = (Math.log(altered_ys[i+1]) - Math.log(altered_ys[i]))/(Math.log(this.xs[i+1])-Math.log(this.xs[i]));
+										else 
+											altered_ys[i]=undefined;
+									} 
+								}
+							} else if(y_log) {
+								if(altered_ys[0]!=undefined && altered_ys[1]!=undefined) y_prime[0] = (Math.log(altered_ys[1]) - Math.log(altered_ys[0])) / Math.LN10 / (this.xs[1] - this.xs[0]);
+								else y_prime[0] = undefined;
+								if(altered_ys[y_prime.length-1]!=undefined && altered_ys[y_prime.length-2]!=undefined) y_prime[y_prime.length-1] = (Math.log(altered_ys[y_prime.length-1]) - Math.log(altered_ys[y_prime.length-2])) / Math.LN10 / (this.xs[y_prime.length-1] - this.xs[y_prime.length-2]);
+								else y_prime[y_prime.length-1] = undefined;
+								for(var i = 1; i < (y_prime.length-1);i++) {
+									if(altered_ys[i]!=undefined) {
+										if(altered_ys[i-1]!=undefined && altered_ys[i+1]!=undefined) 
+											y_prime[i] = 0.5*(Math.log(altered_ys[i]) - Math.log(altered_ys[i-1])) / Math.LN10 /(this.xs[i]-this.xs[i-1]) + 0.5*(Math.log(altered_ys[i+1]) - Math.log(altered_ys[i])) / Math.LN10 /(this.xs[i+1]-this.xs[i]);
+										else if(altered_ys[i-1]!=undefined) 
+											y_prime[i] = (Math.log(altered_ys[i]) - Math.log(altered_ys[i-1])) / Math.LN10 /(this.xs[i]-this.xs[i-1]);
+										else if(altered_ys[i+1]!=undefined) 
+											y_prime[i] = (Math.log(altered_ys[i+1]) - Math.log(altered_ys[i])) / Math.LN10 /(this.xs[i+1]-this.xs[i]);
+										else 
+											altered_ys[i]=undefined;
+									} 
+								}
+							} else if(x_log) {
+								if(altered_ys[0]!=undefined && altered_ys[1]!=undefined) y_prime[0] = (altered_ys[1] - altered_ys[0]) * Math.LN10 / (Math.log(this.xs[1]) - Math.log(this.xs[0]));
+								else y_prime[0] = undefined;
+								if(altered_ys[y_prime.length-1]!=undefined && altered_ys[y_prime.length-2]!=undefined) y_prime[y_prime.length-1] = (altered_ys[y_prime.length-1] - altered_ys[y_prime.length-2]) * Math.LN10 / (Math.log(this.xs[y_prime.length-1]) - Math.log(this.xs[y_prime.length-2]));
+								else y_prime[y_prime.length-1] = undefined;
+								for(var i = 1; i < (y_prime.length-1);i++) {
+									if(altered_ys[i]!=undefined) {
+										if(altered_ys[i-1]!=undefined && altered_ys[i+1]!=undefined) 
+											y_prime[i] = 0.5*(altered_ys[i] - altered_ys[i-1]) * Math.LN10 /(Math.log(this.xs[i])-Math.log(this.xs[i-1])) + 0.5*(altered_ys[i+1] - altered_ys[i])*Math.LN10/(Math.log(this.xs[i+1])-Math.log(this.xs[i]));
+										else if(altered_ys[i-1]!=undefined) 
+											y_prime[i] = (altered_ys[i] - altered_ys[i-1])*Math.LN10/(Math.log(this.xs[i])-Math.log(this.xs[i-1]));
+										else if(altered_ys[i+1]!=undefined) 
+											y_prime[i] = (altered_ys[i+1] - altered_ys[i])*Math.LN10/(Math.log(this.xs[i+1])-Math.log(this.xs[i]));
+										else 
+											altered_ys[i]=undefined;
+									} 
+								}
+							} else {
+								if(altered_ys[0]!=undefined && altered_ys[1]!=undefined) y_prime[0] = (altered_ys[1] - altered_ys[0]) / (this.xs[1] - this.xs[0]);
+								else y_prime[0] = undefined;
+								if(altered_ys[y_prime.length-1]!=undefined && altered_ys[y_prime.length-2]!=undefined) y_prime[y_prime.length-1] = (altered_ys[y_prime.length-1] - altered_ys[y_prime.length-2]) / (this.xs[y_prime.length-1] - this.xs[y_prime.length-2]);
+								else y_prime[y_prime.length-1] = undefined;
+								for(var i = 1; i < (y_prime.length-1);i++) {
+									if(altered_ys[i]!=undefined) {
+										if(altered_ys[i-1]!=undefined && altered_ys[i+1]!=undefined) 
+											y_prime[i] = 0.5*(altered_ys[i] - altered_ys[i-1])/(this.xs[i]-this.xs[i-1]) + 0.5*(altered_ys[i+1] - altered_ys[i])/(this.xs[i+1]-this.xs[i]);
+										else if(altered_ys[i-1]!=undefined) 
+											y_prime[i] = (altered_ys[i] - altered_ys[i-1])/(this.xs[i]-this.xs[i-1]);
+										else if(altered_ys[i+1]!=undefined) 
+											y_prime[i] = (altered_ys[i+1] - altered_ys[i])/(this.xs[i+1]-this.xs[i]);
+										else 
+											altered_ys[i]=undefined;
+									} 
+								}
 							}
 							while(true) {
 								var indexOfMaxValue = altered_ys.reduce((iMax, x, i, arr) => arr[iMax]!=undefined ? (x > arr[iMax] ? i : iMax) : i, 0);
 								var indexOfMinValue = altered_ys.reduce((iMin, x, i, arr) => arr[iMin]!=undefined ? (x < arr[iMin] ? i : iMin) : i, 0);
 								if(indexOfMaxValue == indexOfMinValue) break;
-								var delta = (altered_ys[indexOfMaxValue] - altered_ys[indexOfMinValue]) / (this.xs[this.xs.length-1] - this.xs[0]);
+								if(x_log && y_log)
+									var delta = (Math.log(altered_ys[indexOfMaxValue]) - Math.log(altered_ys[indexOfMinValue])) / (Math.log(this.xs[this.xs.length-1]) - Math.log(this.xs[0]));
+								else if(y_log)
+									var delta = (Math.log(altered_ys[indexOfMaxValue]) - Math.log(altered_ys[indexOfMinValue])) / Math.LN10 / (this.xs[this.xs.length-1] - this.xs[0]);
+								else if(x_log)
+									var delta = (altered_ys[indexOfMaxValue] - altered_ys[indexOfMinValue]) * Math.LN10 / (Math.log(this.xs[this.xs.length-1]) - Math.log(this.xs[0]));
+								else
+									var delta = (altered_ys[indexOfMaxValue] - altered_ys[indexOfMinValue]) / (this.xs[this.xs.length-1] - this.xs[0]);
 								if(Math.abs(y_prime[indexOfMinValue])/delta > big) altered_ys[indexOfMinValue]=undefined;
 								if(Math.abs(y_prime[indexOfMaxValue])/delta > big) altered_ys[indexOfMaxValue]=undefined;
 								if(altered_ys[indexOfMinValue]!=undefined && altered_ys[indexOfMaxValue]!=undefined) break; // Things look good!
