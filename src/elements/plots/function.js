@@ -206,8 +206,8 @@ var plot_func = P(subplot, function(_, super_) {
 								}
 							}
 							while(true) {
-								var indexOfMaxValue = altered_ys.reduce((iMax, x, i, arr) => arr[iMax]!=undefined ? (x > arr[iMax] ? i : iMax) : i, 0);
-								var indexOfMinValue = altered_ys.reduce((iMin, x, i, arr) => arr[iMin]!=undefined ? (x < arr[iMin] ? i : iMin) : i, 0);
+								var indexOfMaxValue = altered_ys.reduce(function(iMax, x, i, arr) { return arr[iMax]!=undefined ? (x > arr[iMax] ? i : iMax) : i}, 0);
+								var indexOfMinValue = altered_ys.reduce(function(iMin, x, i, arr) { return arr[iMin]!=undefined ? (x < arr[iMin] ? i : iMin) : i}, 0);
 								if(indexOfMaxValue == indexOfMinValue) break;
 								if(x_log && y_log)
 									var delta = (Math.log(altered_ys[indexOfMaxValue]) - Math.log(altered_ys[indexOfMinValue])) / (Math.log(this.xs[this.xs.length-1]) - Math.log(this.xs[0]));
