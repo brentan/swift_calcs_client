@@ -21,6 +21,7 @@
 		'plot_bar': plot_bar,
 		'plot_histogram': plot_histogram,
 		'plot_parametric': plot_parametric,
+		'plot_polar': plot_polar,
 		'purge': purge,
 		'solve': solve,
 		'solver': solver,

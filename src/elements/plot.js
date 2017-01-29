@@ -771,7 +771,7 @@ var plot = P(Element, function(_, super_) {
 						var children = _this.children();
 						for(var i = 0; i < children.length; i++) {
 							if(children[i].plot_me && (children[i] instanceof plot_func)) children[i].needsEvaluation = true;
-							if(children[i].plot_me && (children[i] instanceof plot_parametric)) children[i].needsEvaluation = true;
+							if(children[i].plot_me && (children[i] instanceof plot_parametric_holder)) children[i].needsEvaluation = true;
 						}
 					}
 					break;
@@ -786,7 +786,7 @@ var plot = P(Element, function(_, super_) {
 					var children = _this.children();
 					for(var i = 0; i < children.length; i++) {
 						if(children[i].plot_me && (children[i] instanceof plot_func) && (children[i].y_axis == 'y')) children[i].needsEvaluation = true;
-						if(children[i].plot_me && (children[i] instanceof plot_parametric) && (children[i].y_axis == 'y')) children[i].needsEvaluation = true;
+						if(children[i].plot_me && (children[i] instanceof plot_parametric_holder) && (children[i].y_axis == 'y')) children[i].needsEvaluation = true;
 					}
 					break;
 				case Y2_AXIS:
@@ -799,7 +799,7 @@ var plot = P(Element, function(_, super_) {
 					var children = _this.children();
 					for(var i = 0; i < children.length; i++) {
 						if(children[i].plot_me && (children[i] instanceof plot_func) && (children[i].y_axis == 'y2')) children[i].needsEvaluation = true;
-						if(children[i].plot_me && (children[i] instanceof plot_parametric) && (children[i].y_axis == 'y2')) children[i].needsEvaluation = true;
+						if(children[i].plot_me && (children[i] instanceof plot_parametric_holder) && (children[i].y_axis == 'y2')) children[i].needsEvaluation = true;
 					}
 					break;
 			}
@@ -870,6 +870,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 			 	plot_area_stacked: 'Stacked Area Plot',
 			 	plot_scatter: 'Scatter Plot',
 			 	plot_parametric: 'Parametric Plot',
+			 	plot_polar: 'Polar Plot',
 			 	plot_bar: 'Bar Chart',
 			 	plot_bar_stacked: 'Stacked Bar Chart',
 			 	plot_histogram: 'Histogram',
