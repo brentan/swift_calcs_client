@@ -72,6 +72,8 @@ var csvBlock = P(uploadedItem, function(_, super_) {
 			this.independent_vars.push(name + (this.commands[i].sub.length ? ('_' + this.commands[i].sub) : ''));
 	}
 	_.continueEvaluation = function(evaluation_id) {
+		if(this.data_loaded === false) 
+			return window.setTimeout(function(_this) { return function() { _this.continueEvaluation(evaluation_id); } }(this), 250); // Wait for data to load!
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			var name = this.varName.text().trim();
 			this.testName(name);
@@ -307,6 +309,7 @@ var csvBlock = P(uploadedItem, function(_, super_) {
   }
   _.parseSavedProperties = function(args) {
   	super_.parseSavedProperties.call(this, args);
+  	this.data_loaded = false;
   	this.setURL(this.url);
   	return this;
   }
