@@ -117,9 +117,10 @@ $(function() {
         $a.prepend('<i class="fa fa-fw ' + v[i].left + '"></i>');
       else
         $a.prepend('<i class="fa fa-fw fa-minus"></i>');
-      $('<li/>').append($a).appendTo($ul);
+      var title = "Shortcut: " + v[i].el;
+      $('<li/>').append($a).appendTo($ul).attr('title',title);
       // Add to toolbox in sidebar
-      var $item = $('<div/>').addClass('tool').attr('draggable','true');
+      var $item = $('<div/>').addClass('tool').attr('draggable','true').attr('title',title);
       if(v[i].vaporware) $item.addClass('vaporware');
       for(var j = 0; j < options.length; j++)
         if(v[i][options[j]]) $item.attr('data-' + options[j], v[i][options[j]]);
