@@ -177,27 +177,27 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 
 	_.submissionHandler = function(_this) {
 		return function(mathField) {
-			var step_var = _this.numeric_mode ? _this.varField.text() : _this.varField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_]*)\)$/i,"$1, $2");
+			var step_var = _this.numeric_mode ? _this.varField.text() : _this.varField.text().replace(/^([a-z][a-z0-9_~]*)\(([a-z][a-z0-9_~]*)\)$/i,"$1, $2");
 			_this.ignored_vars = GetIgnoredVars(step_var.split(","));
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\[[a-z0-9_,\.]*\])?(\([a-z][a-z0-9_]*\))?$/i))
+				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_~]*(\[[a-z0-9_~,\.]*\])?(\([a-z][a-z0-9_~]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
-				else if(_this.varStoreField.text().trim().length && _this.numeric_mode && _this.varStoreField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_]*\)$/i)) {
+				else if(_this.varStoreField.text().trim().length && _this.numeric_mode && _this.varStoreField.text().match(/^[a-z][a-z0-9_~]*\([a-z][a-z0-9_~]*\)$/i)) {
 					// Numeric mode does not return a function.  Drop the function declaration
-          var varName = _this.varStoreField.text().replace(/^([a-z][a-z0-9_]*)\([a-z][a-z0-9_,]*\)$/i,"$1").replace(/_(.*)$/,"_{$1}");
+          var varName = window.SwiftCalcsLatexHelper.VarNameToLatex(_this.varStoreField.text().replace(/^([a-z][a-z0-9_~]*)\([a-z][a-z0-9_~,]*\)$/i,"$1"));
           _this.varStoreField.clear().paste(varName);
-				} else if(_this.varStoreField.text().trim().length && !_this.numeric_mode && _this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i)) {
+				} else if(_this.varStoreField.text().trim().length && !_this.numeric_mode && _this.varStoreField.text().match(/^[a-z][a-z0-9_~]*$/i)) {
 					// Symbolic mode returns a function.  Add a function declaration
-          var varName = _this.varStoreField.text().replace(/_(.*)$/,"_{$1}");
+          var varName = window.SwiftCalcsLatexHelper.VarNameToLatex(_this.varStoreField.text());
           _this.varStoreField.clear().paste("\\operatorname{" + varName + "}\\left({x}\\right)");
 				}
 				for(var i = 0; i < _this.eqFields.length; i++)
 					if(_this.eqFields[i].empty()) errors.push('Equation ' + _this.numeric_mode ? ('y\'<sub>' + i + '</sub>') : (y+1) + ' is currently empty.  Please add an equation.');
 				if(_this.numeric_mode) {
 					// numeric solver odesolve
-					if(!_this.varField.text().match(/^[a-z][a-z0-9_]*$/i))
+					if(!_this.varField.text().match(/^[a-z][a-z0-9_~]*$/i))
 						errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid dependant variable name.  Ex: x');
 					for(var i = 0; i < _this.startFields.length; i++)
 						if(_this.startFields[i].empty()) errors.push('Initial condition for y<sub>' + i + '</sub> is currently empty.  Please add an initial condition.');
@@ -217,7 +217,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 						init_conditions.push(to_add);
 						v = _this.varFields[i];
 						to_add = v.text();
-						if(!to_add.match(/^[a-z][a-z0-9_]*$/i))
+						if(!to_add.match(/^[a-z][a-z0-9_~]*$/i))
 							errors.push("Invalid variable name (" + _this.worksheet.latexToHtml(v.latex()) + ").  Please correct this error to continue.");
 						eq_vars.push(to_add);
 					}
@@ -239,7 +239,7 @@ var desolve = P(SettableMathOutput, function(_, super_) {
 					// BRENTAN: TODO: The provided guess units should allow us to autoconvert the answer in to the desired units as well...*/
 				} else {
 					// symbolic solver desolve
-					if(!_this.varField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_]*\)$/i))
+					if(!_this.varField.text().match(/^[a-z][a-z0-9_~]*\([a-z][a-z0-9_~]*\)$/i))
 						errors.push('Invalid function name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid function with dependant variables.  Ex: f(x)');
 					var eqs = [];
 					$.each(_this.eqFields, function(i, v) { eqs.push(v.text()); });

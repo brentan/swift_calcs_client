@@ -37,7 +37,7 @@ var programmatic_function = P(Element, function(_, super_) {
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\)$/i))
+				if(!_this.varField.text().match(/^[a-z][a-z0-9_~]*\(([a-z][a-z0-9_~]*,)*[a-z][a-z0-9_~]*\)$/i))
 					errors.push('Invalid function name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid name, such as f(x)');
 				if(errors.length && _this.outputMathBox) {
 					_this.worksheet.save();
@@ -75,11 +75,11 @@ var programmatic_function = P(Element, function(_, super_) {
 		var varField = this.varField.text().trim();
 		if(this.command_list.length > 0) {
 			//take all the commands that were issued and stitch them together into a function, then send that to giac for compilation
-			var input_vars = varField.replace(/^[\s]*[a-z][a-z0-9_]*\((.*)\)$/i, "$1").replace(/ /g,'').split(',');
+			var input_vars = varField.replace(/^[\s]*[a-z][a-z0-9_~]*\((.*)\)$/i, "$1").replace(/ /g,'').split(',');
 			var locals = [];
 			for(var i = 0; i < this.command_list.length; i++) {
-				if(this.command_list[i].match(/^[\s]*[a-z][a-z0-9_]*(\([a-z0-9_,]+\))?[\s]*:=/i)) {
-					var local_var = this.command_list[i].replace(/^[\s]*([a-z][a-z0-9_]*).*$/i, "$1");
+				if(this.command_list[i].match(/^[\s]*[a-z][a-z0-9_~]*(\([a-z0-9_~,]+\))?[\s]*:=/i)) {
+					var local_var = this.command_list[i].replace(/^[\s]*([a-z][a-z0-9_~]*).*$/i, "$1");
 					var add_to_vars = true;
 					for(var j=0; (j<input_vars.length) && add_to_vars; j++)
 						if(input_vars[j] == local_var) add_to_vars = false;

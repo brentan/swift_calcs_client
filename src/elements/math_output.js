@@ -39,7 +39,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		this.dependent_vars = GetDependentVars(to_compute);
 
 		//Perform unit check
-		var reg = /([^a-zA-Z0-9_]|^)_([a-zA-Zµ2]+)/g;
+		var reg = /([^a-zA-Z0-9_~]|^)_([a-zA-Zµ2]+)/g;
 		var result;
 		while((result = reg.exec(to_compute)) !== null) {
     	if(!window.checkForValidUnit(result[2])) {
@@ -136,7 +136,7 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 						menu.append('<div class="pulldown_item" data-action="copyAnswer">Copy to new line</div>');
 						if(!this.scoped() && this.storeAsVariable)
 							menu.append('<div class="pulldown_item" data-action="storeAsVariable">Assign to variable</div>');
-						if(!(this.commands[0].command && this.commands[0].command.match(/^[\s]*[a-z][a-z0-9_]*\([a-z0-9_,]+\)[\s]*:=/i))) { // these dont do anything on function outputs
+						if(!(this.commands[0].command && this.commands[0].command.match(/^[\s]*[a-z][a-z0-9_~]*\([a-z0-9_~,]+\)[\s]*:=/i))) { // these dont do anything on function outputs
 							if(result[0].returned.indexOf('\\Unit') > -1)
 								menu.append('<div class="pulldown_item" data-action="enableUnitMode">Change units</div>');
 							if(this.digits == 0) {
@@ -467,7 +467,7 @@ var SettableMathOutput = P(MathOutput, function(_, super_) {
 	}
 	_.storeAsVariable = function(var_name) {
 		if(var_name) 
-			this.varStoreField.paste(var_name.replace(/_(.*)/,"_{$1}"));
+			this.varStoreField.paste(window.SwiftCalcsLatexHelper.VarNameToLatex(var_name));
 		else if(this.function_of)
 			this.varStoreField.clear().focus(1).moveToLeftEnd().write("latex{\\operatorname{ans_{" + this.uniqueAnsId() + "}}\\left({" + this.function_of + "}\\right)}").closePopup().keystroke('Shift-Home', { preventDefault: function() { } });
 		else

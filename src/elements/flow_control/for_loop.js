@@ -109,7 +109,7 @@ var for_loop = P(Loop, function(_, super_) {
 	_.evaluationFinished = function(result, evaluation_id) {
 		this.iterator = this.varField.text().trim();
 		var errors=[];
-		if(!this.iterator.match(/^[a-z][a-z0-9_]*$/))
+		if(!this.iterator.match(/^[a-z][a-z0-9_~]*$/))
 			errors.push('Iterator: Invalid iterator name (' + this.worksheet.latexToHtml(this.iterator) + ').  Please enter a valid variable name');
 		if(result[0].success) {
 			if(!result[0].returned.match(/^[0-9\.e\-]+$/))

@@ -578,7 +578,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
           for(var i = 0; i < allwords.length; i++) {
           	var element = el.varHelp(allwords[i]);
             var last_result = element ? element.getLastResult() : false;
-          	$("<div/>").addClass('list').attr("data-var",allwords[i].replace("(","")).html("<table border=0><tbody><tr><td>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(allwords[i].replace("(","")) + "</td><td class='val'>" + window.SwiftCalcsLatexHelper.latexToHtml(last_result ? last_result : '') + "</td></tr></tbody></table>").appendTo(input).on('click', function(e) {
+          	$("<div/>").addClass('list').attr("data-var",allwords[i].replace("(","")).html("<table border=0><tbody><tr><td>" + window.SwiftCalcsLatexHelper.VarNameToHTML(allwords[i].replace("(","")) + "</td><td class='val'>" + window.SwiftCalcsLatexHelper.latexToHtml(last_result ? last_result : '') + "</td></tr></tbody></table>").appendTo(input).on('click', function(e) {
           		var_name = $(this).attr("data-var");
           		input.find("div.list").removeClass("selected");
           		$(this).addClass("selected");
@@ -603,7 +603,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 							el.textField.restoreState(startState);
 							// Restore state has a 50ms delay due to window focus shenanigans...so we delay our insert here another 100ms
 							window.setTimeout(function() {
-								el.command('write', "<div class='sc_text_special_block sc_var_reference'><span class='sc_hide'>" + show_prior + "=" + var_name + "</span>Awaiting value of " + window.SwiftCalcsLatexHelper.UnitNameToHTML(var_name) + "</div>&#8203;"); 
+								el.command('write', "<div class='sc_text_special_block sc_var_reference'><span class='sc_hide'>" + show_prior + "=" + var_name + "</span>Awaiting value of " + window.SwiftCalcsLatexHelper.VarNameToHTML(var_name) + "</div>&#8203;"); 
 								el.updateVarReferences();
 							}, 100);
 							window.hidePopupOnTop();
@@ -933,6 +933,22 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			html: '<span style="color: #888888;"><span class="fa fa-square-o"></span><sub><span style="position: relative; top: 3px; left: 1px;" class="fa fa-square-o"></span></sub></span>',
 			title: 'Subscript [_]',
 			method: function(el) { el.command('_'); }
+		},
+		{
+			id: 'accent',
+			html: '<div style="color: #888888;position: relative; top: -3px;"><span style="display:block;line-height:0.25em;font-size:0.85em;text-align:center;">&rarr;</span><span style="display:block;"><span class="fa fa-square-o"></span></span></div>',
+			title: 'Accents [~]',
+			sub: [
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:0.85em;text-align:center;">&rarr;</span><span style="display:block;margin-left:10px;margin-right:10px;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overv'); }, title: 'Vector [~vec]' },
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:1.2em;position:relative;top:0.2em;text-align:center;">&middot;</span><span style="display:block;margin-left:10px;margin-right:10px;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overd'); }, title: 'Single Dot [~dot]' },
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:1.2em;position:relative;top:0.2em;text-align:center;">&middot;&middot;</span><span style="display:block;margin-left:10px;margin-right:10px;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overe'); }, title: 'Double Dot [~ddot]' },
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:1.2em;position:relative;top:0.2em;text-align:center;">&middot;&middot;&middot;</span><span style="display:block;margin-left:10px;margin-right:10px;text-align:center;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overf'); }, title: 'Triple Dot [~tdot]' },
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:0.85em;text-align:center;">&mdash;</span><span style="display:block;margin-left:10px;margin-right:10px;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overb'); }, title: 'Bar [~bar]' },
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:1.2em;position:relative;top:0.4em;text-align:center;">&caron;</span><span style="display:block;margin-left:10px;margin-right:10px;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overc'); }, title: 'Check [~check]' },
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:1.2em;position:relative;top:0.4em;text-align:center;">&circ;</span><span style="display:block;margin-left:10px;margin-right:10px;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overh'); }, title: 'Hat [~hat]' },
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:0.95em;text-align:center;">*</span><span style="display:block;margin-left:10px;margin-right:10px;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overs'); }, title: 'Star [~star]' },
+				{html: '<span style="display:inline-block;color: #888888;text-align:center;"><span style="display:block;line-height:0.25em;font-size:1.3em;position:relative;top:0.4em;text-align:center;">&tilde;</span><span style="display:block;margin-left:10px;margin-right:10px;"><span class="fa fa-square-o"></span></span></span>', method: function(el) { el.command('\\overt'); }, title: 'Tilde [~tilde]' },
+			]
 		},
 		{
 			id: 'brackets',

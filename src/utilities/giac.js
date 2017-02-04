@@ -358,7 +358,7 @@ var loadWorker = function(giacHandler) {
 
   var cleanOutput = function(result) {
   	for(var i = 0; i < result.length; i++) {
-  		if(result[i].success) result[i].returned = result[i].returned.replace(/(\\?[a-zA-Z][a-zA-Z0-9_\\]*)SWIFTCALCSMETHOD(\\?[a-zA-Z0-9_\\]*)/g,'\\functionCommand{$1}{$2}').replace(/"/g,'');
+  		if(result[i].success) result[i].returned = result[i].returned.replace(/(\\?[a-zA-Z][a-zA-Z0-9_~\\]*)SWIFTCALCSMETHOD(\\?[a-zA-Z0-9_~\\]*)/g,'\\functionCommand{$1}{$2}').replace(/"/g,'');
   	}
   	return result;
   }

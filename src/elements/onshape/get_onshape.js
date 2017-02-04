@@ -62,7 +62,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 		return function(mathField) {
 			if(_this.needsEvaluation) {
 				errors = [];
-				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*$/i))
+				if(!_this.varField.text().match(/^[a-z][a-z0-9_~]*$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid variable name');
 				if(errors.length) {
 					_this.worksheet.save();

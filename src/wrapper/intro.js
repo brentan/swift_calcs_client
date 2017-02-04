@@ -186,24 +186,24 @@ var SwiftCalcs = {};
   var GetDependentVars = SwiftCalcs.GetDependentVars = function(command, ignore) {
     var dependent_vars = [];
     if(typeof ignore === 'undefined') ignore = [];
-    if(command.match(/^[\s]*[a-z][a-z0-9_]*SWIFTCALCSMETHOD.*:=.*$/i)) // by setting it, it is also dependent on it, because special objects are weird
-      dependent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)SWIFTCALCSMETHOD.*$/i, "$1"));
-    command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
+    if(command.match(/^[\s]*[a-z][a-z0-9_~]*SWIFTCALCSMETHOD.*:=.*$/i)) // by setting it, it is also dependent on it, because special objects are weird
+      dependent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_~]*)SWIFTCALCSMETHOD.*$/i, "$1"));
+    command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_~]*)?/gi,"");
     var function_vars = {};
     //Add in ignore vars to function vars, as they serve same purpose
     for(var i = 0; i < ignore.length; i++)
       function_vars[ignore[i].trim()] = true;
-    if(command.match(/^[\s]*[a-z][a-z0-9_]*\(.*\)*:=/i)) {
+    if(command.match(/^[\s]*[a-z][a-z0-9_~]*\(.*\)*:=/i)) {
       // Find function vars, these are not really dependent
-      var list = command.replace(/^[\s]*[a-z][a-z0-9_]*\((.*)\)[\s]*:=.*$/i,"$1").split(",");
+      var list = command.replace(/^[\s]*[a-z][a-z0-9_~]*\((.*)\)[\s]*:=.*$/i,"$1").split(",");
       for(var i = 0; i < list.length; i++)
         function_vars[list[i].trim()] = true;
     } 
     if(command.match(/^.*:=.*$/i)) command = command.replace(/^.*:=(.*)$/i,"$1");
     // Remove units
-    command = command.replace(/^_[a-z2µ]+([^a-z2µ])/gi,"$1").replace(/([^a-z0-9_])_[a-z2µ]+$/gi,"$1").replace(/([^a-z0-9_])_[a-z2µ]+([^a-z2µ])/gi,"$1 $2");
-    command = command.replace(/[^a-zA-Z_0-9]/g," ").replace(/[a-z0-9_]+__[a-z0-9_]+/gi,"");
-    var reg = /([a-z][a-z0-9]*(_[a-z0-9]*)?)/gi;
+    command = command.replace(/^_[a-z2µ]+([^a-z2µ])/gi,"$1").replace(/([^a-z0-9_~])_[a-z2µ]+$/gi,"$1").replace(/([^a-z0-9_~])_[a-z2µ]+([^a-z2µ])/gi,"$1 $2");
+    command = command.replace(/[^a-zA-Z_0-9~]/g," ").replace(/[a-z0-9_]+__[a-z0-9_]+/gi,"");
+    var reg = /([a-z][a-z0-9~]*(_[a-z0-9~]*)?)/gi;
     var result;
     while((result = reg.exec(command)) !== null) {
       if(function_vars[result[1]] !== true) dependent_vars.push(result[1]);
@@ -212,18 +212,18 @@ var SwiftCalcs = {};
   }
   var GetIndependentVars = SwiftCalcs.GetIndependentVars = function(command) {
     var independent_vars = [];
-    if(command.match(/^[\s]*[a-z][a-z0-9_]*SWIFTCALCSMETHOD.*:=.*$/i)) {// by setting it, it is also dependent on it, because special objects are weird
-      var method_name = command.replace(/^[\s]*([a-z][a-z0-9_]*)SWIFTCALCSMETHOD.*$/i, "$1");
+    if(command.match(/^[\s]*[a-z][a-z0-9_~]*SWIFTCALCSMETHOD.*:=.*$/i)) {// by setting it, it is also dependent on it, because special objects are weird
+      var method_name = command.replace(/^[\s]*([a-z][a-z0-9_~]*)SWIFTCALCSMETHOD.*$/i, "$1");
       // Objects also set vars with these suffixes...so we need to add those to our list here to ensure they are seen as 'altered'
       independent_vars.push(method_name + "_T__in");
       independent_vars.push(method_name + "_P__in");
       independent_vars.push(method_name + "_rho__in");
     }
-    command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_]*)?/gi,"");
-    if(command.match(/^[\s]*[a-z][a-z0-9_]*(\([a-z][a-z0-9_]*(,[\s]?[a-z][a-z0-9_]*)*\))[\s]*:=/i)) 
-      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))[\s]*:=.*$/i,"$1("));
-    else if(command.match(/^[\s]*[a-z][a-z0-9_]*(\[.*\])?(\(.*\))?[\s]*:=/i)) 
-      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_]*)(\[.*\])?(\(.*\))?[\s]*:=.*$/i,"$1"));
+    command = command.replace(/SWIFTCALCSMETHOD([a-z][a-z0-9_~]*)?/gi,"");
+    if(command.match(/^[\s]*[a-z][a-z0-9_~]*(\([a-z][a-z0-9_~]*(,[\s]?[a-z][a-z0-9_~]*)*\))[\s]*:=/i)) 
+      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_~]*)(\(.*\))[\s]*:=.*$/i,"$1("));
+    else if(command.match(/^[\s]*[a-z][a-z0-9_~]*(\[.*\])?(\(.*\))?[\s]*:=/i)) 
+      independent_vars.push(command.replace(/^[\s]*([a-z][a-z0-9_~]*)(\[.*\])?(\(.*\))?[\s]*:=.*$/i,"$1"));
     return independent_vars
   }
     
@@ -232,7 +232,6 @@ var SwiftCalcs = {};
     if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
     if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
   });
-
 
   RIGHTS = { NO_RIGHTS: 0, READ_ONLY: 1, READ_ONLY_WITH_DUPLICATION: 2, EDIT_RIGHTS: 3,  ADMIN_RIGHTS: 4 };
   INTERACTION_LEVELS = { NONE: 0, FORM_ELEMENTS: 1, FULL: 2}

@@ -893,7 +893,7 @@ var Element = P(function(_) {
       if(this.previous_independent_vars.length && (this.previous_independent_vars.length == this.independent_vars.length) && !this.worksheet.trackingStream) {
         // Check for change of name
         for(var i = 0; i < this.previous_independent_vars.length; i++) {
-          if(this.previous_independent_vars[i].match(/__/)) continue; //System variable, ignore
+          if(this.previous_independent_vars[i].match(/[a-z0-9]__[a-z0-9]/i)) continue; //System variable, ignore
           if(this.previous_independent_vars[i].replace("(","") != this.independent_vars[i].replace("(","")) {
             // Note, this won't rename things above this line but that may be below the item in the calc tree (basically, things above it but in a loop)
             var next_el = this[R];
@@ -905,7 +905,7 @@ var Element = P(function(_) {
             // Stop auto-function during recomputation
             this.worksheet.suppress_autofunction = true;
             var start_name = this.previous_independent_vars[i];
-            this.addNotice((this.previous_independent_vars[i].match(/\($/) ? "Function" : "Variable") + " renamed from <i>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(this.previous_independent_vars[i].replace("(","")) + "</i> to <i>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(this.independent_vars[i].replace("(","")) + "</i>.  Update dependent lines to refer to the new name?","name_change_" + i,[{name: "Yes", color: "green", func: function(start_name, end_name, i) { return function() {
+            this.addNotice((this.previous_independent_vars[i].match(/\($/) ? "Function" : "Variable") + " renamed from <i>" + window.SwiftCalcsLatexHelper.VarNameToHTML(this.previous_independent_vars[i].replace("(","")) + "</i> to <i>" + window.SwiftCalcsLatexHelper.VarNameToHTML(this.independent_vars[i].replace("(","")) + "</i>.  Update dependent lines to refer to the new name?","name_change_" + i,[{name: "Yes", color: "green", func: function(start_name, end_name, i) { return function() {
               // Get current focus
               var el = this.worksheet.activeElement || this.worksheet.lastActive;
               var was_implicit = el ? el.implicit : false;

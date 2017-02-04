@@ -35,10 +35,10 @@ var interpolate = P(SettableMathOutput, function(_, super_) {
       if(_this.needsEvaluation) {
         // check for anything that is empty
         var errors = [];
-        if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*\([a-z][a-z0-9_]*\)$/i)) {
-          if(_this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i)) {
+        if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_~]*\([a-z][a-z0-9_~]*\)$/i)) {
+          if(_this.varStoreField.text().match(/^[a-z][a-z0-9_~]*$/i)) {
             // Need to turn in to a function definition
-            var varName = _this.varStoreField.text().replace(/_(.*)$/,"_{$1}");
+            var varName = window.SwiftCalcsLatexHelper.VarNameToLatex(_this.varStoreField.text());
             _this.varStoreField.clear().paste("\\operatorname{" + varName + "}\\left({x}\\right)");
           } else
             errors.push('Invalid function name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
@@ -51,7 +51,7 @@ var interpolate = P(SettableMathOutput, function(_, super_) {
           errors.push('No y data provided.');
         if(_this.order.empty())
           errors.push('No polynomial order provided.');
-        var ind_var = _this.varStoreField.text().match(/\(/) ? _this.varStoreField.text().replace(/^([a-z][a-z0-9_]*)\(([a-z][a-z0-9_]*)\)$/i,"$2") : "x";
+        var ind_var = _this.varStoreField.text().match(/\(/) ? _this.varStoreField.text().replace(/^([a-z][a-z0-9_~]*)\(([a-z][a-z0-9_~]*)\)$/i,"$2") : "x";
         var command = 'spline(evalf(' + _this.xdata.text({check_for_array: true}) + "), evalf(" + _this.ydata.text({check_for_array: true}) + ")," + ind_var + "," + _this.order.text({}) + "," + (_this.extrapolate.checked ? "1" : "0") + ")";
         _this.commands = _this.genCommand("[val]");
         _this.commands[0].dereference = true;

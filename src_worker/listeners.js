@@ -161,15 +161,15 @@ var receiveMessage = function(command) {
       warnings[ii] = warnings[ii - 1];
       if(output[ii-1].returned.trim() == '[]') output[ii-1].returned = '[undef]';
       var to_replace = output[ii-1].returned.replace(/\-\-/g,"+");
-      if(to_send.match(/^[\s]*[a-z][a-z0-9_]*\(([a-z0-9_,\s]+)\)[\s]*:=/i)) {
+      if(to_send.match(/^[\s]*[a-z][a-z0-9_~]*\(([a-z0-9_~,\s]+)\)[\s]*:=/i)) {
         if(to_replace.match("->")) to_replace = to_replace.replace(/^.*\-\>(.*)$/,"$1");
-        var func_var = to_send.replace(/^[\s]*[a-z][a-z0-9_]*\(([a-z0-9_,\s]+)\)[\s]*:=.*$/i,"$1");
+        var func_var = to_send.replace(/^[\s]*[a-z][a-z0-9_~]*\(([a-z0-9_~,\s]+)\)[\s]*:=.*$/i,"$1");
         if(func_var.match(",")) {
           func_var = func_var.split(",");
           for(var jj = 0; jj < func_var.length; jj++)
-            to_replace = to_replace.replace(new RegExp("^x_" + (jj+1) + "([^a-zA-Z0-9_])","g"),func_var[jj].trim() + "$1").replace(new RegExp("([^a-zA-Z0-9_])x_" + (jj+1) + "$","g"),"$1" + func_var[jj].trim()).replace(new RegExp("([^a-zA-Z0-9_])x_" + (jj+1) + "([^a-zA-Z0-9_])","g"),"$1" + func_var[jj].trim() + "$2").replace(new RegExp("^x_" + (jj+1) + "$","g"),func_var[jj].trim());
+            to_replace = to_replace.replace(new RegExp("^x_" + (jj+1) + "([^a-zA-Z0-9_~])","g"),func_var[jj].trim() + "$1").replace(new RegExp("([^a-zA-Z0-9_~])x_" + (jj+1) + "$","g"),"$1" + func_var[jj].trim()).replace(new RegExp("([^a-zA-Z0-9_~])x_" + (jj+1) + "([^a-zA-Z0-9_~])","g"),"$1" + func_var[jj].trim() + "$2").replace(new RegExp("^x_" + (jj+1) + "$","g"),func_var[jj].trim());
         } else
-          to_replace = to_replace.replace(/^x(_1)?([^a-zA-Z0-9_])/g,func_var + "$2").replace(/([^a-zA-Z0-9_])x(_1)?$/g,"$1" + func_var).replace(/([^a-zA-Z0-9_])x(_1)?([^a-zA-Z0-9_])/g,"$1" + func_var + "$3").replace(/^x(_1)?$/g,func_var);
+          to_replace = to_replace.replace(/^x(_1)?([^a-zA-Z0-9_~])/g,func_var + "$2").replace(/([^a-zA-Z0-9_~])x(_1)?$/g,"$1" + func_var).replace(/([^a-zA-Z0-9_~])x(_1)?([^a-zA-Z0-9_~])/g,"$1" + func_var + "$3").replace(/^x(_1)?$/g,func_var);
       } 
       to_send = to_send.replace(/\[val\]/g, to_replace);
       var test_output = { success: true, returned: Module.casevalWithTimeout(to_send) };
@@ -181,15 +181,15 @@ var receiveMessage = function(command) {
     }
     // If the command is simply a variable name (or object.property transformed to object__property), 
     // and this command is in our global constants array, output its toString value directly
-		if(to_send.match(/^[a-z][a-z0-9_]*$/i) && constants[to_send]) {
+		if(to_send.match(/^[a-z][a-z0-9_~]*$/i) && constants[to_send]) {
 			output[ii] = {success: true, returned: constants[to_send].toString(), warnings: [], suppress_pulldown: true};
       if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
 			continue;
 		}
     // If we are setting an object into a new variable, we do this directly through the 'clone' method.
-		if(to_send.match(/^[a-z][a-z0-9_]* *:= *[a-z][a-z0-9_]*$/i) && constants[to_send.replace(/^[a-z][a-z0-9_]* *:= */i,'')]) {
-			var new_var = to_send.replace(/ *:= *[a-z][a-z0-9_]*$/i,'');
-			var old_var = to_send.replace(/^[a-z][a-z0-9_]* *:= */i,'');
+		if(to_send.match(/^[a-z][a-z0-9_~]* *:= *[a-z][a-z0-9_~]*$/i) && constants[to_send.replace(/^[a-z][a-z0-9_~]* *:= */i,'')]) {
+			var new_var = to_send.replace(/ *:= *[a-z][a-z0-9_~]*$/i,'');
+			var old_var = to_send.replace(/^[a-z][a-z0-9_~]* *:= */i,'');
 			constants[new_var] = user_vars[new_var] = constants[old_var].clone(new_var);
 			output[ii] = {success: true, returned: constants[new_var].toString(), warnings: []};
       if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
@@ -197,16 +197,16 @@ var receiveMessage = function(command) {
 		}
     // Otherwise, lets use giac for our evaluation. 
     // Is this an expression that is setting the value of a variable?  If not, we add some simplification, unit converstion, and set output to latex
-    if(to_send.match(/^[\s]*[a-z][a-z0-9_]*(\([a-z0-9_,]+\))?[\s]*:=/i)) {
+    if(to_send.match(/^[\s]*[a-z][a-z0-9_~]*(\([a-z0-9_~,]+\))?[\s]*:=/i)) {
       var start_pos = to_send.length; // Used by test error reporting.  If column error is reported, we may have to adjust location because of 'evalf(' addition
       // Assignment.  Do the assignment first, then return the value
-      if(to_send.match(/^[\s]*([a-z][a-z0-9_]*)[\s]*:=(.*[^a-z0-9]|[\s]*)\1([^a-z0-9_].*|[\s]*)$/i)) {
+      if(to_send.match(/^[\s]*([a-z][a-z0-9_~]*)[\s]*:=(.*[^a-z0-9~]|[\s]*)\1([^a-z0-9_~].*|[\s]*)$/i)) {
         // Self-referencing definition (a = a + 1).  Add evalf in order to make sure giac doesn't attempt to do this recursively and symbolically, which is computationally SLOW
         start_pos = to_send.indexOf(':=');        
         to_send = to_send.replace(':=', ':=evalf(') + ')';
       }
       // Test for setting protected variable names
-      if(protected_list[to_send.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?[\s]*:=.*$/i,"$1")]) {
+      if(protected_list[to_send.replace(/^[\s]*([a-z][a-z0-9_~]*)(\(.*\))?[\s]*:=.*$/i,"$1")]) {
         if(to_send.match(/^[\s]*i\(?[\s]*:=.*$/))
           output[ii] = {success: false, error_index: 0, returned: 'function or variable name <i>i</i> is protected and defined as sqrt(-1)', warnings: []}
         else if(to_send.match(/^[\s]*e\(?[\s]*:=.*$/))
@@ -214,7 +214,7 @@ var receiveMessage = function(command) {
         else if(to_send.match(/^[\s]*pi\(?[\s]*:=.*$/))
           output[ii] = {success: false, error_index: 0, returned: 'function or variable name <i>&pi;</i> is protected and defined as 3.14159', warnings: []}
         else
-          output[ii] = {success: false, error_index: 0, returned: 'function or variable name <i>' + to_send.replace(/^[\s]*([a-z][a-z0-9_]*)(\(.*\))?[\s]*:=.*$/i,"$1").replace(/_(.*)$/,"<sub>$1</sub>") + '</i> is a built-in function and cannot be overwritten.', warnings: []}
+          output[ii] = {success: false, error_index: 0, returned: 'function or variable name <i>' + to_send.replace(/^[\s]*([a-z][a-z0-9_~]*)(\(.*\))?[\s]*:=.*$/i,"$1").replace(/_(.*)$/,"<sub>$1</sub>") + '</i> is a built-in function and cannot be overwritten.', warnings: []}
         if(command.commands[ii].restore_vars) restoreVars(command.commands[ii].restore_vars);
         continue;
       }
@@ -233,9 +233,9 @@ var receiveMessage = function(command) {
       }
       test_output = testError(test_output, ii, to_send);
       if(test_output.success) {
-        if(to_send.match(/^[\s]*[a-z][a-z0-9_]*\([a-z0-9_,]+\)[\s]*:=/i)) // Factor/expand breaks function definitions (for some reason, it loads function vars as globals) so we dont want to use it
+        if(to_send.match(/^[\s]*[a-z][a-z0-9_~]*\([a-z0-9_~,]+\)[\s]*:=/i)) // Factor/expand breaks function definitions (for some reason, it loads function vars as globals) so we dont want to use it
           command.commands[ii].simplify = ' ';
-        to_send = to_send.replace(/^[\s]*([a-zA-Z0-9_]+).*$/,'$1');
+        to_send = to_send.replace(/^[\s]*([a-zA-Z0-9_~]+).*$/,'$1');
       } else {
         // Correct the error index based on whether we added evalf or not
         if(test_output.error_index > start_pos) {

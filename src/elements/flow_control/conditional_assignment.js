@@ -168,7 +168,7 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*(\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\))?$/i))
+				if(!_this.varField.text().match(/^[a-z][a-z0-9_~]*(\(([a-z][a-z0-9_~]*,)*[a-z][a-z0-9_~]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid variable name');
 				for(var i = 0; i < _this.eqFields.length; i++)
 					if(_this.eqFields[i].empty()) errors.push('Expression ' + (i+1) + ' is currently empty.  Please add an expression.');
@@ -183,7 +183,7 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 					var conds = [];
 					$.each(_this.eqFields, function(i, v) { eqs.push(v.text()); });
 					$.each(_this.condFields, function(i, v) { conds.push(v.text()); });
-					if(_this.varField.text().trim().match(/^[a-z][a-z0-9_]*$/i)) {
+					if(_this.varField.text().trim().match(/^[a-z][a-z0-9_~]*$/i)) {
 						var command = _this.varField.text() + ' := ';
 						var end_command = '';
 						var return_command = '';

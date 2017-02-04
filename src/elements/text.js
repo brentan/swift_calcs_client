@@ -297,14 +297,14 @@ var text = P(EditableBlock, function(_, super_) {
       if(var_name) {
         var el = _this.varHelp(var_name.html().split("=")[1]);
         if(var_name.html().split("=")[0] == '1') 
-          var prior_name = window.SwiftCalcsLatexHelper.UnitNameToLatex(var_name.html().split("=")[1]) + "\\whitespace \\Longrightarrow \\whitespace ";
+          var prior_name = window.SwiftCalcsLatexHelper.VarNameToLatex(var_name.html().split("=")[1]) + "\\whitespace \\Longrightarrow \\whitespace ";
         else
           var prior_name = '';
         var hidden_el = "<span class='sc_hide'>" + var_name.html() + "</span>";
         if(el && el.getLastResult()) 
           $(this).html(hidden_el + window.SwiftCalcsLatexHelper.latexToHtml(prior_name + el.getLastResult()));
         else 
-          $(this).html(hidden_el + "No value found for " + window.SwiftCalcsLatexHelper.UnitNameToHTML(var_name.html().split("=")[1]));
+          $(this).html(hidden_el + "No value found for " + window.SwiftCalcsLatexHelper.VarNameToHTML(var_name.html().split("=")[1]));
       } else
         $(this).html(hidden_el + "<strong>CORRUPT REFERENCE</strong>");
     });

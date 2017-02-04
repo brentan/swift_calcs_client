@@ -117,9 +117,9 @@ var solve = P(SettableMathOutput, function(_, super_) {
 			if(_this.needsEvaluation) {
 				// check for anything that is empty
 				var errors = [];
-				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_]*(\[[a-z0-9_,\.]*\])?(\([a-z][a-z0-9_,]*\))?$/i))
+				if(_this.varStoreField.text().trim().length && !_this.varStoreField.text().match(/^[a-z][a-z0-9_~]*(\[[a-z0-9_~,\.]*\])?(\([a-z][a-z0-9_~,]*\))?$/i))
 					errors.push('Invalid variable name (' + _this.worksheet.latexToHtml(_this.varStoreField.latex()) + ').  Please enter a valid variable name');
-				if(!_this.varField.text().match(/^[a-z][a-z0-9_]*(,[a-z][a-z0-9_]*)*$/i))
+				if(!_this.varField.text().match(/^[a-z][a-z0-9_~]*(,[a-z][a-z0-9_~]*)*$/i))
 					errors.push('Invalid variable list (' + _this.worksheet.latexToHtml(_this.varField.latex()) + ').  Please enter a valid comma-seperated list of variables');
 				if(_this.ask_initial_guess && !_this.guessField.empty() && (_this.guessField.text().split(',').length !== _this.varField.text().split(',').length))
 					errors.push('Invalid guesses.  Please ensure you provide 1 guess for each variable you are solving for (enter as a comma-seperated list)');

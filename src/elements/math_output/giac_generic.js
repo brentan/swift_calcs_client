@@ -94,9 +94,9 @@ var createGiacElement = function(options) {
 						if(returns_function) returns_function=returns_function.replace("$" + (i+1), _this.items[i].text());
 					}
 					if(_this.options.returns_function) {
-	          if(_this.varStoreField.text().match(/^[a-z][a-z0-9_]*$/i)) {
+	          if(_this.varStoreField.text().match(/^[a-z][a-z0-9_~]*$/i)) {
 	            // Need to turn in to a function definition
-	            var varName = _this.varStoreField.text().replace(/_(.*)$/,"_{$1}");
+	            var varName = window.SwiftCalcsLatexHelper.VarNameToLatex(_this.varStoreField.text());
 	            _this.varStoreField.clear().paste("\\operatorname{" + varName + "}\\left({" + returns_function + "}\\right)");
 	          }
 	          if(_this.varStoreField.text().length == 0) command = command.replace("'x'","'" + returns_function + "'");

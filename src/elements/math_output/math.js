@@ -80,13 +80,13 @@ var math = P(MathOutput, function(_, super_) {
       		return false;
       } else
       	return false;
-		} else if(to_text.match(/^[a-z][a-z0-9_]*(\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\))? := {[ ]*$/i)) {
+		} else if(to_text.match(/^[a-z][a-z0-9_~]*(\(([a-z][a-z0-9_~]*,)*[a-z][a-z0-9_~]*\))? := {[ ]*$/i)) {
 			// Turn in to a conditional statement
-			var varName = to_text.replace(/^([a-z][a-z0-9_]*(\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\))?) := .*$/i,"$1");
+			var varName = to_text.replace(/^([a-z][a-z0-9_~]*(\(([a-z][a-z0-9_~]*,)*[a-z][a-z0-9_~]*\))?) := .*$/i,"$1");
 			// Fix function names
-			if(varName.match(/^[a-z][a-z0-9_]*\(([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*\)$/i))
-				varName = varName.replace(/^([a-z][a-z0-9_]*)\((([a-z][a-z0-9_]*,)*[a-z][a-z0-9_]*)\)$/i,"\\operatorname{$1}\\left({$2}\\right)");
-			varName = varName.replace(/_([a-z0-9]+)/ig,"_{$1}"); //Fix underscore
+			if(varName.match(/^[a-z][a-z0-9_~]*\(([a-z][a-z0-9_~]*,)*[a-z][a-z0-9_~]*\)$/i))
+				varName = varName.replace(/^([a-z][a-z0-9_~]*)\((([a-z][a-z0-9_~]*,)*[a-z][a-z0-9_~]*)\)$/i,"\\operatorname{$1}\\left({$2}\\right)");
+			varName = window.SwiftCalcsLatexHelper.VarNameToLatex(varName);
 			var stream = this.worksheet.trackingStream;
 			if(!stream) this.worksheet.startUndoStream();
   		// Good to go
@@ -258,23 +258,23 @@ var math = P(MathOutput, function(_, super_) {
 			if(this.worksheet.suppress_autofunction) return;
 			not_defined = $.unique(not_defined);
 			// This line relies on a variable that has not been previously defined
-			if(this.mathField.text().match(/^[a-z][a-z0-9_]*(\([a-z][a-z0-9_,]*\))?[\s]*:=/i)) {
+			if(this.mathField.text().match(/^[a-z][a-z0-9_~]*(\([a-z][a-z0-9_~,]*\))?[\s]*:=/i)) {
 			  //did we mean to make this a function?   
-			  if(this.mathField.text().match(/^[a-z][a-z0-9_]*[\s]*:=/i)) {         
+			  if(this.mathField.text().match(/^[a-z][a-z0-9_~]*[\s]*:=/i)) {         
 			  	var already_func = false;
 				  var varName = this.mathField.latex().replace(/^([^=]*)=.*$/i,"$1");
 				  var varnametext = this.mathField.text().replace(/^([a-z][a-z0-9_]*)[\s]*:=.*$/i,"$1");
 	        var everythingElse = this.mathField.latex().replace(/^[^=]*=(.*)$/i,"$1");
 	      } else {
 	      	var already_func = true;
-				  var varName = this.mathField.latex().replace(/^\\operatorname\{([\\ a-z0-9_\{\}]*)\}\\left\(\{(.*)\}\\right\)[\s]*=.*$/i,"$1");  
-				  var curvars = this.mathField.latex().replace(/^\\operatorname\{([\\ a-z0-9_\{\}]*)\}\\left\(\{(.*)\}\\right\)[\s]*=.*$/i,"$2");  
-				  var varnametext = this.mathField.text().replace(/^([a-z][a-z0-9_]*)\([a-z][a-z0-9_,]*\)[\s]*:=.*$/i,"$1");
+				  var varName = this.mathField.latex().replace(/^\\operatorname\{([\\ a-z0-9_~\{\}]*)\}\\left\(\{(.*)\}\\right\)[\s]*=.*$/i,"$1");  
+				  var curvars = this.mathField.latex().replace(/^\\operatorname\{([\\ a-z0-9_~\{\}]*)\}\\left\(\{(.*)\}\\right\)[\s]*=.*$/i,"$2");  
+				  var varnametext = this.mathField.text().replace(/^([a-z][a-z0-9_~]*)\([a-z][a-z0-9_~,]*\)[\s]*:=.*$/i,"$1");
 	        var everythingElse = this.mathField.latex().replace(/^[^=]*=(.*)$/i,"$1");
 	      }
         var varList = [];
         for(var i = 0; i < not_defined.length; i++)
-        	varList.push(window.SwiftCalcsLatexHelper.UnitNameToLatex(not_defined[i]));
+        	varList.push(window.SwiftCalcsLatexHelper.VarNameToLatex(not_defined[i]));
         // Get current focus
 				var el = this.worksheet.activeElement || this.worksheet.lastActive;
 				var was_implicit = el ? el.implicit : false;
@@ -294,9 +294,9 @@ var math = P(MathOutput, function(_, super_) {
 				if(was_implicit) el.implicit = true;
 				// Show message
 				if(!already_func)
-			  	var message = "Undefined variables in expression.  Transforming <i>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(varnametext) + "</i> to function definition.&nbsp;&nbsp;&nbsp;<a href='#' class='help_item' data-id='31'>Learn More</a>&nbsp;|";
+			  	var message = "Undefined variables in expression.  Transforming <i>" + window.SwiftCalcsLatexHelper.VarNameToHTML(varnametext) + "</i> to function definition.&nbsp;&nbsp;&nbsp;<a href='#' class='help_item' data-id='31'>Learn More</a>&nbsp;|";
 			  else
-			  	var message = "Undefined variables in function.  Adding undefined variables to input list for <i>" + window.SwiftCalcsLatexHelper.UnitNameToHTML(varnametext) + "</i>.&nbsp;&nbsp;&nbsp;<a href='#' class='help_item' data-id='31'>Learn More</a>&nbsp;|";
+			  	var message = "Undefined variables in function.  Adding undefined variables to input list for <i>" + window.SwiftCalcsLatexHelper.VarNameToHTML(varnametext) + "</i>.&nbsp;&nbsp;&nbsp;<a href='#' class='help_item' data-id='31'>Learn More</a>&nbsp;|";
 			  this.addNotice(message, "missing_var", [], true);
 			}
 		} 

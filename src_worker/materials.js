@@ -62,10 +62,10 @@ var Material = P(SwiftCalcsObject, function(_, super_) {
     var propertyList = [];
     for(var i = 0; i < len; i++) {
       if(typeof secondaryNames[data.properties[i].name] !== 'undefined') {
-        this[secondaryNames[data.properties[i].name]] = '(' + data.properties[i].value + ' * ' + data.properties[i].unit + ')';
+        this[secondaryNames[data.properties[i].name]] = data.properties[i].unit ? ('(' + data.properties[i].value + ' * ' + data.properties[i].unit + ')') : data.properties[i].value;
         propertyList.push(secondaryNames[data.properties[i].name]);
       }
-      this[data.properties[i].name] = '(' + data.properties[i].value + ' * ' + data.properties[i].unit + ')';
+      this[data.properties[i].name] = data.properties[i].unit ? ('(' + data.properties[i].value + ' * ' + data.properties[i].unit + ')') : data.properties[i].value;
       propertyList.push(data.properties[i].name);
     }
     this.propertyList = propertyList;
@@ -1328,7 +1328,7 @@ console.log()
 var setMaterial = function(data) {
   if(data.last_name.length > 0)
     destroyConstant(data.last_name);
-  if(!data.var_name.match(/^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)?$/i))
+  if(!data.var_name.match(/^[a-z][a-z0-9~]*(_[a-z][a-z0-9~]*)?$/i))
     return {success: false, returned: "Invalid variable name.  Please enter a valid variable name."};
   if(constants[data.var_name])
     return {success: false, returned: "Please choose another variable name, an object has already been assigned to this variable."};
