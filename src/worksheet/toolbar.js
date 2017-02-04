@@ -665,7 +665,6 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
           	showNotice('Interaction disabled'); 
         }
 			},
-			{ title: '|' },
 			{
 				id: 'outdent',
 				icon: 'outdent',
@@ -686,19 +685,16 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			{ title: '|' },
 			{
 				id: 'disable_eval',
-				icon: 'ban',
-				html: '&nbsp;Disable Evaluation',
+				html: '<span class="fa-stack fa-lg" style="font-size:0.8em;position:relative;top:-2px;"><i class="fa fa-calculator fa-stack-1x" style="color:#999999;"></i><i class="fa fa-ban fa-stack-2x"></i></span>',
 				title: 'Disable Evaluation',
 				method: function() { 
           for(var i =0; i < el.selection.length; i++)
           	el.selection[i].disable();
         }
 			},
-			{ title: '|' },
 			{
 				id: 'enable_eval',
 				icon: 'calculator',
-				html: '&nbsp;Enable Evaluation',
 				title: 'Enable Evaluation',
 				method: function() { 
           for(var i =0; i < el.selection.length; i++)
@@ -709,7 +705,6 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			{
 				id: 'delete',
 				icon: 'trash-o',
-				html: '&nbsp;Delete',
 				title: 'Delete',
 				method: function() { 
           if(el.allow_interaction())
@@ -718,23 +713,22 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
           	showNotice('Interaction disabled'); 
         }
 			},
-			{ title: '|' },
 			{
 				id: 'cut',
 				icon: 'cut',
-				title: 'cut',
+				title: 'Cut',
 				method: function() { alert("Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-X."); }
 			},
 			{
 				id: 'copy',
 				icon: 'copy',
-				title: 'copy',
+				title: 'Copy',
 				method: function() { alert("Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-C."); }
 			},
 			{
 				id: 'paste',
 				icon: 'paste',
-				title: 'paste',
+				title: 'Paste',
 				method: function() { alert("Due to browser security settings, you need to use your browser controls to cut/copy/paste.  Use the browser edit menu or keyboard shortcut Ctrl-V."); }
 			},
 			{
@@ -962,10 +956,11 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{html: '|<span style="color: #888888;font-size:10px;"><span class="fa fa-square-o"></span></span>|', method: function(el) { el.command('|'); }, title: 'Absolute Value - |' }
 			]
 		},
+		{ title: '|' },
 		{
 			id: 'equality',
 			html: '<div style="position: relative; top: -6px;padding: 0px 6px;font-size:18px;">=</div>',
-			title: 'Equality - =',
+			title: 'Equality [=]',
 			sub: [
 				{html: '&nbsp;&nbsp;<span style="font-family: Symbola, Times, serif;">&#8801;</span>&nbsp;&nbsp;', method: function(el) { el.command('='); }, title: 'Equality/Assignment [=]' },
 				{html: '&nbsp;&nbsp;=&nbsp;&nbsp;', method: function(el) { el.command('\\eq'); }, title: 'Logical Equal [=]' },
@@ -976,7 +971,6 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				{html: '&nbsp;&nbsp;&#8804;&nbsp;&nbsp;', method: function(el) { el.command('\\le'); }, title: 'Less Than or Equal To [<=]' },
 			]
 		},
-		{ title: '|' },
 		{
 			id: 'symbols',
 			html: '<div style="position: relative;top:-2px;padding:0px 3px;font-family: serif;">&#8734;</div>',

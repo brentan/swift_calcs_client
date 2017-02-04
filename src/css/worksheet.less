@@ -894,8 +894,36 @@ div.sc_element_container {
   }
   .sc_selected.sc_blur {
     background-color: #D4D4D4;
+    .sc_math.mq-math-mode.mq-editable-field, .mq-math-mode.mq-editable-field, .sc_SelectBox {
+      border-color: #D4D4D4;
+      &.mq-focused {
+        border-color: #D4D4D4;
+      }
+      span.mq-unit {
+        border-color: #D4D4D4;
+      }
+    }
     .mq-math-mode.mq-editable-field span.mq-unit {
-      border-color: #C4C4C4;
+      border-color: #D4D4D4;
+    }
+    &.sc_text {
+      .sc_hashtag {
+        background-color: #D4D4D4;
+      }
+      .sc_wysiwyg_holder {
+        border-color: #D4D4D4;
+      }
+    }
+    &.sc_element {
+      .sc_end {
+        background-color: #D4D4D4;
+      }
+      table.sc_element_table td.sc_element_td {
+        background-color: #D4D4D4;
+        &.sc_focused {
+          background-color: #D4D4D4;
+        }
+      }
     }
   }
   .sc_dropTop {

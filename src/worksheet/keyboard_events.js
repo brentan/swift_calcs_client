@@ -116,6 +116,7 @@ Worksheet.open(function(_) {
         this.selectAll();
         if(this.activeElement) this.activeElement.mouseOut({});
         evt.preventDefault();
+        this.unblurToolbar();
         return;
     }
     if(this.selection.length == 0) {
