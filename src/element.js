@@ -1061,6 +1061,7 @@ var Element = P(function(_) {
 
 	// Disable/Enable a line.  When disabled, it will be removed from the computation tree
 	_.disable = function() {
+		if(!this.allow_interaction()) return;
 		if(this.disabled) return;
 		var independent_vars = this.allIndependentVars();
 		var do_eval = false;
@@ -1088,6 +1089,7 @@ var Element = P(function(_) {
 		window.setTimeout(function(_this) { return function() { _this.blur(); } }(this),1);
 	}
 	_.enable = function() {
+		if(!this.allow_interaction()) return;
 		if(!this.disabled) return;
 		this.jQ.removeClass(css_prefix + 'disabled');
 		this.disabled = false;
@@ -1691,6 +1693,7 @@ var Element = P(function(_) {
 
   // Can I interact with this element?
   _.allow_interaction = function() {
+  	if(this.worksheet.need_paid_plan) return false;
   	return this.interaction_level <= INTERACTION_LEVEL;
   }
 

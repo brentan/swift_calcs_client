@@ -230,7 +230,7 @@ Worksheet.open(function(_) {
       e.clipboardData.setData('text/plain', to_store);
   }
   _.cut = function(e) {
-    if(this.rights == 1) {
+    if((this.rights == 1) || this.need_paid_plan) {
       e.preventDefault();
       return showNotice('Cut and Copy have been disabled for this Worksheet', 'red');
     }
@@ -248,7 +248,7 @@ Worksheet.open(function(_) {
     }
   }
   _.copy = function(e) {
-    if(this.rights == 1) {
+    if((this.rights == 1) || this.need_paid_plan) {
       e.preventDefault();
       return showNotice('Cut and Copy have been disabled for this Worksheet', 'red');
     }

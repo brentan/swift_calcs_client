@@ -25,6 +25,7 @@ var Worksheet = P(function(_) {
 	_.server_version = 1;
 	_.rights = 0;
 	_.uploads = "";
+  _.need_paid_plan = false;
 	_.revision_hash = 0;
 	_.loaded = false;
 	_.ready_to_print = false;
@@ -46,6 +47,7 @@ var Worksheet = P(function(_) {
     this.author = inputs.author;
     this.onshape_did = inputs.onshape_did;
     this.fusion_id = inputs.fusion_id;
+    this.need_paid_plan = inputs.need_paid_plan;
 		this.ends = {};
     this.object_list = {};
 		this.ends[R] = 0;
@@ -165,6 +167,37 @@ var Worksheet = P(function(_) {
     if(this.onshape_did) {
       var els = $('<div/>').html('Worksheet Linked to Onshape - <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Onshape file</a>.');
       var div = $('<div/>').addClass('top_share').append(els).insertAfter(this.jQ.closest('.active_holder').children('.worksheet_item, .invitation_item'));
+    }
+    if(this.need_paid_plan) {
+      var el = this.jQ.closest('.active_holder');
+      var div = $("<div/>").addClass("need_paid_plan");
+      var _this = this;
+      if(this.rights < 4) {
+        div.html("<i class='fa fa-exclamation-triangle'></i><h2>Worksheet Owner has Downgraded Their Plan</h2>This item's sharing settings are not compatible with the owner's current Swift Calcs subscription.  As a result, the worksheet below is view only and editing has been disabled.  Please contact the worksheet owner and request that they upgrade their account or set the sharing permissions on this worksheet to a level compatible with their current plan.  You can view the owner contact information in the <a href='#' onclick='window.openSharingDialog(\"" + _this.hash_string + "\",\"Worksheet\");return false;'>sharing settings window</a>.<BR><BR><div class='explain'>Questions?  <a href='#' class='support_ticket'>Open a support ticket</a> or email us at <a href='mailto:support@swiftcalcs.com'>support@swiftcalcs.com</a> for assistance.</div>");
+      } else {
+        div.html("<i class='fa fa-exclamation-triangle'></i><h2>Upgrade Your Subsription or Allow Public Access to Edit</h2>This item's sharing settings are not compatible with your current Swift Calcs subscription.  The worksheet below is view only.  To enable editing, please:<ul><li><a href='#' onclick='window.loadSubscriptionSettings(); return false;'>Click here</a> to upgrade your account to a <a href='#' onclick='window.loadSubscriptionSettings(1); return false;'>Professional</a> or <a href='#' onclick='window.loadSubscriptionSettings(2); return false;'>Business Plan</a></li><li>Or <a href='#' class='reset_rights'>click here to change share settings on this Worksheet to allow Public Viewing and Copying</a></li></ul><div class='explain'>Questions?  <a href='#' class='support_ticket'>Open a support ticket</a> or email us at <a href='mailto:support@swiftcalcs.com'>support@swiftcalcs.com</a> for assistance.</div>");
+        div.find('a.reset_rights').on('click', function(e) {
+          e.preventDefault();
+          el.find('div.need_paid_plan').hide();
+          var loader = $('<div class="loader need_paid_plan_loader" style="border: 1px solid #e0e0e0;border-width:1px 0px 1px 0px;"><i class="fa fa-spinner fa-pulse"></i></div>').insertBefore(el.find('div.need_paid_plan'));
+          window.ajaxRequest("/set_public", { hash_string: _this.hash_string }, function(response) {
+              el.find('div.need_paid_plan').remove();
+              el.find("td.collaborators > div").html(response.rights);
+              showNotice("Worksheet set to allow Public Viewing and Copying and is now editable.","green");
+              el.find('.top_warning').slideDown({duration: 250});
+              el.find('.details_span').slideDown({duration: 250});
+              el.find('.'  + css_prefix + 'no_interaction').removeClass(css_prefix + 'no_interaction');
+              loader.slideUp({duration: 250, always: function() { $(this).remove() }});
+              _this.need_paid_plan = false;
+            }, function() {
+              el.find('div.need_paid_plan').show();
+              loader.remove();
+          });
+        });
+      }
+      div.insertAfter(el.children('.worksheet_item, .invitation_item'));
+      el.find('.top_warning').hide();
+      window.setTimeout(function() { el.find('.details_span').hide(); },1);
     }
     /*if(this.fusion_id) {
       var els = $('<div/>').html('Worksheet Linked to Fusion 360 - <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Fusion 360 file</a> (requires Fusion 360 to be installed).');
@@ -428,6 +461,7 @@ var Worksheet = P(function(_) {
 	  this.updateUploads();
 	  this.reset_server_base(to_parse);
 	  this.loaded = true;
+    if(this.need_paid_plan) this.blur();
 	  return this;
 	}
 	_.reset_server_base = function(base) {
@@ -690,6 +724,7 @@ var Worksheet = P(function(_) {
 		return out.join("\n");
   }
   _.allow_interaction = function () {
+    if(this.need_paid_plan) return false;
     return (INTERACTION_LEVEL >= INTERACTION_LEVELS.FULL);
   }
 	// Debug.  Print entire worksheet tree

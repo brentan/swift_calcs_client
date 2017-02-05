@@ -94,6 +94,12 @@ var ajaxQueueClass = P(function(_) {
 		  var patch_list = diff_patch.patch_make(this.server_version[id], this.should_be_server_version[id], diff);
 		  patch_list = diff_patch.patch_toText(patch_list);
 		  post_data.patch = patch_list;
+		  if(patch_list == "") {
+				this.holding_pen[id] = false;
+    		ajaxQueue.server_version[id] = ajaxQueue.should_be_server_version[id]; // Update what we know to be on the server
+    		ajaxQueue.complete(id);
+		  	return this;
+		  }
 		}
 		this.holding_pen[id] = false;
 		$.ajax({

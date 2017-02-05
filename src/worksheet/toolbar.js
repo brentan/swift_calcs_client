@@ -21,6 +21,7 @@ Worksheet.open(function(_) {
 		if(!this.toolbar) return;
 		this.toolbar.attachToolbar(el, options);
 		this.reshapeToolbar();
+		if(this.need_paid_plan) this.toolbar.blurToolbar(el);
 	}
 	_.detachToolbar = function() {
 		if(!this.toolbar) return;
@@ -31,7 +32,7 @@ Worksheet.open(function(_) {
 		this.toolbar.blurToolbar(el);
 	}
 	_.unblurToolbar = function() {
-		if(!this.toolbar) return;
+		if(!this.toolbar || this.need_paid_plan) return;
 		this.toolbar.unblurToolbar();
 	}
 });
