@@ -1,14 +1,10 @@
-var slider = P(Element, function(_, super_) {
-	_.klass = ['slider'];
+var slider = P(a_input_control, function(_, super_) {
+	_.klass = ['slider','a_input_control'];
 	_.savedProperties = ['slider_min','slider_max','step_size','units'];
 	_.slider_min = '0';
 	_.slider_max = '100';
 	_.step_size = '1';
 	_.units = '';
-	_.needsEvaluation = false; 
-	_.evaluatable = true;
-  _.interaction_level = INTERACTION_LEVELS.FORM_ELEMENTS;
-	_.lineNumber = true;
 	_.helpText = "<<slider>>\nThe slider provides a user visual slider that a user can click and manipulate in order to change an input.\nClick the <i class='fa fa-wrench'></i> icon to customize the minimum, maximum, step size, and units of the slider.\nHELP:18";
 
 	_.innerHtml = function() {
@@ -20,8 +16,8 @@ var slider = P(Element, function(_, super_) {
 			blur: this.submissionHandler(this)
 		}});
 		this.varStoreField.variableEntryField(true);
-		this.slider = registerFocusable(Slider,this, 'value', { min: this.slider_min, max: this.slider_max, step: this.step_size, unit: this.units});
-		this.focusableItems = [[this.varStoreField, this.slider]];
+		this.commandElement = registerFocusable(Slider,this, 'value', { min: this.slider_min, max: this.slider_max, step: this.step_size, unit: this.units});
+		this.focusableItems = [[this.varStoreField, this.commandElement]];
 		this.touched = false;
 		this.needsEvaluation = false;
 		super_.postInsertHandler.call(this);
@@ -44,68 +40,8 @@ var slider = P(Element, function(_, super_) {
   	this.updateSlider();
   	return this;
   }
-	_.enterPressed = function(_this) {
-		return function(item) {
-			_this.submissionHandler(_this)();
-			if(_this[R] && (_this[R] instanceof math) && _this[R].empty())
-				_this[R].focus(L);
-			else
-				math().setImplicit().insertAfter(_this).show().focus(0);
-		};
-	}
-	_.submissionHandler = function(_this) {
-		return function(mathField) {
-			if(_this.needsEvaluation) {
-				_this.commands = [{command: _this.varStoreField.text() + " := " + _this.slider.text()}];	
-				_this.independent_vars = [_this.varStoreField.text().trim()];
-				_this.evaluate();
-				_this.needsEvaluation = false;
-			}
-		};
-	}
-	_.evaluationFinished = function(result) {
-		this.last_result = result;
-		if(!result[0].success) {
-			this.outputBox.setError(result[0].returned);
-			this.outputBox.expand();
-		} else
-			this.outputBox.collapse();
-		return true;
-	}
-  _.toString = function() {
-  	return '{slider}{{' + this.argumentList().join('}{') + '}}';
-  }
-	_.PrependBlankItem = function(el) {
-		if(el === this.focusableItems[0][0]) {
-			//add a blank block just before this one
-			math().insertBefore(this).show();
-			this.focus(L);
-			return true;
-		} else
-			return false;
-	}
-  _.indent = function(el, indent) {
-    if(el === this.focusableItems[0][0]) {
-      //indent me (or un-indent)
-      if(indent)
-        this.worksheet.indent(this);
-      else
-        this.worksheet.outdent(this);
-      el.focus(L);
-      return true;
-    } else
-      return false;
-  }
-	// Callback for math elements notifying that this element has been changed
-	_.changed = function(el) {
-		if(el == this.varStoreField) this.needsEvaluation = true;
-		if(el == this.slider) {
-			this.needsEvaluation = true;
-			this.submissionHandler(this)();
-		}
-	}
 	_.updateSlider = function() {
-		this.slider.update({
+		this.commandElement.update({
 			unit: this.units,
 			min: this.slider_min,
 			max: this.slider_max,

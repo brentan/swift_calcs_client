@@ -78,6 +78,9 @@ $(function() {
       {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;{', text: 'Conditional Function', el: 'conditional_assignment', focus_right: false, option: 'latex{\\operatorname{f}\\left({}\\right)}', highlight_always: "Right Shift-Right Shift-Right"},
       {left: 'fa-trash', text: 'Purge Variable', el: 'purge' },
       {left: 'fa-sliders', text: 'Input Slider', el: 'slider' },
+      {left: 'fa-caret-square-o-down', text: 'Pulldown Menu', el: 'select' },
+      {left: 'fa-check-circle-o', text: 'Radio Selector', el: 'radio' },
+      {left: 'fa-check-square-o', text: 'Checkbox Selector', el: 'checkbox' },
     ],
   };
   var first = true;

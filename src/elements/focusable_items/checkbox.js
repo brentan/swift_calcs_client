@@ -10,8 +10,11 @@ var CheckBox = P(aFocusableItem, function(_, super_) {
     if(options.needs_touch) this.needs_touch = options.needs_touch;
     this.message = options.message;
     this.checked = options.checked ? true : false;
-    this.jQ.html("<i class='fa'></i>" + this.message);
+    this.refreshHTML();
     this.updateCheckbox();
+  }
+  _.refreshHTML = function() {
+    this.jQ.html("<i class='fa'></i>" + this.message);
   }
   // Add appropriate class to checkbox
   _.updateCheckbox = function() {

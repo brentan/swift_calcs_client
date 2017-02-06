@@ -43,4 +43,36 @@
 		}
 	}
 	&.sc_no_interaction span.sc_SelectBox { cursor: not-allowed; }
+	span.sc_Radio {
+		display: inline-block;
+		margin: 1px;
+		padding: 1px 2px;
+		& > div {
+			white-space: nowrap;
+			cursor: pointer;
+			i.fa {
+				margin-right:7px;
+			}
+			i.fa-check-circle-o {
+				display: none;
+			}
+			&.selected {
+				i.fa-circle-o {
+					display: none;
+				}
+				i.fa-check-circle-o {
+					display: inline-block;
+				}
+			}
+			&:hover {
+				background-color: #e0e0e0;
+			}
+		}
+		&.highlighted {
+			& > div.highlighted {
+				text-decoration: underline;
+			}
+		}
+	}
+	&.sc_no_interaction span.sc_SelectBox { cursor: not-allowed; }
 }

@@ -30,11 +30,19 @@ var SelectBox = P(aFocusableItem, function(_, super_) {
 		this.openedJQ.html('');
 		var count = 0;
 		var _this = this;
-		$.each(option_list, function(k, v) {
-			var el = $('<div/>').addClass(css_prefix + "select_option").html(v).on('click', function(_this, count) { return function(e) { _this.select(count); e.preventDefault(); }; }(_this, count)).on('mouseenter', function(_this, count) { return function(e) { _this.highlight(count); }; }(_this, count)).appendTo(_this.openedJQ);
-			_this.option_list.push({ key: k, val: v });
-			count++;
-		});
+		if(Array.isArray(option_list)) {
+			for(var i = 0; i < option_list.length; i++) {
+				var el = $('<div/>').addClass(css_prefix + "select_option").html(option_list[i].name).on('click', function(_this, count) { return function(e) { _this.select(count); e.preventDefault(); }; }(_this, count)).on('mouseenter', function(_this, count) { return function(e) { _this.highlight(count); }; }(_this, count)).appendTo(_this.openedJQ);
+				_this.option_list.push({ key: option_list[i].val, val: option_list[i].name });
+				count++;
+			}
+		} else {
+			$.each(option_list, function(k, v) {
+				var el = $('<div/>').addClass(css_prefix + "select_option").html(v).on('click', function(_this, count) { return function(e) { _this.select(count); e.preventDefault(); }; }(_this, count)).on('mouseenter', function(_this, count) { return function(e) { _this.highlight(count); }; }(_this, count)).appendTo(_this.openedJQ);
+				_this.option_list.push({ key: k, val: v });
+				count++;
+			});
+		}
 		this.clear();
 	}
 	_.close = function() {
