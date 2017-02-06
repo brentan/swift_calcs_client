@@ -47,6 +47,17 @@ var select = P(a_input_control, function(_, super_) {
     this.commandElement.position = -1; // Force refresh
     this.commandElement.select(selected >= options.length ? 0 : selected, true);
   }
+  _.submissionHandler = function(_this) {
+    return function(mathField) {
+      if(_this.needsEvaluation && _this.varStoreField.text().trim().length) {
+        _this.commands = [{command: _this.varStoreField.text() + " := " + _this.commandElement.text()}];  
+        _this.independent_vars = [_this.varStoreField.text().trim()];
+        _this.dependent_vars = GetDependentVars(_this.parsed_list[_this.commandElement.position].val);
+        _this.evaluate();
+        _this.needsEvaluation = false;
+      }
+    };
+  }
   _.setOptions = function() {
     window.showPopupOnTop();
     var _this = this;
