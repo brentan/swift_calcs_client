@@ -13,17 +13,6 @@ var a_input_control = P(Element, function(_, super_) {
         math().setImplicit().insertAfter(_this).show().focus(0);
     };
   }
-  _.submissionHandler = function(_this) {
-    return function(mathField) {
-      if(_this.needsEvaluation && _this.varStoreField.text().trim().length) {
-        _this.commands = [{command: _this.varStoreField.text() + " := " + _this.commandElement.text()}];  
-        _this.independent_vars = [_this.varStoreField.text().trim()];
-        _this.dependent_vars = GetDependentVars(_this.parsed_list[_this.commandElement.position].val);
-        _this.evaluate();
-        _this.needsEvaluation = false;
-      }
-    };
-  }
   _.evaluationFinished = function(result) {
     this.last_result = result;
     if(!result[0].success) {

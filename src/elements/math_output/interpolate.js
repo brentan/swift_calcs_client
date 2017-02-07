@@ -27,6 +27,16 @@ var interpolate = P(SettableMathOutput, function(_, super_) {
     this.focusableItems = [[this.xdata] , [this.ydata], [this.order], [this.extrapolate]];
     this.needsEvaluation = false;
     super_.postInsertHandler.call(this);
+    var all_touched = true;
+    for(var i = 0; i < 3; i++) {
+      for(var j = 0; j < this.focusableItems[i].length; j++) {
+        if(this.focusableItems[i][j].needs_touch) all_touched = all_touched && this.focusableItems[i][j].touched;
+      }
+    }
+    if(all_touched) {
+      this.needsEvaluation = true;
+      this.submissionHandler(this)(this.xdata);
+    }
     return this;
   }
 

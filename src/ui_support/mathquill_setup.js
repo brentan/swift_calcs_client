@@ -315,6 +315,7 @@ window.MathquillSetup = function() {
 			and:"<<and>>\nAnd parameter",
 			or:"<<or>>\nOr parameter",
 			xor:"<<xor>>\nXor parameter",
+			makevector:"<<makevector>>\mMake a vector",
 			firstIndex:"<<firstIndex>>\nReturns the numerical index of the first row or column in a vector/matrix, based on current settings (0 or 1)",
 			mksa_remove:"<<mksa_remove(4 in)>>\nConvert value to mksa units and then remove the unit from the value.\n|Also see: mksa, unit_remove|",
 			unit_remove:"<<unit_remove(4 in)>>\nConvert value to default units and then remove the unit from the value.\n|Also see: mksa, mksa_remove|",
