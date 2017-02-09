@@ -227,10 +227,14 @@ var SwiftCalcs = {};
     return independent_vars
   }
     
+  var delay_resize = false;
   $(window).on('resize', function() {
     window.resizeResults();
     if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
-    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
+    if(delay_resize) window.clearTimeout(delay_resize);
+    delay_resize = window.setTimeout(function() {
+      if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
+    },150);
   });
 
   RIGHTS = { NO_RIGHTS: 0, READ_ONLY: 1, READ_ONLY_WITH_DUPLICATION: 2, EDIT_RIGHTS: 3,  ADMIN_RIGHTS: 4 };

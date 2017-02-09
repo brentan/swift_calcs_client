@@ -33,6 +33,7 @@ var plot = P(Element, function(_, super_) {
 	_.height = 300;
 	_.plotBox = false;
 	_.getUnits = false;
+	_.plot_ready = false;
 	_.helpText = "<<plot>>\nCreate a plot of data and functions.  Insert new data to plot with the 'add another item' link, and adjust the properties of each data-set, such as color or line thickness, by clicking on the item in the plot.\nHELP:23";
 
 	_.innerHtml = function() {
@@ -121,6 +122,7 @@ var plot = P(Element, function(_, super_) {
 		this.calc_x_max = false;
 		this.calc_x_min = false;
 		if(this.shouldBeEvaluated(evaluation_id)) {
+			this.plot_ready = false;
 			this.addSpinner(evaluation_id);
 			this.commands = [{command: [this.x_min, this.y_min, this.y2_min, this.x_max, this.y_max, this.y2_max, this.x_log, this.y_log, this.y2_log, this.x_units, this.y_units, this.y2_units].join(",")}];
 			var any_altered = this.newCommands() || this.altered_content;
@@ -244,10 +246,14 @@ var plot = P(Element, function(_, super_) {
 			this.childrenEvaluated(evaluation_id);
 		return false;
 	}
+	_.setWidth = function() {
+		if(this.plot_ready) this.drawPlot();
+	}
 	_.drawPlot = function() {
 		// Draw the plot, if there is anything to plot
 		var columns = [];
 		this.has_bar = false;
+		this.plot_ready = true;
 		var ignore_custom_xs = false;
 		var xs = {};
 		var types = {};

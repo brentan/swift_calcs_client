@@ -54,6 +54,7 @@ Worksheet.open(function(_) {
       // Remove implicit math block that was created
       target.ends[L].hide(0).remove(0,true);
     }
+    target.setWidth();
     if(!stream) this.endUndoStream();
   }
 
@@ -93,6 +94,7 @@ Worksheet.open(function(_) {
       } else 
         this.outdent(blocks); // Recurse with all blocks and try again!
       if(!stream) this.endUndoStream();
+      for(var i = 0; i < blocks.length; i++) blocks[i].setWidth();
       return blocks_in;
     } else {
       //Not in a parent indent.  Go through all blocks and if any are indents, outdent them

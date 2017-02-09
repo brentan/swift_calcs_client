@@ -671,6 +671,9 @@ var Element = P(function(_) {
 					this.focusableItems[i][j].setWidth(max(150, (this.jQ.closest('.' + css_prefix + 'element').width() - 150) / tot));
 			}
 		}
+		var children = this.children();
+		for(var i = 0; i < children.length; i++)
+			children[i].setWidth();
 		return this;
 	}
 	_.hide = function(duration) {

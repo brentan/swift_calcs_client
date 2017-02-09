@@ -1339,6 +1339,62 @@ $(function() {
 		return false;
 	});
 
+	window.download_pdf = function() {
+		// Assume worksheet is open right now
+		if(!SwiftCalcs.active_worksheet || !SwiftCalcs.active_worksheet.jQ) return;
+		window.showLoadingPopup();
+		$('.loading_box .name').html('Preparing to Convert: Preparing...');
+		SwiftCalcs.active_worksheet.blur();
+		SwiftCalcs.active_worksheet.jQ.closest(".worksheet_holder").width(620);
+		SwiftCalcs.active_worksheet.setWidth();
+		window.setTimeout(function() {
+			window.showPopupOnTop();
+			$('.popup_dialog .full').html("<div style='text-align:center;padding:50px;'><h2>Print to PDF</h2>If you have a <i>Print to PDF</i> option on your computer, we recommend using that to provide more control over the output.<BR><a class='button' style='color:white;' onclick='$(\"body nav.menu .print\").click(); return false;'>Open Print Dialog to use Print to PDF</a><BR><BR><h2>Create PDF Directly</h2>If you do not have a <i>Print to PDF</i> capability<BR>select your options below:<BR>Page Size: <select><option value='Letter'>US Letter</option><option value='A4'>A4</option><option value='Legal'>Legal</option></select><br><label><input type=checkbox class=pages checked style='width:auto;'> Include Page Numbers in Footer</label><BR><a class='button grey' style='color:white;' onclick='window.complete_pdf();return false;'>Download Now</a>");
+	    $('.popup_dialog .bottom_links').html('');
+			window.resizePopup(true);
+		},500); // Need to delay to allow plots to re-render
+	}
+	window.complete_pdf = function() {
+		var pages = $('.popup_dialog .pages').is(':checked');
+		var paper = $('.popup_dialog select').val();
+		window.hidePopupOnTop();
+		$('.loading_box .name').html('Loading');
+		if(!SwiftCalcs.active_worksheet || !SwiftCalcs.active_worksheet.jQ) return;
+		var html = SwiftCalcs.active_worksheet.jQ.closest(".active_worksheet").html();
+		window.resizeResults();
+		SwiftCalcs.active_worksheet.setWidth();
+    var form = $('<form target="_blank" style="display:none;" method="POST" action="/worksheets/pdf/' + SwiftCalcs.active_worksheet.hash_string + '">');
+    form.append($('<input type="hidden" name="html">').val(html));
+    form.append($('<input type="hidden" name="pages">').val(pages ? '1' : '0'));
+    form.append($('<input type="hidden" name="paper">').val(paper));
+    $('body').append(form);
+    form.submit();
+	}
+
+	$('body').on('click', 'nav.menu .to_pdf', function(e) {
+		if(SwiftCalcs.active_worksheet) {
+    	window.trackEvent("Worksheet", "Download as PDF");
+			window.showLoadingPopup();
+			$('.loading_box .name').html('Preparing to Convert: Calculating...');
+			var doPrint = function() {
+				if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded && (SwiftCalcs.active_worksheet.ready_to_print || !SwiftCalcs.giac.auto_evaluation)) {
+					window.setTimeout(function() { // Delay to allow animations to finish, SVG plots to be generated, etc
+						window.hidePopupOnTop();
+						$('.loading_box .name').html('Loading');
+						window.download_pdf();
+					}, 400);
+				} else
+					window.setTimeout(doPrint, 250);
+			}
+			if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded && (SwiftCalcs.active_worksheet.ready_to_print || !SwiftCalcs.giac.auto_evaluation)) 
+				window.download_pdf();
+			else
+				doPrint();
+		} else showNotice("Please open a worksheet to download as PDF","red");
+		e.preventDefault();
+		return false;
+	});
+
 
 	$('body').on('click', '.worksheet_item i.fa-ellipsis-v', function(e) {
 		var archived = $(this).closest('.archive').length > 0;
@@ -1400,6 +1456,30 @@ $(function() {
 					closeMenu();
 				}).appendTo(menu);
 			}
+			$('<div/>').html('<i class="fa fa-fw fa-download"></i>Download as PDF').on('click', function(e) {
+				closeMenu();
+				if(SwiftCalcs.active_worksheet) {
+		    	window.trackEvent("Worksheet", "Download as PDF");
+					window.showLoadingPopup();
+					$('.loading_box .name').html('Preparing to Convert: Calculating...');
+					var doPrint = function() {
+						if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded && (SwiftCalcs.active_worksheet.ready_to_print || !SwiftCalcs.giac.auto_evaluation)) {
+							window.setTimeout(function() { // Delay to allow animations to finish, SVG plots to be generated, etc
+								window.hidePopupOnTop();
+								$('.loading_box .name').html('Loading');
+								window.download_pdf();
+							}, 400);
+						} else
+							window.setTimeout(doPrint, 250);
+					}
+					if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded && (SwiftCalcs.active_worksheet.ready_to_print || !SwiftCalcs.giac.auto_evaluation)) 
+						window.download_pdf();
+					else
+						doPrint();
+				} else showNotice("Please open a worksheet to download as PDF","red");
+				e.preventDefault();
+				return false;
+			}).appendTo(menu);
 			if(response.rights_level >= 3) 
 				$('<div/>').html('<i class="fa fa-fw fa-pencil-square-o"></i>Rename').on('click', function(e) {
 					if(el.closest('.active_holder').length > 0) {
