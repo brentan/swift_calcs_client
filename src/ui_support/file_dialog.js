@@ -1343,7 +1343,7 @@ $(function() {
 		// Assume worksheet is open right now
 		if(!SwiftCalcs.active_worksheet || !SwiftCalcs.active_worksheet.jQ) return;
 		window.showPopupOnTop();
-		$('.popup_dialog .full').html("<div class='title'>Print to PDF</div>If you have a <i>Print to PDF</i> option on your computer, we recommend using that to provide more control over the output.<BR><a class='button' style='color:white;margin:5px 50px;text-align:center;' onclick='$(\"body nav.menu .print\").click(); return false;'>Open Print Dialog to use Print to PDF</a><BR><BR><div class='title'>Email Me a PDF</div>If you do not have a <i>Print to PDF</i> capability, select your options below.  We will generage the PDF and email it to you in 3-10 minutes:<BR>Page Size: <select><option value='Letter'>US Letter</option><option value='A4'>A4</option><option value='Legal'>Legal</option></select><br><label><input type=checkbox class=pages checked style='width:auto;'> Include Page Numbers in Footer</label><BR><a class='button grey' style='color:white;margin:5px 50px;text-align:center;' onclick='window.download_pdf2();return false;'>Generate and Email PDF</a>");
+		$('.popup_dialog .full').html("<div class='title'>Print to PDF</div>If you have a <i>Print to PDF</i> option on your computer, we recommend using that to provide more control over the output.<BR><a class='button' style='color:white;margin:5px 50px;text-align:center;' onclick='$(\"body nav.menu .print\").click(); return false;'>Open Print Dialog to use Print to PDF</a><BR><BR><div class='title'>Email Me a PDF</div>If you do not have a <i>Print to PDF</i> capability, select your options below.  We will generage the PDF and email it to you in 3-10 minutes:<BR>Page Size: <select><option value='Letter'>US Letter</option><option value='A4'>A4</option><option value='Legal'>Legal</option></select><br><label><input type=checkbox class='pages' checked style='width:auto;'> Include Page Numbers in Footer</label><BR><a class='button grey' style='color:white;margin:5px 50px;text-align:center;' onclick='window.download_pdf2();return false;'>Generate and Email PDF</a>");
     $('.popup_dialog .bottom_links').html('');
 		window.resizePopup(true);
 	}
@@ -1358,7 +1358,7 @@ $(function() {
 		},500); // Need to delay to allow plots to re-render
 	}
 	window.download_pdf3 = function() {
-		var pages = $('.popup_dialog .pages').is(':checked');
+		var pages = $('.popup_dialog .pages').is(':checked') ? '1' : '0';
 		var paper = $('.popup_dialog select').val();
 		window.hidePopupOnTop();
 		$('.loading_box .name').html('Loading');
