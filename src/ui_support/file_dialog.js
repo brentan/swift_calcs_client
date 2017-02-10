@@ -1342,19 +1342,22 @@ $(function() {
 	window.download_pdf = function() {
 		// Assume worksheet is open right now
 		if(!SwiftCalcs.active_worksheet || !SwiftCalcs.active_worksheet.jQ) return;
+		window.showPopupOnTop();
+		$('.popup_dialog .full').html("<div class='title'>Print to PDF</div>If you have a <i>Print to PDF</i> option on your computer, we recommend using that to provide more control over the output.<BR><a class='button' style='color:white;margin:5px 50px;text-align:center;' onclick='$(\"body nav.menu .print\").click(); return false;'>Open Print Dialog to use Print to PDF</a><BR><BR><div class='title'>Email Me a PDF</div>If you do not have a <i>Print to PDF</i> capability, select your options below.  We will generage the PDF and email it to you in 3-10 minutes:<BR>Page Size: <select><option value='Letter'>US Letter</option><option value='A4'>A4</option><option value='Legal'>Legal</option></select><br><label><input type=checkbox class=pages checked style='width:auto;'> Include Page Numbers in Footer</label><BR><a class='button grey' style='color:white;margin:5px 50px;text-align:center;' onclick='window.download_pdf2();return false;'>Generate and Email PDF</a>");
+    $('.popup_dialog .bottom_links').html('');
+		window.resizePopup(true);
+	}
+	window.download_pdf2 = function() {
 		window.showLoadingPopup();
 		$('.loading_box .name').html('Preparing to Convert: Preparing...');
 		SwiftCalcs.active_worksheet.blur();
 		SwiftCalcs.active_worksheet.jQ.closest(".worksheet_holder").width(620);
 		SwiftCalcs.active_worksheet.setWidth();
 		window.setTimeout(function() {
-			window.showPopupOnTop();
-			$('.popup_dialog .full').html("<div style='text-align:center;padding:50px;'><h2>Print to PDF</h2>If you have a <i>Print to PDF</i> option on your computer, we recommend using that to provide more control over the output.<BR><a class='button' style='color:white;' onclick='$(\"body nav.menu .print\").click(); return false;'>Open Print Dialog to use Print to PDF</a><BR><BR><h2>Create PDF Directly</h2>If you do not have a <i>Print to PDF</i> capability<BR>select your options below:<BR>Page Size: <select><option value='Letter'>US Letter</option><option value='A4'>A4</option><option value='Legal'>Legal</option></select><br><label><input type=checkbox class=pages checked style='width:auto;'> Include Page Numbers in Footer</label><BR><a class='button grey' style='color:white;' onclick='window.complete_pdf();return false;'>Download Now</a>");
-	    $('.popup_dialog .bottom_links').html('');
-			window.resizePopup(true);
+			window.download_pdf3();
 		},500); // Need to delay to allow plots to re-render
 	}
-	window.complete_pdf = function() {
+	window.download_pdf3 = function() {
 		var pages = $('.popup_dialog .pages').is(':checked');
 		var paper = $('.popup_dialog select').val();
 		window.hidePopupOnTop();
@@ -1363,12 +1366,8 @@ $(function() {
 		var html = SwiftCalcs.active_worksheet.jQ.closest(".active_worksheet").html();
 		window.resizeResults();
 		SwiftCalcs.active_worksheet.setWidth();
-    var form = $('<form target="_blank" style="display:none;" method="POST" action="/worksheets/pdf/' + SwiftCalcs.active_worksheet.hash_string + '">');
-    form.append($('<input type="hidden" name="html">').val(html));
-    form.append($('<input type="hidden" name="pages">').val(pages ? '1' : '0'));
-    form.append($('<input type="hidden" name="paper">').val(paper));
-    $('body').append(form);
-    form.submit();
+		window.showLoadingOnTop();
+		window.ajaxRequest('/worksheets/pdf/' + SwiftCalcs.active_worksheet.hash_string,{html: html, pages: pages, paper: paper},function() { window.hidePopupOnTop(); showNotice("Your request has been received.  You should receive an email in a few minutes.","green")},function() { window.hidePopupOnTop(); });
 	}
 
 	$('body').on('click', 'nav.menu .to_pdf', function(e) {
