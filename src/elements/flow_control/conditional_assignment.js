@@ -183,20 +183,14 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 					var conds = [];
 					$.each(_this.eqFields, function(i, v) { eqs.push(v.text()); });
 					$.each(_this.condFields, function(i, v) { conds.push(v.text()); });
-					if(_this.varField.text().trim().match(/^[a-z][a-z0-9_~]*$/i)) {
-						var command = _this.varField.text() + ' := ';
-						var end_command = '';
-						var return_command = '';
-					} else {
-						var command = _this.varField.text() + ' := { ';
-						var end_command = '}';
-						var return_command = 'return';
-					}
-					for(var i = 0; i < conds.length; i++) {
-						command += 'if(evalf(' + conds[i] + ')) { ' + return_command + ' (' + eqs[i] + '); } else {';
-						end_command += "}";
-					}
-					command = command + return_command + '(' + eqs[i] + ');' + end_command;
+					var command = _this.varField.text() + ' := ';
+					var end_command = '';
+					var return_command = '';
+          for(var i = 0; i < conds.length; i++) {
+            command += 'when(evalf(' + conds[i] + '),(' + eqs[i] + '),(';
+            end_command += ")";
+          }
+          command = command + eqs[i] + end_command + ")";
 					_this.commands = _this.genCommand(command); 
 					_this.evaluate();
 					_this.needsEvaluation = false;

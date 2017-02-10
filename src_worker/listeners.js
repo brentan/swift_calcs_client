@@ -220,17 +220,6 @@ var receiveMessage = function(command) {
       }
       // Do the assignment.  Test if there were errors, if so, report those.  If not, and output is asked for, we return the value of the stored variable
       var test_output = { success: true, returned: Module.casevalWithTimeout(to_send) };
-      // Work through the warnings.  If any are present and suggesting a different input, lets evaluate that instead
-      for(var j = (warnings[ii].length - 1); j >= 0; j--) {
-        if(warnings[ii][j].indexOf('Perhaps you meant') > -1) {
-          // Use the cas suggestion, as we probably want to use that
-          to_send = warnings[ii][j].replace('Perhaps you meant ','');
-          errors[ii] = null;
-          warnings[ii] = [];
-          test_output = { success: true, returned: Module.casevalWithTimeout(to_send)};
-          break;
-        }
-      }
       test_output = testError(test_output, ii, to_send);
       if(test_output.success) {
         if(to_send.match(/^[\s]*[a-z][a-z0-9_~]*\([a-z0-9_~,]+\)[\s]*:=/i)) // Factor/expand breaks function definitions (for some reason, it loads function vars as globals) so we dont want to use it
