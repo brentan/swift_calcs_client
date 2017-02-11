@@ -78,7 +78,8 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 		return this.displayResults(result);
 	}
 	_.displayResults = function(result) {
-		this.last_result = result;
+		if((result.length == 0) || !result[0].force_display)
+			this.last_result = result;
 		this.outputBox.jQ.removeClass('calculating error warn unit_input hide_pulldown');
 		this.outputBox.jQ.find('.warning').remove();
 		this.outputBox.jQ.find('.error').remove();
@@ -106,12 +107,12 @@ var MathOutput = P(EditableBlock, function(_, super_) {
 					this.outputBox.jQ.addClass('hide_pulldown');
 					this.outputMathBox.jQ.hide();
 					this.outputBox.setWarning("Long result returned, display suppressed to improve performance.  <a class='suppress_display'>Show Result</a>", true);
-					this.outputBox.jQ.find('.suppress_display').on('click', function(_this) { return function() {
-						_this.last_result[0].force_display = true;
+					this.outputBox.jQ.find('.suppress_display').on('click', function(_this,result) { return function() {
+						result[0].force_display = true;
 						$(this).hide();
 						$("<div/>").html('<span class="fa fa-spinner fa-pulse"></span><i>working...</i>').insertAfter($(this));
-						window.setTimeout(function() { _this.displayResults(_this.last_result); });
-					}; }(this));
+						window.setTimeout(function() { _this.displayResults(result); });
+					}; }(this,result));
 				} else {
 					try {
 						this.outputMathBox.latex(result[0].returned);
