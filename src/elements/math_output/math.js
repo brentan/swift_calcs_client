@@ -263,7 +263,7 @@ var math = P(MathOutput, function(_, super_) {
 			  if(this.mathField.text().match(/^[a-z][a-z0-9_~]*[\s]*:=/i)) {         
 			  	var already_func = false;
 				  var varName = this.mathField.latex().replace(/^([^=]*)=.*$/i,"$1");
-				  var varnametext = this.mathField.text().replace(/^([a-z][a-z0-9_]*)[\s]*:=.*$/i,"$1");
+				  var varnametext = this.mathField.text().replace(/^([a-z][a-z0-9_~]*)[\s]*:=.*$/i,"$1");
 	        var everythingElse = this.mathField.latex().replace(/^[^=]*=(.*)$/i,"$1");
 	      } else {
 	      	var already_func = true;
