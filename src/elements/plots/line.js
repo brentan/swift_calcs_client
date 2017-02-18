@@ -1,6 +1,5 @@
 var plot_line = P(subplot, function(_, super_) {
 	_.plot_type = 'plot_line';
-	_.c3_type = 'line';
 	_.show_points = true;
 	_.helpText = "<<line plot>>\nPlot a line based on x and y data.  Provide the x and y data to plot.\nHELP:23";
 
@@ -29,9 +28,7 @@ var plot_line = P(subplot, function(_, super_) {
 			title: 'Chart Type',
 			sub: [
 				{ html: (this.plot_type == 'plot_line' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Line Plot', method: function(el) { el.unselect().changeTo('plot_line').select() } },
-				{ html: (this.plot_type == 'plot_line_stacked' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Stacked Line Plot', method: function(el) { el.unselect().changeTo('plot_line_stacked').select() } },
 				{ html: (this.plot_type == 'plot_area' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Area Plot', method: function(el) { el.unselect().changeTo('plot_area').select() } },
-				{ html: (this.plot_type == 'plot_area_stacked' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Stacked Area Plot', method: function(el) { el.unselect().changeTo('plot_area_stacked').select() } },
 				{ html: (this.plot_type == 'plot_scatter' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Scatter Plot', method: function(el) { el.unselect().changeTo('plot_scatter').select() } },
 			]
 		};
@@ -113,13 +110,14 @@ var plot_line = P(subplot, function(_, super_) {
 					// Set parent x_min/x_max
 					this.my_xmin = Math.min.apply(Math, this.xs);
 					this.my_xmax = Math.max.apply(Math, this.xs);
+					var extra = (this.my_xmax - this.my_xmin)*0.05;
+					this.my_xmin = this.my_xmin - extra;
+					this.my_xmax = this.my_xmax + extra;
 					this.sets_x = true;
 					this.parent.calc_x_min = this.parent.calc_x_min === false ? this.my_xmin : Math.min(this.my_xmin, this.parent.calc_x_min);
 					this.parent.calc_x_max = this.parent.calc_x_max === false ? this.my_xmax : Math.max(this.my_xmax, this.parent.calc_x_max);
           this.suggest_y_min = (this.y_axis == 'y' && this.parent.y_min === false) || (this.y_axis == 'y2' && this.parent.y2_min === false) ? Math.min.apply(Math, this.ys) : undefined;
           this.suggest_y_max = (this.y_axis == 'y' && this.parent.y_max === false) || (this.y_axis == 'y2' && this.parent.y2_max === false) ? Math.max.apply(Math, this.ys) : undefined;
-					this.ys.unshift('data_' + this.id);
-					this.xs.unshift('x_' + this.id);
 					this.plot_me = true;
 					this.outputBox.clearState().collapse();
 				} catch(e) {
@@ -139,7 +137,7 @@ var plot_line_stacked = P(plot_line, function(_, super_) {
 });
 var plot_area = P(plot_line, function(_, super_) {
 	_.plot_type = 'plot_area';
-	_.c3_type = 'area';
+	_.area = true;
 });
 var plot_area_stacked = P(plot_area, function(_, super_) {
 	_.plot_type = 'plot_area_stacked';
@@ -147,6 +145,5 @@ var plot_area_stacked = P(plot_area, function(_, super_) {
 });
 var plot_scatter = P(plot_line, function(_, super_) {
 	_.plot_type = 'plot_scatter';
-	_.c3_type = 'scatter';
 	_.line_weight = 0;
 });

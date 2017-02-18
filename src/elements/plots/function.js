@@ -1,7 +1,6 @@
 var plot_func = P(subplot, function(_, super_) {
 	_.plot_type = 'plot_func';
 	_.show_unit = false;
-	_.c3_type = 'line';
 	_.x_provided = true;
 	_.show_points = false;
 	_.savedProperties = subplotProperties.slice(0).concat(['show_unit']);
@@ -92,7 +91,7 @@ var plot_func = P(subplot, function(_, super_) {
 		command3 += "(" + this.eq0.text() + "," + this.eq1.text() + "=(" + min_val + "*" + x_unit + ")..(" + max_val +"*" + x_unit + ")" + ",y__limits=(" + y_min + ")..(" + y_max + "),nstep=600," + (this.parent.x_unit_offset * this.parent.x_unit_conversion) + ")"; 
 		var command4 = "latex(at(apply(" + this.eq1.text() + "->(evalf(mksa_base(" + this.eq0.text() + "))),[0.0000000016514245*" + unit_command + "]),0))";
 		this.dependent_vars = GetDependentVars(command3, [this.eq1.text()]);
-		return [{command: command3, nomarkup: true },{command: command4, nomarkup: true }]
+		return [{command: command3, nomarkup: true, protect_vars: this.eq1.text() },{command: command4, nomarkup: true, restore_vars: this.eq1.text() }]
 	}
   _.submissionHandler = function(_this) {
     return function(mathField) {
@@ -123,6 +122,11 @@ var plot_func = P(subplot, function(_, super_) {
 							this.xs.push(output[i][0]); 
 							this.ys.push(output[i][1]);
 						}
+						this.my_xmin = Math.min.apply(Math, this.xs);
+						this.my_xmax = Math.max.apply(Math, this.xs);
+						this.sets_x = true;
+						this.parent.calc_x_min = this.parent.calc_x_min === false ? this.my_xmin : Math.min(this.my_xmin, this.parent.calc_x_min);
+						this.parent.calc_x_max = this.parent.calc_x_max === false ? this.my_xmax : Math.max(this.my_xmax, this.parent.calc_x_max);
 						if(((this.y_axis == 'y') && this.parent.y_log) || ((this.y_axis == 'y2') && this.parent.y2_log)) {
 							for(var j=0; j<=this.ys.length; j++) {
 								if(this.ys[j] <= 0) this.ys[j] = NaN;
@@ -235,8 +239,6 @@ var plot_func = P(subplot, function(_, super_) {
 							this.suggest_y_min = undefined;
 							this.suggest_y_max = undefined;
 						}
-						this.ys.unshift('data_' + this.id);
-						this.xs.unshift('x_' + this.id);
 						this.plot_me = true;
 						this.outputBox.clearState().collapse();
 					}

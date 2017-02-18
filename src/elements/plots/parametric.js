@@ -1,7 +1,7 @@
 var plot_parametric_holder = P(subplot, function(_, super_) {
   _.show_unit = false;
-  _.c3_type = 'scatter';//'line';
-  _.line_weight=0;
+  _.line_weight=1;
+  _.show_points = false;
   _.x_provided = true;
   _.submissionHandler = function(_this) {
     return function(mathField) {
@@ -26,10 +26,12 @@ var plot_parametric_holder = P(subplot, function(_, super_) {
             this.outputBox.setError('No numeric results were returned and nothing will be plotted').expand();
           else {
             output = eval(output);
+            this.ts = [];
             this.xs = [];
             this.ys = [];
             for(var i = 0; i < output.length; i++) {
               // t values are output[i][0]...can we do something with this?
+              this.ts.push(output[i][0]);
               this.xs.push(output[i][1]);
               this.ys.push(output[i][2]);
             }
@@ -41,6 +43,7 @@ var plot_parametric_holder = P(subplot, function(_, super_) {
             if(this.parent.x_log) {
               for(var j=0; j<=this.xs.length; j++) {
                 if(this.xs[j] <= 0) {
+                  this.ts.splice(j,1);
                   this.xs.splice(j,1);
                   this.ys.splice(j,1);
                   j = j - 1;
@@ -49,8 +52,6 @@ var plot_parametric_holder = P(subplot, function(_, super_) {
             }
             this.suggest_y_min = (this.y_axis == 'y' && this.parent.y_min === false) || (this.y_axis == 'y2' && this.parent.y2_min === false) ? Math.min.apply(Math, this.ys) : undefined;
             this.suggest_y_max = (this.y_axis == 'y' && this.parent.y_max === false) || (this.y_axis == 'y2' && this.parent.y2_max === false) ? Math.max.apply(Math, this.ys) : undefined;
-            this.ys.unshift('data_' + this.id);
-            this.xs.unshift('x_' + this.id);
             this.plot_me = true;
             this.outputBox.clearState().collapse();
           }
@@ -134,6 +135,6 @@ var plot_parametric = P(plot_parametric_holder, function(_, super_) {
     this.dependent_vars = GetDependentVars(command3, [this.var.text()]);
     var command4 = "latex(at(apply(" + this.var.text() + "->(evalf(mksa_base(" + this.eqx.text() + "))),[(" + this.endval.text() + ")*1.0000000016514245]),0))"; // Evaluate at the first t to find units...add something so that we dont get evaluation at 0
     var command5 = "latex(at(apply(" + this.var.text() + "->(evalf(mksa_base(" + this.eqy.text() + "))),[(" + this.endval.text() + ")*1.0000000016514245]),0))"; // Evaluate at the first t to find units...add something so that we dont get evaluation at 0
-    return [{command: command3, nomarkup: true },{command: command4, nomarkup: true},{command: command5, nomarkup: true}]
+    return [{command: command3, nomarkup: true, protect_vars: this.var.text() },{command: command4, nomarkup: true},{command: command5, nomarkup: true, restore_vars: this.var.text()}]
   }
 });

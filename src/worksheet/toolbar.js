@@ -36,7 +36,7 @@ Worksheet.open(function(_) {
 		this.toolbar.unblurToolbar();
 	}
 });
-
+var recent_colors = ['#000000','#ffffff','#FF0000','#00FF00','#0000FF','#FFFF00','#FF00FF'];
 var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 
 	_.toolbar = false;
@@ -46,6 +46,9 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	}
 	_.reshapeToolbar = function() {
 		if(window.embedded) return;
+
+		var old_html = $("#account_bar td.middle nav.menu span.save_span").html();
+		$("#account_bar td.middle nav.menu span.save_span").html('______________________________________');
 
 		$("#account_bar td.middle nav.menu").children("ul").children("li").show();
 		$("#account_bar td.middle nav.menu").children("ul").children("li.mobile").hide();
@@ -70,6 +73,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			if(count > 20) break;
 			count++;
 		}
+		$("#account_bar td.middle nav.menu span.save_span").html(old_html);
 
 		count=0;
 		this.toolbar_holder.children("ul").children("li.hidden").removeClass("hidden").show();
@@ -98,7 +102,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 	var current_toolbar_target = 0;
 	_.attachToolbar = function(el, options) {
 		if(current_toolbar_target === el) this.unblurToolbar();
-		this.detachToolbar();
+		this.detachToolbar(el);
 		SwiftCalcs.current_toolbar = this;
 		current_toolbar_target = el;
 		// Helper function to build the toolbar.  Parses the options
@@ -152,7 +156,38 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				}
 				if(cur_item.colorPicker) {
 					cur_item.pulldown = true;
-					$li.append(simpleColorPicker(element, cur_item.colorPicker));
+					$li.append(simpleColorPicker(cur_item.id, cur_item.color ? cur_item.color : undefined)).on('mousedown', 'li.minicolors-swatch', function(e) {
+						e.preventDefault();
+						e.stopPropagation();
+					}).children('ul').on('mouseleave', function(e) {
+						var inp = $(this).find('input');
+						if(inp.length == 0) return;
+						var color = inp.minicolors('value');
+	        	var add_color = true;
+	        	for(var i = 0; i < recent_colors.length; i++)
+	        		if(recent_colors[i].toLowerCase() == color.toLowerCase()) add_color = false;
+	        	if(add_color) {
+	        		recent_colors.push(color); 
+	        		if(recent_colors.length == 8) recent_colors = recent_colors.slice(1);
+	        		inp.minicolors('settings',{swatches: recent_colors});
+	        	}
+	        }).on('mouseup', function(cur_item, li) { return function(e) {
+	        	if($(e.target).hasClass('minicolors-swatch-color')) {
+	        		function rgb2hex(rgb){
+							 rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
+							 return (rgb && rgb.length === 4) ? "#" +
+							  ("0" + parseInt(rgb[1],10).toString(16)).slice(-2) +
+							  ("0" + parseInt(rgb[2],10).toString(16)).slice(-2) +
+							  ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
+							}
+							var color = $(e.target).css('background-color');
+							if(color.match(/rgb/)) color = rgb2hex(color);
+	        	}
+						else
+							var color = $(this).find('input').minicolors('value');
+	        	cur_item.colorPicker(element, color);
+	        	li.find('.fa-paint-brush').css('border-bottom-color',color);
+	        }; }(cur_item, $li));
 				}
 				if(cur_item.symbols) {
 					cur_item.pulldown = true;
@@ -179,7 +214,8 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		if(el.klass && el.klass.length) 
 			this.toolbar_holder.addClass(css_prefix + el.klass.join(' ' + css_prefix));
 	}
-	_.detachToolbar = function() {
+	_.detachToolbar = function(el) {
+		if((current_toolbar_target != el) && (current_toolbar_target instanceof subplot)) current_toolbar_target.unselect();
 		current_toolbar_target = false;
 		var add_tutorial = this.toolbar_holder.hasClass('screen_explanation');
 		this.toolbar_holder.removeClass().addClass('toolbar');
@@ -775,7 +811,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				title: 'Chart Labels',
 				hide_mobile: true ,
 				sub: [
-					{ html: 'Chart Title', method: function() { $('.plot_title').find('span.title_span').click(); } },
+					{ html: 'Chart Title', method: function() { parent_el.setTitle(); } },
 					{ html: 'X Axis Label', method: function() { parent_el.setAxis(0); } },
 					{ html: 'Y Axis Label', method: function() { parent_el.setAxis(1); } },
 					{ html: 'Secondary Y Axis Label', method: function() { parent_el.setAxis(2); } },
@@ -794,16 +830,6 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 			},
 			(el.chart_type ? { title: '|', hide_mobile: true } : {skip: true}),
 			(el.chart_type ? el.chart_type() : {skip: true}),
-			(el.c3_type && el.c3_type.match(/^(area|line)$/) ? {
-				id: 'spline',
-				html: 'Splines&nbsp;',
-				title: 'splines',
-				hide_mobile: true,
-				sub: [
-					{ html: (el.spline ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Enable', method: function(el) { el.command('spline',true); } },
-					{ html: (!el.spline ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Disable', method: function(el) { el.command('spline',false); } },
-				]
-			} : {skip: true}),
 			{ title: '|',
 				hide_mobile: true},
 			{
@@ -811,46 +837,66 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				icon: 'circle',
 				title: 'Marker Size',
 				sub: [
-					{ html: (el.marker_size === 0 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;No Marker', method: function(el) { el.command('marker_size',0); } },
-					{ html: (el.marker_size === 2 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2); } },
-					{ html: (el.marker_size === 2.5 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2.5" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2.5); } },
-					{ html: (el.marker_size === 3 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="3" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',3); } },
-					{ html: (el.marker_size === 4 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="4" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',4); } },
-					{ html: (el.marker_size === 6 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="6" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',6); } },
+					{ html: (!el.show_points || el.marker_size === 0 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;No Marker', method: function(el) { el.command('marker_size',0); } },
+					{ html: (el.show_points && el.marker_size === 2 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2); } },
+					{ html: (el.show_points && el.marker_size === 2.5 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="2.5" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',2.5); } },
+					{ html: (el.show_points && el.marker_size === 3 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="3" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',3); } },
+					{ html: (el.show_points && el.marker_size === 4 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="4" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',4); } },
+					{ html: (el.show_points && el.marker_size === 6 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="14" height="14" viewPort="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg"><circle r="6" style="fill: rgb(0, 0, 0); opacity: 1;" cx="7" cy="7"></circle></svg>', method: function(el) { el.command('marker_size',6); } },
 				],
-				skip: !((el instanceof plot_line) || (el instanceof plot_func))
+				skip: !((el instanceof plot_line) || (el instanceof plot_func) || (el instanceof plot_parametric_holder))
+			},
+			{
+				id: 'marker_type',
+				html: '&nbsp;&#9671;&nbsp;',
+				title: 'Marker Type',
+				sub: [
+					{ html: (el.symbol === 'circle' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9679;', method: function(el) { el.command('symbol','circle'); } },
+					{ html: (el.symbol === 'circle-open' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9675;', method: function(el) { el.command('symbol','circle-open'); } },
+					{ html: (el.symbol === 'square' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9632;', method: function(el) { el.command('symbol','square'); } },
+					{ html: (el.symbol === 'square-open' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9633;', method: function(el) { el.command('symbol','square-open'); } },
+					{ html: (el.symbol === 'diamond' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9670;', method: function(el) { el.command('symbol','diamond'); } },
+					{ html: (el.symbol === 'diamond-open' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9671;', method: function(el) { el.command('symbol','diamond-open'); } },
+					{ html: (el.symbol === 'triangle-up' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9650;', method: function(el) { el.command('symbol','triangle-up'); } },
+					{ html: (el.symbol === 'triangle-up-open' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9651;', method: function(el) { el.command('symbol','triangle-up-open'); } },
+					{ html: (el.symbol === 'triangle-down' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9660;', method: function(el) { el.command('symbol','triangle-down'); } },
+					{ html: (el.symbol === 'triangle-down-open' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;&#9661;', method: function(el) { el.command('symbol','triangle-down-open'); } },
+				],
+				skip: !((el instanceof plot_line) || (el instanceof plot_func) || (el instanceof plot_parametric_holder))
 			},
 			{
 				id: 'line_weight',
 				html: '<svg width="20" height="12" viewPort="0 0 20 12" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="20" y2="0" style="stroke-width:1"/><line x1="0" y1="4" x2="20" y2="4" style="stroke-width:2"/><line x1="0" y1="10" x2="20" y2="10" style="stroke-width:3"/></svg>',
 				title: 'Line Thickness',
 				sub: [
-					{ html: (el.line_weight === 0 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;No Line', method: function(el) { el.command('line_weight',0); } },
-					{ html: (el.line_weight === 1 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:1"/></svg>', method: function(el) { el.command('line_weight',1); } },
-					{ html: (el.line_weight === 2 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_weight',2); } },
-					{ html: (el.line_weight === 3 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:3"/></svg>', method: function(el) { el.command('line_weight',3); } },
-					{ html: (el.line_weight === 4 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:4"/></svg>', method: function(el) { el.command('line_weight',4); } },
-					{ html: (el.line_weight === 5 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="50" y2="3" style="stroke-width:5"/></svg>', method: function(el) { el.command('line_weight',5); } },
+					{ html: (el.line_style === 'none' || el.line_weight === 0 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;No Line', method: function(el) { el.command('line_weight',0); } },
+					{ html: (el.line_style !== 'none' && el.line_weight === 1 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:1"/></svg>', method: function(el) { el.command('line_weight',1); } },
+					{ html: (el.line_style !== 'none' && el.line_weight === 2 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="50" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_weight',2); } },
+					{ html: (el.line_style !== 'none' && el.line_weight === 3 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:3"/></svg>', method: function(el) { el.command('line_weight',3); } },
+					{ html: (el.line_style !== 'none' && el.line_weight === 4 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="4" x2="50" y2="4" style="stroke-width:4"/></svg>', method: function(el) { el.command('line_weight',4); } },
+					{ html: (el.line_style !== 'none' && el.line_weight === 5 ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="50" height="10" viewPort="0 0 50 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="50" y2="3" style="stroke-width:5"/></svg>', method: function(el) { el.command('line_weight',5); } },
 				],
-				skip: !((el instanceof plot_line) || (el instanceof plot_func))
+				skip: !((el instanceof plot_line) || (el instanceof plot_func) || (el instanceof plot_parametric_holder))
 			},
 			{
 				id: 'line_style',
 				html: '<svg width="20" height="12" viewPort="0 0 20 12" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3" x2="20" y2="3" style="stroke-width:2"/><line stroke-dasharray="4,4" x1="0" y1="9" x2="20" y2="9" style="stroke-width:2"/></svg>',
 				title: 'Line Style',
 				sub: [
-					{ html: (el.line_style === 'none' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style','none'); } },
+					{ html: (el.line_style === 'none' || el.line_style === 'solid' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style','solid'); } },
 					{ html: (el.line_style === '5_5' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="5, 5" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"5_5"); } },
 					{ html: (el.line_style === '10_10' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="10, 10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"10_10"); } },
+					{ html: (el.line_style === '20_20' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20, 20" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20_20"); } },
 					{ html: (el.line_style === '20_10_5_10' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20, 10, 5, 10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20_10_5_10"); } },
-					{ html: (el.line_style === '20_10_5_5_5_10' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="20,10,5,5,5,10" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20_10_5_5_5_10"); } },
+					{ html: (el.line_style === '20_10_5_5_5_10' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;<svg width="100" height="10" viewPort="0 0 100 10" version="1.1" xmlns="http://www.w3.org/2000/svg"><line stroke-dasharray="30,15,5,15" x1="0" y1="5" x2="100" y2="5" style="stroke-width:2"/></svg>', method: function(el) { el.command('line_style',"20_10_5_5_5_10"); } },
 				],
-				skip: !((el instanceof plot_line) || (el instanceof plot_func))
+				skip: !((el instanceof plot_line) || (el instanceof plot_func) || (el instanceof plot_parametric_holder))
 			},
 			{ 
 				id: 'color',
+				color: (el.getColor && el.getColor() ? el.getColor() : '#ecf0f1'),
 				title: 'Color',
-				html: '<span class="fa-stack" style="line-height: inherit;"><span style="font-size:1.25em;border-bottom:4px solid ' + (el.color ? el.color : '#ecf0f1') + ';" class="fa fa-paint-brush fa-stack-2x"></span></span>',
+				html: '<span class="fa-stack" style="line-height: inherit;"><span style="font-size:1.25em;border-bottom:4px solid ' + (el.getColor && el.getColor() ? el.getColor() : '#ecf0f1') + ';" class="fa fa-paint-brush fa-stack-2x"></span></span>',
 				colorPicker: function(el, color) { el.command('color', color); }
 			},
 			{ title: '|', id: 'hide_on_plot_only' },
@@ -871,7 +917,18 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 				sub: [
 					{ html: (el.y_axis === 'y' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Primary Y Axis', method: function(el) { el.command('y_axis','y'); } },
 					{ html: (el.y_axis === 'y2' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Secondary Y Axis', method: function(el) { el.command('y_axis',"y2"); } },
-				]
+				],
+				skip: (el instanceof barplot)
+			},
+			{
+				id: 'stacking',
+				icon: 'area-chart',
+				title: 'Stack Data',
+				sub: [
+					{ html: (el.stack ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Stack Plots', method: function(el) { el.command('stack',true); } },
+					{ html: (!el.stack ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Do not Stack Plots', method: function(el) { el.command('stack',false); } },
+				],
+				skip: !((el instanceof barplot) || (el instanceof plot_line))
 			},
 			{
 				id: 'rotated',
@@ -1166,40 +1223,21 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		$this.closest('ul.base').find('ul').addClass('force_hide');
 		window.setTimeout(function() { $this.closest('ul.base').find('ul').removeClass('force_hide') },500);
 	}
-	var simpleColorPicker = function(el, func) {
-		var opts = {
-			colorsPerLine: 8,
-			colors: ['#000000', '#444444', '#666666', '#999999', '#cccccc', '#eeeeee', '#f3f3f3', '#ffffff'
-					, '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#9900ff', '#ff00ff'
-					, '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#cfe2f3', '#d9d2e9', '#ead1dc'
-					, '#ea9999', '#f9cb9c', '#ffe599', '#b6d7a8', '#a2c4c9', '#9fc5e8', '#b4a7d6', '#d5a6bd'
-					, '#e06666', '#f6b26b', '#ffd966', '#93c47d', '#76a5af', '#6fa8dc', '#8e7cc3', '#c27ba0'
-					, '#cc0000', '#e69138', '#f1c232', '#6aa84f', '#45818e', '#3d85c6', '#674ea7', '#a64d79'
-					, '#990000', '#b45f06', '#bf9000', '#38761d', '#134f5c', '#0b5394', '#351c75', '#741b47'
-					, '#660000', '#783f04', '#7f6000', '#274e13', '#0c343d', '#073763', '#20124d', '#4C1130']
-		};
-		var colorsMarkup = '';
-		for(var i = 0; i < opts.colors.length; i++){
-			var item = opts.colors[i];
-			var breakLine = '';
-			if (i % opts.colorsPerLine == 0)
-				breakLine = 'clear: both; ';
-			if (i > 0 && breakLine && $.browser && $.browser.msie && $.browser.version <= 7) {
-				breakLine = '';
-				colorsMarkup += '<li style="float: none; clear: both; overflow: hidden; background-color: #fff; display: block; height: 1px; line-height: 1px; font-size: 1px; margin-bottom: -2px;"></li>';
-			}
-			colorsMarkup += '<li class="color-box" style="' + breakLine + 'background-color: ' + item + '" title="' + item + '"></li>';
-		}
-
-		var box = $('<ul class="color-picker">' + colorsMarkup + '</ul>');
-		box.find('li.color-box').on('mousedown', function(e) {
-			func(el, $(this).attr('title'), e);
-			e.stopPropagation();
-			e.preventDefault();
-		}).on('mouseup', function(e) {
-			forceHide(this);
+	var simpleColorPicker = function(id, color) {
+		var inp = $('<ul><li><input type="text" class="form-control colorpicker ' + id + '" value="' + (color ? color : '#000000') + '"></li></ul>');
+		inp.find('input').minicolors({
+        animationSpeed: 0,
+        control: 'hue',
+        format: 'hex',
+        hideSpeed: 0,
+        inline: true,
+        opacity: false,
+        showSpeed: 0,
+        theme: 'bootstrap',
+        swatches: recent_colors
 		});
-		return box;
+		window.setTimeout(function() { if(inp.closest('body').length) { inp.find('input').minicolors('value',{color:(color ? color : '#000000')}); } });
+		return inp;
 	};
 	var simpleSymbolPicker = function(el, func, options) {
 		var opts = {

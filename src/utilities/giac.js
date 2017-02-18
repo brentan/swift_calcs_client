@@ -346,7 +346,7 @@ var giac = SwiftCalcs.giac = GiacHandler();
 /*
 This file handles communications with giac, which lives in a webworker
 */
-var loadWorker = function(giacHandler) {
+var loadWorker = SwiftCalcs.loadWorker = function(giacHandler) {
 
 	startProgress('Loading Computational Library', true);
 	setProgress(0, true);
@@ -425,4 +425,3 @@ var loadWorker = function(giacHandler) {
 
 
 };
-loadWorker(giac);

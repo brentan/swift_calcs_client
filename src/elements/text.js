@@ -1064,6 +1064,8 @@ var WYSIWYG = P(function(_) {
       this.toolbar.find('.justifyLeft').addClass('highlight');
     this.toolbar.find('.foreColor').css('border-bottom-color',document.queryCommandValue('foreColor'));
     this.toolbar.find('.backColor').css('border-bottom-color',document.queryCommandValue('backColor'));
+    this.toolbar.find('.colorpicker.foreColor').minicolors('value',{color: document.queryCommandValue('foreColor')});
+    this.toolbar.find('.colorpicker.backColor').minicolors('value',{color: document.queryCommandValue('backColor')});
     try { this.toolbar.find('.fontName').html(document.queryCommandValue('fontName').split(',')[0].replace(/'/g,"")); } catch(e) {}
     this.toolbar.find('.fontSize').html(document.queryCommandValue('fontSize'));
 

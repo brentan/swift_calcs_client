@@ -1,6 +1,18 @@
 /*
 Box to create a plot.  The 'plot' element draws the plot, but its the children of the plot element that are used to set options for each dataset
 */
+var default_colors = [
+  '#1f77b4',  // muted blue
+  '#ff7f0e',  // safety orange
+  '#2ca02c',  // cooked asparagus green
+  '#d62728',  // brick red
+  '#9467bd',  // muted purple
+  '#8c564b',  // chestnut brown
+  '#e377c2',  // raspberry yogurt pink
+  '#7f7f7f',  // middle gray
+  '#bcbd22',  // curry yellow-green
+  '#17becf'   // blue-teal
+];
 var plot = P(Element, function(_, super_) {
 	var X_AXIS = 0, Y_AXIS = 1, Y2_AXIS = 2;
 	_.lineNumber = true;
@@ -96,20 +108,20 @@ var plot = P(Element, function(_, super_) {
 		this.collapse();
 	}
 	_.destroy = function() {
-		if(this.plotBox)
-			this.plotBox = this.plotBox.destroy();
+		if(this.plotBox) {
+			Plotly.purge(this.plotBox);
+			this.plotBox = false;
+		}
 		return super_.destroy.call(this);
 	}
 	_.blurOutputBox = function() {
-		if(this.plotBox) {
-			var current = this.plotBox.data.colors();
-			$.each(current, function(k,v) {
-				current[k] = '#cccccc';
+		if(this.plotBox && $(this.plotBox).find('.overlay_message').length==0) {
+			var children = this.children();
+			for(var i = 0; i < children.length; i++) children[i].unselect();
+			Plotly.restyle(this.plotBox, {
+				'marker.color': '#cccccc',
+				'line.color': '#cccccc'
 			});
-			this.plotBox.data.colors(current);
-			this.jQ.find('.c3-axis').css('fill','#cccccc');
-			this.jQ.find('.c3-axis, .c3-legend-item text').css('fill','#cccccc');
-			this.jQ.find('.c3-axis path, .c3-axis line').css('stroke','#cccccc');
 		} else
 			this.jQ.find('.' + css_prefix + 'plot_box').html('<div class="explain" style="text-align:center;margin:3px 20px;padding:10px;border:1px solid #dddddd;border-radius:6px;">Generating Plot...</div>');		
 	}
@@ -249,177 +261,219 @@ var plot = P(Element, function(_, super_) {
 	_.setWidth = function() {
 		if(this.plot_ready) this.drawPlot();
 	}
-	_.drawPlot = function() {
-		// Draw the plot, if there is anything to plot
-		var columns = [];
-		this.has_bar = false;
-		this.plot_ready = true;
-		var ignore_custom_xs = false;
-		var xs = {};
-		var types = {};
-		var groups_y = [];
-		var groups_y2 = []; 
-		var show_points = {};
-		var marker_size = {};
-		var names = {};
-		var colors = {};
-		var els = {};
-		var axes = {};
-		var children = this.children();
-		var x_ticks = [];
-		var x_max = this.x_max === false ? this.calc_x_max : ((this.x_max + this.x_unit_offset) * this.x_unit_conversion); // Convert to mksa from requested unit base
-		var x_min = this.x_min === false ? this.calc_x_min : ((this.x_min + this.x_unit_offset) * this.x_unit_conversion);
-		var y_min = this.y_min === false ? undefined : ((this.y_min + this.y_unit_offset) * this.y_unit_conversion);
-		var y_max = this.y_max === false ? undefined : ((this.y_max + this.y_unit_offset) * this.y_unit_conversion);
-		var y2_min = this.y2_min === false ? undefined : ((this.y2_min + this.y2_unit_offset) * this.y2_unit_conversion);
-		var y2_max = this.y2_max === false ? undefined : ((this.y2_max + this.y2_unit_offset) * this.y2_unit_conversion);
-		var x_unit = this.x_units ? this.x_unit : false;
-		var y_unit = this.y_units ? this.y_unit : false;
-		var y2_unit = this.y2_units ? this.y2_unit : false;
-		var show_y2 = false;
-		var hist_plot = false;
-		var y_ticks = [];
-		var y2_ticks = [];
-		var suggested_y_min = undefined;
-		if(y_min == undefined) {
-			for(var i = 0; i < children.length; i++) {
-				if(children[i].y_axis == 'y' && children[i].suggest_y_min != undefined)
-					y_min = y_min == undefined ? children[i].suggest_y_min : Math.min(y_min, children[i].suggest_y_min);
-			}
-			suggested_y_min = y_min == undefined ? undefined : (y_min / this.y_unit_conversion - this.y_unit_offset);
-		}
-		var suggested_y_max = undefined;
-		if(y_max == undefined) {
-			for(var i = 0; i < children.length; i++) {
-				if(children[i].y_axis == 'y' && children[i].suggest_y_max != undefined)
-					y_max = y_max == undefined ? children[i].suggest_y_max : Math.max(y_max, children[i].suggest_y_max);
-			}
-			suggested_y_max = y_max == undefined ? undefined : (y_max / this.y_unit_conversion - this.y_unit_offset);
-		}
-		var suggested_y2_min = undefined;
-		if(y2_min == undefined) {
-			for(var i = 0; i < children.length; i++) {
-				if(children[i].y_axis == 'y2' && children[i].suggest_y_min != undefined)
-					y2_min = y2_min == undefined ? children[i].suggest_y_min : Math.min(y2_min, children[i].suggest_y_min);
-			}
-			suggested_y2_min = y2_min == undefined ? undefined : (y2_min / this.y2_unit_conversion - this.y2_unit_offset);
-		}
-		var suggested_y2_max = undefined;
-		if(y2_max == undefined) {
-			for(var i = 0; i < children.length; i++) {
-				if(children[i].y_axis == 'y2' && children[i].suggest_y_max != undefined)
-					y2_max = y2_max == undefined ? children[i].suggest_y_max : Math.max(y2_max, children[i].suggest_y_max);
-			}
-			suggested_y2_max = y2_max == undefined ? undefined : (y2_max / this.y2_unit_conversion - this.y2_unit_offset);
-		}
-		for(var i = 0; i < children.length; i++) {
-			// Collapse error/warn boxes
-			children[i].outputBox.jQ.find('.parent_warning').remove();
-			if(children[i].outputBox.jQ.html() == '') children[i].outputBox.clearState().collapse(true);
-			if(!children[i].plot_me) continue;
-			if(children[i] instanceof barplot) {
-				this.has_bar = true;
-				ignore_custom_xs = true;
-			}
-			if(children[i] instanceof plot_histogram) {
-				if(hist_plot)
-					children[i].outputBox.setWarning('Histogram Plot Bin Labels ignored.  Bars have been plotted on the axis of another histogram that may have different bin sizes').expand();
-				else {
-					hist_plot = children[i].x_labels;
-					hist_plot_unit_label = children[i].x_unit;
+	_.drawPlot = function(hide_hidden) {
+		var el = this.jQ.find('.' + css_prefix + 'plot_box');
+		el.css('height','auto').css('min-height', el.height() + 'px').html('');
+
+    // Draw the plot, if there is anything to plot
+    var columns = [];
+    this.has_bar = false;
+    this.plot_ready = true;
+    var ignore_custom_xs = false;
+    var els = {};
+    var stack_bars = false;
+    var stack_lines = false;
+    var default_color_count = 0;
+    var children = this.children();
+    var x_max = this.x_max === false ? this.calc_x_max : ((this.x_max + this.x_unit_offset) * this.x_unit_conversion); // Convert to mksa from requested unit base
+    var x_min = this.x_min === false ? this.calc_x_min : ((this.x_min + this.x_unit_offset) * this.x_unit_conversion);
+    var y_min = this.y_min === false ? undefined : ((this.y_min + this.y_unit_offset) * this.y_unit_conversion);
+    var y_max = this.y_max === false ? undefined : ((this.y_max + this.y_unit_offset) * this.y_unit_conversion);
+    var y2_min = this.y2_min === false ? undefined : ((this.y2_min + this.y2_unit_offset) * this.y2_unit_conversion);
+    var y2_max = this.y2_max === false ? undefined : ((this.y2_max + this.y2_unit_offset) * this.y2_unit_conversion);
+    var x_unit = this.x_units ? this.x_unit : false;
+    var y_unit = this.y_units ? this.y_unit : false;
+    var y2_unit = this.y2_units ? this.y2_unit : false;
+    var show_y2 = false;
+    var hist_plot = false;
+    var last_stack = [];
+    var suggested_y_min = undefined;
+    // Loop through and do some type checks and clearing.  bar stack requires this to be done before the rendering loop
+    for(var i = 0; i < children.length; i++) {
+      // Collapse error/warn boxes
+      children[i].outputBox.jQ.find('.parent_warning').remove();
+      if(children[i].outputBox.jQ.html() == '') children[i].outputBox.clearState().collapse(true);
+      if(!children[i].plot_me) continue;
+      if(children[i] instanceof barplot) {
+        this.has_bar = true;
+        ignore_custom_xs = true;
+        if(children[i].stack) stack_bars = true;
+      }
+      if((children[i] instanceof plot_line) && (children[i].stack)) stack_lines = true;
+      if(children[i] instanceof plot_histogram) {
+        if(hist_plot)
+          children[i].outputBox.setWarning('Histogram Plot Bin Labels ignored.  Bars have been plotted on the axis of another histogram that may have different bin sizes').expand();
+        else {
+          hist_plot = children[i].x_labels;
+          hist_plot_unit_label = children[i].x_unit;
+        }
+      }
+      if(children[i] instanceof plot_func) {
+        if(ignore_custom_xs) {
+          this.expand();
+          children[i].outputBox.setWarning('Function Plot Ignored.  Function is plotted with a bar chart, which assumes a monotonic x-axis.').expand();
+          continue;
+        }
+        if(x_min === false) x_min = (-5 + this.x_unit_offset) * this.x_unit_conversion;
+        if(x_max === false) x_max = (5 + this.x_unit_offset) * this.x_unit_conversion;
+      }
+    }
+    // Loop through all child plots and add to the plot listing
+    for(var i = 0; i < children.length; i++) {
+    	var current_trace = {};
+      if(!children[i].plot_me) continue;
+      var y_vals = children[i].ys.slice(0);
+      if(children[i].y_axis == 'y2') {
+        var offset = this.y2_unit_offset;
+        if(y2_unit && (y2_unit != children[i].y_unit)) {
+          // Check for temperature mis-matching...if I get a delta unit back, ignore the offset.
+          if(children[i].y_unit && y2_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/)) 
+            offset = 0;
+        }
+        for(var j = 0; j < y_vals.length; j++)
+          y_vals[j] = y_vals[j] / this.y2_unit_conversion - offset;  // Convert from mksa back to requested unit base
+      } else {
+        var offset = this.y_unit_offset;
+        if(y_unit && (y_unit != children[i].y_unit)) {
+          // Check for temperature mis-matching...if I get a delta unit back, ignore the offset.
+          if(children[i].y_unit && y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/)) 
+            offset = 0;
+        }
+        for(var j = 0; j < y_vals.length; j++)
+          y_vals[j] = y_vals[j] / this.y_unit_conversion - offset;  // Convert from mksa back to requested unit base
+      }
+      if(!ignore_custom_xs) {
+        if(x_unit && (x_unit != children[i].x_unit)) {
+          if(!((this.x_unit_label.match(/\{(K|Rankine)\}/)) && children[i].x_unit && children[i].x_unit.match(/\{\\delta(C|F|K|Rankine)\}/))) { // Hide this for K/Rankine as base unit, as this is 'same' unit type (no offset, deltaK = K, deltaRankine = Rankine)
+            this.expand();
+            if((typeof children[i].x_unit === 'undefined') || (children[i].x_unit == '1.0'))
+              children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted on an x-axis with units, but this plot has no associated x-axis units.', true).expand();
+            else if(x_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && children[i].x_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
+              children[i].outputBox.setWarning('Incompatible x-axis units.  Data returned units in absolute temperature (' + this.worksheet.latexToUnit(this.x_unit_label.replace("delta","deg"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however x-axis is set to relative temperature (' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
+            else if(children[i].x_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && x_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
+              children[i].outputBox.setWarning('Incompatible x-axis units.  Data returned units in relative temperature (' + this.worksheet.latexToUnit(this.x_unit_label.replace(/\{(deg)?/,"{\\delta"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however x-axis is set to absolute temperature (' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
+            else if(this.worksheet.latexToUnit(children[i].x_unit)[0])
+              children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted, but its x-axis units (' + this.worksheet.latexToUnit(children[i].x_unit)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;") + ') are not the same as shown.', true).expand();
+            else
+              children[i].outputBox.setWarning('Could not determine x-axis units.  It may not be defined near the test point of x=0').expand();
+            children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
+          } 
+        } else
+          x_unit = children[i].x_unit;
+        var x_vals = children[i].xs.slice(0);
+        if(children[i].plot_type == 'plot_func') {
+          for(var j = 0; j < x_vals.length; j++)
+            x_vals[j] = x_vals[j] / this.x_unit_conversion;  // Convert from mksa back to requested unit base (offset already removed by plotfunc)
+        } else {
+          for(var j = 0; j < x_vals.length; j++)
+            x_vals[j] = x_vals[j] / this.x_unit_conversion - this.x_unit_offset;  // Convert from mksa back to requested unit base
+        }
+        if(!(children[i] instanceof plot_func)) {
+          x_min = x_min === false ? Math.min.apply(Math, children[i].xs.slice(0)) : Math.min(Math.min.apply(Math, children[i].xs.slice(0)), x_min);
+          x_max = x_max === false ? Math.max.apply(Math, children[i].xs.slice(0)) : Math.max(Math.max.apply(Math, children[i].xs.slice(0)), x_max);
+          if(this.x_min !== false) x_min = Math.max(x_min, this.x_min);
+          if(this.x_max !== false) x_max = Math.min(x_max, this.x_max);
+        }
+        if(this.rotated && children[i].y_axis=='y')
+        	current_trace.y = x_vals;
+        else
+        	current_trace.x = x_vals;
+      }
+			// Setup x-axis labels/categories for bar plots
+			if(hist_plot) {
+				try {
+					var x_tick_order = ((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2;
+				} catch(e) {
+					var x_tick_order = 0;
 				}
-			}
-			if(children[i] instanceof plot_func) {
-				if(ignore_custom_xs) {
-					this.expand();
-					children[i].outputBox.setWarning('Function Plot Ignored.  Function is plotted with a bar chart, which assumes a monotonic x-axis.').expand();
-					continue;
+				var ceil10 = function(val, exp) {
+					if (typeof exp === 'undefined' || +exp === 0) 
+		    		return Math.ceil(val);
+		    	val = +val;
+		    	exp = +exp;
+		    	val = val.toString().split('e');
+		    	val = Math.ceil(+(val[0] + 'e' + (val[1] ? (+val[1] - exp) : -exp)));
+		    	val = val.toString().split('e');
+		    	return +(val[0] + 'e' + (val[1] ? (+val[1] + exp) : exp));
 				}
-				if(x_min === false) x_min = (-5 + this.x_unit_offset) * this.x_unit_conversion;
-				if(x_max === false) x_max = (5 + this.x_unit_offset) * this.x_unit_conversion;
-			}
-			var y_vals = children[i].ys.slice(0);
-			if(children[i].y_axis == 'y2') {
-				var offset = this.y2_unit_offset;
-				if(y2_unit && (y2_unit != children[i].y_unit)) {
-					// Check for temperature mis-matching...if I get a delta unit back, ignore the offset.
-					if(children[i].y_unit && y2_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/)) 
-						offset = 0;
+			  var categories = [];
+			  for(var j = 0; j < hist_plot.length; j++) 
+			    categories.push(ceil10(hist_plot[j][0], x_tick_order) + ' to ' + ceil10(hist_plot[j][1], x_tick_order) + ((hist_plot_unit_label && (hist_plot_unit_label != '1.0')) ? (' [' + this.worksheet.latexToUnit(hist_plot_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']') : ''));
+			} else if(this.x_labels && this.has_bar)
+			  var categories = this.x_labels.split('__s__');
+			else 
+			  var categories = [];
+      // Create popup labels
+      var cur_x_vals = ignore_custom_xs ? (categories.length ? categories : Array.apply(null, {length: y_vals.length}).map(Number.call, Number)) : x_vals;
+			y_txt=[];
+			var pre_text = "";
+			var load_ts = children[i].ts && children[i].ts.length;
+			if(this.rotated && children[i].y_axis=='y' && !(children[i] instanceof barplot)) {
+				for(var j = 0; j < y_vals.length; j++) {
+					if(load_ts) pre_text = "" + children[i].ts[j] + ": ";
+					y_txt.push(pre_text+y_vals[j] + ", " + cur_x_vals[j]);
 				}
-				for(var j = 1; j < y_vals.length; j++)
-					y_vals[j] = y_vals[j] / this.y2_unit_conversion - offset;  // Convert from mksa back to requested unit base
-				if(this.y2_log) {
-					for(var j=1; j<y_vals.length; j++){
-					  if(y_vals[j] && ((y2_min === undefined) || (y_vals[j] < y2_min))) y2_min = y_vals[j];
-					  if(y_vals[j] && ((y2_max === undefined) || (y_vals[j] > y2_max))) y2_max = y_vals[j];
-					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
-					}
-				} 
 			} else {
-				var offset = this.y_unit_offset;
-				if(y_unit && (y_unit != children[i].y_unit)) {
-					// Check for temperature mis-matching...if I get a delta unit back, ignore the offset.
-					if(children[i].y_unit && y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/)) 
-						offset = 0;
+				for(var j = 0; j < y_vals.length; j++) {
+					if(load_ts) pre_text = "" + children[i].ts[j] + ": ";
+					y_txt.push(pre_text+cur_x_vals[j] + ", " + y_vals[j]);
 				}
-				for(var j = 1; j < y_vals.length; j++)
-					y_vals[j] = y_vals[j] / this.y_unit_conversion - offset;  // Convert from mksa back to requested unit base
-				if(this.y_log) {
-					for(var j=1; j<y_vals.length; j++){
-					  if(y_vals[j] && ((y_min === undefined) || (y_vals[j] < y_min))) y_min = y_vals[j];
-					  if(y_vals[j] && ((y_max === undefined) || (y_vals[j] > y_max))) y_max = y_vals[j];
-					  y_vals[j] = Math.log(y_vals[j]) / Math.LN10;
-					}
-				} 
 			}
-			columns.push(y_vals);
-			els['data_' + children[i].id] = children[i];
-			if(!ignore_custom_xs) {
-				xs['data_' + children[i].id] = 'x_' + children[i].id;
-				if(x_unit && (x_unit != children[i].x_unit)) {
-					if(!((this.x_unit_label.match(/\{(K|Rankine)\}/)) && children[i].x_unit && children[i].x_unit.match(/\{\\delta(C|F|K|Rankine)\}/))) { // Hide this for K/Rankine as base unit, as this is 'same' unit type (no offset, deltaK = K, deltaRankine = Rankine)
-						this.expand();
-						if((typeof children[i].x_unit === 'undefined') || (children[i].x_unit == '1.0'))
-							children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted on an x-axis with units, but this plot has no associated x-axis units.', true).expand();
-						else if(x_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && children[i].x_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
-							children[i].outputBox.setWarning('Incompatible x-axis units.  Data returned units in absolute temperature (' + this.worksheet.latexToUnit(this.x_unit_label.replace("delta","deg"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however x-axis is set to relative temperature (' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
-						else if(children[i].x_unit.match(/\{\\delta(C|F|K|Rankine)\}/) && x_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/))
-							children[i].outputBox.setWarning('Incompatible x-axis units.  Data returned units in relative temperature (' + this.worksheet.latexToUnit(this.x_unit_label.replace(/\{(deg)?/,"{\\delta"))[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + '), however x-axis is set to absolute temperature (' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;&deg;") + ').', true).expand();
-						else if(this.worksheet.latexToUnit(children[i].x_unit)[0])
-							children[i].outputBox.setWarning('Incompatible x-axis units.  Data has been plotted, but its x-axis units (' + this.worksheet.latexToUnit(children[i].x_unit)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"&deg;$1").replace(/delta/,"&Delta;") + ') are not the same as shown.', true).expand();
-						else
-							children[i].outputBox.setWarning('Could not determine x-axis units.  It may not be defined near the test point of x=0').expand();
-						children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
-					} 
-				} else
-					x_unit = children[i].x_unit;
-				var x_vals = children[i].xs.slice(0);
-				if(children[i].plot_type == 'plot_func') {
-					for(var j = 1; j < x_vals.length; j++)
-						x_vals[j] = x_vals[j] / this.x_unit_conversion;  // Convert from mksa back to requested unit base (offset already removed by plotfunc)
-				} else {
-					for(var j = 1; j < x_vals.length; j++)
-						x_vals[j] = x_vals[j] / this.x_unit_conversion - this.x_unit_offset;  // Convert from mksa back to requested unit base
-				}
-				if(!(children[i] instanceof plot_func)) {
-					x_min = x_min === false ? Math.min.apply(Math, children[i].xs.slice(1)) : Math.min(Math.min.apply(Math, children[i].xs.slice(1)), x_min);
-					x_max = x_max === false ? Math.max.apply(Math, children[i].xs.slice(1)) : Math.max(Math.max.apply(Math, children[i].xs.slice(1)), x_max);
-					if(this.x_min !== false) x_min = Math.max(x_min, this.x_min);
-					if(this.x_max !== false) x_max = Math.min(x_max, this.x_max);
-				}
-				if(this.x_log) {
-					for(var j=1; j<x_vals.length; j++){
-					  x_vals[j] = Math.log(x_vals[j]) / Math.LN10;
-					}
-					x_min = x_min / this.x_unit_conversion - this.x_unit_offset;
-					x_max = x_max / this.x_unit_conversion - this.x_unit_offset;
-					if(x_min <= 0) x_min = 1e-15;
-					if(x_max <= 0) x_max = 2e-15;
-				  x_min = Math.log(x_min) / Math.LN10;
-				  x_max = Math.log(x_max) / Math.LN10;
-				} 
-				columns.push(x_vals);
-			}
+			// For stacking charts, update y_val
+      if((stack_lines && (children[i] instanceof plot_line)) || (stack_bars && (children[i] instanceof barplot))) {
+      	children[i].stack = true;
+      	if(children[i] instanceof barplot) 
+      		cur_x_vals = Array.apply(null, {length: y_vals.length}).map(Number.call, Number); // Redo numbering for y_max adjustment
+      	// Add original y values to stack
+      	last_stack.push({x: cur_x_vals, y:y_vals.slice(0), ax: children[i].y_axis, bar: (children[i] instanceof barplot)});
+      	var orig_y_vals = y_vals.slice(0);
+      	// Need to adjust y_vals to 'stack' on top of the previous stackable items
+      	for(var j = 0; j < (last_stack.length-1); j++) {
+      		if(last_stack[j].ax != children[i].y_axis) continue;
+      		if(last_stack[j].bar != (children[i] instanceof barplot)) continue;
+      		var ok = 0;
+      		for(var k = 0; k < cur_x_vals.length; k++) {
+      			if((cur_x_vals[k] < last_stack[j].x[ok]) && (ok == 0)) continue; // Dont touch points below range of old
+      			while((cur_x_vals[k] > last_stack[j].x[ok]) && (ok < last_stack[j].x.length)) ok++;
+      			if(ok == last_stack[j].x.length) break;
+      			if(cur_x_vals[k] == last_stack[j].x[ok]) {
+      				y_vals[k] += last_stack[j].y[ok];
+      			}
+      			else if(cur_x_vals[k] < last_stack[j].x[ok]) {
+      				// Find linear interpolated point
+      				var dy_dx = (last_stack[j].y[ok]-last_stack[j].y[ok-1])/(last_stack[j].x[ok]-last_stack[j].x[ok-1]);
+      				y_vals[k] += dy_dx * (cur_x_vals[k] - last_stack[j].x[ok-1]);
+      			}
+      			if(children[i].suggest_y_min && (children[i].suggest_y_min > y_vals[k])) children[i].suggest_y_min = y_vals[k];
+      			if(children[i].suggest_y_max && (children[i].suggest_y_max < y_vals[k])) children[i].suggest_y_max = y_vals[k];
+      		}
+      	}
+				if(this.rotated && children[i].y_axis=='y') {
+	      	if(children[i] instanceof barplot) {
+	      		current_trace.orientation= 'h';
+	      		current_trace.x = orig_y_vals;
+	      	} else
+	      		current_trace.x = y_vals;
+	      } else {
+	      	if(children[i] instanceof barplot) 
+	      		current_trace.y = orig_y_vals;
+	      	else
+	      		current_trace.y = y_vals;
+	      }
+      } else {
+      	if(this.rotated && children[i].y_axis=='y') {
+	      	if(children[i] instanceof barplot) current_trace.orientation= 'h';
+      		current_trace.x = y_vals;
+      	} else
+      		current_trace.y = y_vals;
+      }
+			if(ignore_custom_xs) {
+      	if(this.rotated && children[i].y_axis=='y')
+      		current_trace.y = categories.length ? categories : cur_x_vals; // Bar plots have categories
+      	else
+      		current_trace.x = categories.length ? categories : cur_x_vals; // Bar plots have categories
+      }
+      current_trace.text = y_txt;
 			if(children[i].y_axis != 'y2') {
 				if(y_unit && (y_unit != children[i].y_unit)) {
 					if(!(children[i].y_unit && y_unit.match(/\{(\\degC|\\degF|K|Rankine)\}/) && children[i].y_unit.match(/\{\\delta(C|F|K|Rankine)\}/))) {
@@ -462,214 +516,386 @@ var plot = P(Element, function(_, super_) {
 				children[i].outputBox.setWarning('X-data ignored.  Data is plotted with a bar chart, which assumes a monotonic x-axis.', true).expand();
 				children[i].outputBox.jQ.find('.warning').last().addClass('parent_warning');
 			}
-			if(children[i].spline) 
-				types['data_' + children[i].id] = (children[i].c3_type === 'area') ? 'area-spline' : 'spline';
+			if(children[i] instanceof barplot)
+				current_trace.type = 'bar'
+			else if(children[i].show_points && (children[i].line_weight > 0) && (children[i].line_style != 'none'))
+				current_trace.mode = 'lines+markers'; 
+			else if(children[i].show_points)
+				current_trace.mode = 'markers';
 			else
-				types['data_' + children[i].id] = children[i].c3_type;
-			axes['data_' + children[i].id] = children[i].y_axis;
+				current_trace.mode = 'lines';
 			if(children[i].y_axis == 'y2') show_y2 = true;
-			show_points['data_' + children[i].id] = children[i].show_points;
-			names['data_' + children[i].id] = children[i].name();
-			marker_size['data_' + children[i].id] = children[i].marker_size;
-			if(children[i].color) colors['data_' + children[i].id] = children[i].color;
-			if(children[i].stack) {
-				if(children[i].y_axis == 'y') 
-					groups_y.push('data_' + children[i].id);
-				else
-					groups_y2.push('data_' + children[i].id);
-			}
-		}
-		var x_label = this.x_label ? this.x_label : 'Add a label';
-		var y_label = this.y_label ? this.y_label : 'Add a label';
-		var y2_label = this.y2_label ? this.y2_label : 'Add a label';
-		if(!ignore_custom_xs && this.x_unit_label && (this.x_unit_label != '1.0')) x_label += ' [' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
-		if(this.y_unit_label && (this.y_unit_label != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
-		if(this.y2_unit_label && (this.y2_unit_label != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
-		// BRENTAN: Any way to make the units 'pretty' in the label?  Instead of using '/' and '^'
-	
-		if(this.y_log) {
-			if(y_min === undefined) y_min = 1e-15;
-			if(y_max === undefined) y_max = 2e-15;
-			if(y_min <= 0) y_min = 1e-15;
-			if(y_max <= 0) y_max = 2e-15;
-			y_min = Math.log(y_min) / Math.LN10;
-			y_max = Math.log(y_max) / Math.LN10;
-			var exp_diff = Math.floor(Math.log(y_max - y_min) / Math.LN10);
-			var exp_min = Math.floor(y_min / Math.pow(10,exp_diff)) * Math.pow(10,exp_diff);
-			var exp_max = Math.ceil(y_max / Math.pow(10,exp_diff)) * Math.pow(10,exp_diff);
-			var step = (exp_max - exp_min)/10;
-			for(var i = exp_min; i <= exp_max; i = i + step) 
-				if(i>y_min && i<y_max) y_ticks.push(i);
-		}
-		if(this.y2_log) {
-			if(y2_min === undefined) y2_min = 1e-15;
-			if(y2_max === undefined) y2_max = 2e-15;
-			if(y2_min <= 0) y2_min = 1e-15;
-			if(y2_max <= 0) y2_max = 2e-15;
-			y2_min = Math.log(y2_min) / Math.LN10;
-			y2_max = Math.log(y2_max) / Math.LN10;
-			var exp_diff = Math.floor(Math.log(y2_max - y2_min) / Math.LN10);
-			var exp_min = Math.floor(y2_min / Math.pow(10,exp_diff)) * Math.pow(10,exp_diff);
-			var exp_max = Math.ceil(y2_max / Math.pow(10,exp_diff)) * Math.pow(10,exp_diff);
-			var step = (exp_max - exp_min)/10;
-			for(var i = exp_min; i <= exp_max; i = i + step) 
-				if(i>y2_min && i<y2_max) y2_ticks.push(i);
-		}
-		if(this.x_log) {
-			var exp_min = Math.ceil(x_min);
-			var exp_max = Math.floor(x_max);
-			var step = Math.max(1,Math.floor((exp_max - exp_min)/10));
-			for(var i = exp_min; i <= exp_max; i = i + step) 
-				x_ticks.push(i);
-		} else {
-			for(var i = 0; i <= 20; i++) 
-				x_ticks.push((i*(x_max - x_min)/20 + x_min)/this.x_unit_conversion - this.x_unit_offset);
-		}
-		try {
-			var x_tick_order = ((x_max - x_min)/this.x_unit_conversion).toExponential().replace(/^.*e/,'')*1-2;
-		} catch(e) {
-			var x_tick_order = 0;
-		}
-		var _this = this;
-		this.jQ.find('.' + css_prefix + 'plot_box').prev('div.plot_title').remove();
-		var title_div = $('<div/>').addClass('plot_title');
-		if(this.chart_title === false) {
-			title_div.addClass('no_title').addClass(css_prefix + 'hide_print').html('<span class="title_span">Add a Title</span>');
-		} else {
-			title_div.html('<span class="title_span">' + this.chart_title + '</span>');
-		}
-		title_div.insertBefore(this.jQ.find('.' + css_prefix + 'plot_box'));
-		title_div.find('span.title_span').on('click', function(e) {
-			title_div.html('<input type="text">');
-			title_div.find('input').val(_this.chart_title === false ? '' : _this.chart_title).focus().on('blur', function() {
-				var title = $(this).val().trim();
-				if(title == '') title = false;
-				_this.chart_title = title;
-				_this.drawPlot();
-				_this.worksheet.save();
-			});
-			e.preventDefault();
-			e.stopPropagation();
-		});
-		this.jQ.find('.' + css_prefix + 'plot_box').html('');
-		var ceil10 = function(val, exp) {
-			if (typeof exp === 'undefined' || +exp === 0) 
-    		return Math.ceil(val);
-    	val = +val;
-    	exp = +exp;
-    	val = val.toString().split('e');
-    	val = Math.ceil(+(val[0] + 'e' + (val[1] ? (+val[1] - exp) : -exp)));
-    	val = val.toString().split('e');
-    	return +(val[0] + 'e' + (val[1] ? (+val[1] + exp) : exp));
-		}
-		if(hist_plot) {
-			var categories = [];
-			for(var i = 0; i < hist_plot.length; i++) 
-				categories.push(ceil10(hist_plot[i][0], x_tick_order) + ' to ' + ceil10(hist_plot[i][1], x_tick_order) + ((hist_plot_unit_label && (hist_plot_unit_label != '1.0')) ? (' [' + this.worksheet.latexToUnit(hist_plot_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']') : ''));
-		}	else if(this.x_labels && this.has_bar)
-			var categories = this.x_labels.split('__s__');
-		else 
-			var categories = [];
-		var plot_options = {
-			bindto: this.jQ.find('.' + css_prefix + 'plot_box')[0],
-			size: { height: this.height },
-			axis: {
-				rotated: this.rotated,
-				x: { 
-					tick: (ignore_custom_xs ? { rotate: (hist_plot ? 90 : 0), multiline: (hist_plot ? false : true) } : { rotate: (this.x_log ? 90 : 0), values: x_ticks, format: this.x_log ? function (d) { return Math.pow(10,d).toPrecision(3)*1; } : function (d) { return ceil10(d, x_tick_order); } }),
-					label: { text: x_label, position: 'outer-center'}, 
-					min: ((this.x_min === false) || ignore_custom_xs ? undefined : (this.x_log ? Math.log(this.x_min) / Math.LN10 : this.x_min)),
-					max: ((this.x_max === false) || ignore_custom_xs ? undefined : (this.x_log ? Math.log(this.x_max) / Math.LN10 : this.x_max)),
-					categories: categories,
-					type: categories.length ? 'category' : 'indexed'
-				},
-				y: { 
-					label: { text: y_label, position: 'outer-middle'},
-					min: (this.y_min === false ? (suggested_y_min == undefined ? undefined : (this.y_log ? Math.log(suggested_y_min) / Math.LN10 : suggested_y_min)) : (this.y_log ? Math.log(this.y_min) / Math.LN10 : this.y_min)),
-					max: (this.y_max === false ? (suggested_y_max == undefined ? undefined : (this.y_log ? Math.log(suggested_y_max) / Math.LN10 : suggested_y_max)) : (this.y_log ? Math.log(this.y_max) / Math.LN10 : this.y_max)),
-					tick: (this.y_log ? { values: y_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {})
-				},
-				y2: { 
-					label: { text: y2_label, position: 'outer-middle'}, 
-					min: (this.y2_min === false ? (suggested_y2_min == undefined ? undefined : (this.y2_log ? Math.log(suggested_y2_min) / Math.LN10 : suggested_y2_min)) : (this.y2_log ? Math.log(this.y2_min) / Math.LN10 : this.y2_min)),
-					max: (this.y2_max === false ? (suggested_y2_max == undefined ? undefined : (this.y2_log ? Math.log(suggested_y2_max) / Math.LN10 : suggested_y2_max)) : (this.y2_log ? Math.log(this.y2_max) / Math.LN10 : this.y2_max)),
-					tick: (this.y2_log ? { values: y2_ticks, format: function (d) { return Math.pow(10,d).toPrecision(3)*1; } } : {}),
-					show: show_y2
+
+			if(!(children[i] instanceof barplot)) {
+				if(children[i].area && stack_lines) 
+					current_trace.fill = (this.rotated && children[i].y_axis == 'y') ? 'tonextx' : 'tonexty'
+				else if(children[i].area)
+					current_trace.fill = (this.rotated && children[i].y_axis == 'y') ? 'tozerox' : 'tozeroy'
+				else if(stack_lines) {
+					current_trace.fill = (this.rotated && children[i].y_axis == 'y') ? 'tonextx' : 'tonexty'
+					current_trace.fillcolor = 'rgba(0,0,0,0)'
 				}
+			}
+			current_trace.hoverinfo = 'text';
+			
+			var line_dash = '';
+			switch(children[i].line_style) {
+				case '5_5':
+					line_dash = 'dot';
+					break;
+				case '10_10':
+					line_dash = 'dash';
+					break;
+				case '20_20':
+					line_dash = 'longdash';
+					break;
+				case '20_10_5_10':
+					line_dash = 'dashdot';
+					break;
+				case '20_10_5_5_5_10':
+					line_dash = 'longdashdot'; 
+					break;
+				default:
+					line_dash = 'solid';
+					break;
+			}
+			current_trace.name = children[i].name();
+			if(children[i].color) {
+				current_trace.marker = { symbol: children[i].symbol, size: children[i].marker_size*2, color: children[i].color}
+				current_trace.line = { width: children[i].line_weight, color: children[i].color, dash: line_dash}
+			} else {
+				current_trace.marker = { symbol: children[i].symbol, size: children[i].marker_size*2, color: default_colors[default_color_count]}
+				current_trace.line = { width: children[i].line_weight, color: default_colors[default_color_count], dash: line_dash}
+				default_color_count++;
+				if(default_color_count == default_colors.length) default_color_count = 0;
+			}
+			if(children[i].y_axis == 'y2') 
+				current_trace.yaxis = 'y2';
+			if(children[i] instanceof plot_func) current_trace.plot_func = true;
+			columns.push(current_trace);
+      children[i].curveNumber = i;
+      els[i] = children[i];
+		} // End loop through children
+
+    // Set y_min and y_max (if not previously defined by user) based on data/plot suggestion:
+    if(y_min == undefined) {
+      for(var i = 0; i < children.length; i++) {
+        if(children[i].y_axis == 'y' && children[i].suggest_y_min != undefined)
+          y_min = y_min == undefined ? children[i].suggest_y_min : Math.min(y_min, children[i].suggest_y_min);
+      }
+      suggested_y_min = y_min == undefined ? undefined : (y_min / this.y_unit_conversion - this.y_unit_offset);
+    }
+    var suggested_y_max = undefined;
+    if(y_max == undefined) {
+      for(var i = 0; i < children.length; i++) {
+        if(children[i].y_axis == 'y' && children[i].suggest_y_max != undefined)
+          y_max = y_max == undefined ? children[i].suggest_y_max : Math.max(y_max, children[i].suggest_y_max);
+      }
+      suggested_y_max = y_max == undefined ? undefined : (y_max / this.y_unit_conversion - this.y_unit_offset);
+    }
+    var suggested_y2_min = undefined;
+    if(y2_min == undefined) {
+      for(var i = 0; i < children.length; i++) {
+        if(children[i].y_axis == 'y2' && children[i].suggest_y_min != undefined)
+          y2_min = y2_min == undefined ? children[i].suggest_y_min : Math.min(y2_min, children[i].suggest_y_min);
+      }
+      suggested_y2_min = y2_min == undefined ? undefined : (y2_min / this.y2_unit_conversion - this.y2_unit_offset);
+    }
+    var suggested_y2_max = undefined;
+    if(y2_max == undefined) {
+      for(var i = 0; i < children.length; i++) {
+        if(children[i].y_axis == 'y2' && children[i].suggest_y_max != undefined)
+          y2_max = y2_max == undefined ? children[i].suggest_y_max : Math.max(y2_max, children[i].suggest_y_max);
+      }
+      suggested_y2_max = y2_max == undefined ? undefined : (y2_max / this.y2_unit_conversion - this.y2_unit_offset);
+    }
+
+		// Determine the axis labels
+// Any way to make this 'pretty' with latex?
+    var x_label = this.x_label ? this.x_label : (hide_hidden ? '' : 'Add a label');
+    var y_label = this.y_label ? this.y_label : (hide_hidden ? '' : 'Add a label');
+    var y2_label = this.y2_label ? this.y2_label : (hide_hidden ? '' : 'Add a label');
+    if(!ignore_custom_xs && this.x_unit_label && (this.x_unit_label != '1.0')) x_label += ' [' + this.worksheet.latexToUnit(this.x_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
+    if(this.y_unit_label && (this.y_unit_label != '1.0')) y_label += ' [' + this.worksheet.latexToUnit(this.y_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
+    if(this.y2_unit_label && (this.y2_unit_label != '1.0')) y2_label += ' [' + this.worksheet.latexToUnit(this.y2_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'').replace(/deg(C|F)/,"°$1").replace(/delta(C|F)/,"Δ°$1").replace(/delta/,'') +']';
+    
+    // Range wants the log of the number, so we do it here.
+    var xaxis = {
+			title: x_label,
+			titlefont: {
+				color: this.x_label === false ? 'lightgrey' : 'black',
+				size: 12
 			},
-			data: { 
-				xs: xs,
-				columns: columns,
-				types: types,
-				groups: [groups_y, groups_y2],
-				axes: axes,
-				names: names,
-				colors: colors,
-				onclick: function(d, el) { els[d.id].select(); }
-			},
-			legend: {
-			  item: {
-			    onclick: function (id) { els[id].select(); }
-			  }
-			},
-			transition: { duration: 0 },
-			onrendered: function(_this) { return function() { _this.jQ.find('.' + css_prefix + 'plot_box').height('auto'); }; }(this),
-			point: {
-				show: function(d) { if(show_points[d.id]) { return 1; } else { return 0; } },
-				r: function(d) { return marker_size[d.id]; }
-			},
-	    grid: {
-        x: ((ignore_custom_xs || this.x_log) ? { show: this.x_grid } : { show: this.x_grid, lines: [{value: 0}] }),
-        y: (this.y_log ? { show: this.y_grid } : { show: this.y_grid, lines: [{value: 0}] }),
-        lines: { front: false }
-	    }
+    	ticks: 'outside',
+    	showline: true,
+    	ticklen: 6,
+      fixedrange: true,
+    	gridcolor: '#e4e4e4',
+    	zerolinecolor: '#cccccc',
+			showgrid: this.x_grid,
+    	nticks:  categories.length ? categories.length : (this.rotated ? 10 : 16),
+			tickfont: {size: 9}
 		};
-		if(this.plotBox) {
-			this.jQ.find('.' + css_prefix + 'plot_box').height(this.height);
-			this.plotBox.destroy();
+		if(this.x_log) xaxis.type = 'log';
+    var yaxis = {
+			title: y_label,
+			titlefont: {
+				color: this.y_label === false ? 'lightgrey' : 'black',
+				size: 12
+			},
+    	ticks: 'outside',
+      fixedrange: true,
+    	showline: true,
+    	nticks: this.rotated ? 16 : 10,
+    	ticklen: 6,
+    	gridcolor: '#e4e4e4',
+    	zerolinecolor: '#cccccc',
+			showgrid: this.y_grid,
+			tickfont: {size: 9}
+		};
+		if(this.y_log) yaxis.type = 'log';
+    var y2axis = {
+			title: y2_label,
+    	showline: true,
+			titlefont: {
+				color: this.y2_label === false ? 'lightgrey' : 'black',
+				size: 12
+			},
+    	ticks: 'outside',
+    	nticks: 10,
+    	ticklen: 6,
+      fixedrange: true,
+			showgrid: false,
+			showline: true,
+			zeroline: false,
+			overlaying: 'y',
+			side: 'right',
+			tickfont: {size: 9}
+		};
+		if(this.y2_log) y2axis.type = 'log';
+    var x_min = (this.x_min === false) ? (this.x_log ? Math.log(this.calc_x_min / this.x_unit_conversion - this.x_unit_offset) / Math.LN10 : (this.calc_x_min / this.x_unit_conversion - this.x_unit_offset)) : (this.x_log ? Math.log(this.x_min) / Math.LN10 : this.x_min);
+    var x_max = (this.x_max === false) ? (this.x_log ? Math.log(this.calc_x_max / this.x_unit_conversion - this.x_unit_offset) / Math.LN10 : (this.calc_x_max / this.x_unit_conversion - this.x_unit_offset)) : (this.x_log ? Math.log(this.x_max) / Math.LN10 : this.x_max);
+    if(ignore_custom_xs) x_min = false;
+    if((typeof x_min == 'number') && (typeof x_max == 'number')) {
+    	xaxis.autorange = false;
+    	xaxis.range = [x_min, x_max];
+    	// Need to trim asymptotes off...otherwise plot wont show correctly
+    	for(var i = 0; i < columns.length; i++) {
+    		if(columns[i].plot_func && (typeof columns[i].yaxis == 'undefined')) {
+    			var test_max = x_max + (x_max - x_min)*100;
+    			var test_min = x_min - (x_max - x_min)*100;
+    			for(var k = 0; k < columns[i].x.length; k++) {
+    				if(columns[i].x[k] > test_max) columns[i].x[k] = test_max;
+    				if(columns[i].x[k] < test_min) columns[i].x[k] = test_min;
+    			}
+    		}
+    	}
+    }
+    var y_min = (this.y_min === false ? (suggested_y_min == undefined ? undefined : (this.y_log ? Math.log(suggested_y_min) / Math.LN10 : suggested_y_min)) : (this.y_log ? Math.log(this.y_min) / Math.LN10 : this.y_min));
+    var y_max = (this.y_max === false ? (suggested_y_max == undefined ? undefined : (this.y_log ? Math.log(suggested_y_max) / Math.LN10 : suggested_y_max)) : (this.y_log ? Math.log(this.y_max) / Math.LN10 : this.y_max));
+    if((typeof y_min == 'number') && (typeof y_max == 'number')) {
+    	yaxis.autorange = false;
+    	var extra = 0.05 * (y_max - y_min)
+    	if(this.has_bar)
+				yaxis.range = [this.y_min === false ? 0 : y_min, y_max + (this.y_max === false ? extra : 0)];
+    	else
+    		yaxis.range = [y_min - (this.y_min === false ? extra : 0), y_max + (this.y_max === false ? extra : 0)];
+    	// Need to trim asymptotes off...otherwise plot wont show correctly
+    	for(var i = 0; i < columns.length; i++) {
+    		if(columns[i].plot_func && (typeof columns[i].yaxis == 'undefined')) {
+    			var test_max = y_max + (y_max - y_min)*100;
+    			var test_min = y_min - (y_max - y_min)*100;
+    			for(var k = 0; k < columns[i].y.length; k++) {
+    				if(columns[i].y[k] > test_max) columns[i].y[k] = test_max;
+    				if(columns[i].y[k] < test_min) columns[i].y[k] = test_min;
+    			}
+    		}
+    	}
+    }
+    var y2_min = (this.y2_min === false ? (suggested_y2_min == undefined ? undefined : (this.y2_log ? Math.log(suggested_y2_min) / Math.LN10 : suggested_y2_min)) : (this.y2_log ? Math.log(this.y2_min) / Math.LN10 : this.y2_min));
+    var y2_max = (this.y2_max === false ? (suggested_y2_max == undefined ? undefined : (this.y2_log ? Math.log(suggested_y2_max) / Math.LN10 : suggested_y2_max)) : (this.y2_log ? Math.log(this.y2_max) / Math.LN10 : this.y2_max));
+    if((typeof y2_min == 'number') && (typeof y2_max == 'number')) {
+    	y2axis.autorange = false;
+    	var extra = 0.05 * (y2_max - y2_min)
+    	y2axis.range = [y2_min - (this.y2_min === false ? extra : 0), y2_max + (this.y2_max === false ? extra : 0)];
+    	// Need to trim asymptotes off...otherwise plot wont show correctly
+    	for(var i = 0; i < columns.length; i++) {
+    		if(columns[i].plot_func && (columns[i].yaxis == 'y2')) {
+    			var test_max = y2_max + (y2_max - y2_min)*100;
+    			var test_min = y2_min - (y2_max - y2_min)*100;
+    			for(var k = 0; k < columns[i].y.length; k++) {
+    				if(columns[i].y[k] > test_max) columns[i].y[k] = test_max;
+    				if(columns[i].y[k] < test_min) columns[i].y[k] = test_min;
+    			}
+    		}
+    	}
+    }
+    var layout = {
+    	paper_bgcolor: 'rgba(0,0,0,0)',
+    	plot_bgcolor: 'rgba(0,0,0,0)',
+			legend: {
+				orientation: "h",
+				font: {size: 10},
+				y: -0.21
+			},
+			margin: {
+				t: 40,
+				r: show_y2 ? 80 : 20,
+				b: 80
+			},
+			height: 350,
+			title: this.chart_title ? this.chart_title : (hide_hidden ? '' : 'Add a Title'),
+			titlefont: {
+				color: this.chart_title === false ? 'lightgrey' : 'black'
+			},
+			showlegend: columns.length > 1,
+  		hovermode: 'closest'
+		};
+		if(this.rotated) {
+			layout.yaxis = xaxis;
+			layout.xaxis = yaxis;
+		} else {
+			layout.xaxis = xaxis;
+			layout.yaxis = yaxis;
 		}
-		this.plotBox = c3.generate(plot_options);
-		var el = $(this.plotBox.element);
-		el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').find('.tick text').hover(function() {
-			$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'underline');
-		}, function() {
-			$(this).closest('.c3-axis').find('.tick text').css('text-decoration', 'none');
+		if(stack_bars) layout.barmode = 'stack';
+		if(show_y2)
+			layout.yaxis2 = y2axis;
+    Plotly.newPlot(el[0],columns,layout,{showLink: false, displayModeBar: false});
+		el[0].on('plotly_click', function(data){
+			if(!(data && data.points && data.points.length > 0)) return;
+			data = data.points[0]; // Get closest trace
+			var id = data.curveNumber;
+			if(els[id]) {
+				els[id].select();
+			}
 		});
-		if(this.allow_interaction()) el.find('.c3-axis-x, .c3-axis-y, .c3-axis-y2').on('click', function(e) { 
-			var target = $(e.target);
-			var axis = X_AXIS;
-			if(target.closest('.c3-axis-y').length) axis = Y_AXIS;
-			if(target.closest('.c3-axis-y2').length) axis = Y2_AXIS;
-			_this.setAxis(axis);
-			e.preventDefault();
-			e.stopPropagation();
-		});
-		// Setup axes styling
-		if(this.x_label === false) 
-			el.find('.c3-axis-x-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
-		else 
-			el.find('.c3-axis-x-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
-		if(this.y_label === false) 
-			el.find('.c3-axis-y-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
-		else 
-			el.find('.c3-axis-y-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
-		if(this.y2_label === false) 
-			el.find('.c3-axis-y2-label').addClass(css_prefix + 'hide_print').css('fill','#bbbbbb').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
-		else 
-			el.find('.c3-axis-y2-label').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
-		el.find('.c3-legend-item').hover(function() { $(this).find('text').css('text-decoration', 'underline'); }, function() { $(this).find('text').css('text-decoration', 'none'); });
+		this.plotBox = el[0];
+		// Re-select last item
 		$.each(this.children(), function(i, child) {
-			el.find('.c3-line-data-' + child.id).css('stroke-width',child.line_weight).css('stroke-dasharray', child.line_style.replace(/_/g,','));
-			if(child.selected)
-				child.addSelectLine();
+			if(child.selected) child.addSelectLine();
 		});
-		if(columns.length == 0) {
-			this.jQ.find('.c3-xgrid-lines line, .c3-ygrid-lines, .c3-y2grid-lines').css('stroke','#ffffff');
-			this.jQ.find('.' + css_prefix + 'plot_box').height('300px');
-			this.expand();
-			this.jQ.find('.' + css_prefix + 'plot_box').append($('<div/>').addClass('overlay_message').html('<strong>No data to plot.</strong><BR>Setup a data source or check for errors.'));
-		}
+		// Set hover/click effects on axes and titles 
+    var _this = this;
+    if(this.allow_interaction()) {
+	    // Setup title styling
+	    if(this.chart_title === false) 
+	      el.find('text.gtitle').attr('pointer-events','all').attr("class", "gtitle " + css_prefix + 'hide_print').css('fill','#bbbbbb').css('cursor','pointer').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+	    else 
+	      el.find('text.gtitle').attr('pointer-events','all').css('cursor','pointer').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+	    el.find('text.gtitle').click(function(e) {
+	    	_this.setTitle();
+	    	e.preventDefault();
+	    });
+	    // Setup axes styling
+	    if(this.x_label === false) 
+	      el.find('text.xtitle').attr('pointer-events','all').attr("class", "xtitle " + css_prefix + 'hide_print').css('fill','#bbbbbb').css('cursor','pointer').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+	    else 
+	      el.find('text.xtitle').attr('pointer-events','all').css('cursor','pointer').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+	    el.find('text.xtitle').click(function(e) {
+	    	_this.setAxis(0);
+	    	e.preventDefault();
+	    });
+	    el.find('g.xaxislayer').attr('pointer-events','all').css('cursor','pointer').hover(function() {
+	      $(this).find('text').css('text-decoration', 'underline');
+	    }, function() {
+	      $(this).find('text').css('text-decoration', 'none');
+	    }).click(function(e) {
+	    	_this.setAxis(0);
+	    	e.preventDefault();
+	    });
+
+
+	    if(this.y_label === false) 
+	      el.find('text.ytitle').attr('pointer-events','all').attr("class", "ytitle " + css_prefix + 'hide_print').css('fill','#bbbbbb').css('cursor','pointer').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+	    else 
+	      el.find('text.ytitle').attr('pointer-events','all').css('cursor','pointer').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+	    el.find('text.ytitle').click(function(e) {
+	    	_this.setAxis(1);
+	    	e.preventDefault();
+	    });
+	    el.find('g.yaxislayer').attr('pointer-events','all').css('cursor','pointer').hover(function() {
+	      $(this).find('text').css('text-decoration', 'underline');
+	    }, function() {
+	      $(this).find('text').css('text-decoration', 'none');
+	    }).click(function(e) {
+	    	_this.setAxis(1);
+	    	e.preventDefault();
+	    });
+
+			if(show_y2) {
+		    if(this.y2_label === false) 
+		      el.find('text.y2title').attr('pointer-events','all').attr("class", "y2title " + css_prefix + 'hide_print').css('fill','#bbbbbb').css('cursor','pointer').hover(function() { $(this).css('fill','#454545').css('text-decoration', 'underline'); }, function() { $(this).css('fill', '#bbbbbb').css('text-decoration', 'none'); });
+		    else 
+		      el.find('text.y2title').attr('pointer-events','all').css('cursor','pointer').hover(function() { $(this).css('text-decoration', 'underline'); }, function() { $(this).css('text-decoration', 'none'); });
+		    el.find('text.y2title').click(function(e) {
+		    	_this.setAxis(2);
+	    	e.preventDefault();
+		    });
+		    el.find('g.overaxes').attr('pointer-events','all').css('cursor','pointer').hover(function() {
+		      $(this).find('text').css('text-decoration', 'underline');
+		    }, function() {
+		      $(this).find('text').css('text-decoration', 'none');
+		    }).click(function(e) {
+		    	_this.setAxis(2);
+	    	e.preventDefault();
+		    });
+		  }
+	  } else {
+	  	if(this.y2_label === false) 
+	      el.find('text.y2title').remove();
+	  	if(this.y_label === false) 
+	      el.find('text.ytitle').remove();
+	  	if(this.x_label === false) 
+	      el.find('text.xtitle').remove();
+	    if(this.chart_title === false)
+	      el.find('text.gtitle').remove();
+	  }
+    // IF NO DATA:
+    if(columns.length == 0) {
+    	el.find('.overlay_message').remove();
+      el.find('.gridlayer, .zerolinelayer, .overzero').remove();
+      this.expand();
+      el.append($('<div/>').addClass('overlay_message').html('<strong>No data to plot.</strong><BR>Setup a data source or check for errors.'));
+    } else {
+    	el.find('.print_image').remove();
+      el.prepend($('<div/>').addClass('print_image').addClass(css_prefix + 'hide_print').html('<i class="fa fa-image"></i>').on('click','i',function(_this) { return function(e) {
+      	if(_this.plotBox) {
+	      	$('.popup_dialog .full').html("<div class='title'>Export as Image</div>Image Width (pixels):<BR><input type=text value=800 size=8 class=wide><BR><BR>Image Height (pixels):<BR><input type=text value=600 size=8 class=high>");
+			    var links = $('.popup_dialog .bottom_links').html('<button class="grey close">Close</button>');
+			    $('<button>Create Image</button>').on('click', function(e) {
+						window.hidePopupOnTop();
+						var w = $('.popup_dialog .full .wide').val()*1;
+						var h = $('.popup_dialog .full .high').val()*1;
+						if(w < 100) {
+							w = 100;
+							showNotice('Minimum Width of 100px imposed');
+						}
+						if(h < 100) {
+							h = 100;
+							showNotice('Minimum Height of 100px imposed');
+						}
+	      		_this.drawPlot(true);
+	      		Plotly.downloadImage(_this.plotBox, {format: 'png', width: w, height: h, filename: 'SwiftCalcsChart'});
+	      		_this.drawPlot(false);
+			    }).prependTo(links);
+			    window.showPopupOnTop();
+			    window.resizePopup(true);
+      	}
+      	e.preventDefault();
+      	e.stopPropagation();
+      } }(this)));
+    }
 	}
+	_.setTitle = function() { 
+  	var title = prompt("Chart Title:",this.chart_title ? this.chart_title : '');
+  	if(title == null) return;
+  	title = title.trim();
+    if(title == '') title = false;
+    this.chart_title = title;
+    this.drawPlot();
+    this.worksheet.save();
+  }
 	_.children = function() { 
 		var kids = super_.children.call(this);
 		var functions = [];
@@ -834,20 +1060,22 @@ var plot = P(Element, function(_, super_) {
 
 /* object that is a child element of 'plot', allows multiple subplots on a single plot */
 /* subplot is a generic class used to generate the subplot types.  It should never be called by iteself */
-var subplotProperties = ['spline', 'show_points','line_weight','marker_size','line_style','color', 'y_axis'];
+var subplotProperties = ['area', 'stack', 'show_points','line_weight','marker_size','line_style','color', 'y_axis', 'symbol'];
 var subplot = P(EditableBlock, function(_, super_) {
 	_.evaluatable = true;
 	_.plot_me = false;
 	_.stack = false;
-	_.spline = false;
 	_.show_points = true;
 	_.line_weight = 1;
+	_.curveNumber = false;
 	_.sets_x = false;
+	_.area = false;
 	_.x_provided = false;
 	_.color = false;
 	_.x_unit = '1.0';
 	_.y_unit = '1.0';
 	_.x_labels = false;
+	_.symbol = 'circle';
 	_.y_axis = 'y';
 	_.line_style = 'none';
 	_.marker_size = 2.5;
@@ -870,15 +1098,12 @@ var subplot = P(EditableBlock, function(_, super_) {
 		this.selectBox = registerFocusable(SelectBox, this, 'plot_type', { blank_message: 'Choose Plot Type', options: 
 			{ 
 				plot_func: 'Function',
-			 	plot_line: 'Line Plot',
-			 	plot_line_stacked: 'Stacked Line Plot',
-			 	plot_area: 'Area Plot',
-			 	plot_area_stacked: 'Stacked Area Plot',
 			 	plot_scatter: 'Scatter Plot',
+			 	plot_line: 'Line Plot',
+			 	plot_area: 'Area Plot',
 			 	plot_parametric: 'Parametric Plot',
 			 	plot_polar: 'Polar Plot',
 			 	plot_bar: 'Bar Chart',
-			 	plot_bar_stacked: 'Stacked Bar Chart',
 			 	plot_histogram: 'Histogram',
 			}
 		});
@@ -899,6 +1124,11 @@ var subplot = P(EditableBlock, function(_, super_) {
 			if(kids[i] === this) setEval = true;
 		}
 	}
+  _.parseSavedProperties = function(args) {
+  	super_.parseSavedProperties.call(this, args);
+  	if((this.line_style == 'none') && !(this instanceof plot_scatter)) this.line_style = 'solid';
+  	return this;
+  }
 	_.name = function() {
 		var name = this.label.toString().trim();
 		if(name == '') return 'data_' + this.id;
@@ -1010,14 +1240,15 @@ var subplot = P(EditableBlock, function(_, super_) {
 		if(to_change.eq0 && this.eq0 && this.eq0.text().trim().length) { to_change.eq0.latex(this.eq0.latex()); to_change.eq0.touched = true; }
 		if(to_change.eq1 && this.eq1 && this.eq1.text().trim().length) { to_change.eq1.latex(this.eq1.latex()); to_change.eq1.touched = true; }
 		to_change.label.clear().paste(this.label.toString());
-		var to_move = ['line_weight','marker_size','line_style','color', 'y_axis'];
+		var to_move = ['marker_size','line_style','color', 'y_axis','stack'];
+		if((type != 'plot_scatter') && !(type == 'plot_line' && this instanceof plot_scatter)) to_move.push('line_weight');
 		for(var i = 0; i < to_move.length; i++)
 			to_change[to_move[i]] = this[to_move[i]];
 		to_change.focus(-2);
 		var all_touched = true;
 		for(var i = 1; i < to_change.focusableItems.length; i++) {
 			for(var j = 0; j < to_change.focusableItems[i].length; j++) {
-				if(to_change.focusableItems[i][j].needs_touch) all_touched = all_touched && to_change.focusableItems[i][j].touched;
+				if(to_change.focusableItems[i][j].needs_touch) all_touched = to_change.focusableItems[i][j].touched === false ? false : all_touched;
 			}
 		}
 		if(all_touched) {
@@ -1027,25 +1258,54 @@ var subplot = P(EditableBlock, function(_, super_) {
 		this.worksheet.save();
 		return to_change;
 	}
-	_.addSelectLine = function() {
-		this.worksheet.attachToolbar(this, this.worksheet.toolbar.plotToolbar(this));
+	_.getUID = function() {
+		if(this.parent.plotBox && (this.curveNumber !== false)) {
+			if(this.parent.plotBox.data[this.curveNumber])
+				return this.parent.plotBox.data[this.curveNumber].uid;
+		}
+		return false;
+	}
+	_.getColor = function() {
+		if(this.color) return this.color;
+		if(this.parent.plotBox && (this.curveNumber !== false)) {
+			if(this.parent.plotBox.data[this.curveNumber])
+				return this.parent.plotBox.data[this.curveNumber].marker.color;
+		}
+		return false;
+	}
+	_.addSelectLine = function(no_toolbar) {
+		if(no_toolbar !== false) this.worksheet.attachToolbar(this, this.worksheet.toolbar.plotToolbar(this));
 		if(this.parent.plotBox) {
-			var old_el = $(this.parent.plotBox.element).find('.c3-line-data-' + this.id).first();
-			var new_el = old_el.clone();
-			new_el.insertBefore(old_el).css('opacity',0.5).css('stroke','#aaaaaa').css('stroke-width',this.line_weight + 5).css('stroke-dasharray','none');
+			if(this instanceof barplot) {
+				Plotly.restyle(this.parent.plotBox, {'marker.line': {color: '#000000', width: 1.5}}, this.curveNumber);
+			} else {
+				var els = $(this.parent.plotBox).find('.trace' + this.getUID());
+				if(els.length > 1) els.first().remove();
+				var old_el = $(this.parent.plotBox).find('.trace' + this.getUID()).first();
+				var new_el = old_el.clone();
+				new_el.attr('data-select','1').insertBefore(old_el).css('opacity',0.5).css('stroke-opacity',0.5).css('stroke','#777777').css('stroke-width',this.line_weight + 5).css('stroke-dasharray','none').find('path').not('.js-fill').css('opacity',0.5).css('stroke-opacity',0.5).css('stroke','#777777').css('stroke-width',this.line_weight + 5).css('stroke-dasharray','none');
+			}
 		}
 	}
 	_.unselect = function() {
 		if(this.selected) {
 			this.selected = false;
 			this.worksheet.blurToolbar(this);
-			$(this.parent.plotBox.element).find('.c3-line-data-' + this.id).first().remove();
+			if(this instanceof barplot) {
+				if(this.parent.plotBox) Plotly.restyle(this.parent.plotBox, {'marker.line': {color: '#000000', width: 0}}, this.curveNumber);
+			} else {
+				var els = $(this.parent.plotBox).find('.trace' + this.getUID());
+				if(els.length > 1) els.first().remove();
+			}
 			$(document).off('click.plot_' + this.id);
 		}
 		return this;
 	}
 	_.select = function() {
 		if(this.selected) return;
+		$.each(this.parent.children(), function(i, child) {
+			if(child.selected) child.unselect();
+		});
 		this.selected = true;
 		this.addSelectLine();
 		var _this = this;
@@ -1057,6 +1317,28 @@ var subplot = P(EditableBlock, function(_, super_) {
 	}
 	_.command = function(command, value) {
 		switch(command) {
+			case 'color':
+				this.color = value;
+				this.worksheet.save();
+				if(this.parent.plotBox) {
+					var els = $(this.parent.plotBox).find('.trace' + this.getUID());
+					if(els.length > 1) els.first().remove();
+					Plotly.restyle(this.parent.plotBox,{'marker.color':value, 'line.color':value},this.curveNumber);
+					if(this.selected) this.addSelectLine(false);
+				}
+				return;
+			case 'stack':
+				this.stack = value;
+				var children = this.parent.children();
+				for(var i = 0;i < children.length; i++ ) {
+					if(((this instanceof barplot) && (children[i] instanceof barplot)) || ((this instanceof plot_line) && (children[i] instanceof plot_line)))
+						children[i].stack = value;
+				}
+				break;
+			case 'line_weight':
+				if((value > 0) && (this.line_style == 'none')) this.line_style = 'solid';
+				this.line_weight = value;
+				break;
 			case 'marker_size':
 				if(value == 0) this.show_points = false;
 				else this.show_points = true;
@@ -1065,6 +1347,7 @@ var subplot = P(EditableBlock, function(_, super_) {
 		}
 		this.worksheet.save();
 		this.parent.drawPlot();
+		this.select();
 	}
 	// Methods to overwrite (in addition to innerHtml and postInsertHandler)
 	_.createCommands = function() {

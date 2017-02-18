@@ -54,7 +54,6 @@ var plot_histogram = P(barplot, function(_, super_) {
 					}
           this.suggest_y_min = (this.y_axis == 'y' && this.parent.y_min === false) || (this.y_axis == 'y2' && this.parent.y2_min === false) ? Math.min.apply(Math, freqs) : undefined;
           this.suggest_y_max = (this.y_axis == 'y' && this.parent.y_max === false) || (this.y_axis == 'y2' && this.parent.y2_max === false) ? Math.max.apply(Math, freqs) : undefined;
-					freqs.unshift('data_' + this.id);
 					this.ys = freqs;
 					this.x_labels = bins;
 					this.plot_me = true;

@@ -1,6 +1,5 @@
 var plot_bar = P(barplot, function(_, super_) {
 	_.plot_type = 'plot_bar';
-	_.c3_type = 'bar';
 	_.helpText = "<<bar plot>>\nPlot a Bar Graph based on data.  To assign labels to the data, click on the x-axis.\nHELP:23";
 
 	_.innerHtml = function() {
@@ -15,17 +14,6 @@ var plot_bar = P(barplot, function(_, super_) {
 		super_.postInsertHandler.call(this);
 		var _this = this;
 		this.leftJQ.append('<span class="fa fa-bar-chart"></span>');
-	}
-	_.chart_type = function() {
-		return {
-			id: 'chart_type',
-			html: 'Chart Type&nbsp;',
-			title: 'Chart Type',
-			sub: [
-				{ html: (this.plot_type == 'plot_bar' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Bar Chart', method: function(el) { el.unselect().changeTo('plot_bar').select() } },
-				{ html: (this.plot_type == 'plot_bar_stacked' ? '<span class="fa fa-fw fa-check"></span>' : '<span class="fa fa-fw"></span>') + '&nbsp;Stacked Bar Chart', method: function(el) { el.unselect().changeTo('plot_bar_stacked').select() } }
-			]
-		};
 	}
 	_.getUnitsCommands = function() {
 		return [
@@ -54,7 +42,6 @@ var plot_bar = P(barplot, function(_, super_) {
 					this.ys = eval(this.ys);
           this.suggest_y_min = (this.y_axis == 'y' && this.parent.y_min === false) || (this.y_axis == 'y2' && this.parent.y2_min === false) ? Math.min.apply(Math, this.ys) : undefined;
           this.suggest_y_max = (this.y_axis == 'y' && this.parent.y_max === false) || (this.y_axis == 'y2' && this.parent.y2_max === false) ? Math.max.apply(Math, this.ys) : undefined;
-					this.ys.unshift('data_' + this.id);
 					this.plot_me = true;
 					this.outputBox.clearState().collapse();
 				} catch(e) {
