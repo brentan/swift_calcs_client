@@ -272,6 +272,7 @@ var plot = P(Element, function(_, super_) {
     var ignore_custom_xs = false;
     var els = {};
     var stack_bars = false;
+    var categories = [];
     var stack_lines = false;
     var default_color_count = 0;
     var children = this.children();
@@ -396,13 +397,13 @@ var plot = P(Element, function(_, super_) {
 		    	val = val.toString().split('e');
 		    	return +(val[0] + 'e' + (val[1] ? (+val[1] + exp) : exp));
 				}
-			  var categories = [];
+			  categories = [];
 			  for(var j = 0; j < hist_plot.length; j++) 
 			    categories.push(ceil10(hist_plot[j][0], x_tick_order) + ' to ' + ceil10(hist_plot[j][1], x_tick_order) + ((hist_plot_unit_label && (hist_plot_unit_label != '1.0')) ? (' [' + this.worksheet.latexToUnit(hist_plot_unit_label)[0].replace(/_/g,'').replace(/1\.0/,'') +']') : ''));
 			} else if(this.x_labels && this.has_bar)
-			  var categories = this.x_labels.split('__s__');
+			  categories = this.x_labels.split('__s__');
 			else 
-			  var categories = [];
+			  categories = [];
       // Create popup labels
       var cur_x_vals = ignore_custom_xs ? (categories.length ? categories : Array.apply(null, {length: y_vals.length}).map(Number.call, Number)) : x_vals;
 			y_txt=[];
@@ -628,6 +629,7 @@ var plot = P(Element, function(_, super_) {
 			},
     	ticks: 'outside',
     	showline: true,
+    	exponentformat: 'power',
     	ticklen: 6,
       fixedrange: true,
     	gridcolor: '#e4e4e4',
@@ -648,6 +650,7 @@ var plot = P(Element, function(_, super_) {
     	showline: true,
     	nticks: this.rotated ? 16 : 10,
     	ticklen: 6,
+    	exponentformat: 'power',
     	gridcolor: '#e4e4e4',
     	zerolinecolor: '#cccccc',
 			showgrid: this.y_grid,
@@ -665,6 +668,7 @@ var plot = P(Element, function(_, super_) {
     	nticks: 10,
     	ticklen: 6,
       fixedrange: true,
+    	exponentformat: 'power',
 			showgrid: false,
 			showline: true,
 			zeroline: false,
