@@ -118,14 +118,14 @@ var plot = P(Element, function(_, super_) {
 		if(this.plotBox && $(this.plotBox).find('.overlay_message').length==0) {
 			var children = this.children();
 			for(var i = 0; i < children.length; i++) children[i].unselect();
-				try {
-					Plotly.restyle(this.plotBox, {
-						'marker.color': '#cccccc',
-						'line.color': '#cccccc'
-					});
-				} catch(e) {
-					//move along...
-				}
+			try {
+				Plotly.restyle(this.plotBox, {
+					'marker.color': '#cccccc',
+					'line.color': '#cccccc'
+				});
+			} catch(e) {
+				//move along...
+			}
 		} else
 			this.jQ.find('.' + css_prefix + 'plot_box').html('<div class="explain" style="text-align:center;margin:3px 20px;padding:10px;border:1px solid #dddddd;border-radius:6px;">Generating Plot...</div>');		
 	}
