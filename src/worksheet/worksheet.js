@@ -21,6 +21,7 @@ var Worksheet = P(function(_) {
 	_.dragging = false;
 	_.mousedown = false;
 	_.name = '';
+  _.new_name = false;
 	_.hash_string = '';
 	_.server_version = 1;
 	_.rights = 0;
@@ -233,8 +234,10 @@ var Worksheet = P(function(_) {
 				this.hash_string = new_hash;
 				ajaxQueue.known_server_version[this.hash_string] = 1;
     		ajaxQueue.ignore_errors[this.hash_string] = false;
-			} else
+			} else {
+        this.new_name = true;
 				this.save();
+      }
       pushState.navigate('/worksheets/' + this.hash_string + '/' + encodeURIComponent(this.name.replace(/ /g,'_')), {trigger: false});
 		}
 	}
