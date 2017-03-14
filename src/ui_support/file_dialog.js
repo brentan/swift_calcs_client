@@ -101,15 +101,15 @@ $(function() {
 		}
 		else if(hash_string && archive) {
 			window.trackEvent("Project", "Load", "Archive: " + hash_string);
-			SwiftCalcs.pushState.navigate('/archive_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
+			SwiftCalcs.pushState.navigate('/archive_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/( |\\|\.)/g,'_')), {trigger: true});
 		}
 		else if(hash_string && starred) {
 			window.trackEvent("Project", "Load", "Stars: " + hash_string);
-			SwiftCalcs.pushState.navigate('/starred_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
+			SwiftCalcs.pushState.navigate('/starred_projects/' + hash_string + '/' + encodeURIComponent(name.replace(/( |\\|\.)/g,'_')), {trigger: true});
 		}
 		else if(hash_string) {
 			window.trackEvent("Project", "Load", hash_string);
-			SwiftCalcs.pushState.navigate('/projects/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')), {trigger: true});
+			SwiftCalcs.pushState.navigate('/projects/' + hash_string + '/' + encodeURIComponent(name.replace(/( |\\|\.)/g,'_')), {trigger: true});
 		}
 		else if(current_project_navigable_url) {
 			window.trackEvent("Project", "Load", "Current Project");
@@ -463,8 +463,8 @@ $(function() {
 	$('body').on('click', '.worksheet_item i.fa-external-link', function(e) {
 		var name = $(this).closest('.worksheet_item').attr('data-name');
 		var hash_string = $(this).closest('.worksheet_item').attr('data-hash');
-		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
-    window.trackEvent("Worksheet", "Expand", '/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
+		SwiftCalcs.pushState.navigate('/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/( |\\|\.)/g,'_')));
+    window.trackEvent("Worksheet", "Expand", '/worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/( |\\|\.)/g,'_')));
 		SwiftCalcs.pushState.last_active_url = '/';
 		SwiftCalcs.pushState.last_active_title = 'Swift Calcs';
 		if($(this).closest('.active_worksheet').length == 0) {
@@ -1136,7 +1136,7 @@ $(function() {
 		$(document).prop('title', name);
 		var hash_string = el.attr('data-hash');
 		if(!SwiftCalcs.pushState.fragment.match(/^(worksheets|revisions)\//i) && (set_url !== false))
-			SwiftCalcs.pushState.navigate('/inline_worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/ /g,'_')));
+			SwiftCalcs.pushState.navigate('/inline_worksheets/' + hash_string + '/' + encodeURIComponent(name.replace(/( |\\|\.)/g,'_')));
 		$('.base_layout').addClass('worksheet_open');
 		var before_item = el.prev();
 		var after_item = el.next();

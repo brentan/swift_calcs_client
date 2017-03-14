@@ -139,7 +139,7 @@ var Worksheet = P(function(_) {
   					return false;
   				}; }(this));
   				els.find('a.back').on('click', function(e) {
-  					pushState.navigate('/worksheets/' + SwiftCalcs.active_worksheet.hash_string + '/' + encodeURIComponent(SwiftCalcs.active_worksheet.name.replace(/ /g,'_')), {trigger: true});
+  					pushState.navigate('/worksheets/' + SwiftCalcs.active_worksheet.hash_string + '/' + encodeURIComponent(SwiftCalcs.active_worksheet.name.replace(/( |\\|\.)/g,'_')), {trigger: true});
   					e.preventDefault();
   					return false;
   				});
@@ -238,7 +238,7 @@ var Worksheet = P(function(_) {
         this.new_name = true;
 				this.save();
       }
-      pushState.navigate('/worksheets/' + this.hash_string + '/' + encodeURIComponent(this.name.replace(/ /g,'_')), {trigger: false});
+      pushState.navigate('/worksheets/' + this.hash_string + '/' + encodeURIComponent(this.name.replace(/( |\\|\.)/g,'_')), {trigger: false});
 		}
 	}
 	/*
