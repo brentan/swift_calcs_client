@@ -186,7 +186,7 @@ $(function() {
     code += "var f=document.createElement('script');f.setAttribute('type','text/javascript');f.setAttribute('src','" + (dev == 'true' ? 'http://dev.swiftcalcs.com:3000' : 'https://www.swiftcalcs.com') + "/libraries/embed/sc_client_embed" + window.sc_embed_version + ".js');document.getElementsByTagName('head')[0].appendChild(f);";
     // do timeouts to run l when we are loaded
     code += "var t=function(){if(window.SwiftCalcs_Embed_Iframe_" + window.sc_embed_version + "){l();}else{window.setTimeout(t,250);}};t();}}());</script>";
-    var iframe_src = (dev == 'true' ? 'http://dev.swiftcalcs.com:3000' : 'https://www.swiftcalcs.com') + "/embed/" + worksheet + "/" + hash_string + "?height=" + (height > 0 ? height : '600') + "&autosave=" + (autosave == 'true' ? '1' : '0') + "&interaction=" + interaction + "&copy_message=" + copy_message;
+    var iframe_src = (dev == 'true' ? 'http://dev.swiftcalcs.com:3000' : 'https://www.swiftcalcs.com') + "/embed/" + worksheet + "/" + hash_string + "?height=" + (height > 0 ? height : '600') + "&autosave=" + (autosave == 'true' ? '1' : '0') + "&interaction=" + interaction + "&comessage=" + copy_message;
     el.find('.embed_code').val(code);
     el.find('.iframe_embed input').val("<iframe width='100%' height='" + (height > 0 ? height : '600') + "' frameborder='0' allowTransparency='true' scrolling='no' style='width:100%;overflow:hidden;border-width:0px;height:" + (height > 0 ? height : '600') + "px;background-color:transparent;' src='" + iframe_src + "'></iframe>");
   }

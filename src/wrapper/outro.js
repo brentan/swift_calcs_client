@@ -1,6 +1,8 @@
 
 	SwiftCalcs.Worksheet = Worksheet;
 	var elements = SwiftCalcs.elements = {
+		'systemvision': systemvision,
+		'systemvisionBlock': systemvisionBlock,
 		'math': math,
 		'text': text,
 		'if': if_block,
