@@ -50,6 +50,7 @@ var Worksheet = P(function(_) {
     this.fusion_id = inputs.fusion_id;
     this.need_paid_plan = inputs.need_paid_plan;
 		this.ends = {};
+    this.archive_string = "";
     this.object_list = {};
 		this.ends[R] = 0;
 		this.ends[L] = 0;
@@ -231,6 +232,7 @@ var Worksheet = P(function(_) {
 			$('#account_bar .content').find("input." + css_prefix + "worksheet_name").val(this.name);
 			if(new_hash) {// new hash_string and server id provided means this is a duplication event.  Do not save, just update my hash_string
         ajaxQueue.server_version[new_hash] = ajaxQueue.server_version[this.hash_string];
+        ajaxQueue.server_archive[new_hash] = ajaxQueue.server_archive[this.hash_string];
 				this.hash_string = new_hash;
 				ajaxQueue.known_server_version[this.hash_string] = 1;
     		ajaxQueue.ignore_errors[this.hash_string] = false;
@@ -378,6 +380,7 @@ var Worksheet = P(function(_) {
 			this.revision_hash = response.revision_hash;
 			this.revision_rights_level = response.revision_rights_level;
 		}
+    this.archive_string = response.archive_string;
 		var to_parse = response.data;
 		// Load the details section
 
@@ -462,13 +465,14 @@ var Worksheet = P(function(_) {
       this.first_eval_complete = true;
     }
 	  this.updateUploads();
-	  this.reset_server_base(to_parse);
+	  this.reset_server_base(to_parse, this.archive_string);
 	  this.loaded = true;
     if(this.need_paid_plan) this.blur();
 	  return this;
 	}
-	_.reset_server_base = function(base) {
-	  ajaxQueue.server_version[this.hash_string] = base; // Seed the diff so that we load it with the current version that we just got from the server
+	_.reset_server_base = function(base, archive) {
+    ajaxQueue.server_archive[this.hash_string] = archive;
+    ajaxQueue.server_version[this.hash_string] = base; // Seed the diff so that we load it with the current version that we just got from the server
 	}
 	// Detach method (remove from the DOM)
 	_.unbind = function() {
@@ -742,4 +746,8 @@ var Worksheet = P(function(_) {
 		}
 		return out;
 	}
+  _.set_archive_string = function(string) {
+    this.archive_string = string;
+    this.save(false);
+  }
 });

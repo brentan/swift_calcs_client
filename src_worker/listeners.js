@@ -1,3 +1,8 @@
+var last_archive = ""
+var get_archive_data = function(package_name) {
+  console.log("SEEKING: " + package_name);
+  return last_archive;
+}
 var eval_function = function(var_name) {
   /* 
   Will receive a string, var_name, that is asking if we know its value.
@@ -85,6 +90,13 @@ var receiveMessage = function(command) {
   }
   if(command.setCurrencyConversion) {
     Module.setCurrency(command.setCurrencyConversion.coeff > 0 ? 1/command.setCurrencyConversion.coeff : 0, command.setCurrencyConversion.index);
+    return
+  }
+  if(command.archive_string) {
+    return sendMessage({command: 'archive_string', string: Module.caseval("archive_string()")});
+  }
+  if(command.unarchive_string) {
+    Module.caseval('unarchive_string("' + command.unarchive_string + '")')
     return
   }
   if(command.objectList) {

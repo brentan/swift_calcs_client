@@ -23,6 +23,8 @@ var ajaxQueueClass = P(function(_) {
 		this.server_version = {};
 		this.known_server_version = {};
 		this.should_be_server_version = {};
+		this.server_archive = {};
+		this.should_be_server_archive = {};
 		this.ignore_errors = {};
 		this.save_div = $('.save_div');
 		this.jQ = {
@@ -46,6 +48,7 @@ var ajaxQueueClass = P(function(_) {
 		this.running[id] = true;
 		this.jQ.html('Saving...');
 		this.should_be_server_version[id] = this.holding_pen[id].worksheet.toString();
+		this.should_be_server_archive[id] = this.holding_pen[id].worksheet.archive_string;
 		if((this.holding_pen[id].worksheet.ends[L] === 0) || (this.holding_pen[id].worksheet.ends[R] === 0)) {
 			// This should never happen.  It indicates that the tree was corrupted.  Stop now to avoid destroying data.
 			ajaxQueue.jQ.html('Fatal error on save.  Saving disabled.');
@@ -69,6 +72,7 @@ var ajaxQueueClass = P(function(_) {
 		if(full) {
 			// For force saves, we push up the whole document...we do this in case something is corrupted, which shouldnt happen...so eventually we may just remove this
 			post_data.full_resave = this.should_be_server_version[id];
+			post_data.full_archive_string = this.should_be_server_archive[id];
 		} else {
 			// Create diff between what we have now and what we are trying to commit up
 			if(this.should_be_server_version[id].trim() === '') {
@@ -100,7 +104,11 @@ var ajaxQueueClass = P(function(_) {
 		  var patch_list = diff_patch.patch_make(this.server_version[id], this.should_be_server_version[id], diff);
 		  patch_list = diff_patch.patch_toText(patch_list);
 		  post_data.patch = patch_list;
-		  if((patch_list == "") && !this.holding_pen[id].worksheet.new_name) {
+			var diff = diff_patch.diff_main(this.server_archive[id], this.should_be_server_archive[id], true);
+		  var patch_list = diff_patch.patch_make(this.server_archive[id], this.should_be_server_archive[id], diff);
+		  patch_list = diff_patch.patch_toText(patch_list);
+		  post_data.archive_patch = patch_list;
+		  if((post_data.archive_patch == "") && (post_data.patch == "") && !this.holding_pen[id].worksheet.new_name) {
 				this.holding_pen[id] = false;
     		ajaxQueue.complete(id);
 		  	return this;
@@ -120,6 +128,7 @@ var ajaxQueueClass = P(function(_) {
 		    		$("<div id='new_version'><span>A New Version of Swift Calcs is Available</span><a href='#' onclick='window.location.reload();'>Reload window</a></div>").appendTo("body");
       		ajaxQueue.known_server_version[id]++;
       		ajaxQueue.server_version[id] = ajaxQueue.should_be_server_version[id]; // Update what we know to be on the server
+      		ajaxQueue.server_archive[id] = ajaxQueue.should_be_server_archive[id]; // Update what we know to be on the server
       		ajaxQueue.complete(id);
       	}
       	else {

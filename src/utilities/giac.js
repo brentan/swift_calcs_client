@@ -190,18 +190,19 @@ var GiacHandler = P(function(_) {
 			this.aborting = 1;
 		return this;
 	}
-	_.evaluationComplete = function(eval_id) {
+	_.evaluationComplete = function(eval_id, full_eval) {
 		if(!this.evaluations[eval_id]) return this;
-		if(SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) {
+		if(this.evaluations[eval_id].evaluation_full && SwiftCalcs.active_worksheet && SwiftCalcs.active_worksheet.loaded) {
       SwiftCalcs.active_worksheet.ready_to_print = true;
       SwiftCalcs.active_worksheet.first_eval_complete = true;
       SwiftCalcs.active_worksheet.suppress_autofunction = false;
+      this.sendCommand({archive_string: true});
     }
 		if(this.errors_encountered)
 			setError('Error encountered during computation.  Please correct to continue computation.'); // BRENTAN: Add link to line number?
 		else {
 			if(this.evaluations[eval_id].evaluation_full) {
-				this.sendCommand({objectList: true});
+        this.sendCommand({objectList: true});
 			} else
 				setComplete();
 		}
@@ -381,6 +382,9 @@ var loadWorker = SwiftCalcs.loadWorker = function(giacHandler) {
     		} else if(Element.byId[response.callback_id]) Element.byId[response.callback_id].evaluationCallback(response.eval_id, response.callback_function, cleanOutput(response.results));
     		else setComplete();
     		break;
+      case 'archive_string':
+        if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.set_archive_string(response.string);
+        break;
     	case 'objectList':
     		giacHandler.objectListCallback(response);
     		break;
