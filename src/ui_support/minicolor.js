@@ -619,9 +619,13 @@
         hsb = hex2hsb(hex);
 
         // Get array of lowercase keywords
-        keywords = !settings.keywords ? [] : $.map(settings.keywords.split(','), function(a) {
-            return $.trim(a.toLowerCase());
-        });
+        if(settings) {
+            keywords = !settings.keywords ? [] : $.map(settings.keywords.split(','), function(a) {
+                return $.trim(a.toLowerCase());
+            });
+        } else {
+            keywords = [];
+        }
 
         // Set color string
         if( input.val() !== '' && $.inArray(input.val().toLowerCase(), keywords) > -1 ) {
@@ -1056,9 +1060,13 @@
             if( !input.data('minicolors-initialized') ) return;
 
             // Get array of lowercase keywords
-            keywords = !settings.keywords ? [] : $.map(settings.keywords.split(','), function(a) {
-                return $.trim(a.toLowerCase());
-            });
+            if(settings) {
+                keywords = !settings.keywords ? [] : $.map(settings.keywords.split(','), function(a) {
+                    return $.trim(a.toLowerCase());
+                });
+            } else {
+                keywords = [];
+            }
 
             // Set color string
             if( input.val() !== '' && $.inArray(input.val().toLowerCase(), keywords) > -1 ) {

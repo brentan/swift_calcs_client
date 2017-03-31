@@ -11,6 +11,8 @@
 		'for': for_loop,
 		'continue': continue_block,
 		'break': break_block,
+		'include': include_worksheet,
+		'include_block': include_block,
 		'indent': indent,
 		'plot': plot,
 		'plot_func': plot_func,

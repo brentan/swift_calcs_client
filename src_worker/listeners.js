@@ -1,8 +1,3 @@
-var last_archive = ""
-var get_archive_data = function(package_name) {
-  console.log("SEEKING: " + package_name);
-  return last_archive;
-}
 var eval_function = function(var_name) {
   /* 
   Will receive a string, var_name, that is asking if we know its value.
@@ -93,11 +88,9 @@ var receiveMessage = function(command) {
     return
   }
   if(command.archive_string) {
-    return sendMessage({command: 'archive_string', string: Module.caseval("archive_string()")});
-  }
-  if(command.unarchive_string) {
-    Module.caseval('unarchive_string("' + command.unarchive_string + '")')
-    return
+    var output = Module.caseval("archive_string()").replace(/""/g,'"').replace(/\n/g,'').replace(/\\/g,"\\\\").replace(/\\\\"/g,"\\\"");
+    output = output.substr(1,output.length-2);
+    return sendMessage({command: 'archive_string', string: output});
   }
   if(command.objectList) {
     // If we are asking for the object list, we simply get that list and return it immediately
@@ -396,13 +389,13 @@ var Module = {
       return Module.caseval_direct(text);
   },
   casevalWithTimeout: function(text) {
-    //try {
+    try {
       return Module.caseval(text);
-    /*} catch(e) {
+    } catch(e) {
       if(e.message)
         errors[ii] = fix_message(e.message);
       else
-        errors[ii] = fix_message('An unknown error occurred.  This has been recorded with the Swift Calcs dev team.');
+        errors[ii] = fix_message('An error occurred while processing this item.  Please check syntax (use f(x) instead of f to call a function, for example) and try again.');
       return '';
     }
     /*

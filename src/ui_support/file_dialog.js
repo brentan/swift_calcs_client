@@ -142,7 +142,8 @@ $(function() {
 			$container.addClass('closed');
 			$container.children('.expand').slideUp(150);
 		}
-		window.loadProject($container.attr('data-hash'), $container.attr('data-name'), $container.closest('.archive').length > 0);
+		if($(this).closest('.popup_dialog').length == 0)
+			window.loadProject($container.attr('data-hash'), $container.attr('data-name'), $container.closest('.archive').length > 0);
 	});
 	$('body').on('click', '.full_swift', function(e) {
 	  var win = window.open("https://www.swiftcalcs.com/", '_blank');
@@ -526,6 +527,226 @@ $(function() {
 	    if(SwiftCalcs.current_toolbar) SwiftCalcs.current_toolbar.reshapeToolbar();
 	    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
 		}
+	}
+	window.loadFilePicker = function(callback, parent_id) {
+    window.showPopupOnTop();
+    var current_parent_hash = undefined;
+    $('.popup_dialog .full').html("<table border=0 width='100%'><tbody><tr><td style='width:200px;' valign=top><div class='left_bar'></div></td><td valign=top><div class='select_worksheet'><div class='input_box'><input type='text'></div><div class='title'>Choose a Worksheet and Variables</div><div class='search'><i class='fa fa-search'></i><div class='input'><input type='text' placeholder='Search'></div><i class='fa fa-times-circle'></i></div><div class='list_content'></div></div></td></tr></tbody></table>");
+    var $list_content_td = $('.popup_dialog .full div.list_content');
+    var $leftbar = $('.popup_dialog .full div.left_bar');
+    var $autocomplete = $('.popup_dialog .full').find('input').eq(1);
+    var $input = $('.popup_dialog .full').find('input').eq(0);
+    var loading = function() {
+      $('.popup_dialog .bottom_links').find('button.select_worksheet').hide();
+      $list_content_td.html("<div style='text-align:center;'><h1>Loading...</h1><BR><BR><i class='fa fa-spinner fa-pulse'></i></div>");
+    }
+    loading();
+    window.resizePopup();
+    var _this = this;
+    var select_worksheet = function() {
+      var val = $list_content_td.find('.selected').first();
+      if(val.length == 0) 
+        return showNotice("Please select a worksheet", "red");
+      var selected_vars = $list_content_td.find('.selected').first().find('input:checked');
+      if(selected_vars.length == 0)
+      	return showNotice("Please choose at least one variable to include","red");
+      var var_list = [];
+      selected_vars.each(function() {
+      	var_list.push($(this).attr('data-val'));
+      });
+      callback(val.attr('data-id'),var_list);
+      window.hidePopupOnTop();
+    }
+    var populate = function(response) { 
+      if(response.success) {
+        $list_content_td.html("");
+        $.each(response.worksheets, function(k,v) {
+          $list_content_td.append("<div class='list item' data-id='" + v.hash_string + "'>" + v.name + "</div>");
+        });
+        if(response.worksheets == 0)
+          $list_content_td.append("<div><strong>No Results</strong></div>");
+        $('.popup_dialog .bottom_links').html('<button class="select_worksheet" style="display:none;">Include Chosen Variables</button><button class="grey close">Close</button>');
+        $('.popup_dialog .bottom_links').find('button.select_worksheet').on('click', select_worksheet);
+        $list_content_td.find('.item').on('click', function() {
+          if($(this).find('.detail').length) return false;
+      		$('.popup_dialog .bottom_links').find('button.select_worksheet').hide();
+          $list_content_td.find('.selected').removeClass('selected');
+          $list_content_td.find('.detail').slideUp({duration: 200, always: function() { $(this).remove(); }});
+          $(this).addClass('selected');
+          var detail_div = $('<div/>').addClass('detail').appendTo($(this)).hide();
+          detail_div.html("<div style='text-align:center;'><h3>Loading Variable List...</h3><BR><BR><i class='fa fa-spinner fa-pulse'></i></div>").slideDown(200);
+          window.ajaxRequest("/worksheets/variable_list",{hash_string: $(this).attr('data-id')},function(results) {
+          	try {
+          		variables = JSON.parse(results.variables);
+          	} catch(err) {
+			      	detail_div.html("<div style='text-align:center;'><h3>Unable to Decode Variable List</h3><div style='font-size:11px;font-weight:normal;line-height:13px;'>The worksheet variable listing may be corrupt.  Open the worksheet to reset the variable list.</div></div>");
+			      	return;
+          	}
+          	if(variables.length == 0) {
+			      	detail_div.html("<div style='text-align:center;'><h3>No Variables Were Found</h3><div style='font-size:11px;font-weight:normal;line-height:13px;'>Ensure that variables and functions are defined in this worksheet.  If you believe you are receiving this message in error, load the worksheet in a new window and verify that it calculates through completely.</div></div>");
+          	} else {
+          		var select_html = '';
+          		for(var i = 0; i < variables.length; i++) 
+          			select_html += "<tr class='hover_highlight'><td style='width:30px;border-bottom:1px solid #ccc;'><input type=checkbox style='width:auto;' data-val='" + variables[i].name + "'></td><td style='border-bottom:1px solid #ccc;font-weight:bold;'>" + window.SwiftCalcsLatexHelper.VarNameToHTML(variables[i].name) + "</td><td style='border-bottom:1px solid #ccc;'>" + (variables[i].latex.length < 250 ? window.SwiftCalcsLatexHelper.latexToHtml(variables[i].latex) : "<span class='explain'>Value too long to display</span>")+ "</td></tr>";
+		          detail_div.html('<table border=0 style="width:100%;"><tbody><tr><td colspan=3 style="border-bottom:1px solid #ccc;"><b>Select Variables to Include</b></td></tr>' + select_html + '<tr><td colspan=3><a class="button" style="display:inline-block;left-margin:0px;">Include Chosen Variables</a></tr></td></tbody></table>');
+		          detail_div.find('a.button').on('click', select_worksheet);
+		          detail_div.find('tr.hover_highlight').on('click', function(e) {
+		          	$(this).find('input').click();
+		          	e.stopPropagation();
+		          });
+		          detail_div.find('input').on('click', function(e) {
+		          	e.stopPropagation();
+		          });
+		          $('.popup_dialog .bottom_links').find('button.select_worksheet').show();
+          	}
+          }, function(response) {
+			      detail_div.html("<div style='text-align:center;'><h3>Unable to load variable list</h3>Ensure you have appropriate permissions.</div>");
+			    });
+          $autocomplete.val('');
+          lastRequest = '';
+          $input.focus();
+          return false;
+        });
+        // register input
+        window.resizePopup();
+        if(!$autocomplete.is(":focus"))
+          $input.focus();
+      } else {
+        showNotice(response.message, 'red');
+        window.hidePopupOnTop();
+      }
+    };
+
+    var timeOut = false;
+    var ajaxRequest = false;
+    var lastRequest = '';
+    var submitFunction = function(_this){ return function() {
+      search = $autocomplete.val().trim();
+      // Cancel the last request if valid
+      if(ajaxRequest) ajaxRequest.abort();
+      // Currently loading? 
+      var curloading = $list_content_td.find('.fa-spinner').length > 0;
+      if(!curloading && (search == lastRequest)) return;
+      lastRequest = search;
+      if(search == '') // blank, reload initial material listing
+        return load();
+      if(search.length < 3) {
+        if(curloading) $list_content_td.html("");
+        return showNotice('Please enter a search phrase of at least 3 characters');
+      }
+      loading();
+      ajaxRequest = $.ajax({
+        type: "POST",
+        url: "/projects",
+        data: {search_term: search, hash_string: current_parent_hash, order_by_name: true },
+        success: populate,
+        error: function(err) {
+          window.hidePopupOnTop();
+          console.log('Error: ' + err.responseText)
+          showNotice('Error: There was a server error.  We have been notified', 'red');
+          SwiftCalcs.await_printing = false;
+        }
+      });
+    }; }(this);
+    $('.popup_dialog .full').find('div.search .fa-times-circle').on('click', function(evt) {
+      $autocomplete.val('');
+      submitFunction();
+      evt.preventDefault();
+    });
+    $autocomplete.on("keydown", function(evt) {
+      var which = evt.which || evt.keyCode;
+      var search = $(this).val();
+      var curloading = $list_content_td.find('.fa-spinner').length > 0;
+      // It will clear the setTimeOut activity if valid.
+      if(timeOut) clearTimeout(timeOut);
+      if((which == 10) || (which == 13)) {
+        evt.preventDefault();
+        this.blur(); //Blur will submit, see 'onblur'
+      }
+      else if(search.length >= 3) {
+        loading();
+        timeOut = setTimeout(function() { submitFunction(); }, 400);// wait for quarter second.
+      } else if(curloading) {
+        loading();
+        timeOut = setTimeout(function() { submitFunction(); }, 1200);// wait for quarter second.
+      }
+    }).on("blur", function(evt) {
+      submitFunction();
+      evt.preventDefault();
+      $input.focus();
+    });
+
+    $input.on("keydown", function(evt) {
+      var which = evt.which || evt.keyCode;
+      switch(which) {
+        case 10:
+        case 13:
+        case 39:
+          //Enter or Right
+          $list_content_td.find('.selected').first().click();
+        break;
+        case 38:
+          //Up
+          var sel = $list_content_td.find('.selected').first();
+          if(sel.length == 0) {
+            sel = $list_content_td.find('div.list').first();
+            sel.addClass('selected');
+          }
+          if(sel.prev('div.list').length) {
+            sel.prev('div.list').addClass('selected');
+            sel.removeClass('selected');
+          }
+        break;
+        case 40:
+          //Down
+          var sel = $list_content_td.find('.selected').first();
+          if(sel.next('div.list').length) {
+            sel.next('div.list').addClass('selected');
+            sel.removeClass('selected');
+          }
+          if(sel.length == 0) {
+            sel = $list_content_td.find('div.list').first();
+            sel.addClass('selected');
+          }
+      }
+      evt.preventDefault();
+    });
+
+    var load = function(parent_id, archive, star) {
+      loading();
+      current_parent_hash = parent_id;
+      if((typeof current_parent_hash === 'undefined') || (current_parent_hash.length == 0)) current_parent_hash = 'active';
+      if(current_parent_hash == 'starred') {
+      	current_parent_hash = 'active';
+      	star = true;
+      }
+      var data = { hash_string: current_parent_hash, order_by_name: true }
+      if(archive) data.show_archived = true;
+      if(star) data.star = true;
+      window.ajaxRequest('/projects', data , populate, function(response) {
+        window.hidePopupOnTop();
+      });
+    }
+    loading();
+    window.ajaxRequest('/projects/left_bar',{}, function(response) {
+    	$leftbar.html(response.html);
+    	load(parent_id);
+      // Listeners
+		  $leftbar.on('click', '.project_title', function(e) {
+		    var $container = $(this).closest('div.item');
+		    load($container.attr('data-hash'), $container.closest('.archive').length > 0, false);
+		  });
+			$leftbar.on('click', '.star_title', function(e) {
+				var $container = $(this);
+				if($container.closest('.project_list').length > 0) {
+					$project = $container.closest('.expand').closest('div.item');
+					load($project.attr('data-hash'), false, true);
+				} else
+					load(undefined, false, true);
+			});
+  	}, function(response) {
+      window.hidePopupOnTop();
+    });
 	}
 	// Batch (multiple select)
 	var batch_toolbar = function(tot) {
@@ -1695,6 +1916,7 @@ $(function() {
 	});
 	$('body').on('click', '.star_title', function(e) {
 		var $container = $(this);
+		if($container.closest('.popup_dialog').length) return;
 		if($container.closest('.project_list').length > 0) {
 			$project = $container.closest('.expand').closest('div.item');
 			window.loadProject($project.attr('data-hash'), $project.attr('data-name'), false, true);

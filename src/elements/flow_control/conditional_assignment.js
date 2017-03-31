@@ -188,9 +188,9 @@ var conditional_assignment = P(MathOutput, function(_, super_) {
 					var return_command = '';
           for(var i = 0; i < conds.length; i++) {
             command += 'when(evalf(' + conds[i] + '),(' + eqs[i] + '),(';
-            end_command += ")";
+            end_command += "))";
           }
-          command = command + eqs[i] + end_command + ")";
+          command = command + eqs[i] + end_command;
 					_this.commands = _this.genCommand(command); 
 					_this.evaluate();
 					_this.needsEvaluation = false;

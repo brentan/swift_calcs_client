@@ -52,6 +52,16 @@ var ajaxQueueClass = P(function(_) {
 		if((this.holding_pen[id].worksheet.ends[L] === 0) || (this.holding_pen[id].worksheet.ends[R] === 0)) {
 			// This should never happen.  It indicates that the tree was corrupted.  Stop now to avoid destroying data.
 			ajaxQueue.jQ.html('Fatal error on save.  Saving disabled.');
+  		window.showPopupOnTop();
+  		$('.popup_dialog .full').html("<div class='title'>Save Failed</div><div>There was a problem while saving your worksheet.  To avoid data-loss, saving has been disabled.  Please reload your browser window to correct this issue.</div>");
+      $('.popup_dialog .bottom_links').html('<button class="grey">Close</button>');
+      $('.popup_dialog .bottom_links button').on('click', function() {
+	      if(SwiftCalcs.active_worksheet && (SwiftCalcs.active_worksheet.hash_string == id))
+	      	SwiftCalcs.active_worksheet.FailedSaveMessage();
+	      window.hidePopupOnTop();
+		    return false;
+	    });
+		  window.resizePopup(true);
 			//ajaxQueue.jQ_fatal.show();
 			ajaxQueue.running[id] = false;
 			ajaxQueue.suppress = true;
@@ -162,6 +172,16 @@ var ajaxQueueClass = P(function(_) {
 				ajaxQueue.saving = false;
 				if(ajaxQueue.ignore_errors[id] === true) return;
       	showNotice('Error while saving: ' + err.responseText, 'red');
+	  		window.showPopupOnTop();
+	  		$('.popup_dialog .full').html("<div class='title'>Save Failed</div><div>There was a problem while saving your worksheet.  To avoid data-loss, saving has been disabled.  Please reload your browser window to correct this issue.</div>");
+	      $('.popup_dialog .bottom_links').html('<button class="grey">Close</button>');
+	      $('.popup_dialog .bottom_links button').on('click', function() {
+		      if(SwiftCalcs.active_worksheet && (SwiftCalcs.active_worksheet.hash_string == id))
+		      	SwiftCalcs.active_worksheet.FailedSaveMessage();
+		      window.hidePopupOnTop();
+			    return false;
+		    });
+		    window.resizePopup(true);
       	console.log(err);
       	//Depending on error, do we try again?
       	// TODO: Much better error handling!
