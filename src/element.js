@@ -803,9 +803,15 @@ var Element = P(function(_) {
 					if(el2 instanceof LogicCommand) break;
 				}
 				if(el2 instanceof LogicCommand) {
-				 	if(el2.logicResult === false) { this.jQ.addClass(css_prefix + 'greyout'); return false; }
+				 	if(el2.logicResult === false) { 
+				 		if(this.allowOutput()) this.jQ.addClass(css_prefix + 'greyout'); 
+				 		return false; 
+				 	}
 				} else 
-					if(el.parent.logicResult === false) { this.jQ.addClass(css_prefix + 'greyout'); return false; }
+					if(el.parent.logicResult === false) { 
+						if(this.allowOutput()) this.jQ.addClass(css_prefix + 'greyout'); 
+						return false; 
+					}
 			}
 		}
 		if(this.jQ && (typeof this.jQ.removeClass === 'function'))

@@ -162,7 +162,7 @@ var for_loop = P(Loop, function(_, super_) {
 					this.outputBox.setWarning('Further output from this loop has been temporarily suppressed to increase computation speed.');
 					this.outputBox.expand();
 				}
-				if(this.count >= 20)
+				if((this.count >= 20) || (this.parent instanceof for_loop))
 					this.suppress_output = true;
 			}
 			if(this.count == 1000) {

@@ -81,9 +81,9 @@ var if_block = P(LogicBlock, function(_, super_) {
 				this.all_blocks.push(el);
 			} else if(el instanceof LogicCommand) {
 				this.all_blocks.push(el);
-				el.jQ.addClass(css_prefix + 'greyout');
+				if(this.allowOutput()) el.jQ.addClass(css_prefix + 'greyout');
 			} else
-				el.jQ.addClass(css_prefix + 'greyout');
+				if(this.allowOutput()) el.jQ.addClass(css_prefix + 'greyout');
 		}
 		this.previous_commands = new_command;
 		if(this.shouldBeEvaluated(evaluation_id) && this.commands.length) {
