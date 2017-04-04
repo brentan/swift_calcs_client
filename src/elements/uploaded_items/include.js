@@ -124,6 +124,27 @@ var include_block = P(EditableBlock, function(_, super_) {
     }
   }
   _.continueEvaluation = function(evaluation_id) {
+    if($("div.base_layout").hasClass('hobby_tier')) {
+      var other_include = false;
+      var el = this;
+      while(true) {
+        if(el[L]) {
+          el = el[L];
+          while(el.ends[R]) el = el.ends[R];
+        } else if(el.parent) el = el.parent;
+        else break;
+        if((el instanceof include_block) && (el.hash_string == this.hash_string)) {
+          other_include = true;
+          break;
+        }
+      }
+      if(other_include) {
+        this.outputBox.expand();
+        this.outputBox.setError("You have already imported variables from this worksheet above.  Your subscription level limits you to one include per source per worksheet.  <a href='#' onclick='window.loadSubscriptionSettings(1);return false;' >Upgrade your account</a> to enable multiple source includes in a worksheet.");
+        this.evaluateNext(evaluation_id);
+        return;
+      }
+    }
     if(this.data_loaded === false) 
       return window.setTimeout(function(_this) { return function() { _this.continueEvaluation(evaluation_id); } }(this), 250); // Wait for data to load!
     super_.continueEvaluation.call(this, evaluation_id);

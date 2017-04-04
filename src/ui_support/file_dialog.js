@@ -550,6 +550,8 @@ $(function() {
       var selected_vars = $list_content_td.find('.selected').first().find('input:checked');
       if(selected_vars.length == 0)
       	return showNotice("Please choose at least one variable to include","red");
+    	if($("div.base_layout").hasClass('hobby_tier') && (selected_vars.length > 2)) 
+      	return showNotice("Your Subscription level only allows the inclusion of 2 variables.  Please upgrade or remove some selected variables.","red");
       var var_list = [];
       selected_vars.each(function() {
       	var_list.push($(this).attr('data-val'));

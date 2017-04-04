@@ -82,6 +82,7 @@ $(function() {
       {left: 'fa-caret-square-o-down', text: 'Pulldown Menu', el: 'select' },
       {left: 'fa-check-circle-o', text: 'Radio Selector', el: 'radio' },
       {left: 'fa-check-square-o', text: 'Checkbox Selector', el: 'checkbox' },
+      {left: 'fa-download', text: 'Include Worksheet', el: 'include'},
     ],
   };
   var first = true;
