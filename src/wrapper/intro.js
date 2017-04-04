@@ -203,10 +203,12 @@ var SwiftCalcs = {};
     // Remove units
     command = command.replace(/^_[a-z2µ]+([^a-z2µ])/gi,"$1").replace(/([^a-z0-9_~])_[a-z2µ]+$/gi,"$1").replace(/([^a-z0-9_~])_[a-z2µ]+([^a-z2µ])/gi,"$1 $2");
     command = command.replace(/[^a-zA-Z_0-9~]/g," ").replace(/[a-z0-9_]+__[a-z0-9_]+/gi,"");
+    command = command.replace(/[\s]_[a-z2µ]+/gi,"");
     var reg = /([a-z][a-z0-9~]*(_[a-z0-9~]*)?)/gi;
     var result;
+    var dependent_vars = []
     while((result = reg.exec(command)) !== null) {
-      if(function_vars[result[1]] !== true) dependent_vars.push(result[1]);
+      if((function_vars[result[1]] !== true) && !result[1].match(/^(i|e|e[0-9]+)$/)) dependent_vars.push(result[1]);
     }
     return dependent_vars;
   }

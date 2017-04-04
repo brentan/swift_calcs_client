@@ -249,7 +249,9 @@ var math = P(MathOutput, function(_, super_) {
 		this.was_altered = false;
 		var not_defined = [];
 		for(var i = 0; i < this.dependent_vars.length; i++) 
-			if(!this.autocomplete_list[this.dependent_vars[i]] && !this.autocomplete_list[this.dependent_vars[i] + "("] && !window.mathquillConfigParams.helpList[this.dependent_vars[i]]) not_defined.push(this.dependent_vars[i]);
+			if(!this.autocomplete_list[this.dependent_vars[i]] 
+				&& !this.autocomplete_list[this.dependent_vars[i] + "("] 
+				&& !window.mathquillConfigParams.helpList[this.dependent_vars[i]]) not_defined.push(this.dependent_vars[i]);
 		if(this.not_defined_allowed == not_defined.join("=")) return;
 		if(not_defined.length) {
 			this.not_defined_allowed = not_defined.join("=");
