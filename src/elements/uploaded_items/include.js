@@ -66,25 +66,32 @@ var include_block = P(EditableBlock, function(_, super_) {
     this.worksheet.removeIncludeMessage();
     return super_.postInsertHandler.call(this);
   }
+  _.getLastResult = function(varname) {
+    for(var j = 0; j < this.data.length; j++) {
+      if(varname == this.data[j].name) return this.data[j].latex;
+    }
+    return false;
+  }
   _.setData = function(hash_string, var_list_string) {
     if(hash_string.length) {
       this.hash_string = hash_string;
       this.var_list_string = var_list_string;
-      this.independent_vars = var_list_string.split(";");
+      this.all_vars = var_list_string.split(";");
+      this.independent_vars = []
       window.ajaxRequest("/worksheets/variable_list",{hash_string: this.hash_string},function(_this) { return function(response) {
         _this.data_loaded = true;
         try {
           var vars = JSON.parse(response.variables);
         } catch(e) {
-          _this.independent_vars = [];
+          _this.all_vars = [];
           _this.outputBox.expand();
           _this.outputBox.setError("Unable to decode stored variables.  The included worksheet variable listing may be corrupt.  Open the worksheet to reset the variable list.");
           return;
         }
         _this.data = vars
         var var_list = []
-        for(var i = 0; i < _this.independent_vars.length; i++) 
-          var_list.push(window.SwiftCalcsLatexHelper.VarNameToHTML(_this.independent_vars[i]));
+        for(var i = 0; i < _this.all_vars.length; i++) 
+          var_list.push(window.SwiftCalcsLatexHelper.VarNameToHTML(_this.all_vars[i]));
         _this.jQ.find('.material_name').html(var_list.join(", ") + " from ");
         $("<a href='#' class='worksheet_link'>" + response.name + "&nbsp;<i class='fa fa-external-link-square'></i></a>").on('click', function(e) {
           window.open('/worksheets/' + _this.hash_string, "_blank");
@@ -101,15 +108,18 @@ var include_block = P(EditableBlock, function(_, super_) {
         _this.outputBox.setError('An Error occured while loading the variable data from the server.  Ensure you have read-level access to the worksheet you are attempting to include.');
       } }(this));
     } else
-      this.independent_vars = [];
+      this.all_vars = [];
     return this;
   }
   _.genCommand = function() {
     this.commands = [];
-    for(var i = 0; i < this.independent_vars.length; i++) {
+    this.independent_vars = [];
+    for(var i = 0; i < this.all_vars.length; i++) {
       for(var j = 0; j < this.data.length; j++) {
-        if(this.independent_vars[i] == this.data[j].name)
+        if(this.all_vars[i] == this.data[j].name) {
           this.commands.push({command: this.data[j].name + ":=" + this.data[j].data, nomarkup: true});
+          this.independent_vars.push(this.data[j].name + (this.data[j].latex.match(/^function/) ? '(' : ''));
+        }
       }
     }
   }

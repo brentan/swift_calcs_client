@@ -1547,7 +1547,7 @@ var Element = P(function(_) {
 	_.autocompleteObject = function(name) {
 		return giac.object_methods[name];
 	}
-  _.getLastResult = function() {
+  _.getLastResult = function(varname) {
     if(this.last_result && this.last_result[0] && this.last_result[0].success) return this.last_result[0].returned;
     return false;
   }

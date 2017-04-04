@@ -109,7 +109,7 @@ var mixture = P(Element, function(_, super_) {
     if(this.last_name) this.worksheet.object_list[this.last_name+"__SCOBJECT"] = false;
     this.commands = [{command: this.independent_vars.join(",") + "=" + command, setMaterial: {data_type: this.data_type, var_name: this.varStoreField.text().trim(), data: species, last_name: this.last_name} }];    
   }
-  _.getLastResult = function() {
+  _.getLastResult = function(varname) {
     if(this.last_result) return this.last_result;
     return false;
   }

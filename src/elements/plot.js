@@ -137,7 +137,6 @@ var plot = P(Element, function(_, super_) {
 	_.continueEvaluation = function(evaluation_id) {
 		this.calc_x_max = false;
 		this.calc_x_min = false;
-    if(window.skip_plots) return this.evaluateNext(evaluation_id);
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.plot_ready = false;
 			this.addSpinner(evaluation_id);

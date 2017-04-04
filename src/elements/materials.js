@@ -74,7 +74,7 @@ var material_holder = P(EditableBlock, function(_, super_) {
     } else
       return false;
   }
-  _.getLastResult = function() {
+  _.getLastResult = function(varname) {
     if(this.full_name) return this.full_name.replace(/ /g,"\\whitespace ");
     return false;
   }

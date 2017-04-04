@@ -94,7 +94,7 @@ var interpolate = P(SettableMathOutput, function(_, super_) {
     this.last_result = result;
     return to_return;
   }
-  _.getLastResult = function() {
+  _.getLastResult = function(varname) {
     if(this.last_result && this.last_result[1] && this.last_result[1].success) return this.last_result[1].returned;
     return false;
   }

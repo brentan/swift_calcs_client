@@ -301,8 +301,8 @@ var text = P(EditableBlock, function(_, super_) {
         else
           var prior_name = '';
         var hidden_el = "<span class='sc_hide'>" + var_name.html() + "</span>";
-        if(el && el.getLastResult()) 
-          $(this).html(hidden_el + window.SwiftCalcsLatexHelper.latexToHtml(prior_name + el.getLastResult()));
+        if(el && el.getLastResult(var_name.html().split("=")[1])) 
+          $(this).html(hidden_el + window.SwiftCalcsLatexHelper.latexToHtml(prior_name + el.getLastResult(var_name.html().split("=")[1])));
         else 
           $(this).html(hidden_el + "No value found for " + window.SwiftCalcsLatexHelper.VarNameToHTML(var_name.html().split("=")[1]));
       } else

@@ -614,7 +614,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 					var allwords = el.autocomplete();
           for(var i = 0; i < allwords.length; i++) {
           	var element = el.varHelp(allwords[i]);
-            var last_result = element ? element.getLastResult() : false;
+            var last_result = element ? element.getLastResult(allwords[i]) : false;
           	$("<div/>").addClass('list').attr("data-var",allwords[i].replace("(","")).html("<table border=0><tbody><tr><td>" + window.SwiftCalcsLatexHelper.VarNameToHTML(allwords[i].replace("(","")) + "</td><td class='val'>" + window.SwiftCalcsLatexHelper.latexToHtml(last_result ? last_result : '') + "</td></tr></tbody></table>").appendTo(input).on('click', function(e) {
           		var_name = $(this).attr("data-var");
           		input.find("div.list").removeClass("selected");
