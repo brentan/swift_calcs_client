@@ -1,4 +1,5 @@
 var include_worksheet = P(EditableBlock, function(_, super_) {
+  // TODO: Default include
   _.klass = ['include'];
   _.needsEvaluation = false; 
   _.evaluatable = false;
@@ -21,9 +22,18 @@ var include_worksheet = P(EditableBlock, function(_, super_) {
       this.loadOptions();
     return this;
   }
-  _.loadOptions = function(parent_id) {
+  _.loadOptions = function() {
     this.blur();
-    window.loadFilePicker(function(_this) { return function(h,v) { _this.setData(h,v); } }(this), parent_id);
+    window.showPopupOnTop();
+    $('.popup_dialog .full').html("<div style='text-align:center;'><div class='title'>Where do you want to include from?</div><table width='100%'><tbody><tr><td width='50%'><h3>Your Worksheets</h3><a class='button mine' href='#' style='margin:1px 10px;color:white;'>Include Functions and Variables from Worksheets I created or Have Access To</a></td><td width='50%'><h3>Swift Calcs Libraries</h3><a class='button sc' href='#' style='margin:1px 10px;color:white;'>Load Functions and Variables from Databases Created and Curated by Swift Calcs</a></td></tr></tbody></table></div>");
+    $('.popup_dialog .bottom_links').html('<button class="close grey">Cancel</button>');
+    window.resizePopup(true);
+    $('.popup_dialog a.mine').on('click',function(_this) { 
+      return function(e) { window.loadFilePicker(function(h,v) { _this.setData(h,v); }); e.preventDefault(); }
+    }(this));
+    $('.popup_dialog a.sc').on('click',function(_this) { 
+      return function(e) { window.loadFilePicker(function(h,v) { _this.setData(h,v); }, 'SwiftCalcs'); e.preventDefault(); }
+    }(this));
   }
   _.toString = function() {
     return '';
@@ -32,6 +42,7 @@ var include_worksheet = P(EditableBlock, function(_, super_) {
     var stream = this.worksheet.trackingStream;
     if(!stream) this.worksheet.startUndoStream();
     include_block().setData(hash_string,var_list.join(";")).insertAfter(this).show().focus(0);
+    this.worksheet.removeIncludeMessage();
     this.remove(0);
     if(!stream) this.worksheet.endUndoStream();
     this.worksheet.save();
@@ -52,6 +63,7 @@ var include_block = P(EditableBlock, function(_, super_) {
   _.postInsertHandler = function() {
     this.codeBlock = registerFocusable(CodeBlock, this, 'include', { });
     this.focusableItems = [[this.codeBlock]];
+    this.worksheet.removeIncludeMessage();
     return super_.postInsertHandler.call(this);
   }
   _.setData = function(hash_string, var_list_string) {

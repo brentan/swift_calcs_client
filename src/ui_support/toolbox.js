@@ -11,7 +11,7 @@ $(function() {
       {left: 'fa-upload', text: 'Import Data', el: 'import'},
       {left: 'fa-book', text: 'Material Library', el: 'material'},
       {left: 'fa-book', text: 'Ideal Mixtures', el: 'mixture'},
-      {left: 'fa-download', text: 'Include Worksheet', el: 'include', vaporware: true},
+      {left: 'fa-download', text: 'Include Worksheet', el: 'include'},
       {left: 'fa-table', text: 'Table', vaporware: true},
       {left: 'fa-paint-brush', text: 'Drawing', vaporware: true},
       {left: 'test', text: 'Program Function', el: 'function', vaporware: true}

@@ -90,6 +90,51 @@ $(function() {
 	window.SwiftCalcsSettings.showApplyNow = function() {
 		$('.popup_dialog .bottom_links button.submit').show();
 	}
+	window.SwiftCalcsSettings.includeSettings = function($div) {
+		for(var j = 0; j < window.SwiftCalcsSettings.settings.includes.length; j++) {
+			var out = [];
+			var includes = window.SwiftCalcsSettings.settings.includes[j].split(",");
+			for(var k = 3; k < includes.length; k++)
+				includes[2] += "," + includes[k];
+			var vars = includes[1].split(';');
+			for(var i = 0; i < vars.length; i++)
+				out.push(window.SwiftCalcsLatexHelper.VarNameToHTML(vars[i]))
+			$('<div/>').css('font-size','11px').html("<i>" + out.join(", ") + "</i> from " + includes[2] + "<i class='fa fa-times'></i>").attr('data-hash', includes[0]).appendTo($div).find('i.fa').attr('data-hash',includes[0]).click(function(e) {
+				var out = [];
+				var hash_to_match = $(this).attr('data-hash');
+				for(var k = 0; k < window.SwiftCalcsSettings.settings.includes.length; k++) {
+					console.log(window.SwiftCalcsSettings.settings.includes[k].replace(/^([^,]*),.*$/,"$1"));
+					if(window.SwiftCalcsSettings.settings.includes[k].replace(/^([^,]*),.*$/,"$1") != hash_to_match) out.push(window.SwiftCalcsSettings.settings.includes[k]);
+				}
+				window.SwiftCalcsSettings.settings.includes = out;
+				$(this).closest('div').remove();
+				window.SwiftCalcsSettings.showApplyNow();
+				e.preventDefault();
+			});
+		}
+		if(window.SwiftCalcsSettings.settings.includes.length == 0)
+			$('<div/>').html('None').appendTo($div);
+		$('<div/>').addClass('explain').appendTo($div).append($('<a href="#">Add More</a>').click(function(e) {
+	    window.showPopupOnTop();
+	    $('.popup_dialog .full').html("<div style='text-align:center;'><div class='title'>Where do you want to include from?</div><table width='100%'><tbody><tr><td width='50%'><h3>Your Worksheets</h3><a class='button mine' href='#' style='margin:1px 10px;color:white;'>Include Functions and Variables from Worksheets I created or Have Access To</a></td><td width='50%'><h3>Swift Calcs Libraries</h3><a class='button sc' href='#' style='margin:1px 10px;color:white;'>Load Functions and Variables from Databases Created and Curated by Swift Calcs</a></td></tr></tbody></table></div>");
+	    $('.popup_dialog .bottom_links').html('<button class="close grey">Cancel</button>');
+	    window.resizePopup(true);
+	    $('.popup_dialog a.mine').on('click',function(_this) { 
+	      return function(e) { window.loadFilePicker(function(h,v) { window.SwiftCalcsSettings.addInclude(h,v); }); e.preventDefault(); }
+	    }(this));
+	    $('.popup_dialog a.sc').on('click',function(_this) { 
+	      return function(e) { window.loadFilePicker(function(h,v) { window.SwiftCalcsSettings.addInclude(h,v); }, 'SwiftCalcs'); e.preventDefault(); }
+	    }(this));
+			e.preventDefault();
+		}));
+	}
+	window.SwiftCalcsSettings.addInclude = function(hash, vars) {
+		window.showLoadingOnTop();
+		window.silentRequest("/worksheets/get_name",{hash_string: hash}, function(response) {
+			window.SwiftCalcsSettings.settings.includes.push([hash, vars.join(';'), response.name].join(','));
+			window.SwiftCalcsSettings.load(true);
+		});
+	}
 	window.SwiftCalcsSettings.loadAndAttachListeners = function(settingsHTML, item) {
 		var handleSelectChange = function(e) {
 			switch($(this).attr('data-type')) {
@@ -155,6 +200,7 @@ $(function() {
 		$('select.index_mode').val(item.settings.one_indexed).on('change', handleSelectChange);
 		$('select.thousands').val(item.settings.thousands).on('change', handleSelectChange);
 		$('select.temperature').val(item.settings.base_units[3]).on('change', handleSelectChange);
+		if(!(item instanceof Worksheet)) window.SwiftCalcsSettings.includeSettings($('.popup_dialog .full div.includes'));
 		$('.popup_dialog .bottom_links button.close').on('click', function(e) { 
 			$('.popup_dialog .settings').remove();
 			window.hideDialogs();
@@ -174,10 +220,11 @@ $(function() {
 			window.SwiftCalcsSettings.setUnitSidebar(item, false);
 		}).appendTo('div.custom_units .remove_units');
 	}
-	window.SwiftCalcsSettings.load = function() {
+	window.SwiftCalcsSettings.load = function(show_on_load) {
 		window.showLoadingOnTop();
 		window.ajaxRequest("/users/load_settings",{}, function(response) {
 			window.SwiftCalcsSettings.populate(response.html);
+			if(show_on_load) window.SwiftCalcsSettings.showApplyNow();
 		}, function(err) {
 			window.hidePopupOnTop();
 		})

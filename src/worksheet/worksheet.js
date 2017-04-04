@@ -23,6 +23,7 @@ var Worksheet = P(function(_) {
 	_.name = '';
   _.new_name = false;
 	_.hash_string = '';
+  _.show_include_message = true;
 	_.server_version = 1;
 	_.rights = 0;
 	_.uploads = "";
@@ -188,6 +189,7 @@ var Worksheet = P(function(_) {
               showNotice("Worksheet set to allow Public Viewing and Copying and is now editable.","green");
               el.find('.top_warning').slideDown({duration: 250});
               el.find('.details_span').slideDown({duration: 250});
+              el.find('.include_span').slideDown({duration: 250});
               el.find('.'  + css_prefix + 'no_interaction').removeClass(css_prefix + 'no_interaction');
               loader.slideUp({duration: 250, always: function() { $(this).remove() }});
               _this.need_paid_plan = false;
@@ -199,7 +201,7 @@ var Worksheet = P(function(_) {
       }
       div.insertAfter(el.children('.worksheet_item, .invitation_item'));
       el.find('.top_warning').hide();
-      window.setTimeout(function() { el.find('.details_span').hide(); },1);
+      window.setTimeout(function() { el.find('.details_span').hide(); el.find('.include_span').hide(); },1);
     }
     /*if(this.fusion_id) {
       var els = $('<div/>').html('Worksheet Linked to Fusion 360 - <a href="https://cad.onshape.com/documents/' + this.onshape_did + '" target="_blank">Open associated Fusion 360 file</a> (requires Fusion 360 to be installed).');
@@ -362,7 +364,10 @@ var Worksheet = P(function(_) {
   		_this.rename(el.val());
   		el.closest('span').prev('span').show().children('span').html(el.val());
   		el.closest('span').remove();
-  		window.setTimeout(function() { _this.ends[-1].focus(-1); });
+  		window.setTimeout(function() {
+        for(var to_focus = _this.ends[-1];to_focus instanceof include_block;to_focus = to_focus[1]);
+        if(to_focus) to_focus.focus(-1); 
+      });
   	}
   	input_div.children('input').val(_this.name).on('blur', function(e) {
   		setName($(this));
@@ -385,6 +390,7 @@ var Worksheet = P(function(_) {
 		// Load the details section
 
     var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody><tr><td class="collaborators"></td><td class="settings"></td><td class="location"></td><td class="revisions"></td></tr></tbody></table>');
+
 
 	  /*var det_div = $('<div/>').hide().addClass('details_span').html('<table><tbody>'
 			+ '<tr><td class="left"><i class="fa fa-users"></i></td><td class="collaborators right"></td></tr>' //+ '<tr><td class="left"><i class="fa fa-tags"></i></td><td class="labels right"></td></tr>'
@@ -417,8 +423,21 @@ var Worksheet = P(function(_) {
 		$('<div/>').addClass('settings').html(this.setSettingsText()).appendTo(det_div.find('td.settings').append($('<i/>').addClass('fa').addClass('fa-gear')).on('click', function(_this) { return function(e) {
 			_this.loadSettingsPane();
 		}; }(this)));
-    if(typeof window.embedded === 'undefined') 
+    if(typeof window.embedded === 'undefined') {
 		  det_div.insertBefore(this.jQ).slideDown({duration: 200});
+      // include message
+      if((this.rights > 2) && (this.show_include_message)) {
+        //edit rights
+        $is = $('<div/>').addClass('include_span')
+        $is.html("<a href='#'><i class='fa fa-fw fa-download'></i>Click to Include variables or functions from another worksheet</a>");
+        $is.find('a').on('click', function(_this) { return function(e) {
+          include_worksheet().insertBefore(_this.ends[L]).show();
+          e.preventDefault();
+          e.stopPropagation();
+        } }(this));
+        $is.insertAfter(det_div)
+      }
+    }
 		var name_span = this.jQ.closest('.active_holder').find('.worksheet_item span.name');
 		if((this.rights >= 3))
 			name_span.addClass('change').children('span').on('click', function(_this, name_span) { return function(e) { rename(_this, name_span, e); }; }(this, name_span));
@@ -749,5 +768,10 @@ var Worksheet = P(function(_) {
   _.set_archive_string = function(string) {
     this.archive_string = string;
     this.save(false);
+  }
+  _.removeIncludeMessage = function() {
+    if(this.jQ && this.jQ.parent())
+      this.jQ.parent().find('.include_span').slideUp({duration: 250, always: function() { $(this).remove(); }});
+    this.show_include_message = false;
   }
 });

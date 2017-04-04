@@ -597,6 +597,8 @@ $(function() {
 		          detail_div.find('input').on('click', function(e) {
 		          	e.stopPropagation();
 		          });
+		          if(results.description) 
+		          	$('<div/>').html(results.description).css('margin-bottom','8px').css('font-weight','normal').css('font-size','12px').prependTo(detail_div);
 		          $('.popup_dialog .bottom_links').find('button.select_worksheet').show();
           	}
           }, function(response) {
@@ -629,7 +631,7 @@ $(function() {
       if(!curloading && (search == lastRequest)) return;
       lastRequest = search;
       if(search == '') // blank, reload initial material listing
-        return load();
+        return load(current_parent_hash);
       if(search.length < 3) {
         if(curloading) $list_content_td.html("");
         return showNotice('Please enter a search phrase of at least 3 characters');
@@ -728,25 +730,31 @@ $(function() {
       });
     }
     loading();
-    window.ajaxRequest('/projects/left_bar',{}, function(response) {
-    	$leftbar.html(response.html);
-    	load(parent_id);
-      // Listeners
-		  $leftbar.on('click', '.project_title', function(e) {
-		    var $container = $(this).closest('div.item');
-		    load($container.attr('data-hash'), $container.closest('.archive').length > 0, false);
-		  });
-			$leftbar.on('click', '.star_title', function(e) {
-				var $container = $(this);
-				if($container.closest('.project_list').length > 0) {
-					$project = $container.closest('.expand').closest('div.item');
-					load($project.attr('data-hash'), false, true);
-				} else
-					load(undefined, false, true);
-			});
-  	}, function(response) {
-      window.hidePopupOnTop();
-    });
+    if(parent_id === 'SwiftCalcs') {
+    	$leftbar.closest('td').remove();
+    	$list_content_td.css({left: '8px'});
+	    load(parent_id);
+    } else {
+	    window.ajaxRequest('/projects/left_bar',{}, function(response) {
+	    	$leftbar.html(response.html);
+	    	load(parent_id);
+	      // Listeners
+			  $leftbar.on('click', '.project_title', function(e) {
+			    var $container = $(this).closest('div.item');
+			    load($container.attr('data-hash'), $container.closest('.archive').length > 0, false);
+			  });
+				$leftbar.on('click', '.star_title', function(e) {
+					var $container = $(this);
+					if($container.closest('.project_list').length > 0) {
+						$project = $container.closest('.expand').closest('div.item');
+						load($project.attr('data-hash'), false, true);
+					} else
+						load(undefined, false, true);
+				});
+	  	}, function(response) {
+	      window.hidePopupOnTop();
+	    });
+	  }
 	}
 	// Batch (multiple select)
 	var batch_toolbar = function(tot) {
@@ -1851,6 +1859,15 @@ $(function() {
 			el.addClass('change_name');
 			openActive(el);
 			window.loadWorksheet(el, response);
+			if((duplicate != true) && window.SwiftCalcsSettings && window.SwiftCalcsSettings.settings && window.SwiftCalcsSettings.settings.includes.length) {
+				window.setTimeout(function() { 
+					for(var i = 0; i < window.SwiftCalcsSettings.settings.includes.length; i++) { 
+						var includes = window.SwiftCalcsSettings.settings.includes[i].split(',');
+						SwiftCalcs.elements.include_block().setData(includes[0],includes[1]).prependTo(SwiftCalcs.active_worksheet).show();
+					}; 
+	    		SwiftCalcs.active_worksheet.removeIncludeMessage();
+	    	});
+			}
 		}
 		var fail = function(message) {
 			loading_div.remove();
