@@ -17,6 +17,8 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 	_.part_name = "";
 	_.part_id = "";
 	_.var_name = "";
+	_.data_loaded = false;
+	_.started_load = false;
 	_.var_id = "";
 	_.needsEvaluation = false;
 	_.savedProperties = ['part_name','part_id','var_name','var_id'];
@@ -53,6 +55,7 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 		if(target.hasClass(css_prefix + 'add_equation')) {
 			this.needsEvaluation = true;
 			this.altered_content = true;
+			this.data_loaded = false;
 			this.submissionHandler(this)(this.varField);
 			return false;
 		}
@@ -70,8 +73,26 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 					_this.setError(errors.join('<BR>'));
 				} else {
 					_this.independent_vars = [_this.varField.text().trim()];
-					_this.evaluate();
-					_this.needsEvaluation = false;
+					if(_this.data_loaded) {
+						_this.evaluate();
+						_this.needsEvaluation = false;
+					} else {
+						_this.started_load = true;
+						window.ajaxRequest("/onshape/get_variable", {hash_string: _this.worksheet.hash_string, eid: _this.part_id, fid: _this.var_id}, function(_this) { return function(response) { 
+							if(response.var["name"]) {
+								_this.jQ.find(".var_name").html(response.var["name"]);
+								_this.commands = _this.genCommand(_this.varField.text() + ' := ' + response.var["value"].trim().replace(/  /g,' ').replace(/ /g,'_'));
+								_this.data_loaded = true;
+								_this.evaluate();
+								_this.needsEvaluation = false;
+							} else {
+								_this.setError("The requested variable was not found...it may have been removed.");
+								_this.evaluateNext(evaluation_id)
+							}
+						}}(_this), function(_this) { return function(response) { 
+							_this.setError(response.message)
+						}}(_this));
+					}
 				}
 			}
 		}
@@ -91,31 +112,13 @@ var loadOnshapeVariable = P(MathOutput, function(_, super_) {
 	}
 	// Hijack the evaluation chain and do what I need to do
 	_.continueEvaluation = function(evaluation_id) {
-		if(this.shouldBeEvaluated(evaluation_id)) {
-			this.addSpinner(evaluation_id);
-			if(this.altered(evaluation_id)) {
-				window.ajaxRequest("/onshape/get_variable", {hash_string: this.worksheet.hash_string, eid: this.part_id, fid: this.var_id}, function(_this) { return function(response) { 
-					if(response.var["name"]) {
-						_this.jQ.find(".var_name").html(response.var["name"]);
-						_this.commands = _this.genCommand(_this.varField.text() + ' := ' + response.var["value"].trim().replace(/  /g,' ').replace(/ /g,'_'));
-						_this.continueEvaluation2(evaluation_id);
-					} else {
-						_this.setError("The requested variable was not found...it may have been removed.");
-						_this.evaluateNext(evaluation_id)
-					}
-				}}(this), function(_this) { return function(response) { 
-					_this.setError(response.message)
-					_this.evaluateNext(evaluation_id)
-				}});
-			} else {
-				// Not altered, but we are scoped, so we need to save scope
-				giac.skipExecute(evaluation_id, this, 'scopeSaved');
-			} 
-		} else 
-			this.evaluateNext(evaluation_id)
-	}
-	_.continueEvaluation2 = function(evaluation_id) {
-		giac.execute(evaluation_id, this.commands, this, 'evaluationFinished');
+		if(this.varField.empty()) return this.evaluateNext(evaluation_id);
+		if(this.data_loaded) return super_.continueEvaluation.call(this, evaluation_id);
+		if(!this.started_load) {
+			this.needsEvaluation = true;
+			this.submissionHandler(this)();
+		}
+		window.setTimeout(function(_this) { return function() { _this.continueEvaluation(evaluation_id); }}(this),250);
 	}
 
 });
