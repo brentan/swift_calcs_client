@@ -110,7 +110,7 @@ var for_loop = P(Loop, function(_, super_) {
 		} else 
 			this.evaluateNext(evaluation_id);
 	}
-	_.continueEvaluationCompileMode = function(evaluation_id) {
+	_.continueEvaluationCompileMode = function(result, evaluation_id) {
 		super_.continueEvaluation.call(this, evaluation_id);
 		return false;
 	}
@@ -198,7 +198,7 @@ var for_loop = P(Loop, function(_, super_) {
 			giac.skipExecute(evaluation_id, this, 'scopeSaved');
 		}
 	}
-	_.childrenEvaluatedCompileMode = function(evaluation_id) {
+	_.childrenEvaluatedCompileMode = function(result, evaluation_id) {
 		super_.childrenEvaluated.call(this, evaluation_id);
 		return false;
 	}
