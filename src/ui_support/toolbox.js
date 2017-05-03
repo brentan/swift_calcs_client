@@ -38,7 +38,8 @@ $(function() {
       { left: '&#931;', text: 'Series Expansion', el: 'series' },
       { left: '&#8465;', text: 'Taylor Expansion', el: 'taylor' },
     ],
-    Flow_Control: [
+    Programming: [
+      {left: 'prog', text: 'Create Program', el: 'program'},
       {left: 'if', text: 'If Statement', el: 'if'},
       {left: 'elseif', text: 'Else If Statement', el: 'elseif'},
       {left: 'else', text: 'Else Statement', el: 'else'},
@@ -78,6 +79,7 @@ $(function() {
       {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;', text: 'Define a Function', el: 'math', focus_right: true, option: 'latex{\\operatorname{f}\\left({}\\right)=}', prepend: true, highlight: "Right Shift-Right Shift-Right"},
       {left: '&#402;(<span style="font-style: italic;">x</span>)&#8801;{', text: 'Conditional Function', el: 'conditional_assignment', focus_right: false, option: 'latex{\\operatorname{f}\\left({}\\right)}', highlight_always: "Right Shift-Right Shift-Right"},
       {left: 'fa-trash', text: 'Purge Variable', el: 'purge' },
+      {left: 'prog', text: 'Create Program', el: 'program'},
       {left: 'fa-sliders', text: 'Input Slider', el: 'slider' },
       {left: 'fa-caret-square-o-down', text: 'Pulldown Menu', el: 'select' },
       {left: 'fa-check-circle-o', text: 'Radio Selector', el: 'radio' },
