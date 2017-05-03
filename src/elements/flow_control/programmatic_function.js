@@ -4,13 +4,14 @@ var programmatic_function = P(Element, function(_, super_) {
 	_.evaluatable = true;
 	_.hasChildren = true;
 	_.lineNumber = true;
-	_.helpText = "<<<[var]> = function>>\nProgrammatic Function Definition.  Return an output from the function based on provided inputs by following the computation put forth in the function.";
+	_.helpText = "<<<[var]> = program>>\nProgrammatic Function Definition.  Return an output from the program based on provided inputs by following the computation put forth in the program.";
 
 	_.init = function() {
+		this.function_vars = {};
 		super_.init.call(this);
 	}
 	_.innerHtml = function() {
-		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var') + '<span class="equality">&#8801;</span>' + focusableHTML('CodeBlock', 'function') + helpBlock()
+		return '<div class="' + css_prefix + 'focusableItems" data-id="0">' + focusableHTML('MathQuill',  'var') + '<span class="equality">&#8801;</span>' + focusableHTML('CodeBlock', 'program') + "&nbsp;<span class='explain locals'></span>" + helpBlock()
 		+ '<BR>' + answerSpan() + '</div><div class="' + css_prefix + 'insert"></div><div class="' + css_prefix + 'focusableItems" data-id="2">' + focusableHTML('CodeBlock', 'end') + '</div>';
 	}
 	_.postInsertHandler = function() {
@@ -18,7 +19,7 @@ var programmatic_function = P(Element, function(_, super_) {
 			enter: this.enterPressed(this),
 			blur: this.submissionHandler(this)
 		}});
-		this.focusableItems = [[this.varField, registerFocusable(CodeBlock,this, 'function', { })], [-1], [registerFocusable(CodeBlock,this, 'end', { })]];
+		this.focusableItems = [[this.varField, registerFocusable(CodeBlock,this, 'program', { })], [-1], [registerFocusable(CodeBlock,this, 'end', { })]];
 		this.needsEvaluation = false;
 		super_.postInsertHandler.call(this);
 		return this;
@@ -44,6 +45,7 @@ var programmatic_function = P(Element, function(_, super_) {
 					_this.outputMathBox.clear();
 					_this.setError(errors.join('<BR>'));
 				} else {
+					_this.independent_vars = SwiftCalcs.GetIndependentVars(_this.varField.text() + " := 1");
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}
@@ -53,60 +55,96 @@ var programmatic_function = P(Element, function(_, super_) {
 	_.continueEvaluation = function(evaluation_id) {
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			this.command_list = [];
+			this.function_vars = {};
+			this.internal_independents = {};
+	    if(this.varField.text().match(/^[\s]*[a-z][a-z0-9_~]*\(.*\)[\s]*$/i)) {
+	      // Find function vars
+	      var list = this.varField.text().replace(/^[\s]*[a-z][a-z0-9_~]*\((.*)\)[\s]*$/i,"$1").split(",");
+	      for(var i = 0; i < list.length; i++) {
+	      	this.function_vars[list[i].trim()] = true;
+	        this.internal_independents[list[i].trim()] = true;
+	      }
+	    } 
+			this.dependent_vars = [];
 			giac.setCompileMode(true, this); //Enable compile mode
 		}
 		return super_.continueEvaluation.call(this, evaluation_id);
 	}
-	_.compile_line = function(commands, el, evaluation_id) {
+  _.register_vars = function(independent_vars, dependent_vars) {
+  	// Register independent and dependent vars from all blocks so that we know what external vars we depend on
+  	for(var i = 0; i < dependent_vars.length; i++)
+  		if((this.internal_independents[dependent_vars[i].trim()] !== true) && (this.dependent_vars.indexOf(dependent_vars[i].trim()) === -1)) this.dependent_vars.push(dependent_vars[i].trim())
+  	for(var i = 0; i < independent_vars.length; i++)
+  		this.internal_independents[independent_vars[i].trim()] = true;
+  }
+	_.compile_line = function(commands, el, evaluation_id, callback_function) {
 		for(var i = 0; i < commands.length; i++) {
 			if(commands[i].pre_command) this.command_list.push(commands[i].pre_command);
-	    if(((i+1) < commands.length) && (commands[i+1].dereference)) { // A bit hacky, but we have to deal with the special mksavariable_mode being enabled/disabled
+	    if(((i+1) < commands.length) && (commands[i+1].dereference)) { // Need to do the de-referencing directly
 	    	this.command_list.push("temp__var := " + commands[i].command);
-	    	this.command_list.push(commands[i+1].command.replace(/\[val\]/g, "revertSWIFTCALCSCLIENTunits(temp__var)"));
+	    	this.command_list.push(commands[i+1].command.replace(/\[val\]/g, "(temp__var)"));
 	    	this.command_list.push('purge(temp__var);');
 	    	i++;
 	    } else
 	    	this.command_list.push(commands[i].command);
 		}
-		el.evaluateNext(evaluation_id);
+		if(callback_function && callback_function != "evaluationFinished") {
+			if(el[callback_function]([],evaluation_id)) el.evaluateNext(evaluation_id);
+		}	else
+			el.evaluateNext(evaluation_id);
 	}
 	_.childrenEvaluated = function(evaluation_id) {
 		giac.setCompileMode(false, this); //Disable compile mode
+		this.jQ.find('span.explain.locals').first().html('');
 		var varField = this.varField.text().trim();
 		if(this.command_list.length > 0) {
 			//take all the commands that were issued and stitch them together into a function, then send that to giac for compilation
 			var input_vars = varField.replace(/^[\s]*[a-z][a-z0-9_~]*\((.*)\)$/i, "$1").replace(/ /g,'').split(',');
-			var locals = [];
+			var locals = ['temp__var'];
+			var added = {temp__var: true};
 			for(var i = 0; i < this.command_list.length; i++) {
 				if(this.command_list[i].match(/^[\s]*[a-z][a-z0-9_~]*(\([a-z0-9_~,]+\))?[\s]*:=/i)) {
-					var local_var = this.command_list[i].replace(/^[\s]*([a-z][a-z0-9_~]*).*$/i, "$1");
+					var local_var = this.command_list[i].replace(/(?:\r\n|\r|\n)/g, ' ').replace(/^[\s]*([a-z][a-z0-9_~]*).*$/i, "$1");
 					var add_to_vars = true;
 					for(var j=0; (j<input_vars.length) && add_to_vars; j++)
 						if(input_vars[j] == local_var) add_to_vars = false;
-					if(add_to_vars) locals.push(local_var);
+					if(add_to_vars && (added[local_var] !== true)) locals.push(local_var);
+					added[local_var] = true;
 				}
 			}
 			var prog = varField + " := {\n";
-			if(locals.length > 0)
-				prog += "local " + locals.join(",") + ";\n"; 
-			prog += this.command_list.join(";\n").replace(";;",";") + ";\n}";
+			var html = [];
+			for(var i = 0; i < locals.length; i++)
+				if(locals[i].indexOf("__") == -1) html.push(window.SwiftCalcsLatexHelper.VarNameToHTML(locals[i]));
+			this.jQ.find('span.explain.locals').first().html('local variables: ' + html.join(", "));
+			prog += "local " + locals.join(",") + ";\n"; 
+			prog += (this.command_list.join(";\n") + ";\n}").replace(/(;|\}|\{);/g,"$1");
 		} else
 			var prog = varField + " := 0;";
 		this.startCompilation(evaluation_id, prog);
 	}
 	_.startCompilation = function(evaluation_id, prog) {
-		giac.execute(evaluation_id, [{ command: prog, nomarkup: true }], this, 'compilationCallback');
+		this.commands = [{ command: prog, nomarkup: true }];
+		if(this.newCommands()) 
+			this.altered_content = true;
+		this.altered(evaluation_id);
+		giac.execute(evaluation_id, this.commands, this, 'compilationCallback');
 	}
 	_.compilationCallback = function(result, evaluation_id) {
-		if(!result[0].success) {
-			this.outputBox.setError('Error compiling function: ' + result[0].returned);
-			this.outputBox.expand();
+		if(!giac.compile_mode) {
+			if(!result[0].success) {
+				this.outputBox.setError('Error compiling function: ' + result[0].returned);
+				this.outputBox.expand();
+			} else {
+				this.outputBox.clearState();
+				this.outputBox.collapse();
+			}
 		}
 		super_.childrenEvaluated.call(this, evaluation_id);
 		return false;
 	}
   _.toString = function() {
-  	return '{function}{{' + this.argumentList().join('}{') + '}}';
+  	return '{program}{{' + this.argumentList().join('}{') + '}}';
   }
 	// Callback for math elements notifying that this element has been changed
 	_.changed = function(el) {
@@ -115,10 +153,6 @@ var programmatic_function = P(Element, function(_, super_) {
 	_.validateChild = function(child) {
 		return !(child instanceof plot);
   }
-	_.validateParent = function(parent) {
-		if (parent instanceof Worksheet) return true;
-		return false;
-	}
 	// Update the line numbers on this block and all children
 	_.numberBlock = function(start) {
 		this.myLineNumber = start;
@@ -134,9 +168,34 @@ var programmatic_function = P(Element, function(_, super_) {
 		if(this.myLineNumber === line) return this;
 		return undefined;
 	}
-
+	// Override because this element should not return the archive list of its children, which are of a different scope
+	_.getUnarchiveList = function() {
+		if(this.unarchive_list_set) return this.unarchive_list;
+		return this.previousUnarchivedList();
+	}
+	_.PrependBlankItem = function(el) {
+		if(el === this.focusableItems[0][0]) {
+			//add a blank block just before this one
+			math().insertBefore(this).show();
+			this.focus(L);
+			return true;
+		} else
+			return false;
+	}
+  _.indent = function(el, indent) {
+    if(el === this.focusableItems[0][0]) {
+      //indent me (or un-indent)
+      if(indent)
+        this.worksheet.indent(this);
+      else
+        this.worksheet.outdent(this);
+      el.focus(L);
+      return true;
+    } else
+      return false;
+  }
 });
-var return_block = P(Element, function(_, super_) {
+var return_block = P(FlowControl, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
 	_.needsEvaluation = false;

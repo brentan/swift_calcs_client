@@ -46,6 +46,7 @@
 		'video': video,
 		'videoBlock': videoBlock,
 		'conditional_assignment': conditional_assignment,
+		'program': programmatic_function,
 		'function': programmatic_function,
 		'return': return_block,
 		'onshape_get': getOnshape,

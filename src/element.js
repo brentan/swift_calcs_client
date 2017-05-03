@@ -763,7 +763,7 @@ var Element = P(function(_) {
 
 		var el = this;
 		var stop_id = false;
-		if(!this.outputSettingsChange && this.scoped()) 
+		if((!this.outputSettingsChange && this.scoped()) || (this.inProgrammaticFunction() && this.scoped() || (this instanceof FlowControl)))
 			el = this.firstGenAncestor(); // Scoped items should start at first gen ancestor
 		else 
 			stop_id = this.id; //not scoped, so start here and stop when we reach this guy
@@ -771,6 +771,15 @@ var Element = P(function(_) {
 		this.worksheet.evaluate([], el, stop_id);
 		return this;
 	}
+	_.getProgrammaticFunction = function() {
+		for(var parent = this.parent; !(parent instanceof Worksheet); parent = parent.parent)
+			if (parent instanceof programmatic_function) return parent;
+		return false;
+	}
+	_.inProgrammaticFunction = function() {
+		return this.getProgrammaticFunction() ? true : false;
+	}
+
   var count = 0;
 	_.blurOutputBox = function() {
 		if(this.outputBox) this.outputBox.calculating();
@@ -795,25 +804,28 @@ var Element = P(function(_) {
 		giac.load_altered(evaluation_id, this);
 		if(giac.evaluations[evaluation_id]) giac.evaluations[evaluation_id].active_id = this.id;
 		if(!this.evaluatable || this.disabled || this.mark_for_deletion || !giac.shouldEvaluate(evaluation_id)) return false;
-		if(giac.compile_mode && !this.scoped()) return false; // In compile mode, we only care about scoped lines
+		if(giac.compile_mode && !this.scoped() && !(this instanceof FlowControl)) return false; // In compile mode, we only care about scoped lines
 		// Logic Blocks: Make sure I'm not a children of any block that is not currently activated
-		for(var el = this; el instanceof Element; el = el.parent) {
-			if(el.parent instanceof LogicBlock) {
-				for(var el2 = el; el2 instanceof Element; el2 = el2[L]) {
-					if(el2 instanceof LogicCommand) break;
-				}
-				if(el2 instanceof LogicCommand) {
-				 	if(el2.logicResult === false) { 
-				 		if(this.allowOutput()) this.jQ.addClass(css_prefix + 'greyout'); 
-				 		return false; 
-				 	}
-				} else 
-					if(el.parent.logicResult === false) { 
-						if(this.allowOutput()) this.jQ.addClass(css_prefix + 'greyout'); 
-						return false; 
+		if(!giac.compile_mode) {
+			for(var el = this; el instanceof Element; el = el.parent) {
+				if(el.parent instanceof LogicBlock) {
+					for(var el2 = el; el2 instanceof Element; el2 = el2[L]) {
+						if(el2 instanceof LogicCommand) break;
 					}
+					if(el2 instanceof LogicCommand) {
+					 	if(el2.logicResult === false) { 
+					 		if(this.allowOutput()) this.jQ.addClass(css_prefix + 'greyout'); 
+					 		return false; 
+					 	}
+					} else 
+						if(el.parent.logicResult === false) { 
+							if(this.allowOutput()) this.jQ.addClass(css_prefix + 'greyout'); 
+							return false; 
+						}
+				}
 			}
-		}
+		} else
+			this.jQ.find('.' + css_prefix + 'greyout').removeClass(css_prefix + 'greyout');
 		if(this.jQ && (typeof this.jQ.removeClass === 'function'))
 			this.jQ.removeClass(css_prefix + 'greyout');
 		return true;
@@ -882,6 +894,8 @@ var Element = P(function(_) {
 		return next_id;
 	}
   _.findStartElement = function() {
+  	var programmatic = this.getProgrammaticFunction();
+  	if(programmatic) return programmatic;
     var start_element = this;
     for(var el = start_element.parent; el instanceof Element; el = el.parent)
       if(el instanceof Loop) {
@@ -897,8 +911,10 @@ var Element = P(function(_) {
 			// Find next element to evaluate:
 			var next_id = this.nextEvaluateElement();
 			// Register the variable change with the next item (why not register now? in case we hijack this evaluation with another, we need to ensure the change gets loaded)
-			giac.add_altered(evaluation_id, this.previous_independent_vars, next_id ? next_id.id : -1);
-			giac.add_altered(evaluation_id, this.independent_vars, next_id ? next_id.id : -1);
+			if(!giac.compile_mode) {
+				giac.add_altered(evaluation_id, this.previous_independent_vars, next_id ? next_id.id : -1);
+				giac.add_altered(evaluation_id, this.independent_vars, next_id ? next_id.id : -1);
+			}
       if(this.previous_independent_vars.length && (this.previous_independent_vars.length == this.independent_vars.length) && !this.worksheet.trackingStream) {
         // Check for change of name
         for(var i = 0; i < this.previous_independent_vars.length; i++) {
@@ -906,7 +922,7 @@ var Element = P(function(_) {
           if(this.previous_independent_vars[i].replace("(","") != this.independent_vars[i].replace("(","")) {
             // Note, this won't rename things above this line but that may be below the item in the calc tree (basically, things above it but in a loop)
             var next_el = this[R];
-            if(!next_el && this.parent) next_el = this.parent[R];
+            if(!next_el && this.parent && !(this.parent instanceof programmatic_function)) next_el = this.parent[R];
             if(!(next_el && next_el.reliesOn(this.previous_independent_vars[i].replace("(","")))) continue; //No later lines rely on this variable, so just ignore the name change
             // Variable name change!
             if(this.worksheet.undoTimer) // Previous scheduled undo.  Do it now, as if we wait it will destroy the notice we are about to post.
@@ -929,7 +945,7 @@ var Element = P(function(_) {
               this.focus(L);
               this.worksheet.startUndoStream();
               var next_el = this[R];
-              if(!next_el && this.parent) next_el = this.parent[R];
+              if(!next_el && this.parent && !(this.parent instanceof programmatic_function)) next_el = this.parent[R];
               next_el.changeVarName(start_name, end_name);
               this.worksheet.setUndoPoint(this,{command: 'suppress_autofunction', val:true});
               this.worksheet.endUndoStream();
@@ -953,29 +969,35 @@ var Element = P(function(_) {
 			return true;
 		}
 //this.jQ.css("background-color", "#ff0000").animate({ backgroundColor: "#FFFFFF"}, { duration: 1500, complete: function() { $(this).css('background-color','')} } );
+		if(giac.compile_mode) return true; // In compile mode, we need to know the commands that are sent
 		giac.remove_altered(evaluation_id, this.independent_vars);
-		return giac.compile_mode; // In compile mode, we need to know the commands that are sent
+		return false; 
 	}
   _.reliesOn = function(varName) { // Test if this block or any following rely on this variable
+  	var programmatic = this.getProgrammaticFunction();
+  	if(programmatic && programmatic.function_vars[varName]) return false;
     if(this.dependent_vars.indexOf(varName) > -1) return true;
     if(this.independent_vars.indexOf(varName) > -1) return false;
     if(this.hasChildren && this.ends[L]) return this.ends[L].reliesOn(varName);
     if(this[R]) return this[R].reliesOn(varName);
-    if(this.parent && this.parent[R]) return this.parent[R].reliesOn(varName);
+    if(this.parent && !(this.parent instanceof programmatic_function) && this.parent[R]) return this.parent[R].reliesOn(varName);
     return false;
   }
   _.changeVarName = function(varName,newName) { // Rename variable in this block and all following blocks
-    if(this.dependent_vars.indexOf(varName) > -1) {
-      // Rename variable inside all mathquill boxes
-      for(var i = 0; i < this.focusableItems.length; i++) {
-        for(var j = 0; j < this.focusableItems[i].length; j++) {
-          if((this.focusableItems[i][j] != -1) && this.focusableItems[i][j].mathquill) this.focusableItems[i][j].renameVariable(varName, newName);
-        }
-      }
-    } else if(this.independent_vars.indexOf(varName) > -1) return; // I define this variable, which means I should stop renaming from this point downwards
+  	var programmatic = this.getProgrammaticFunction();
+  	if(!(programmatic && programmatic.function_vars[varName])) {
+	    if(this.dependent_vars.indexOf(varName) > -1) {
+	      // Rename variable inside all mathquill boxes
+	      for(var i = 0; i < this.focusableItems.length; i++) {
+	        for(var j = 0; j < this.focusableItems[i].length; j++) {
+	          if((this.focusableItems[i][j] != -1) && this.focusableItems[i][j].mathquill) this.focusableItems[i][j].renameVariable(varName, newName);
+	        }
+	      }
+	    } else if(this.independent_vars.indexOf(varName) > -1) return; // I define this variable, which means I should stop renaming from this point downwards
+	  }
     if(this.hasChildren && this.ends[L]) return this.ends[L].changeVarName(varName,newName);
     if(this[R]) return this[R].changeVarName(varName,newName);
-    if(this.parent && this.parent[R]) return this.parent[R].changeVarName(varName,newName);
+    if(this.parent && !(this.parent instanceof programmatic_function) && this.parent[R]) return this.parent[R].changeVarName(varName,newName);
     return;
   }
 	_.allIndependentVars = function() {
@@ -1037,6 +1059,8 @@ var Element = P(function(_) {
 
 	// Call the next item
 	_.evaluateNext = function(evaluation_id) {
+		if(giac.compile_mode) 
+			giac.compile_callback[giac.compile_callback.length-1].register_vars(this.independent_vars, this.dependent_vars);
 		this.leftJQ.find('i.fa-spinner').remove();
 		this.unblurOutputBox();
 		this.unarchive_list = this.previousUnarchivedList().slice(0);
@@ -1614,7 +1638,7 @@ var Element = P(function(_) {
   		return this;
   	}
   	if(!args.length) return this;
-  	if(this.hasChildren || this.savedProperties.length || (this instanceof MathOutput)) {
+  	if(this.hasChildren || this.savedProperties.length || this.evaluatable || (this instanceof MathOutput)) {
   		this.parseSavedProperties(args[0]);
 	  	var k = 1;
 	  } else
@@ -1734,13 +1758,18 @@ var EditableBlock = P(Element, function(_, super_) {
 // should be evaluated, up to the next LogicCommand, and so on.
 // LogicBlock is responsible for setting its logicResult property, and the property of all of its child LogicCommands, 
 // before the children are executed.
-var LogicBlock = P(Element, function(_, super_) {
+var FlowControl = P(Element, function(_, super_) {
+	_.init = function() {
+		super_.init.call(this);
+	}
+});
+var LogicBlock = P(FlowControl, function(_, super_) {
 	_.logicResult = false;
 	_.init = function() {
 		super_.init.call(this);
 	}
 });
-var LogicCommand = P(Element, function(_, super_) {
+var LogicCommand = P(FlowControl, function(_, super_) {
 	_.klass = ['logic_command'];
 	_.logicResult = false;
 	_.init = function() {
@@ -1748,7 +1777,7 @@ var LogicCommand = P(Element, function(_, super_) {
 	}
 });
 // Loops are things like for loops or while loops that use flow control statements such as 'continue' or 'break'
-var Loop = P(Element, function(_, super_) {
+var Loop = P(FlowControl, function(_, super_) {
 	_.init = function() {
 		super_.init.call(this);
 	}

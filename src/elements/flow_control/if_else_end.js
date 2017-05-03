@@ -63,6 +63,10 @@ var if_block = P(LogicBlock, function(_, super_) {
 	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id) {
+		if(giac.compile_mode) {
+			giac.execute(evaluation_id, [{command:'if(evalf(' + this.mathField.text() + ')) { 1'}], this, 'continueEvaluationCompileMode');
+			return; 
+		}
 		giac.load_altered(evaluation_id, this);
 		// Build command list
 		this.commands = [];
@@ -81,9 +85,9 @@ var if_block = P(LogicBlock, function(_, super_) {
 				this.all_blocks.push(el);
 			} else if(el instanceof LogicCommand) {
 				this.all_blocks.push(el);
-				if(this.allowOutput()) el.jQ.addClass(css_prefix + 'greyout');
+				if(this.allowOutput() && !giac.compile_mode) el.jQ.addClass(css_prefix + 'greyout');
 			} else
-				if(this.allowOutput()) el.jQ.addClass(css_prefix + 'greyout');
+				if(this.allowOutput() && !giac.compile_mode) el.jQ.addClass(css_prefix + 'greyout');
 		}
 		this.previous_commands = new_command;
 		if(this.shouldBeEvaluated(evaluation_id) && this.commands.length) {
@@ -94,39 +98,45 @@ var if_block = P(LogicBlock, function(_, super_) {
 		else 
 			this.evaluateNext(evaluation_id);
 	}
+	_.continueEvaluationCompileMode = function(evaluation_id) {
+		super_.continueEvaluation.call(this, evaluation_id);
+		return false;
+	}
 	_.lastTrueId = -1;
 	_.evaluationFinished = function(result, evaluation_id) {
-		var any_yet = false;
-		for(var i = 0; i < this.all_blocks.length; i++) {
-			if(typeof this.else_blocks[this.all_blocks[i].id] != 'undefined')
-				any_yet = this.all_blocks[i].handle_response(result[this.else_blocks[this.all_blocks[i].id]], any_yet);
-			else if(any_yet) 
-				this.all_blocks[i].logicResult = false;
-			else {
-				any_yet = any_yet || this.all_blocks[i].returnedResult;
-				this.all_blocks[i].logicResult = any_yet;
+		if(!giac.compile_mode) {
+			var any_yet = false;
+			for(var i = 0; i < this.all_blocks.length; i++) {
+				if(typeof this.else_blocks[this.all_blocks[i].id] != 'undefined')
+					any_yet = this.all_blocks[i].handle_response(result[this.else_blocks[this.all_blocks[i].id]], any_yet);
+				else if(any_yet) 
+					this.all_blocks[i].logicResult = false;
+				else {
+					any_yet = any_yet || this.all_blocks[i].returnedResult;
+					this.all_blocks[i].logicResult = any_yet;
+				}
 			}
-		}
-		// Find the 'true' block
-		var new_true_id = -1;
-		for(var i = 0; i < this.all_blocks.length; i++) {
-			if(this.all_blocks[i].logicResult) { new_true_id = this.all_blocks[i].id; break; }
-		}
-		if(this.lastTrueId != new_true_id) {
-			// New item is 'true'.  Need to mark all things after it 'altered' to make sure they are recalced
-			if(new_true_id > -1) {
-				var el = new_true_id == this.id ? this.ends[L] : Element.byId[new_true_id][R];
-				for(el; (el instanceof Element) && !(el instanceof LogicCommand); el = el[R]) 
-	    		el.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true;  _this.previous_commands = []; } });
-	    }
-    	// Also need to go through and mark all variables that were set in old 'true' area as altered for the continuing calculation
-    	if(this.lastTrueId > -1) {
-				el = this.lastTrueId == this.id ? this.ends[L] : Element.byId[this.lastTrueId][R];
-				for(el; (el instanceof Element) && !(el instanceof LogicCommand); el = el[R]) 
-					giac.add_altered(evaluation_id, el.allIndependentVars());
+			// Find the 'true' block
+			var new_true_id = -1;
+			for(var i = 0; i < this.all_blocks.length; i++) {
+				if(this.all_blocks[i].logicResult) { new_true_id = this.all_blocks[i].id; break; }
 			}
+			if(this.lastTrueId != new_true_id) {
+				// New item is 'true'.  Need to mark all things after it 'altered' to make sure they are recalced
+				if(new_true_id > -1) {
+					var el = new_true_id == this.id ? this.ends[L] : Element.byId[new_true_id][R];
+					for(el; (el instanceof Element) && !(el instanceof LogicCommand); el = el[R]) 
+		    		el.commandChildren(function(_this) { if(_this.evaluatable) { _this.altered_content = true;  _this.previous_commands = []; } });
+		    }
+	    	// Also need to go through and mark all variables that were set in old 'true' area as altered for the continuing calculation
+	    	if(this.lastTrueId > -1) {
+					el = this.lastTrueId == this.id ? this.ends[L] : Element.byId[this.lastTrueId][R];
+					for(el; (el instanceof Element) && !(el instanceof LogicCommand); el = el[R]) 
+						giac.add_altered(evaluation_id, el.allIndependentVars());
+				}
+			}
+			this.lastTrueId = new_true_id;
 		}
-		this.lastTrueId = new_true_id;
 
 		if(this.ends[L])
 			this.ends[L].continueEvaluation(evaluation_id)
@@ -155,6 +165,19 @@ var if_block = P(LogicBlock, function(_, super_) {
 	_.changed = function(el) {
 		this.needsEvaluation = true;
 	}
+	_.childrenEvaluated = function(evaluation_id) {
+		if(giac.compile_mode) {
+			var end_brackets = "}";
+			for(var el = this.ends[L]; el instanceof Element; el = el[R]) 
+				if(el instanceof else_if_block) end_brackets += "}";
+			giac.execute(evaluation_id, [{command: end_brackets}], this, 'childrenEvaluatedCompileMode');
+		}	else
+			super_.childrenEvaluated.call(this, evaluation_id);
+	}
+	_.childrenEvaluatedCompileMode = function(evaluation_id) {
+		super_.childrenEvaluated.call(this, evaluation_id);
+		return false;
+	}
 
 });
 var else_block = P(LogicCommand, function(_, super_) {
@@ -182,8 +205,10 @@ var else_block = P(LogicCommand, function(_, super_) {
 	}
 	_.continueEvaluation = function(evaluation_id) {
 		giac.load_altered(evaluation_id, this);
-		this.rightParent();
-		this.evaluateNext(evaluation_id);
+		if(this.rightParent() && giac.compile_mode) {
+			giac.execute(evaluation_id, [{command: "} else {"}], this, 'evaluationFinished');
+		} else 
+			this.evaluateNext(evaluation_id);
 	}
 	_.allIndependentVars = function() {
 		return [""]; // force to appear as scoped
@@ -301,6 +326,13 @@ var else_if_block = P(else_block, function(_, super_) {
 		this.rightParent();
 		if(dir === 0) this.mathField.focus(0);
 		return this;
+	}
+	_.continueEvaluation = function(evaluation_id) {
+		giac.load_altered(evaluation_id, this);
+		if(this.rightParent() && giac.compile_mode) {
+			giac.execute(evaluation_id, [{command: "} else { if(evalf(" + this.mathField.text() + ")) {"}], this, 'evaluationFinished');
+		} else 
+			this.evaluateNext(evaluation_id);
 	}
 	_.handle_response = function(result, any_yet) {
 		if(result.success) {

@@ -90,6 +90,10 @@ var for_loop = P(Loop, function(_, super_) {
 	}
 	// Continue evaluation is called within an evaluation chain.  It will evaluate this node, and then move to evaluate the next node.
 	_.continueEvaluation = function(evaluation_id) {
+		if(giac.compile_mode) {
+			giac.execute(evaluation_id, [{command:'for(' + this.varField.text().trim() + ':=evalf(' + this.startField.text() + ');evalf(' + this.varField.text().trim() + '<' + this.finishField.text() + ');' + this.varField.text().trim() + ':=evalf(' + this.varField.text().trim() + '+' + this.stepField.text() + ')) { 1'}], this, 'continueEvaluationCompileMode');
+			return; 
+		}
 		if(this.shouldBeEvaluated(evaluation_id)) {
 			if(this.altered(evaluation_id) || this.childNeedsEvaluation(evaluation_id)) {
 				this.single_run = false;
@@ -105,6 +109,10 @@ var for_loop = P(Loop, function(_, super_) {
 			}
 		} else 
 			this.evaluateNext(evaluation_id);
+	}
+	_.continueEvaluationCompileMode = function(evaluation_id) {
+		super_.continueEvaluation.call(this, evaluation_id);
+		return false;
 	}
 	_.evaluationFinished = function(result, evaluation_id) {
 		this.iterator = this.varField.text().trim();
@@ -147,6 +155,10 @@ var for_loop = P(Loop, function(_, super_) {
 	}
 	// Called by the last child node of this element after it is evaluated.  Reloops if we have more loops to calculate
 	_.childrenEvaluated = function(evaluation_id) {
+		if(giac.compile_mode) {
+			giac.execute(evaluation_id, [{command: "}"}], this, 'childrenEvaluatedCompileMode');
+			return;
+		}	
 		this.suppress_output = false;
 		this.start_val += this.step_val;
 		if(this.single_run) {
@@ -185,6 +197,10 @@ var for_loop = P(Loop, function(_, super_) {
 			giac.add_altered(evaluation_id, [this.iterator.trim()], next_id ? next_id.id : -1); 
 			giac.skipExecute(evaluation_id, this, 'scopeSaved');
 		}
+	}
+	_.childrenEvaluatedCompileMode = function(evaluation_id) {
+		super_.childrenEvaluated.call(this, evaluation_id);
+		return false;
 	}
 	_.startIteration = function(evaluation_id) {
 		giac.add_altered(evaluation_id, [this.iterator.trim()], this.ends[L].id); // Add in iterator to 'altered' list
@@ -225,7 +241,7 @@ var for_loop = P(Loop, function(_, super_) {
 	}
 
 });
-var continue_block = P(Element, function(_, super_) {
+var continue_block = P(FlowControl, function(_, super_) {
 	_.lineNumber = true;
 	_.evaluatable = true;
 	_.command_name = 'continue';
@@ -245,6 +261,10 @@ var continue_block = P(Element, function(_, super_) {
 	_.continueEvaluation = function(evaluation_id) {
 		var parentLoop = this.parentLoop();
 		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) {
+			if(giac.compile_mode) {
+				giac.execute(evaluation_id, [{command:this.command_name}], this, 'evaluationFinished');
+				return; 
+			}
 			// Need to load the vars that I am being asked to load to the nextEvaluateElement instead (note, on next iteration the for loop will lift these and move them back to the start)
 			var next_id = parentLoop.nextEvaluateElement();
 			giac.add_altered(evaluation_id, giac.get_and_wipe_altered(evaluation_id, this.id), next_id ? next_id.id : -1); 
@@ -299,6 +319,10 @@ var break_block = P(continue_block, function(_, super_) {
 	_.continueEvaluation = function(evaluation_id) {
 		var parentLoop = this.parentLoop();
 		if(parentLoop && this.shouldBeEvaluated(evaluation_id)) {
+			if(giac.compile_mode) {
+				giac.execute(evaluation_id, [{command:this.command_name}], this, 'evaluationFinished');
+				return; 
+			}
 			parentLoop.start_val = parentLoop.finish_val; // Force loop to be complete
 			// Need to load the vars that I am being asked to load to the nextEvaluateElement instead
 			var next_id = parentLoop.nextEvaluateElement();

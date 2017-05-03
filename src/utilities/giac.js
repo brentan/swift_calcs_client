@@ -15,6 +15,7 @@ var GiacHandler = P(function(_) {
 		this.evaluations = {};
     this.object_names = {};
     this.object_methods = {};
+    this.compile_callback = [];
 		this.giac_ready = false;
 		this.aborting = false;
 		this.errors_encountered = false;
@@ -104,9 +105,22 @@ var GiacHandler = P(function(_) {
 		return this;
 	}
 	_.setCompileMode = function(val, el) {
-		this.compile_mode = val;
-		if(val) this.compile_callback = el;
-		else this.compile_callback = false;
+    if(el && this.compile_mode) {
+      // Already in compile mode, so this works a bit differently...
+      if(val)
+        this.compile_callback.push(el);
+      else if(this.compile_callback.length == 1) {
+        this.compile_mode = false;
+        this.compile_callback = [];
+      } else
+        this.compile_callback.pop();
+    } else {
+  		this.compile_mode = val;
+  		if(val) 
+        this.compile_callback = [el];
+  		else 
+        this.compile_callback = [];
+    }
 	}
 	_.shouldEvaluate = function(eval_id) {
 		if(this.errors_encountered) return false;
@@ -318,8 +332,8 @@ var GiacHandler = P(function(_) {
 		if(this.giac_ready && (!SwiftCalcs.active_worksheet || (typeof hash_string.eval_id === 'undefined') || SwiftCalcs.active_worksheet.settings_loaded) && ((typeof hash_string.eval_id === 'undefined') || this.auto_evaluation || this.evaluations[hash_string.eval_id].manual_evaluation)) {
 			//if(typeof window.start_time === 'undefined')
 	  	//	window.start_time = new Date().getTime();
-			if(this.compile_mode)
-				this.compile_callback.compile_line(hash_string.commands, el, hash_string.eval_id);
+			if(el && this.compile_mode)
+				this.compile_callback[this.compile_callback.length-1].compile_line(hash_string.commands, el, hash_string.eval_id, hash_string.callback_function);
 			else {
         if(el && this.evaluations[hash_string.eval_id].restart && this.evaluations[hash_string.eval_id].start_element) {
           this.worker.postMessage(JSON.stringify({restart: true, unarchive_list: this.evaluations[hash_string.eval_id].start_element.previousUnarchivedList()}));
