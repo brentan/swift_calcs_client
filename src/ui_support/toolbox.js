@@ -40,6 +40,7 @@ $(function() {
     ],
     Programming: [
       {left: 'prog', text: 'Create Program', el: 'program'},
+      {left: 'rtrn', text: 'Return', el: 'return'},
       {left: 'if', text: 'If Statement', el: 'if'},
       {left: 'elseif', text: 'Else If Statement', el: 'elseif'},
       {left: 'else', text: 'Else Statement', el: 'else'},

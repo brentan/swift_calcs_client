@@ -4,7 +4,7 @@ var programmatic_function = P(Element, function(_, super_) {
 	_.evaluatable = true;
 	_.hasChildren = true;
 	_.lineNumber = true;
-	_.helpText = "<<<[var]> = program>>\nProgrammatic Function Definition.  Return an output from the program based on provided inputs by following the computation put forth in the program.";
+	_.helpText = "<<<[var]> = program>>\nProgram definition.  A Program is a pre-compiled series of commands that then returns a value.  Enter the progarm name and input variables (ex <[ProgName(in1, in2)]>), then use normal Swift Calcs tools and commands to build your program.  Ensure a <<return>> statement is included at some point in the program to return a value from the program.  You can then use the program later in your worksheet just as you would use a function.\nHELP:40";
 
 	_.init = function() {
 		this.function_vars = {};
@@ -46,6 +46,7 @@ var programmatic_function = P(Element, function(_, super_) {
 					_this.setError(errors.join('<BR>'));
 				} else {
 					_this.independent_vars = SwiftCalcs.GetIndependentVars(_this.varField.text() + " := 1");
+					_this.commands.push([]); // Make new commands return true to force execution
 					_this.evaluate();
 					_this.needsEvaluation = false;
 				}
@@ -121,6 +122,13 @@ var programmatic_function = P(Element, function(_, super_) {
 			prog += (this.command_list.join(";\n") + ";\n}").replace(/(;|\}|\{);/g,"$1");
 		} else
 			var prog = varField + " := 0;";
+		if(prog.indexOf("return") == -1) {
+			this.outputBox.setWarning('No <i>return</i> statement found in program.  Ensure your program includes a return statement.', false, true);
+			this.outputBox.expand();
+		} else {
+			this.outputBox.clearState();
+			this.outputBox.collapse();
+		}
 		this.startCompilation(evaluation_id, prog);
 	}
 	_.startCompilation = function(evaluation_id, prog) {
@@ -131,14 +139,9 @@ var programmatic_function = P(Element, function(_, super_) {
 		giac.execute(evaluation_id, this.commands, this, 'compilationCallback');
 	}
 	_.compilationCallback = function(result, evaluation_id) {
-		if(!giac.compile_mode) {
-			if(!result[0].success) {
-				this.outputBox.setError('Error compiling function: ' + result[0].returned);
-				this.outputBox.expand();
-			} else {
-				this.outputBox.clearState();
-				this.outputBox.collapse();
-			}
+		if(!giac.compile_mode && !result[0].success) {
+			this.outputBox.setError('Error compiling function: ' + result[0].returned);
+			this.outputBox.expand();
 		}
 		super_.childrenEvaluated.call(this, evaluation_id);
 		return false;
