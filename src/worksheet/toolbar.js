@@ -411,6 +411,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		{
 			id: 'subscript',
 			icon: 'subscript',
+			klass: 'subscript',
 			hide_mobile: true,
 			title: 'Subscript [Ctrl-,]',
 			method: function(el) { el.command('subscript'); } 
@@ -418,6 +419,7 @@ var Toolbar = SwiftCalcs.toolbar = P(function(_) {
 		{
 			id: 'superscript',
 			icon: 'superscript',
+			klass: 'superscript',
 			hide_mobile: true,
 			title: 'Superscript [Ctrl-.]',
 			method: function(el) { el.command('superscript'); } 

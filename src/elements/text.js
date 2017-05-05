@@ -1062,6 +1062,10 @@ var WYSIWYG = P(function(_) {
       this.toolbar.find('.justifyFull').addClass('highlight');
     if(document.queryCommandState('justifyLeft'))
       this.toolbar.find('.justifyLeft').addClass('highlight');
+    if(document.queryCommandState('subscript')) 
+      this.toolbar.find('.subscript').addClass('highlight');
+    if(document.queryCommandState('superscript'))
+      this.toolbar.find('.superscript').addClass('highlight');
     this.toolbar.find('.foreColor').css('border-bottom-color',document.queryCommandValue('foreColor'));
     this.toolbar.find('.backColor').css('border-bottom-color',document.queryCommandValue('backColor'));
     this.toolbar.find('.colorpicker.foreColor').minicolors('value',{color: document.queryCommandValue('foreColor')});
