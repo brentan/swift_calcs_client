@@ -113,12 +113,23 @@ var programmatic_function = P(Element, function(_, super_) {
 					added[local_var] = true;
 				}
 			}
+			// Add __local to all local vars to avoid weird issues with inputs
+			for(var j= 0; j < locals.length; j++) {
+				for(var i = 0; i < this.command_list.length; i++) 
+					this.command_list[i] = this.command_list[i].replace(new RegExp("(^|[^A-Za-z0-9_~])" + locals[j] + "($|[^A-Za-z0-9_~])","g"), "$1" + locals[j]+ "__local$2");
+			}
+			for(var j= 0; j < input_vars.length; j++) {
+				for(var i = 0; i < this.command_list.length; i++) 
+					this.command_list[i] = this.command_list[i].replace(new RegExp("(^|[^A-Za-z0-9_~])" + input_vars[j] + "($|[^A-Za-z0-9_~])","g"), "$1" + input_vars[j]+ "__local$2");
+				varField = varField.replace(new RegExp("(^|[^A-Za-z0-9_~])" + input_vars[j] + "($|[^A-Za-z0-9_~])","g"), "$1" + input_vars[j]+ "__local$2");
+			}
+
 			var prog = varField + " := {\n";
 			var html = [];
 			for(var i = 0; i < locals.length; i++)
 				if(locals[i].indexOf("__") == -1) html.push(window.SwiftCalcsLatexHelper.VarNameToHTML(locals[i]));
 			this.jQ.find('span.explain.locals').first().html('local variables: ' + html.join(", "));
-			prog += "local " + locals.join(",") + ";\n"; 
+			prog += "local " + locals.join("__local,") + "__local;\n"; 
 			prog += (this.command_list.join(";\n") + ";\n}").replace(/(;|\}|\{);/g,"$1");
 		} else
 			var prog = varField + " := 0;";

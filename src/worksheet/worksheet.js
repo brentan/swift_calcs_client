@@ -423,21 +423,6 @@ var Worksheet = P(function(_) {
 		$('<div/>').addClass('settings').html(this.setSettingsText()).appendTo(det_div.find('td.settings').append($('<i/>').addClass('fa').addClass('fa-gear')).on('click', function(_this) { return function(e) {
 			_this.loadSettingsPane();
 		}; }(this)));
-    if(typeof window.embedded === 'undefined') {
-		  det_div.insertBefore(this.jQ).slideDown({duration: 200});
-      // include message
-      if((this.rights > 2) && (this.show_include_message)) {
-        //edit rights
-        $is = $('<div/>').addClass('include_span')
-        $is.html("<a href='#'><i class='fa fa-fw fa-download'></i>Click to Include variables or functions from another worksheet</a>");
-        $is.find('a').on('click', function(_this) { return function(e) {
-          include_worksheet().insertBefore(_this.ends[L]).show();
-          e.preventDefault();
-          e.stopPropagation();
-        } }(this));
-        $is.insertAfter(det_div)
-      }
-    }
 		var name_span = this.jQ.closest('.active_holder').find('.worksheet_item span.name');
 		if((this.rights >= 3))
 			name_span.addClass('change').children('span').on('click', function(_this, name_span) { return function(e) { rename(_this, name_span, e); }; }(this, name_span));
@@ -456,6 +441,21 @@ var Worksheet = P(function(_) {
     	else
     		this.completeLoad(to_parse);
 	  } else {
+      if(typeof window.embedded === 'undefined') {
+        det_div.insertBefore(this.jQ).slideDown({duration: 200});
+        // include message
+        if((this.rights > 2) && (this.show_include_message)) {
+          //edit rights
+          $is = $('<div/>').addClass('include_span')
+          $is.html("<a href='#'><i class='fa fa-fw fa-download'></i>Click to Include variables or functions from another worksheet</a>");
+          $is.find('a').on('click', function(_this) { return function(e) {
+            include_worksheet().insertBefore(_this.ends[L]).show();
+            e.preventDefault();
+            e.stopPropagation();
+          } }(this));
+          $is.insertAfter(det_div)
+        }
+      }
 			math().appendTo(this).show(200);
 			this.completeLoad(to_parse);
 	  }
