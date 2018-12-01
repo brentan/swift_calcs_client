@@ -1,3 +1,4 @@
+// Functions to deal with worksheet revisions (restoring a worksheet to a revision, etc)
 $(function() {
 	var restoreWorksheet = window.restoreWorksheet = function() {
 		if(confirm('Are you sure?  Subsequent revisions and changes will be permanently deleted.  The current worksheet version will be set as a new revision.')) {

@@ -1,3 +1,5 @@
+// Listeners waiting for commands from the client application.  
+
 var eval_function = function(var_name) {
   /* 
   Will receive a string, var_name, that is asking if we know its value.

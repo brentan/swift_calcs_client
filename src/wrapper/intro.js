@@ -183,6 +183,7 @@ var SwiftCalcs = {};
       out[list[i]] = true;
     return out;
   }
+  // Parsing functions: find independent and dependent variables in a math command
   var GetDependentVars = SwiftCalcs.GetDependentVars = function(command, ignore) {
     var dependent_vars = [];
     if(typeof ignore === 'undefined') ignore = [];

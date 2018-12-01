@@ -1,3 +1,5 @@
+// Used to create mathquill blocks outside of a worksheet element.  Handles the binding of the mathquill block
+// and passing for mouse events etc
 $(function() {
 	var standaloneMathquill = window.standaloneMathquill = function(math_jQ, reset, focus, handlers, element) {
 		// Common function to create a standalone mathquill block, with associated key/mouse listeners.

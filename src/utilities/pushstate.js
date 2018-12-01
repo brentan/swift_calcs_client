@@ -1,4 +1,4 @@
-/* object that deals with the URL, changing its properties OR hash_string depending on browser ability */
+/* object that deals with the URL, changing its properties OR hash_string depending on browser ability. history.js */
 var PushState = P(function(_) {
   var routeStripper = /^[#\/]|\s+$/g;
   var rootStripper = /^\/+|\/+$/g;

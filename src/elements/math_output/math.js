@@ -1,4 +1,10 @@
+/*
+The workhorse of Swift Calcs.  This is the element where math is entered into a single mathquill object, and 
+the evaluated result is displayed.  This is the default element when a new line is created in a worksheet.
 
+Note that this element will check for special commands (plot, solve, etc) and auto-transform in to the requested
+element if that command is typed.  A double-space will turn this in to a text element.
+*/
 var math = P(MathOutput, function(_, super_) {
 	_.klass = ['math'];
 	_.mathField = 0;

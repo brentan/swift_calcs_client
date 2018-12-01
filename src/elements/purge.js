@@ -1,3 +1,4 @@
+// Purge block allows for the deletion of variables.
 var purge = P(Element, function(_, super_) {
 	_.klass = ['purge'];
 	_.needsEvaluation = false; 

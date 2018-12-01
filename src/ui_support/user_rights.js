@@ -1,3 +1,5 @@
+// All functions and dialogs dealing with worksheet/project sharing are here.  This file includes
+// the dialog creation, listeners, etc that power the ‘share’ dialog
 $(function() {
 
   var emailInput = window.userRightsEmailInput = function(el) {

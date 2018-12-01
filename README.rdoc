@@ -32,3 +32,31 @@ Thanks to the support of developers whose open source software is used in this a
 * Diff Match and Patch, Copyright 2006 Google Inc. - http://code.google.com/p/google-diff-match-patch/
 
 * Papa Parse - https://github.com/mholt/PapaParse
+
+== NAVIGATING
+
+swift_calcs_client contains three different libraries that are used by the swift calcs application.  They are all built using the ‘make’ command.  All three libraries are composed of multiple javscript files that, upon build, are concatenated together into a single file.  The intro.js and outro.js files in each library provide the beginning/end of the built library.
+
+SRC_WORKER
+
+This folder contains the library for the webworker that launches and runs the math engine emgiac.  This is done in a worker so that active calculations do not freeze the UI.  Its primary purpose is to launch emgiac, receive commands from the main process, perform the calculation in emgiac, and return results to the main process.
+
+SRC_EMBED
+
+This folder contains the library that is loaded by third-party websites that embed swift calcs content
+
+SRC
+
+This folder contains the library for the swift calcs UI, and is organized in to a few different folders based on the function of the underlying scripts.  They are:
+
+* wrapper: contains intro/outro files
+
+* worksheet: The base object for a swift calcs worksheet.  A worksheet contains multiple elements, organized from top of the worksheet to the bottom.  Each element can have children of its own.  Each line in a worksheet is its own element.  Worksheets track the first/last elements in .ends[L] and .ends[R].  Elements track children in the same manner, and also track neighbors with [L] and [R] (L and R are defined as -1 and 1, respectively).  
+
+* element.js: The base class for an element
+
+* elements: All the various elements that can exist in a swift calcs worksheet, from plots to solvers to text boxes.  The most common elements are the math and text elements.
+
+* ui_support: Various functions that provide UI features, like popups and dialogs.
+
+* utilies: Functions that provide various utility functions for the rest of the library

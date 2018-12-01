@@ -1,3 +1,5 @@
+// Various helper methods for creating tooltips and popups.  
+
 $(function() { 
   var $el = $('<div/>').addClass(css_prefix + 'tooltip');
   var exposed = false;

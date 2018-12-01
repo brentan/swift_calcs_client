@@ -1,3 +1,4 @@
+// Emgiac returns messages of little use to a use.  Attempt to convert these to messages that make a bit more sense.
 var fix_message = function(message) {
 	message = message.replace(/:.*:[ ]*/,'').replace(/([ '])_/g,"$1").replace("latex","");
     if(message.match(/^Temperature Units Warning/)) {

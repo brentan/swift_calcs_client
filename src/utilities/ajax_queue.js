@@ -5,9 +5,7 @@ calls.
 
 The main calls are:
 saveNeeded(worksheet): called to indicate we should save.  After a save needed, a 2 second timer is started, after which the save occurs
-if saveNeeded is again called in this timespan, the timer resets.
-
-TODO: Error handling.  What if the server doesnt respond?  Etc.
+if saveNeeded is again called in this timespan, the timer resets.  Whenever a change is made in a worksheet (keypress, etc) a saveNeeded is called.  When the timer expires, a save is triggered.  Save will use the toString method of workseet to create a textual representation of the worksheet for saving.  This is then diffed against the last known saved version, and a patch created.  The patch is sent to the server.  The server applies the patch to the version is has.  A version number is returned from the server, which is updated here.  The version numbering ensures that the client/server are synced and applying diff/patch to the same versioned file.
 
 TODO: Update all of this to rely on real-time (SSE? websockets?) and allow real-time, multi-user editing of worksheets
 */

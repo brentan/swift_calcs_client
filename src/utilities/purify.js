@@ -1,3 +1,4 @@
+// Purify library to strip pasted content of most HTML to avoid issues.
 ;(function(factory) {
     'use strict';
     /* global window: false, define: false, module: false */

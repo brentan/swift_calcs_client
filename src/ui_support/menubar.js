@@ -1,3 +1,4 @@
+// File contains all the listeners for the manubar and accountbar at the top of the screen.
 $(function() {
 	
 	$('body').on('click', '#account_bar .new', function(e) { 

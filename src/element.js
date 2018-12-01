@@ -166,7 +166,8 @@ var Element = P(function(_) {
 	Insert methods
 
 	These should all be self explanatory.  All operate with this being the object being inserted, so it will
-	be placed next to/into/in place of the provided target
+	be placed next to/into/in place of the provided target.  dont_eval is a T/F depending on whether the insert
+	event should cause a recalculation of the worksheet.
 	*/
 	_.insertNextTo = function(sibling, location, dont_eval) {
 		if(this.inTree) return this; // Already added...
@@ -288,6 +289,7 @@ var Element = P(function(_) {
 		});
 		return start;
 	}
+	// Find an object by its line number.  If I’m it, return me, otherwise search children.
 	_.findByLineNumber = function(line) {
 		if(this.myLineNumber === line) return this;
 		var child_found = undefined;
@@ -297,6 +299,7 @@ var Element = P(function(_) {
 		});
 		return child_found;
 	}
+	// Cause the background to flash.  Color and duration can be set, defaults are a yellow color for 400ms
   _.flash = function(color, duration) {
     var el = this.jQ.closest('.sc_element');
     if(typeof color === 'undefined') color = "#ffe0e0";
@@ -304,6 +307,7 @@ var Element = P(function(_) {
     el.stop().css("background-color", color).animate({ backgroundColor: "#FFFFFF"}, {complete: function() { $(this).css('background-color','')} , duration: duration });
     return this;
   }
+	//addNotice will show a message immediately after the element.  Used to ask user about changing variable names etc
   _.addNotice = function(message, klass, buttons, show_undo) {
     this.insertJQ.children(".after_notice." + klass).remove();
     if(show_undo) 
@@ -325,7 +329,7 @@ var Element = P(function(_) {
   }
 
 	/*
-	Move commands.  Allows them to be moved upwards, downwards, etc.
+	Move commands.  Allow elements to be moved upwards, downwards, etc.
 	The move command takes care of all the move related stuff, including removing the old element and reinserting at the correct
 	new location.  Note that it takes a target to insert before or after, and a direction.  insertInto should be set to true to insert into 
 	an element at the end based on dir.  Set dont_eval true in order to perform a move without evaluating anything
@@ -698,18 +702,20 @@ var Element = P(function(_) {
 		}
 		return out;
 	}
+	// Will run the func command on myself, and then command all children with the same function
 	_.commandChildren = function(func) {
-		// Will run the func command on myself, and then command all children with the same function
 		func(this);
 		var children = this.children();
 		for(var i = 0; i < children.length; i++)
 			children[i].commandChildren(func);
 		return this;
 	}
+	// Find the first-generation ancestor (aka search parents until find parent who is first descendant of worksheet)
 	_.firstGenAncestor = function() {
 		for(var w = this; !(w.parent instanceof Worksheet); w = w.parent) {}
 		return w;
 	}
+	//Helper function: will find its current ‘depth’, aka how many parents between itself and worksheet.
 	_.setDepth = function() {
 		var to_run = function(_this) {
 			_this.depth = 0;
@@ -726,11 +732,13 @@ var Element = P(function(_) {
 
 	/*
 	Evaluation functions. 
-	Evaluation depends on whether item is 'scoped' or not.  Scoped items alter a variable
-	Scoped evaluations start at the first_gen_ancestor of the element, otherwise evaluation is in-place just for the element in question.
-	Evaluation starts with a reset of the environment, followed by a reload of all variables defined prior to the evaluation point.
-	From the point onwards, for items that have not been altered, we just skip (if not scoped) or load the archived value for the
-	independent variable.  When we hit an altered element (test this.altered(eval_id)) we evaluation it and then continue to march downwards
+	Evaluation depends on whether item is 'scoped' or not.  Scoped items alter a variable.
+	Scoped evaluations start at the first_gen_ancestor of the element, and then the environment is reset.
+	The environment is reloaded by finding all variables defined prior to the evaluation point (the archived variables from the previous element in the worksheet).
+	From the point onwards, for any elements that have not been altered and don’t depend on an altered variable, we just skip (if not scoped) or load the archived value for the
+	independent variable (if scoped).  When we hit an altered element or element dependent on an altered variable (test this.altered(eval_id)) we evaluate it and then continue to march downwards.  The list of altered variables therefore can grow as evaluation continues, and only
+	lines dependent on an altered variable are then evaluated.  This continues until the end of the worksheet is reached.
+	For non-scoped evaluations, only that element is evaluated, and no tree traversal is done, as the element doesn’t change any variables and therefore no other elements will depend on it.
 
 	Most of these functions work on their own, but elements can override:
 	continueEvaluation: What should happen when this element is evaluated
@@ -747,7 +755,7 @@ var Element = P(function(_) {
 	_.altered_content = false;
 	_.outputSettingsChange = false;
 
-	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method) 
+	// Evaluate starts an evaluation at this node.  It checks if an evaluation is needed (needsEvaluation method or force=true) 
 	// This function assigns this evaluation stream a unique id, and registers it in Worksheet.  Other functions can cancel this evaluation stream with this unique id.
 	// If we need an evaluation, we start at the top of the worksheet.
 	_.evaluate = function(force) {
@@ -766,21 +774,24 @@ var Element = P(function(_) {
 		if((!this.outputSettingsChange && this.scoped()) || (this.inProgrammaticFunction() && this.scoped() || (this instanceof FlowControl)))
 			el = this.firstGenAncestor(); // Scoped items should start at first gen ancestor
 		else 
-			stop_id = this.id; //not scoped, so start here and stop when we reach this guy
+			stop_id = this.id; //not scoped, so start here and stop when we reach element with this.id
 		this.outputSettingsChange = false;
 		this.worksheet.evaluate([], el, stop_id);
 		return this;
 	}
+	//Return parent program function block, if I’m in one.  Use to ensure we complile functions
 	_.getProgrammaticFunction = function() {
 		for(var parent = this.parent; !(parent instanceof Worksheet); parent = parent.parent)
 			if (parent instanceof programmatic_function) return parent;
 		return false;
 	}
+	//Test if this block is in a program function.  If so, its not really evaluatable, as the function needs to be compiled.
 	_.inProgrammaticFunction = function() {
 		return this.getProgrammaticFunction() ? true : false;
 	}
 
   var count = 0;
+	//blur the Output Box, done when a calculation starts and is in progress.
 	_.blurOutputBox = function() {
 		if(this.outputBox) this.outputBox.calculating();
 		if(this.jQ && (typeof this.jQ.find === 'function')) {
@@ -800,6 +811,7 @@ var Element = P(function(_) {
 			for(var i = 0; i < children.length; i++) window.setTimeout(function(i) { return function() { children[i].unblurOutputBox(); }; }(i));
 		}*/
 	}
+	//Check to see if I should be evaluated, based on the evaulation_id.  Return false if this eval_id has been cancelled, otherwise it checks if I depend on any variables that have been changed recently.
 	_.shouldBeEvaluated = function(evaluation_id) {
 		giac.load_altered(evaluation_id, this);
 		if(giac.evaluations[evaluation_id]) giac.evaluations[evaluation_id].active_id = this.id;
@@ -830,11 +842,13 @@ var Element = P(function(_) {
 			this.jQ.removeClass(css_prefix + 'greyout');
 		return true;
 	}
+	// Check to see if I’m allowed to show output (a line that is in an if/else statement, for example, may not show output if the if/else statement took a different route)
 	_.allowOutput = function() {
 		for(var el = this; el instanceof Element; el = el.parent)
 			if(el.suppress_output) return false;
 		return true;
 	}
+	// Add the ‘thinking’ spinner to the start of this line (and remove it from other lines)
 	_.addSpinner = function(eval_id) {
 		if(this.allowOutput() && this.leftJQ) {
 			this.leftJQ.find('i.fa-spinner').remove();
@@ -871,6 +885,7 @@ var Element = P(function(_) {
 		} else 
 			this.evaluateNext(evaluation_id)
 	}
+	// Determine if this item has changed since we last evaluated it
 	_.newCommands = function() {
 		var equal = true;
 		if(this.commands.length == this.previous_commands.length) {
@@ -884,6 +899,7 @@ var Element = P(function(_) {
 			equal = false;
 		return !equal;
 	}
+	// Find the next element that should be evaluated after me
 	_.nextEvaluateElement = function() {
 		var next_id = this;
 		while(true) {
@@ -893,6 +909,10 @@ var Element = P(function(_) {
 		}
 		return next_id;
 	}
+	//Find the element I should start evaluation at.
+	// Journey up parents to the worksheet.  Evaluation is linear in the first generation children of worksheet.  Below that level,
+	// Children blocks may have non-linear evaluation (such as 'for' loops, etc).  We need to find our ancestor who is a worksheet
+	// first generation child, then start the evaluation process there and move inwards/downwards.  
   _.findStartElement = function() {
   	var programmatic = this.getProgrammaticFunction();
   	if(programmatic) return programmatic;
@@ -1000,6 +1020,7 @@ var Element = P(function(_) {
     if(this.parent && !(this.parent instanceof programmatic_function) && this.parent[R]) return this.parent[R].changeVarName(varName,newName);
     return;
   }
+	//Return a list of all independent variables in this element and its children
 	_.allIndependentVars = function() {
 		var arr = this.independent_vars.concat(this.previous_independent_vars);
 		if(this.hasChildren) {
@@ -1009,9 +1030,11 @@ var Element = P(function(_) {
 		}
 		return arr;
 	}
+	//Scoped elements set variables (as opposed to just performing evaluations)
 	_.scoped = function() {
 		return this.allIndependentVars().length > 0;
 	}
+	//Find offset from the top of the screen.
   _.topOffset = function() {
     var top_self = this.jQ.position().top;
     if(this.parent instanceof Element) return top_self + this.parent.topOffset();
@@ -1023,7 +1046,7 @@ var Element = P(function(_) {
 		// Example: Function (drop all vars and only show function vars)
 		// Output is the new array to pass
 	//}
-	// Find the nearest previous element and return its unarchive list...this is what we should be loading
+	// Find the nearest previous element and return its unarchive list...this is what we should be loading if this element is the start of an evaluation chain in order to restore the environment at this point in the worksheet.
 	_.previousUnarchivedList = function() {
 		var el = this;
 		if(el[L]) el = el[L];
@@ -1057,7 +1080,7 @@ var Element = P(function(_) {
 		return true;
 	}
 
-	// Call the next item
+	// Evaluate the next element
 	_.evaluateNext = function(evaluation_id) {
 		if(giac.compile_mode) 
 			giac.compile_callback[giac.compile_callback.length-1].register_vars(this.independent_vars, this.dependent_vars);
@@ -1131,10 +1154,6 @@ var Element = P(function(_) {
 		this.worksheet.save();
 	}
 
-	// Journey up parents to the worksheet.  Evaluation is linear in the first generation children of worksheet.  Below that level,
-	// Children blocks may have non-linear evaluation (such as 'for' loops, etc).  We need to find our ancestor who is a worksheet
-	// first generation child, then start the evaluation process there and move inwards/downwards.  
-	// Bring/remove cursor focus to/from the block, if possible
 	// Call all post insert handlers
 	_.postInsert = function() {
 		if(this.worksheet && this.worksheet.activeUndo) return this.preReinsertHandler();

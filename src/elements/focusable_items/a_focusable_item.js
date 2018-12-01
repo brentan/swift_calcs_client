@@ -1,5 +1,8 @@
 /*
-	Simple class for all focusable items to extend, has some basic functionality
+	Simple class for all focusable items to extend, has some basic functionality.
+A focusable item is a user entry field within an element.  These mostly just recreate normal UI that would
+be available, such as select boxes and radio boxes.  All the other files in this folder extend this class.
+Focusable items are loaded by elements in their postInsertHandler when focusable items are registered and populated
 */
 var aFocusableItem = P(function(_) {
 

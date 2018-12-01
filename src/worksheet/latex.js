@@ -1,5 +1,7 @@
 /********************************************************************
- * Helper function to transform latex into HTML or evaluatable text *
+ * Helper object to transform latex into HTML or evaluatable text *
+ * The object will basically create a mathquill object and use it *
+ * to transform between the various representations.              *
  ********************************************************************/
 window.SwiftCalcsLatexHelper = {
 	mathField: false,

@@ -1,3 +1,6 @@
+/*
+Object to hold materials (solids, liquids, gases) that can be accessed from Swift Calcs elements.  
+*/
 
 //BRENTAN: Add support for fluids and gases
 var SwiftCalcsObject = P(function(_) {

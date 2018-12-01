@@ -1,3 +1,5 @@
+// Functions to show the ‘welcome’ tutorial for new users on first load of the application.
+
 $(function() {
 	// Screen explanation will highlight various sections of the screen and show explanatory text
 

@@ -1,3 +1,7 @@
+/*
+Fancy-type text block.  Allows for formatted text entry utilizing the toolbar to set colors, size, etc
+*/
+
 var text = P(EditableBlock, function(_, super_) {
   _.klass = ['text'];
   _.textField = 0;

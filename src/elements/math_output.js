@@ -1,5 +1,10 @@
 /* Math output is an extension of Element that has some built in commands
-   to support math output in the output box, as well as some other functionality */
+   to support math output in the output box, as well as some other functionality 
+
+The mathOutput class includes all the functions needed for an evaluatable element, including 
+the result block at the end of the element.  It is not called directly, but is extended by the elements in the
+math_output directory
+*/
 
 var MathOutput = P(EditableBlock, function(_, super_) {
 	_.lineNumber = true;

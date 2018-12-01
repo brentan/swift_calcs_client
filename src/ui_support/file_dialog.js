@@ -1,3 +1,11 @@
+/*
+File contains nearly all functions used by swift calcs to populate the UI, including functions that:
+- Populate the worksheet listing (based on current project, search terms, etc)
+- Load a worksheet
+- Close a worksheet
+- Load correct view based on URL (used for history back/forth monitoring)
+*/
+
 $(function() {
 	var current_project_hash = false;
 	var current_project_no_save = false;
@@ -14,6 +22,9 @@ $(function() {
 		$('.feedback_link').css('left', '25px');
 	}
 	var allowNewProject = true;
+
+	// Load worksheets from a particular project.  Limit by archived/starred as options.  Usually not called
+	// directly, but instead called when the URL changes.
 	var openFileDialog = window.openFileDialog = function(hash_string, archive, starred) {
     if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.unbind();
     $('.worksheet_holder').html('<div style="text-align:center; font-size:60px;margin-top:40px;color:#999999;"><i class="fa fa-spinner fa-pulse"></i></div>');
@@ -62,6 +73,8 @@ $(function() {
 		current_project_no_save = no_save;
 		current_project_navigable_url = url;
 	}
+
+	//Public function used to load a project.  Pass the project hash, name, whether to include archived worksheets, and whether to restrict to starred items.  Function will set the URL based on the request, and history.js will handle calling openFileDialog
 	var loadProject = window.loadProject = function(hash_string, name, archive, starred) {
 		if(hash_string && (hash_string == 'active')) {
 			window.trackEvent("Project", "Load", "Active");
@@ -160,6 +173,7 @@ $(function() {
 		if(today.getFullYear() != date.getFullYear()) string += ' ' + date.getFullYear();
 		return string;
 	}
+	// Given a worksheet, return the HTML used to populate a worksheet list
 	var worksheet_html = window.worksheet_html = function(w) {
 		return "<span class='select_box'><i class='fa fa-square-o'></i><i class='fa fa-check-square-o'></i></span>"
 			+ "<span class='name'><span class='hover'>" + w.name + "</span></span>"
@@ -167,6 +181,7 @@ $(function() {
 			+ "<span class='star'><i class='fa fa-star" + (w.star_id ? '' : '-o') + "' title='Add or Remove Star'></i></span>"
 			+ "<span class='menu'><i class='fa fa-ellipsis-v' title='Options Menu'></i></span>";
 	}
+	// Given an invitation, return the HTML used to populate the invitation list.
 	var invitation_html = window.invitation_html = function(w) {
 		return "<span class='file_type'><i class='fa fa-" + (w.worksheet ? "file" : "folder-open") + "'></i></span>"
 			+ "<span class='name'><span class='hover'>" + w.name + "</span></span>"
@@ -197,6 +212,7 @@ $(function() {
 	  }
 		e.preventDefault();
 	});
+	// Display the listing of worksheets on the screen.  Pass the list of worksheets (returned from the server), path, and whether this is an onshape or fusion project.
 	var displayWorksheetList = window.displayWorksheetList = function(worksheets, path_html, onshape, fusion) {
 		clear_batch();
 		window.selectToolboxTab('projects_list');
@@ -410,6 +426,7 @@ $(function() {
 		}
 		prepend_to_list = false;
 	}
+// Add/remove stars to a worksheet
 	var addStar = window.addStar = function(data_hash) {
     window.trackEvent("Star", "Add", data_hash);
 		toggleStar(data_hash, true);
@@ -528,6 +545,7 @@ $(function() {
 	    if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.setWidth();
 		}
 	}
+// Load in a popup a dialog allowing you to choose a file.  Pass a callback.
 	window.loadFilePicker = function(callback, parent_id) {
     window.showPopupOnTop();
     var current_parent_hash = undefined;
@@ -868,6 +886,7 @@ $(function() {
       }
     });		
 	}
+	//Generic function to create a popup asking for an input
 	var createPrompt = window.createPrompt = function(title, message, options, handler) { 
     window.showPopupOnTop();
 		var el = $('.popup_dialog .full').html("<div class='title'>" + title + "</div><div>" + message + "</div>");
@@ -882,6 +901,7 @@ $(function() {
     });
 		window.resizePopup(true);
 	}
+	// Dialog for when moving a worksheet or project.
 	var moveDialog = function(callbackFunction, parent_project_hash) {
 		if(typeof parent_project_hash === 'undefined') parent_project_hash = current_project_hash;
 		var expandCollapse = function(el) {
@@ -955,6 +975,7 @@ $(function() {
       }
     });
 	}
+	//Generic prompt dialog.  Used to create rename or invitation dialogs.
 	var promptDialog = function(prompt, button_text, suggested_name, callbackFunction, invite_dialog) {
     window.showPopupOnTop();
     var el = $('.popup_dialog .full').html("<div class='title'>" + prompt + "</div><div class='input'><input type=text></div>");
@@ -1037,6 +1058,7 @@ $(function() {
     window.resizePopup(invite_dialog ? false : true);
     el.find('.input input').focus();
 	}
+	// Create a new project (will open a dialog asking for options)
 	var newProject = window.newProject = function(parent_project_hash, no_save) {
 		if(typeof parent_project_hash === 'undefined') {
 			parent_project_hash = current_project_hash;
@@ -1044,6 +1066,7 @@ $(function() {
 		}
 		promptDialog('Name your new project', 'Create', '', function(parent_project_hash) { return function(name, data) { processNewProject(name, data, parent_project_hash) }; }(parent_project_hash), no_save !== true);
 	}
+	// Callback from the new project dialog that will actually create the project.
 	var processNewProject = function(name, data, parent_project_hash) {
     window.trackEvent("Project", "Create", name);
 		window.showLoadingOnTop();
@@ -1073,6 +1096,7 @@ $(function() {
 		}
 		window.ajaxRequest('/projects/new', post_data, success, fail);
 	}
+	// Listener for the new project link under the project listing
 	$('body').on('click', '.projects_list span.fa-plus-circle', function(e) {
 		if($(this).attr('data-type') == 'project') window.newProject(null);
 		/*
@@ -1092,7 +1116,7 @@ $(function() {
 		e.preventDefault();
 		e.stopPropagation();
 	});
-
+	// Project options menu and associated dialogs (access by pressing the ‘cog’)
 	$('body').on('click', '.project_title .fa-cog', function(e) {
 		var archived = $(this).closest('.archive').length > 0;
 		var offset = $(this).offset();
@@ -1226,7 +1250,7 @@ $(function() {
 		e.preventDefault();
 		e.stopPropagation();
 	});
-
+	// Callback to rename a project.
 	var processProjectRename = function(el, project_hash, new_name) {
 		el.attr('data-name', new_name);
 		el.children('.project_title').children('.name').html(new_name);
@@ -1238,7 +1262,7 @@ $(function() {
       });
 		}, function() { window.hidePopupOnTop(); });
 	}
-	// Archive button
+	// Archive listeners and functions
 	$('body').on('click', '.worksheet_item i.fa-archive', function(e) {
 		var w_id = $(this).closest('.worksheet_item').attr('data-hash');
 		if($(this).closest('.worksheet_item').hasClass('archived')) {
@@ -1295,6 +1319,7 @@ $(function() {
 		}
 		window.ajaxRequest("/projects/archive", { hash_string: data_hash, data_type: data_type, add: add }, function() { flipArchive(true); }, function() { flipArchive(false); });
 	}
+	// Callbacks for the project listing to expand archive, onshape, etc.
 	$('body').on('click', '.archive_not_loaded', function(e) {
 		$(this).children('.project_list').html('<i class="fa fa-spinner fa-pulse"></i>').addClass('archive_tree');
 		$(this).removeClass('archive_not_loaded');
@@ -1320,6 +1345,7 @@ $(function() {
 		$(this).removeClass('shared_not_loaded');
 		window.ajaxRequest("/projects/shared_tree", { }, function(response) { $('.shared_tree').html(response.shared_html).removeClass('shared_tree'); }, function() { $('.shared_tree').html('An error occurred').removeClass('shared_tree').closest('.left_item').addClass('shared_not_loaded'); });
 	});
+	// Close the active worksheet.
 	var closeActive = window.closeActive = function(el, clear_url, dont_check_for_empty) { 
 		window.selectToolboxTab('projects_list');
 		$('.base_layout').removeClass('worksheet_open');
@@ -1359,6 +1385,7 @@ $(function() {
 		});
 	};
 	var beginLoad = false;
+	//Function to open a worksheet.  Will open the active worksheet into the chosen alement and optionally set the URL
 	var openActive = window.openActive = function(el, set_url) {
 		beginLoad = false;
 		closeActive($('.active_worksheet'), false, true);
@@ -1397,6 +1424,7 @@ $(function() {
 				wrapper_box.animate({'margin-left':-30, 'margin-right': -30, 'padding-top': "+=15", 'padding-bottom': "+=15"}, {duration: 250});
 		}
 	}
+	// Listener to open a worksheet or invitation when clicked in the list
 	$('body').on('click', '.worksheet_item, .invitation_item', function(e) {
 		if($(this).hasClass('worksheet_loading')) return;
 		if($(this).hasClass('screen_explanation')) return;
@@ -1416,6 +1444,7 @@ $(function() {
 			window.loadWorksheet($(this));
 		}
 	});
+	// Function to load a worksheet.  
 	var loadWorksheet = window.loadWorksheet = function(el, response) {
 		var hash_string = el.attr('data-hash');
     window.trackEvent("Worksheet", "Load", hash_string);
@@ -1457,14 +1486,17 @@ $(function() {
 		else
 			window.ajaxRequest("/worksheet_commands", { command: 'get_worksheet', data: {hash_string: hash_string} }, try_success, fail);
 	}
+	// Load project listener
 	$('body').on('click', '.project_item', function(e) {
 		if($(this).closest(".details_span").length) return;
 		var archive = $(this).closest('.archived').length > 0;
 		window.loadProject($(this).attr('data-hash_string'), $(this).attr('data-name'), archive);
 	});
+	// Move worksheet listener
 	$('body').on('click', 'td.location', function(e) {
 		window.moveWorksheet($(this).closest('.active_holder').children('.worksheet_item, .invitation_item'));
 	});
+	// Function to start move of a worksheet.
 	var moveWorksheet = window.moveWorksheet = function(el, remove_after_move) {
     window.trackEvent("Worksheet", "Move");
 		var dets = el.closest('.active_holder').children('.details_span');
@@ -1486,10 +1518,12 @@ $(function() {
 		}
 		moveDialog(processMove, el.attr('parent-hash'));
 	}
+	// Revisions listener
 	$('body').on('click', 'td.revisions', function(e) {
     window.trackEvent("Worksheet", "Load Revisions", "From Header");
 		window.loadRevisions($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash'), $(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-name'));
 	});
+	// Collaborators/sharing listener
 	$('body').on('click', 'td.collaborators', function(e) {
     window.trackEvent("Worksheet", "Sharing Dialog","From Header");
 		window.openSharingDialog($(this).closest('.active_holder').children('.worksheet_item, .invitation_item').attr('data-hash'), 'Worksheet');
@@ -1505,6 +1539,7 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
+	// Embed listener
 	$('body').on('click', 'nav.menu .embed_dialog', function(e) {
 		window.trackEvent("Worksheet", "Embed Dialog","From Menu");
 		if(SwiftCalcs.active_worksheet)
@@ -1516,25 +1551,26 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
+	// Share listener
 	$('body').on('click', '.sharing_icon', function(e) {
 		window.openSharingDialog($(this).attr('data-hash'), $(this).attr('data-type'));
 		e.preventDefault();
 		return false;
 	});
-
+	// Project load listener
 	$('body').on('click', 'nav.menu .fileopen', function(e) {
 		window.loadProject($(this).attr('data-cmd'));
 		e.preventDefault();
 		return false;
 	});
-
+	// Force Save listener
 	$('body').on('click', 'nav.menu .save', function(e) {
 		if($(this).closest('nav.menu').hasClass('noWorksheet')) return false;
 		if(SwiftCalcs.active_worksheet) SwiftCalcs.active_worksheet.save();
 		e.preventDefault();
 		return false;
 	});
-
+	// Close listener (close worksheet)
 	$('body').on('click', 'nav.menu .closeActive', function(e) {
 		if($(this).closest('nav.menu').hasClass('noWorksheet')) return false;
 		window.closeActive($('.active_worksheet'), false, false);
@@ -1548,6 +1584,7 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
+	// Print listener
 	$('body').on('click', 'nav.menu .print', function(e) {
 		if(SwiftCalcs.active_worksheet) {
     	window.trackEvent("Worksheet", "Print");
@@ -1569,7 +1606,7 @@ $(function() {
 		e.preventDefault();
 		return false;
 	});
-
+	// Functions to allow file to be downloaded as a PDF
 	window.download_pdf = function() {
 		// Assume worksheet is open right now
 		if(!SwiftCalcs.active_worksheet || !SwiftCalcs.active_worksheet.jQ) return;
@@ -1625,7 +1662,7 @@ $(function() {
 		return false;
 	});
 
-
+	// Worksheet options menu listener.  Displays the menu and populates.
 	$('body').on('click', '.worksheet_item i.fa-ellipsis-v', function(e) {
 		var archived = $(this).closest('.archive').length > 0;
 		var offset = $(this).offset();
@@ -1766,6 +1803,7 @@ $(function() {
 		e.preventDefault();
 		e.stopPropagation();
 	});
+	// Function to remove a worksheet from the screen.
 	var removeWorksheet = window.removeWorksheet = function(el, worksheet_hash) {
 		SwiftCalcs.ajaxQueue.killSaves(worksheet_hash);
 		el.find('.name .hover').hide();
@@ -1799,6 +1837,7 @@ $(function() {
 		window.ajaxRequest("/projects/remove", { data_type: 'Worksheet', hash_string: worksheet_hash }, success, fail);
 		window.hidePopupOnTop();
 	}
+	// Function to remove a project from the screen.
 	var removeProject = window.removeProject = function(el, project_hash) {
 		var success = function(response) {
 			window.hidePopupOnTop();
@@ -1818,6 +1857,7 @@ $(function() {
 		window.hidePopupOnTop();
 		window.showLoadingOnTop();
 	}
+	// Callback to rename a worksheet.
 	var processRename = function(el, name, worksheet_hash) {
 		el.find('.name .hover').hide();
 		el.find('.name').append('<span class="fa fa-spinner fa-pulse"></span>');
@@ -1832,6 +1872,7 @@ $(function() {
 		window.ajaxRequest("/worksheet_commands", { command: 'rename', data: {hash_string: el.attr('data-hash'), name: name} }, success, fail);
 		window.hidePopupOnTop();
 	}
+	// Callback to duplicate a worksheet.  Will create the new worksheet, copy info in to it, and open it.
 	var newWorksheet = window.newWorksheet = function(duplicate, worksheet_hash, revision_hash, lend_author_rights) {
     if(duplicate && revision_hash) window.trackEvent("Worksheet", "Copy Revision", revision_hash);
     else if(duplicate) window.trackEvent("Worksheet", "Copy", worksheet_hash);
@@ -1877,6 +1918,7 @@ $(function() {
 		window.ajaxRequest("/worksheet_commands", { command: (duplicate ? 'copy_worksheet': 'new_worksheet'), data: post_data }, success, fail);
 		window.hidePopupOnTop();
 	}
+	// Listeners for the ‘new’ bubble in the bottom right of the screen.
 	$('body').on('mouseenter', '.new_bubble.new_worksheet', function() {
 		var closeBubble = function() {
 			$('.new_bubble_mouseover').remove();
@@ -1933,6 +1975,7 @@ $(function() {
 		$('.new_bubble_mouseover').remove();
 		$('.new_bubble.new_project').fadeOut(150);
 	});
+	// Star listeners
 	$('body').on('click', '.star_title', function(e) {
 		var $container = $(this);
 		if($container.closest('.popup_dialog').length) return;
@@ -1942,7 +1985,7 @@ $(function() {
 		} else
 			window.loadProject('starred');
 	});
-	/*
+	/* LABELS ARE NO LONGER A THING
 	$('body').on('click', '.label_title', function(e) {
 		var $container = $(this).closest('div.item');
 		if($container.closest('.project_list').length > 0) {
@@ -1974,6 +2017,7 @@ $(function() {
 		e.stopPropagation();
 	});
 	*/
+	// Resize the worksheet (call if window is resized)
 	var resizeResults = window.resizeResults = function() {
 		if(window.embedded) {
 			$('.embed_container').css('width','auto');
@@ -1990,17 +2034,20 @@ $(function() {
 		}
 	}
 	window.resizeResults();
+	// Clear the search bar (listen for click of ‘x’)
  	$('body').on('click', 'div.search_bar .fa-times-circle', function(e) {
  		$(this).closest('div.search_bar').find('input').val('');
  		SwiftCalcs.pushState.refresh(true);
  		e.preventDefault();
  		e.stopPropagation();
  	});
+	// Listener to activate a search
  	$('body').on('blur', 'div.search_bar input', function(e) {
  		SwiftCalcs.pushState.refresh(true);
  	}).on('keyup', 'div.search_bar input', function(e) {
  		if(e.which == 13) $(this).blur();
  	});
+	// Invite accept/reject functions
 	var acceptInvite = function(el) {
 		window.trackEvent("Invite", "Accept");
 		processInvite(el, true);
@@ -2038,6 +2085,7 @@ $(function() {
 		}
 		window.ajaxRequest("/projects/invite", {hash_string: el.attr('data-rights-hash'), add: accept }, success, fail);
 	}
+	// Invite listeners
 	$('.base_layout').on('click', '.invite_accept', function(e) {
 		acceptInvite($(this).closest('.invitation_item'));
 		e.preventDefault();

@@ -1,11 +1,8 @@
 
 /*
-A worksheet is a large container block that houses more blocks, and has its own variable scope for mathjs.
+A worksheet is a large container block that houses elements.
 Worksheets are attached/removed to/from the DOM after initialization with the 'bind'/'unbind' command
 
-To create a worksheet, you initialize an object by passing in:
-- Nothing: Create new worksheet, default name based on current time
-- String: Create a new worksheet with the passed string as its name
 */
 var Worksheet = P(function(_) {
 	_.parent = 0;
@@ -37,7 +34,7 @@ var Worksheet = P(function(_) {
   var id = 0;
   function uniqueWorksheetId() { return id += 1; }
 
-  // Create the worksheet, pass in an optional name
+  // Create the worksheet, pass in a name and hash_string.  Both are needed to initialize a worksheet.
 	_.init = function(inputs) { 
 		if((typeof inputs === 'undefined') || (typeof inputs.name === 'undefined') || (typeof inputs.hash_string === 'undefined')) 
 			throw "Worksheet initialized with no name or hash_string";
@@ -59,7 +56,7 @@ var Worksheet = P(function(_) {
 		this.selection = [];
 		this.id = uniqueWorksheetId();
 	}
-	// Attach the worksheet to the DOM and regenerate HTML
+	// Attach the worksheet to the DOM and regenerate HTML.  Pass to bind the element you would like the worksheet to be bound within.  HTML will be shown within this element.
 	_.bind = function(el) {
 		ans_id = 0;
 		this.jQ = $(el);

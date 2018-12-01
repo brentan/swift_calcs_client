@@ -1,4 +1,9 @@
 
+/*
+The outputbox is the ‘results’ section of any evaluatable element.  It contains the result of the evaluation,
+as well as various functions that can be used to alter the evaluation (set units, etc) by a menu that appears
+on mouseover.
+*/
 var outputBox = P(function(_) {
 	_.jQ = 0;
 	_.el = 0;

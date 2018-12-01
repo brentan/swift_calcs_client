@@ -1,3 +1,4 @@
+// All functions to populate the left-side ‘toolbox’ sidebar
 $(function() {
   // Setup the sidebar
 

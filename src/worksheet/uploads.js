@@ -1,3 +1,6 @@
+/*
+Upload functionality for a worksheet.  This will add drag handlers for when a file is dopped on to a worksheet and adds the jQuery transport plugin to manage multiple uplaods
+/*
 
 Worksheet.open(function(_) {
 	var el = false;

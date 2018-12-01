@@ -1,5 +1,11 @@
 
-/* object that deals with evaluations, and setting the evaluation queue */
+/* 
+Object that deals with evaluations, and setting the evaluation queue.
+A single GiacHandler is created in the application, which spins up a webworker with giac running.
+The GiacHandler then handles the queuing of commands to giac, the communication with the webworker, the response, and the callbacks in the worksheet when a response is received.
+
+
+*/
 var GiacHandler = P(function(_) {
 	_.auto_evaluation = true;
 	_.compile_mode = false;
@@ -38,6 +44,7 @@ var GiacHandler = P(function(_) {
 		this.setCompileMode(false, false);
 		return eval_id;
 	}
+	// Update the list of altered variables.
   _.add_altered = function(eval_id, altered, delay) {
     if(!this.evaluations[eval_id]) return;
     var l = altered.length;
@@ -104,6 +111,7 @@ var GiacHandler = P(function(_) {
 		} 
 		return this;
 	}
+	// Compile mode is used for programmatic functions.  Instead of evaluating each element in the program, they are chained together and the whole program is then compiled.  It becomes a function that can be called elsewhere in a worksheet.
 	_.setCompileMode = function(val, el) {
     if(el && this.compile_mode) {
       // Already in compile mode, so this works a bit differently...
