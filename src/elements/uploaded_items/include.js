@@ -117,7 +117,7 @@ var include_block = P(EditableBlock, function(_, super_) {
     for(var i = 0; i < this.all_vars.length; i++) {
       for(var j = 0; j < this.data.length; j++) {
         if(this.all_vars[i] == this.data[j].name) {
-          this.commands.push({command: this.data[j].name + ":=" + this.data[j].data.replace(/\\n/g," "), nomarkup: true});
+          this.commands.push({command: this.data[j].name + ":=" + this.data[j].data.replace(/\\n/g,"\n"), nomarkup: true});
           this.independent_vars.push(this.data[j].name + (this.data[j].latex.match(/^function/) ? '(' : ''));
         }
       }
