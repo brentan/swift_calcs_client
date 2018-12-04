@@ -3,7 +3,7 @@
 #
 
 # inputs
-VERSION = 1_1_28
+VERSION = 1_1_29
 EMBED_VER = 1_00
 SRC_DIR = ./src
 INTRO = $(SRC_DIR)/wrapper/intro.js
